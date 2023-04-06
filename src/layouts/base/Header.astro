@@ -1,3 +1,69 @@
 ---
+interface MenuItem {
+  identifier: string;
+  name: string;
+  url: string;
+}
 
+const menu: MenuItem[] = [
+  {
+    identifier: 'projects',
+    name: 'Projects',
+    url: '/projects/',
+  },
+  {
+    identifier: 'posts',
+    name: 'Posts',
+    url: '/posts/',
+  },
+  {
+    identifier: 'slides',
+    name: 'Slides',
+    url: '/slides/',
+  },
+  {
+    identifier: 'aoc',
+    name: 'AoC',
+    url: '/aoc/',
+  },
+  {
+    identifier: 'map',
+    name: 'Map',
+    url: '/map/',
+  },
+  {
+    identifier: 'about',
+    name: 'About',
+    url: '/about/',
+  }
+]
 ---
+<nav class="p-nav">
+  <input id="p-nav-toggle" type="checkbox" hidden>
+
+  <div class="p-nav__bar">
+    <a href="/" class="p-nav__logo">
+      <img height="48px" width="51px" src="/static/svg/aya.svg" alt="">
+      <div class="p-nav__logo-text">
+        <div class="p-nav__logo-main">Kamoshi.org</div>
+        <div class="p-nav__logo-sub" id="p-nav-splash">
+          Doesn't require JavaScript!
+        </div>
+      </div>
+    </a>
+
+    <label class="p-nav__burger" for="p-nav-toggle" tabindex="0">
+      <span class="p-nav__burger-icon"></span>
+    </label>
+  </div>
+
+  <menu class="p-nav__menu">
+    {menu.map(item => (
+      <li class="p-nav__menu-item">
+        <a class="p-nav__menu-link" href={item.url}>
+          {item.name}
+        </a>
+      </li>
+    ))}
+  </menu>
+</nav>
