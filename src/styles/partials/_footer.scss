@@ -1,0 +1,9 @@
+.p-footer {
+  padding: 0.5em;
+  background-color: var(--c-footer-bg);
+
+  &__info {
+    font-size: var(--fs-sm);
+    color: var(--c-footer-text);
+  }
+}

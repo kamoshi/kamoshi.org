@@ -1,0 +1,28 @@
+@use '../consts' as consts;
+
+
+$border: 1px dashed gray;
+
+.sc-sidenote {
+  margin: 1em 2em;
+  padding: 0.5em 1em;
+  border-top: $border;
+  border-bottom: $border;
+  color: gray;
+  line-height: normal;
+  font-size: var(--fs-sm);
+
+  @media (min-width: consts.$bp-sm) {
+    float: right;
+    clear: right;
+    max-width: 15em;
+    padding-right: 0;
+  }
+
+  @media (min-width: consts.$bp-xl) {
+    max-width: 15em;
+    margin: 0.5em -16em;
+    border-left: $border;
+    border-style: none none none dashed;
+  }
+}

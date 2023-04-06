@@ -1,0 +1,91 @@
+.readable {
+  line-height: 1.6em;
+  font-size: var(--fs-md);
+}
+
+/**
+ * MARKER
+ */
+
+$marker-color: 5px solid var(--c-secondary);
+$marker-offset: -0.7rem;
+
+%article-marker {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  display: block;
+  height: 2em;
+  width: 2em;
+  border-radius: 5px;
+}
+
+.marker {
+  position: relative;
+
+  &::before {
+    border-left: $marker-color;
+    border-top: $marker-color;
+    left: $marker-offset;
+    top: $marker-offset;
+    @extend %article-marker;
+  }
+
+  &::after {
+    border-right: $marker-color;
+    border-bottom: $marker-color;
+    right: $marker-offset;
+    bottom: $marker-offset;
+    @extend %article-marker;
+  }
+}
+
+/**
+ * OTHER
+ */
+
+.block {
+  display: block;
+}
+
+.flex {
+  display: flex;
+
+  &-row {
+    flex-direction: row;
+  }
+  &-col {
+    flex-direction: column;
+  }
+
+  &-wrap {
+    flex-wrap: wrap;
+  }
+}
+
+.justify {
+  &-center {
+    justify-content: center;
+  }
+  &-between {
+    justify-content: space-between;
+  }
+}
+
+.items {
+  &-center {
+    align-items: center;
+  }
+}
+
+.font {
+  &-light {
+    font-weight: 300;
+  }
+  &-medium {
+    font-weight: 500;
+  }
+  &-bold {
+    font-weight: 700;
+  }
+}

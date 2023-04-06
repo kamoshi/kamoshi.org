@@ -1,0 +1,49 @@
+:root {
+  /* Colors */
+  --c-primary-d: hsl(240, 21%, 35%);
+  --c-primary: hsl(240, 21%, 45%);
+  --c-primary-l: hsl(240, 21%, 55%);
+  --c-secondary: hsl(2, 58%, 52%);
+  --c-white: hsl(0, 0%, 98%);
+  --c-purewhite: hsl(0, 0%, 100%);
+  --c-black: hsl(0, 0%, 7%);
+  --c-text: hsl(0, 0%, 13%);
+  --c-text-muted: hsl(0, 0%, 40%);
+  --c-footer-bg: hsl(0, 0%, 93%);
+  --c-footer-text: hsl(0, 0%, 35%);
+  --c-timeline-bg: hsl(0, 0%, 78%);
+  --c-shadow: 0deg 0% 76%;
+  --c-bg-main: hsl(0, 0%, 98%);
+
+
+  /* Fonts */
+
+  // size
+  --fs-xs: 0.694rem;
+  --fs-sm: 0.833rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.2rem;
+  --fs-xl: 1.44rem;
+
+  // typeface
+  --san-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", sans-serif;
+  --serif: Cambria, Georgia, serif;
+  --monospace: "monaco", monospace;
+
+  // shadow
+  --shadow-l:
+    0.7px 0.6px 0.9px hsl(var(--c-shadow) / 0.39),
+    2.2px 1.9px 2.9px -3.2px hsl(var(--c-shadow) / 0.3);
+  --shadow-m:
+    0.7px 0.6px 0.9px hsl(var(--c-shadow) / 0.37),
+    2.6px 2.3px 3.5px -1.6px hsl(var(--c-shadow) / 0.31),
+    10.8px 9.6px 14.6px -3.2px hsl(var(--c-shadow) / 0.25);
+  --shadow-h:
+    0.7px 0.6px 0.9px hsl(var(--c-shadow) / 0.41),
+    3.3px 2.9px 4.4px -0.8px hsl(var(--c-shadow) / 0.37),
+    8.2px 7.4px 11.2px -1.6px hsl(var(--c-shadow) / 0.33),
+    19.4px 17.3px 26.3px -2.4px hsl(var(--c-shadow) / 0.3),
+    40.4px 36px 54.8px -3.2px hsl(var(--c-shadow) / 0.26);
+
+  --momiji: url("/static/svg/momiji.svg") 0 0, url("/static/svg/momiji.svg") 16px 16px;
+}

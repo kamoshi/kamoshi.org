@@ -1,0 +1,11 @@
+.sc-coll {
+  &__title {
+    min-width: 10em;
+  }
+  &__yeah {
+    background-color: lightgreen;
+  }
+  &__nope {
+    background-color: lightcoral;
+  }
+}

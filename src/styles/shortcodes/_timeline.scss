@@ -1,0 +1,68 @@
+.sc-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  position: relative;
+  max-width: fit-content;
+  margin: 1em auto;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 3.5em;
+    z-index: 1;
+    width: 0.15em;
+    height: 100%;
+    margin-top: 0.7em;
+    background: var(--c-timeline-bg);
+  }
+
+  &__year {
+    display: flex;
+    gap: 2em;
+    position: relative;
+
+    &-header {
+      position: sticky;
+      top: 1em;
+      align-self: flex-start;
+      margin: 0;
+      font-size: var(--fs-lg);
+      color: var(--c-primary);
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 3.25em;
+      top: 0.5em;
+      z-index: 2;
+      width: 0.6em;
+      height: 0.6em;
+      border-radius: 9999px;
+      background: var(--c-primary);
+      border: 2px solid var(--c-white);
+    }
+  }
+  &__month {
+    margin-bottom: 0.5em;
+    
+    &-header {
+      margin: 0;
+      color: var(--c-text-muted);
+    }
+  }
+
+  &__list {
+    margin-top: 0;
+    max-width: 28em;
+    list-style-type: none;
+
+    &-item::before {
+      content: '·';
+      margin-left: -0.5rem;
+      padding-right: 0.3rem;
+    }
+  }
+}

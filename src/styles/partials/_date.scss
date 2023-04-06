@@ -1,0 +1,11 @@
+.p_date {
+  margin-right: 0.5em;
+
+  &__icon {
+    display: inline;
+    max-height: 1.2em;
+    line-height: 1em;
+    width: auto;
+    vertical-align: text-top;
+  }
+}

@@ -1,0 +1,23 @@
+.p-toc {
+  #TableOfContents > ul {
+    list-style: hiragana-iroha;
+    margin-left: 2em;
+
+    li {
+      margin: 0.3em 0;
+    }
+
+    ul {
+      margin: 0.5em 0;
+    }
+  }
+
+  a {
+    line-height: 1.2;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

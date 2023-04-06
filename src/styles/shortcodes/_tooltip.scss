@@ -1,0 +1,37 @@
+.sc-tooltip {
+  position: relative;
+  text-decoration: underline dotted;
+
+  &__box {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    visibility: hidden;
+    width: max-content;
+    max-width: min(50vw, 20em);
+    padding: 0.5em;
+    z-index: 2;
+    border-radius: 0.5em;
+    background-color: black;
+    text-align: center;
+    color: white;
+    line-height: normal;
+    font-size: var(--fs-sm);
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -0.3em;
+      border-width: 0.3em;
+      border-style: solid;
+      border-color: black transparent transparent transparent;
+    }
+  }
+  
+  &:hover .sc-tooltip__box {
+    visibility: visible;
+  }
+}

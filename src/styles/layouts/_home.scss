@@ -1,0 +1,34 @@
+@use '../consts' as consts;
+
+
+.l-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5em;
+
+  @media (min-width: consts.$bp-lg) {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  &__aside {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    max-width: 40em;
+    margin-top: 3em;
+  
+    @media (min-width: consts.$bp-lg) {
+      width: 24em;
+      margin-top: 0;
+      margin-left: 3em;
+    }
+  }
+
+  &__article {
+    max-width: 40em;
+  }
+}

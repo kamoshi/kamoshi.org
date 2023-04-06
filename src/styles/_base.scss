@@ -1,0 +1,63 @@
+@use 'consts';
+
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--san-serif);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--c-bg-main);
+  color: var(--c-text);
+  font-size: var(--fs-md);
+}
+
+main {
+  flex: 1 0 auto;
+
+  @media screen and (min-width: consts.$bp-md) {
+    --fs-xs: 0.833rem;
+    --fs-sm: 1rem;
+    --fs-md: 1.2rem;
+    --fs-lg: 1.44rem; 
+    --fs-xl: 1.728rem;
+  }
+}
+
+/**
+ * BASE STYLES
+ */
+
+ol, ul {
+  margin: 1em 0em 1em 1em;
+}
+
+p {
+  margin: 0.5em 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 0.5em;
+}
+h1 {
+  font-size: var(--fs-xl);
+}
+h2 {
+  font-size: var(--fs-lg);
+}
+h3, h4, h5, h6 {
+  font-size: var(--fs-md);
+}
+h4, h6 {
+  font-style: italic;
+}
+h5, h6 {
+  color: gray;
+}
+
+a {
+  text-decoration: underline;
+  color: var(--c-primary);
+}

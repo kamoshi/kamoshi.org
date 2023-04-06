@@ -1,0 +1,44 @@
+.p-card {
+  padding: 1em;
+  border-radius: 5px;
+  background-color: white;
+  box-shadow: var(--shadow-l);
+
+  &__header {
+    margin-top: 0;
+  }
+
+  &-latest {
+    &__pages {
+      display: grid;
+      grid-template-columns: 4em 1fr;
+      row-gap: 0.5em;
+    }
+  }
+
+  &-image {
+    &__image {
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  &-contact {
+    &__grid {
+      display: grid;
+      grid-template-columns: 3em 1fr;
+      row-gap: 0.5em;
+    }
+
+    &__image {
+      max-width: 2em;
+      height: auto;
+      margin: 0 0.5em 0 0;
+    }
+
+    &__text {
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+}

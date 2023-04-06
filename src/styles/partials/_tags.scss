@@ -1,0 +1,34 @@
+.p_tags {
+  display: inline;
+  line-height: 1em;
+
+  &__icon {
+    display: inline;
+    max-height: 1.2em;
+    width: auto;
+    margin-right: 0.25em;
+    vertical-align: text-top;
+  }
+
+  &__list {
+    display: inline;
+    margin: 0;
+    list-style: none;
+  }
+
+  li {
+    display: inline-block;
+  }
+
+  a {
+    display: block;
+    border-radius: 0.4em;
+    padding: 0.1em 0.25em;
+    margin-right: 0.25em;
+    text-decoration: none;
+    line-height: 1em;
+    font-size: var(--fs-xs);
+    background-color: var(--c-purewhite);
+    border: 2px solid var(--c-primary);
+  }
+}

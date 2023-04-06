@@ -1,0 +1,43 @@
+@use '../consts' as consts;
+
+
+.l-article {
+  position: relative;
+  padding: 1.5em;
+
+  @media (min-width: consts.$bp-lg) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "left main";
+    gap: 1.5em;
+  }
+
+  @media (min-width: consts.$bp-xl) {
+    grid-template-columns: 15em 1fr 15em;
+  }
+
+  &__aside {
+    display: none;
+    position: sticky;
+    top: 0;
+    height: fit-content;
+    max-height: 100vh;
+    width: fit-content;
+    max-width: 15em;
+    margin: -1.5em 0;
+    padding: 1.5em 1.5em 1.5em 0;
+    overflow-y: auto;
+
+    @media (min-width: consts.$bp-lg) {
+      display: block;
+      grid-area: left;
+    }
+  }
+
+  &__article {
+    grid-area: main;
+    width: 100%;
+    max-width: 40em;
+    margin: 0 auto auto auto;
+  }
+}
