@@ -1,0 +1,14 @@
+---
+import dayjs from 'dayjs';
+const copyright = `Copyright &copy; ${dayjs().year()} Maciej Jur`;
+const email = "maciej@kamoshi.org";
+---
+<footer class="p-footer flex flex-row items-center justify-between">
+  <div class="p-footer__info">
+    <div set:html={copyright}></div>
+    <div><a href={`mailto:${email}`}>{email}</a></div>
+  </div>
+  <a class="block" rel="license" href="http://creativecommons.org/licenses/by/4.0/">
+    <img class="block" alt="Creative Commons License" width="88" height="31" src="/static/svg/by.svg" />
+  </a>
+</footer>
