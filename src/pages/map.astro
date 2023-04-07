@@ -1,0 +1,49 @@
+---
+import Base from "../layouts/Base.astro";
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import '../assets/leaflet-photo/styles.scss';
+---
+
+<Base>
+  <div id="map" style="height: 100%; width: 100%"></div>
+  <script>
+    import L from 'leaflet';
+    import 'leaflet.markercluster';
+    import '../assets/leaflet-photo';
+
+    const template = `
+      <div class="popup">
+        <a href="{photo}">
+          <img width="{width}" height="{height}" src="{photo}" alt="" />
+          <div class="meta">
+            <span class="date">{date}</span><span class="caption">{caption}</span>
+          </div>
+        </a>
+      </div>`;
+
+    const map = L.map('map').setView([51.85, 16.57], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const photoLayer = L.photo.cluster!().on('click', function(evt: any) {
+      evt.layer.bindPopup(L.Util.template(template, evt.layer.photo)).openPopup();
+    });
+
+
+    async function loadData() {
+      const data = await fetch('/static/map/data.json');
+      if (!data.ok) return;
+
+      return await data.json()
+    }
+
+    // Add photos to the map
+    loadData().then(data => photoLayer.add(data).addTo(map));
+  </script>
+
+  <div slot="footer"></div>
+</Base>
