@@ -1,0 +1,35 @@
+---
+layout: ../layouts/Article.astro
+title: "A little about me!"
+date: 2021-09-10T19:34:01+02:00
+tags: ["meta"]
+---
+
+## Summary
+
+I'm a CS student with professional experience as a TypeScript developer, but generally I enjoy playing around and tinkering with all kinds of tangentially related things. Some of my favorite programming languages are Rust, TypeScript and Python. I also have some experience with functional languages such as Scala and OCaml. In the future I would like to learn to program in Haskell.
+
+When it comes to human-languages, I really like the Japanese language, so I've been learning it on and off since 2016. I think that it is very beautiful and elegant at the same time. I also like listening to music, playing video games. In my free time I love going on pretty long walks and whenever I come across something interesting I usually take a photo of it.
+
+## Website
+
+This website was a completely random idea of mine, but it turned out to be a great fun with occasional frustrating moments here and there (especially configuring Nginx and DNS :smile:). I've written it from scratch with the help of [Hugo](https://gohugo.io/). Originally I thought about using Angular, but I realized it would be a huge overkill for a website of this type, so I decided to look as some static site generators. Eventually, I came across Hugo and it turned out to be the right tool for the job. I'm very happy that I ended up learning it!
+
+Why create a website from scratch instead of just using something existing like Wordpress, or at least use someone else's theme for Hugo/Jekyll? That's a pretty reasonable question. Thing is, I didn't actually want to have a website per se, or rather I don't think it would be any good anyway. I just wanted to create one myself completely on my own. There's something about looking at your own creations, and feeling good about the outcome, even if it's not that good, at least you know you made it! :smile:
+
+## Timeline
+
+{{ timeline(source="/data/timelines/about.yml") }}
+
+
+## Acknowledgements
+
+This website would not have been possible without the following free and open-source projects. Thanks!
+
+| Project                                                                   | License      |
+|---------------------------------------------------------------------------|--------------|
+| [Leaflet](https://leafletjs.com/)                                         | BSD 2-clause |
+| [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) | MIT          |
+| [leaflet-photo](https://github.com/kamoshi/leaflet-photo)                 | MIT          |
+| [Github Corners](https://tholman.com/github-corners/)                     | MIT          |
+| [Lunr](https://lunrjs.com/)                                               | MIT          |

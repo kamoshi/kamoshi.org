@@ -1,0 +1,25 @@
+---
+import dayjs from "dayjs";
+import Base from "./Base.astro";
+import Header from "../components/headers/Article.astro";
+
+const {frontmatter} = Astro.props;
+---
+<Base>
+  <main class="l-article">
+    <aside class="l-article__aside">
+      <div class="l-article__toc">
+        <!-- {%- include "partials/toc.html" -%} -->
+      </div>
+    </aside>
+    <article class="l-article__article marker readable">
+        <Header
+          title={frontmatter.title}
+          date={dayjs(frontmatter.date)}
+          tags={frontmatter.tags}/>
+      <div class="markdown">
+        <slot />
+      </div>
+    </article>
+  </main>
+</Base>

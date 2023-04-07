@@ -5,6 +5,7 @@ interface MenuItem {
   url: string;
 }
 
+/** Config for the menu displayed in site navbar. */
 const menu: MenuItem[] = [
   {
     identifier: 'projects',
@@ -36,7 +37,7 @@ const menu: MenuItem[] = [
     name: 'About',
     url: '/about/',
   }
-]
+];
 ---
 <nav class="p-nav">
   <input id="p-nav-toggle" type="checkbox" hidden>

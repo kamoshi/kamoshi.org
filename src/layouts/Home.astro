@@ -1,0 +1,51 @@
+---
+import Base from "./Base.astro";
+
+
+const notice = {
+	header: "Hello!",
+	content: [
+		"Test"
+	]
+};
+---
+<Base>
+	<main class="l-home">
+		<article class="l-home__article markdown readable">
+			<slot />
+		</article>
+		<aside class="l-home__aside">
+			<section class="p-card">
+				<h2 class="p-card__header">{notice.header}</h2>
+				{notice.content.map(item => (
+					<p>{item}</p>
+				))}
+			</section>
+
+			<!-- <section class="p-card p-card-image">
+				<h2 class="p-card__header">Image of the Month</h2>
+				<a href="{{config.extra.cards.image.src}}">
+					{%- set image = resize_image(path=config.extra.cards.image.src, op="fit_width", width=400, format="webp") -%}
+					<img class="p-card-image__image" src="{{image.url}}" width="{{image.width}}" height="{{image.height}}" alt="{{- config.extra.cards.image.alt -}}">
+				</a>
+			</section> -->
+
+			<!-- <section class="p-card p-card-contact">
+				<h2 class="p-card__header">Contact</h2>
+				<div class="p-card-contact__grid">
+					{%- if config.extra.cards.contact.email -%}
+					<img class="p-card-contact__image" width="38" height="25" src=/static/svg/email.svg alt="email">
+					<a class="p-card-contact__text" href="mailto:{{- config.extra.cards.contact.email -}}">
+						{{- config.extra.cards.contact.email -}}
+					</a>
+					{%- endif -%}
+			
+					{%- if config.extra.cards.contact.discord -%}
+					<img class="p-card-contact__image" width="38" height="30" src="/static/svg/discord.svg" alt="discord">
+					<span class="p-card-contact__text">{{- config.extra.cards.contact.discord -}}</span>
+					{%- endif -%}
+				</div>
+			</section> -->
+		</aside>
+	</main>
+</Base>

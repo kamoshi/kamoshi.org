@@ -1,0 +1,20 @@
+---
+import '../styles/styles.scss';
+import Head from "../components/base/Head.astro";
+import Header from "../components/base/Header.astro";
+import Footer from "../components/base/Footer.astro";
+---
+<html lang="en">
+	<Head />
+	<body>
+    <slot name="header">
+      <Header />
+    </slot>
+		
+    <slot />
+		
+    <slot name="footer">
+      <Footer />
+    </slot>
+	</body>
+</html>
