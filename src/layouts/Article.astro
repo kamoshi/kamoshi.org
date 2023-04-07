@@ -2,21 +2,34 @@
 import dayjs from "dayjs";
 import Base from "./Base.astro";
 import Header from "../components/headers/Article.astro";
+import Toc from "../components/Toc.astro";
 
-const {frontmatter} = Astro.props;
+interface Props {
+  headings: any[],
+  frontmatter: {
+    title: string;
+    date: string;
+    tags: string[];
+  }
+}
+
+const {
+  headings,
+  frontmatter: {
+    title,
+    date,
+    tags,
+}} = Astro.props;
 ---
 <Base>
   <main class="l-article">
     <aside class="l-article__aside">
       <div class="l-article__toc">
-        <!-- {%- include "partials/toc.html" -%} -->
+        <Toc headings={headings} />
       </div>
     </aside>
     <article class="l-article__article marker readable">
-        <Header
-          title={frontmatter.title}
-          date={dayjs(frontmatter.date)}
-          tags={frontmatter.tags}/>
+        <Header title={title} date={dayjs(date)} tags={tags}/>
       <div class="markdown">
         <slot />
       </div>
