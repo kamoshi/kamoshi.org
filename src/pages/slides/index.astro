@@ -1,0 +1,16 @@
+---
+import dayjs from 'dayjs';
+import List from '../../layouts/List.astro';
+import { getCollection } from 'astro:content';
+
+
+const content = await getCollection('slides');
+const pages = content
+  .map(entry => ({
+    title: entry.data.title,
+    slug: entry.slug,
+    date: dayjs(entry.data.date),
+  }));
+---
+
+<List title="Slides" pages={pages} />

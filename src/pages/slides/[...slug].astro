@@ -1,0 +1,32 @@
+---
+import 'reveal.js/dist/reveal.css';
+import 'reveal.js/dist/theme/white.css';
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+
+export async function getStaticPaths () {
+  return (await getCollection('slides'))
+    .map(entry => ({params: {slug: entry.slug}, props: {entry}}));
+}
+
+const { entry } = Astro.props;
+---
+
+<Base>
+  <div class="reveal">
+    <div class="slides">
+      <section data-markdown>
+        <textarea data-template>{entry.body}</textarea>
+      </section>
+    </div>
+  </div>
+  <script>
+    import Reveal from 'reveal.js';
+    import Markdown from 'reveal.js/plugin/markdown/markdown';
+
+    Reveal.initialize({
+      plugins: [ Markdown ]
+    });
+  </script>
+</Base>

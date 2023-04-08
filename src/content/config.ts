@@ -11,4 +11,10 @@ export const collections = {
       math: z.boolean().optional()
     })
   }),
+  slides: defineCollection({
+    schema: z.object({
+      title: z.string(),
+      date: z.date(),
+    })
+  })
 }

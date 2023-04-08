@@ -2,7 +2,6 @@
 import Article from '../../layouts/Article.astro';
 import { getCollection } from 'astro:content';
 
-
 export async function getStaticPaths () {
   return (await getCollection('aoc'))
     .map(entry => ({params: {slug: entry.slug}, props: {entry}}));
