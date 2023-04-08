@@ -576,7 +576,7 @@ fn main() {
 ### Traits
 
 Haskell:
-```hs
+```haskell
 class Cool a where
     giveMeNumber :: a -> Integer
 ```
@@ -591,7 +591,7 @@ trait Cool {
 ---
 
 Haskell:
-```hs
+```haskell
 newtype Hello = Hello Integer
 
 instance Cool Hello where
@@ -610,7 +610,7 @@ impl Cool for Hello {
 ---
 
 Haskell:
-```hs
+```haskell
 main = do
   let test = Hello 2
   putStrLn $ show $ giveMeNumber test
@@ -649,7 +649,7 @@ fn main() {
 }
 ```
 
-```txt
+```
 Hello { a: 22, b: 0, c: [] }
 ```
 

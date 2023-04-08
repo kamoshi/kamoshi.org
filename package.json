@@ -10,19 +10,23 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/svelte": "^2.1.0",
     "astro": "^2.2.0",
     "dayjs": "^1.11.7",
     "leaflet": "^1.9.3",
     "leaflet.markercluster": "^1.5.3",
+    "lunr": "^2.3.9",
     "rehype-katex": "^6.0.2",
     "remark-emoji": "^3.1.1",
     "remark-math": "^5.1.1",
     "reveal.js": "^4.4.0",
-    "sass": "^1.61.0"
+    "sass": "^1.61.0",
+    "svelte": "^3.54.0"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.3",
     "@types/leaflet.markercluster": "^1.5.1",
+    "@types/lunr": "^2.3.4",
     "@types/reveal.js": "^4.4.2"
   }
 }

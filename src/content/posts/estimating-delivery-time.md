@@ -1,6 +1,7 @@
 ---
 title: "Estimating package delivery time"
 date: 2022-06-21T18:44:53+02:00
+tags: [math, statistics]
 ---
 
 In the last few months I have ordered a dozen of items from Japan. In total there were six distinct orders that were delivered to me in separate boxes. Here's the data for the time between being sent out (dispatch from outward office of exchange) from Japan and arriving (arrival at inward office of exchange) in Poland.
@@ -44,7 +45,7 @@ $$
 
 With these results we can say with 95% confidence that the mean time of delivery from Japan to Poland lies somewhere between 3.66 days and 9.27 days. We can also calculate different results for different confidence levels to get some more interesting overview:
 
-| Confidence level | \\(t_{\alpha, n-1} \frac{s}{\sqrt{n}}\\) | Confidence interval        |
+| Confidence level | $t_{\alpha, n-1} \frac{s}{\sqrt{n}}$ | Confidence interval        |
 |------------------|------------------------------------------|----------------------------|
 | 99%              | 4.398820806                              | (2.068077342; 10.86571895) |
 | 95%              | 2.804347194                              | (3.662550954; 9.271245342) |

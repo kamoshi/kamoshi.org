@@ -8,7 +8,7 @@ const content = await getCollection('slides');
 const pages = content
   .map(entry => ({
     title: entry.data.title,
-    slug: entry.slug,
+    slug: `/slides/${entry.slug}/`,
     date: dayjs(entry.data.date),
   }));
 ---
