@@ -1,6 +1,7 @@
 ---
-import Base from '../../layouts/Base.astro';
+import List from '../../layouts/List.astro';
 import { getCollection } from 'astro:content';
+import dayjs from 'dayjs';
 
 
 export async function getStaticPaths () {
@@ -9,13 +10,15 @@ export async function getStaticPaths () {
 }
 
 const { year } = Astro.props;
-const pages = await getCollection('aoc', (entry) => entry.id.startsWith(year));
+const content = await getCollection('aoc', (entry) => entry.id.startsWith(year));
+
+const pages = content
+  .map(doc => ({
+    title: `Day ${doc.data.day}`,
+    slug: `/aoc/${doc.slug}/`,
+    date: dayjs(doc.data.date),
+  }));
+
 ---
 
-<Base>
-  {pages.map(entry => (
-    <div>
-      <a href={entry.slug.split('/')[1]}>{entry.id}</a>
-    </div>
-  ))}
-</Base>
+<List title={year} pages={pages} />

@@ -1,19 +1,21 @@
 ---
+import List from '../../layouts/List.astro';
 import { getCollection } from 'astro:content';
-import Base from '../../layouts/Base.astro';
 
 
-const posts = await getCollection('aoc');
+const content = await getCollection('aoc');
+const occ: {[key: string]: number} = {}
 
-const map = posts.reduce((acc, next) => {
-    const year = next.slug.slice(0, 4);
-    (year in acc) ? acc[year] += 1 : acc[year] = 1;
-    return acc;
-  }, {} as {[key: string]: number})
+for (const doc of content) {
+  const year = doc.slug.slice(0, 4);
+  (year in occ) ? occ[year] += 1 : occ[year] = 1;
+}
+
+const pages = Object.entries(occ)
+  .map(([year, occ]) => ({
+    title: `${year} - ${occ} days`,
+    slug: `/aoc/${year}/`,
+  }));
 ---
 
-<Base>
-  {Object.entries(map).map(([year, count]) => (
-    <div><a href={year}>{year} - {count}</a></div>
-  ))}
-</Base>
+<List title="Advent of Code" pages={pages} />

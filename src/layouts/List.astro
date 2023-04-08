@@ -1,0 +1,36 @@
+---
+import type { Dayjs } from "dayjs";
+import Base from "./Base.astro";
+import Header from "../components/headers/Base.astro";
+
+interface Props {
+  title: string;
+  pages: Array<{
+    title: string;
+    slug: string;
+    date?: Dayjs;
+  }>;
+}
+
+const { title, pages } = Astro.props;
+const dates = pages.every(page => page.date);
+---
+
+<Base>
+  <main class="l-pages">
+    <article class="l-pages__list readable">
+      <Header title={title} />
+      <div class="p-pagelist" class:list={{dates}}>
+        {pages.map(page => (<>
+          {dates && (
+            <time class="date" datetime={page.date!.toISOString()}>
+              {page.date!.format("MMM DD, YYYY")}
+            </time>
+          )}
+          <a href={page.slug}>{page.title}</a>
+        </>
+        ))}
+      </div>
+    </article>
+  </main>
+</Base>

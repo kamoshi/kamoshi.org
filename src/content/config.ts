@@ -6,7 +6,6 @@ export const collections = {
     schema: z.object({
       title: z.string(),
       date: z.date(),
-      year: z.number(),
       day: z.number(),
       stars: z.number(),
       math: z.boolean().optional()

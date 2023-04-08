@@ -1,5 +1,6 @@
 ---
 import type { Dayjs } from "dayjs";
+import Base from "./Base.astro";
 
 interface Props {
   title: string;
@@ -10,12 +11,12 @@ interface Props {
 
 const { title, date, tags = [], github } = Astro.props;
 ---
-<header class="p-header">
-  <h1 class="p-header__heading">{title}</h1>
+
+<Base title={title}>
   <div class="p-header__meta">
     <span class="p_date">
       <img class="p_date__icon" width="120" height="123" src="/static/svg/calendar.svg" alt="">
-      &nbsp;{date.format("MMM DD, YYYY")}
+      <time datetime={date.toISOString()}>{date.format("MMM DD, YYYY")}</time>
     </span>
 
     <!-- {%- include "partials/tags.html" -%} -->
@@ -39,5 +40,4 @@ const { title, date, tags = [], github } = Astro.props;
       </svg>
     </a>
   )}
-  
-</header>
+</Base>
