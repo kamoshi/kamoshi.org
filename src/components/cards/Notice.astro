@@ -1,0 +1,14 @@
+---
+const notice = {
+	header: "Website ported to Astro 2!",
+	content: [
+		"Third time's a charm, so hopefully this time it will last longer. So far Astro looks really cool. There's still a lot of work to do, to make this version reach the same level of usability as before."
+	]
+};
+---
+<section class="p-card">
+  <h2 class="p-card__header">{notice.header}</h2>
+  {notice.content.map(item => (
+    <p>{item}</p>
+  ))}
+</section>

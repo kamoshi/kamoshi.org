@@ -1,4 +1,5 @@
 <script lang="ts">
+  import dayjs from "dayjs";
   import lunr from "lunr";
   import { onMount } from "svelte";
 
@@ -6,6 +7,7 @@
   let value = '';
   let index: lunr.Index;
   let results: lunr.Index.Result[] = [];
+  let metadata: any;
 
   /** Update the value so that it reflects the URL */
   function sync() {
@@ -28,7 +30,8 @@
 
   async function load() {
     const data = await fetch('/search.json').then(r => r.json());
-    index = lunr.Index.load(data);
+    index = lunr.Index.load(data.index);
+    metadata = data.metadata;
   }
 
   function search() {
@@ -49,8 +52,11 @@
     <section class="results">
       <div>Showing results for "{value}" ({results.length})</div>
       {#each results as result}
+        {@const meta = metadata[result.ref]}
+        {@const date = dayjs(meta.date)}
         <a class="result" href={result.ref}>
-          {result.ref}
+          <span class="name">{meta.title}</span>
+          <time class="date" datetime={date.toISOString()}>{date.format("MMM DD, YYYY")}</time>
         </a>
       {/each}
     </section>
@@ -81,11 +87,18 @@
     }
 
     .result {
-      display: block;
+      display: flex;
+      flex-direction: row;
       padding: 0.5em;
       background-color: white;
       box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
       transition: box-shadow linear 100ms;
+      text-decoration: none;
+
+      .date {
+        margin-left: auto;
+        color: rgb(65, 65, 65);
+      }
 
       &:focus-within,
       &:hover {

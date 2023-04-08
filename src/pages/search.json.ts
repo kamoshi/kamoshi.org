@@ -10,6 +10,14 @@ const posts = await Promise.all([
   ])
   .then(array => array.flat());
 
+const metadata = posts.reduce(
+  (acc, next) => (
+    acc[next.slug] = { title: next.data.title, date: next.data.date },
+    acc
+  ),
+  {} as {[key: string]: {title: string, date: Date}}
+)
+
 const index = lunr(function() {
   this.ref('slug');
   this.field('body');
@@ -19,7 +27,5 @@ const index = lunr(function() {
 })
 
 export async function get(_: APIContext) {
-  return {
-    body: JSON.stringify(index)
-  }
+  return {body: JSON.stringify({ index, metadata })};
 }

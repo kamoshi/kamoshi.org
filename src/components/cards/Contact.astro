@@ -1,0 +1,17 @@
+---
+const email = "maciej@kamoshi.org";
+const discord = "kamov#2485";
+---
+<section class="p-card p-card-contact">
+  <h2 class="p-card__header">Contact</h2>
+  <div class="p-card-contact__grid">
+    {email && (
+      <img class="p-card-contact__image" width="38" height="25" src="/static/svg/email.svg" alt="email">
+      <a class="p-card-contact__text" href={`mailto:${email}`}>{email}</a>
+    )}
+    {discord && (
+      <img class="p-card-contact__image" width="38" height="30" src="/static/svg/discord.svg" alt="discord">
+      <span class="p-card-contact__text">{discord}</span>
+    )}
+  </div>
+</section>
