@@ -22,3 +22,5 @@ pnpm-debug.log*
 
 # binary blobs
 public/**/*.jpg
+public/**/*.png
+public/**/*.webp

@@ -40,8 +40,8 @@ function fold(headings: Heading[]) {
         <a href={`#${heading.slug}`}>{heading.text}</a>
         {heading.children && (
           <ul>
-            {heading.children?.map((child: any) => (
-              <li><a href={`#${heading.slug}`}>{heading.text}</a></li>
+            {heading.children?.map(child => (
+              <li><a href={`#${child.slug}`}>{child.text}</a></li>
             ))}
           </ul>
         )}

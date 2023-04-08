@@ -15,6 +15,7 @@
     "leaflet": "^1.9.3",
     "leaflet.markercluster": "^1.5.3",
     "rehype-katex": "^6.0.2",
+    "remark-emoji": "^3.1.1",
     "remark-math": "^5.1.1",
     "reveal.js": "^4.4.0",
     "sass": "^1.61.0"

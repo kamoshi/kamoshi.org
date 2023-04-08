@@ -1,6 +1,7 @@
 ---
 import 'reveal.js/dist/reveal.css';
-import 'reveal.js/dist/theme/white.css';
+import 'reveal.js/dist/theme/black.css';
+import 'reveal.js/plugin/highlight/monokai.css';
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 
@@ -16,7 +17,7 @@ const { entry } = Astro.props;
 <Base>
   <div class="reveal">
     <div class="slides">
-      <section data-markdown>
+      <section data-markdown data-separator="^\n-----\n$" data-separator-vertical="^\n---\n$">
         <textarea data-template>{entry.body}</textarea>
       </section>
     </div>
@@ -24,9 +25,22 @@ const { entry } = Astro.props;
   <script>
     import Reveal from 'reveal.js';
     import Markdown from 'reveal.js/plugin/markdown/markdown';
+    import Highlight from 'reveal.js/plugin/highlight/highlight';
 
     Reveal.initialize({
-      plugins: [ Markdown ]
+      hash: true,
+      plugins: [Markdown, Highlight]
     });
   </script>
+
+  <style is:global>
+    .slides img {
+      margin-left: auto;
+      margin-right: auto;
+      max-height: 60vh;
+    }
+  </style>
+
+  <span slot="header"></span>
+  <span slot="footer"></span>
 </Base>

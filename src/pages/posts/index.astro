@@ -1,0 +1,17 @@
+---
+import dayjs from "dayjs";
+import List from "../../layouts/List.astro";
+import { getCollection } from 'astro:content';
+
+
+const posts = (await getCollection('posts'))
+  .sort((a, b) => a.data.date < b.data.date ? 1 : -1)
+  .map(entry => ({
+    title: entry.data.title,
+    slug: `/posts/${entry.slug}`,
+    date: dayjs(entry.data.date),
+  }))
+
+---
+
+<List title="Posts" pages={posts} />
