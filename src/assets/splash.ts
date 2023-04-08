@@ -1,4 +1,5 @@
-const a = [
+/** Subtitles dusplayed under site title in navbar. */
+const subtitles = [
   "Playtime's over, playtime's now",
   "永遠のオデッセイ",
   "0% code coverage",
@@ -40,6 +41,12 @@ const a = [
   "a2Ftb3NoaS5vcmc=",
   ":: (Thought a) => a -> String",
 ];
-a.push(`${Math.round(1 / a.length * 10000)/100}% chance for this message`);
-const target = document.getElementById("p-nav-splash");
-target && (target.innerText = a[Math.floor(Math.random() * a.length)]);
+
+const chance = Math.round(1 / (subtitles.length + 1) * 10000) / 100;
+subtitles.push(`${chance}% chance for this message`);
+
+export function bindSubtitle() {
+  const target = document.getElementById("p-nav-splash");
+  const choice = subtitles[Math.floor(Math.random() * subtitles.length)];
+  target && (target.innerText = choice);
+}
