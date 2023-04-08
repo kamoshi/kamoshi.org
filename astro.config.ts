@@ -11,6 +11,9 @@ export default defineConfig({
     ],
     rehypePlugins: [
       [rehypeKatex, {output: 'mathml'}]
-    ]
+    ],
+    shikiConfig: {
+      theme: 'min-light'
+    }
   }
 });
