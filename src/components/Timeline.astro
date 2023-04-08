@@ -1,0 +1,34 @@
+---
+import timeline from '../assets/timeline.yml';
+---
+
+<div class="sc-timeline">
+  {timeline.map((year: any) => (
+    <section class="sc-timeline__year">
+      <h3 class="sc-timeline__year-header sticky font-medium">{year.year}</h3>
+
+      <div class="sc-timeline__year-container">
+        {year.events && (
+          <section class="sc-timeline__year-events">
+            <ul class="sc-timeline__list">
+              {year.events.map((event: any) => (
+                <li class="sc-timeline__list-item">{event}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+        
+        {year.months?.map((month: any) => (
+          <section class="sc-timeline__month">
+            <h4 class="sc-timeline__month-header font-medium">{month.month}</h4>
+            <ul class="sc-timeline__list">
+              {month.events.map((event: any) => (
+                <li class="sc-timeline__list-item">{event}</li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </section>
+  ))}
+</div>

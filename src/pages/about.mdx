@@ -4,6 +4,7 @@ title: "A little about me!"
 date: 2021-09-10T19:34:01+02:00
 tags: ["meta"]
 ---
+import Timeline from '../components/Timeline.astro';
 
 ## Summary
 
@@ -19,8 +20,7 @@ Why create a website from scratch instead of just using something existing like 
 
 ## Timeline
 
-{{ timeline(source="/data/timelines/about.yml") }}
-
+<Timeline />
 
 ## Acknowledgements
 
@@ -28,8 +28,10 @@ This website would not have been possible without the following free and open-so
 
 | Project                                                                   | License      |
 |---------------------------------------------------------------------------|--------------|
+| [Astro](https://astro.build/)                                             | MIT          |
+| [Svelte](https://svelte.dev/)                                             | MIT          |
 | [Leaflet](https://leafletjs.com/)                                         | BSD 2-clause |
 | [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) | MIT          |
-| [leaflet-photo](https://github.com/kamoshi/leaflet-photo)                 | MIT          |
-| [Github Corners](https://tholman.com/github-corners/)                     | MIT          |
+| [Reveal.js](https://revealjs.com/)                                        | MIT          |
 | [Lunr](https://lunrjs.com/)                                               | MIT          |
+| [Github Corners](https://tholman.com/github-corners/)                     | MIT          |
