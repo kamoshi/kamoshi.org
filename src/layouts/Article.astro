@@ -5,7 +5,7 @@ import Header from "../components/headers/Article.astro";
 import Toc from "../components/Toc.astro";
 
 interface Props {
-  headings: any[],
+  headings?: any[],
   frontmatter: {
     title: string;
     date: string;
@@ -25,7 +25,7 @@ const {
   <main class="l-article">
     <aside class="l-article__aside">
       <div class="l-article__toc">
-        <Toc headings={headings} />
+        {headings && (<Toc headings={headings} />)}
       </div>
     </aside>
     <article class="l-article__article marker readable">

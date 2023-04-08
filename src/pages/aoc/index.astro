@@ -1,0 +1,10 @@
+---
+import { getCollection } from 'astro:content';
+
+
+const posts = await getCollection('aoc');
+---
+
+<div>{posts.length}</div>
+
+
