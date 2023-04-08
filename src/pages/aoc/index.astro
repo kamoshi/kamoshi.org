@@ -1,10 +1,19 @@
 ---
 import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
 
 
 const posts = await getCollection('aoc');
+
+const map = posts.reduce((acc, next) => {
+    const year = next.slug.slice(0, 4);
+    (year in acc) ? acc[year] += 1 : acc[year] = 1;
+    return acc;
+  }, {} as {[key: string]: number})
 ---
 
-<div>{posts.length}</div>
-
-
+<Base>
+  {Object.entries(map).map(([year, count]) => (
+    <div><a href={year}>{year} - {count}</a></div>
+  ))}
+</Base>

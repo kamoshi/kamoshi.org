@@ -1,18 +1,21 @@
 ---
+import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 
+
 export async function getStaticPaths () {
-  return (await getCollection('aoc'))
-    .map(entry => entry.slug.slice(0, 4))
+  return [...new Set((await getCollection('aoc')).map(e => e.slug.slice(0, 4)))]
     .map(year => ({params: {year}, props: {year}}))
 }
 
 const { year } = Astro.props;
-const pages = await getCollection('aoc', (entry) => entry.id.startsWith(Astro.params.year!));
+const pages = await getCollection('aoc', (entry) => entry.id.startsWith(year));
 ---
 
-{pages.map(entry => (
-  <div>
-    {entry.id}
-  </div>
-))}
+<Base>
+  {pages.map(entry => (
+    <div>
+      <a href={entry.slug.split('/')[1]}>{entry.id}</a>
+    </div>
+  ))}
+</Base>
