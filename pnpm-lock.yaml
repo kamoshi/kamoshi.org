@@ -22,6 +22,9 @@ dependencies:
   lunr:
     specifier: ^2.3.9
     version: 2.3.9
+  marked:
+    specifier: ^4.3.0
+    version: 4.3.0
   rehype-katex:
     specifier: ^6.0.2
     version: 6.0.2
@@ -57,6 +60,9 @@ devDependencies:
   '@types/lunr':
     specifier: ^2.3.4
     version: 2.3.4
+  '@types/marked':
+    specifier: ^4.0.8
+    version: 4.0.8
   '@types/reveal.js':
     specifier: ^4.4.2
     version: 4.4.2
@@ -881,6 +887,10 @@ packages:
 
   /@types/lunr@2.3.4:
     resolution: {integrity: sha512-j4x4XJwZvorEUbA519VdQ5b9AOU9TSvfi8tvxMAfP8XzNLtFex7A8vFQwqOx3WACbV0KMXbACV3cZl4/gynQ7g==}
+    dev: true
+
+  /@types/marked@4.0.8:
+    resolution: {integrity: sha512-HVNzMT5QlWCOdeuBsgXP8EZzKUf0+AXzN+sLmjvaB3ZlLqO+e4u0uXrdw9ub69wBKFs+c6/pA4r9sy6cCDvImw==}
     dev: true
 
   /@types/mdast@3.0.11:
@@ -2090,6 +2100,12 @@ packages:
 
   /markdown-table@3.0.3:
     resolution: {integrity: sha512-Z1NL3Tb1M9wH4XESsCDEksWoKTdlUafKc4pt0GRwjUyXaCFZ+dc3g2erqB6zm3szA2IUSi7VnPI+o/9jnxh9hw==}
+    dev: false
+
+  /marked@4.3.0:
+    resolution: {integrity: sha512-PRsaiG84bK+AMvxziE/lCFss8juXjNaWzVbN5tXAm4XjeaS9NAHhop+PjQxz2A9h8Q4M/xGmzP8vqNwy6JeK0A==}
+    engines: {node: '>= 12'}
+    hasBin: true
     dev: false
 
   /mdast-util-definitions@5.1.2:

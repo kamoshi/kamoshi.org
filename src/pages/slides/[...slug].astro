@@ -24,7 +24,7 @@ const { entry } = Astro.props;
   </div>
   <script>
     import Reveal from 'reveal.js';
-    import Markdown from 'reveal.js/plugin/markdown/markdown';
+    import Markdown from '../../assets/reveal-md';
     import Highlight from 'reveal.js/plugin/highlight/highlight';
 
     Reveal.initialize({
@@ -41,6 +41,6 @@ const { entry } = Astro.props;
     }
   </style>
 
-  <span slot="header"></span>
-  <span slot="footer"></span>
+  <span slot="header" style="display: none;"></span>
+  <span slot="footer" style="display: none;"></span>
 </Base>
