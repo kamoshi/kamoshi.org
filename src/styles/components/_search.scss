@@ -1,0 +1,42 @@
+.c-search {
+  max-width: 52em;
+  margin: 0.5em auto;
+  padding: 0 1em;
+
+  @media (min-width: 40em) {
+    margin: 2em auto;
+    padding: 0 4em;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 0.5em 1em;
+    margin-bottom: 0.5em;
+    box-sizing: border-box;
+  }
+
+  &__results {
+    display: grid;
+    row-gap: 0.5em;
+  }
+
+  &__result {
+    display: flex;
+    flex-direction: row;
+    padding: 0.5em;
+    background-color: white;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+    transition: box-shadow linear 100ms;
+    text-decoration: none;
+
+    &:focus-within,
+    &:hover {
+      box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+    }
+  }
+
+  &__date {
+    margin-left: auto;
+    color: rgb(65, 65, 65);
+  }
+}

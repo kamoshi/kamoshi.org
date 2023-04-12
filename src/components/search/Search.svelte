@@ -43,20 +43,20 @@
 </script>
 
 
-<article class="search">
+<article class="c-search">
   <h1>Search</h1>
 
-  <input class="search-input" bind:value on:input={search} placeholder="Start typing here!"/>
+  <input class="c-search__input" bind:value on:input={search} placeholder="Start typing here!"/>
 
   {#if value}
-    <section class="results">
+    <section class="c-search__results">
       <div>Showing results for "{value}" ({results.length})</div>
       {#each results as result}
         {@const meta = metadata[result.ref]}
         {@const date = dayjs(meta.date)}
-        <a class="result" href={result.ref}>
-          <span class="name">{meta.title}</span>
-          <time class="date" datetime={date.toISOString()}>{date.format("MMM DD, YYYY")}</time>
+        <a class="c-search__result" href={result.ref}>
+          <span class="c-search__name">{meta.title}</span>
+          <time class="c-search__date" datetime={date.toISOString()}>{date.format("MMM DD, YYYY")}</time>
         </a>
       {/each}
     </section>
@@ -66,44 +66,3 @@
 </article>
 
 <svelte:window on:popstate={sync} />
-
-
-<style lang="scss">
-  .search {
-    margin: 2em auto;
-    padding: 0 4em;
-    max-width: 52em;
-
-    .search-input {
-      width: 100%;
-      padding: 0.5em 1em;
-      margin-bottom: 0.5em;
-      box-sizing: border-box;
-    }
-
-    .results {
-      display: grid;
-      row-gap: 0.5em;
-    }
-
-    .result {
-      display: flex;
-      flex-direction: row;
-      padding: 0.5em;
-      background-color: white;
-      box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
-      transition: box-shadow linear 100ms;
-      text-decoration: none;
-
-      .date {
-        margin-left: auto;
-        color: rgb(65, 65, 65);
-      }
-
-      &:focus-within,
-      &:hover {
-        box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
-      }
-    }
-  }
-</style>
