@@ -10,9 +10,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^0.18.3",
+    "@astrojs/mdx": "^0.18.4",
     "@astrojs/svelte": "^2.1.0",
-    "astro": "^2.2.2",
+    "astro": "^2.2.3",
     "dayjs": "^1.11.7",
     "leaflet": "^1.9.3",
     "leaflet.markercluster": "^1.5.3",
