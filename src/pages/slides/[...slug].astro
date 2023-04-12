@@ -4,6 +4,7 @@ import 'reveal.js/dist/theme/black.css';
 import 'reveal.js/plugin/highlight/monokai.css';
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import { compile } from '../../assets/reveal-ssr/markdown';
 
 
 export async function getStaticPaths () {
@@ -16,20 +17,17 @@ const { entry } = Astro.props;
 
 <Base>
   <div class="reveal">
-    <div class="slides">
-      <section data-markdown data-separator="^\n-----\n$" data-separator-vertical="^\n---\n$">
-        <textarea data-template>{entry.body}</textarea>
-      </section>
-    </div>
+    <div class="slides" set:html={compile(entry.body)}></div>
   </div>
   <script>
     import Reveal from 'reveal.js';
-    import Markdown from '../../assets/reveal-md';
     import Highlight from 'reveal.js/plugin/highlight/highlight';
 
     Reveal.initialize({
       hash: true,
-      plugins: [Markdown, Highlight]
+      plugins: [
+        Highlight,
+      ]
     });
   </script>
 
