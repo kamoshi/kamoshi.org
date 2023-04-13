@@ -13,11 +13,12 @@ export async function getStaticPaths () {
 }
 
 const { entry } = Astro.props;
+const slides = compile(entry.body);
 ---
 
 <Base>
   <div class="reveal">
-    <div class="slides" set:html={compile(entry.body)}></div>
+    <div class="slides" set:html={slides}></div>
   </div>
   <script>
     import Reveal from 'reveal.js';

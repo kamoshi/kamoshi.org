@@ -1,0 +1,122 @@
+[
+  {
+    "year": 2015,
+    "events": [
+      "Learned HTML, CSS, SQL, PHP and Lua"
+    ]
+  },
+  {
+    "year": 2016,
+    "months": [
+      {
+        "month": "May",
+        "events": [
+          "Started learning Japanese language"
+        ]
+      }
+    ]
+  },
+  {
+    "year": 2017,
+    "events": [
+      "Learned JavaScript"
+    ]
+  },
+  {
+    "year": 2018,
+    "events": [
+      "Learned Java"
+    ]
+  },
+  {
+    "year": 2019,
+    "events": [
+      "Learned Scala and OCaml, got interested in the functional paradigm and functional languages."
+    ]
+  },
+  {
+    "year": 2020,
+    "events": [
+      "Learned Python, Bash and *nix"
+    ]
+  },
+  {
+    "year": 2021,
+    "months": [
+      {
+        "month": "January",
+        "events": [
+          "Learned C# and ASP.NET"
+        ]
+      },
+      {
+        "month": "May",
+        "events": [
+          "Learned Vue.js"
+        ]
+      },
+      {
+        "month": "July",
+        "events": [
+          "Learned TypeScript and Angular",
+          "Idea for a personal website is conceived. The first idea is to use Angular for the website.",
+          "28th - First [basic layout](/static/first-layout.png) in plain HTML and CSS is created by hand."
+        ]
+      },
+      {
+        "month": "August",
+        "events": [
+          "Started thinking about using a static website generator, Jekyll and Hugo are under consideration.",
+          "26th - Migrating already created content to Hugo."
+        ]
+      },
+      {
+        "month": "September",
+        "events": [
+          "Learned Hugo"
+        ]
+      },
+      {
+        "month": "December",
+        "events": [
+          "Started using GNU/Linux"
+        ]
+      }
+    ]
+  },
+  {
+    "year": 2022,
+    "months": [
+      {
+        "month": "February",
+        "events": [
+          "Completed bachelor's degree in Computer Science at Wrocław University of Science and Technology"
+        ]
+      },
+      {
+        "month": "April",
+        "events": [
+          "Learned Svelte"
+        ]
+      },
+      {
+        "month": "December",
+        "events": [
+          "Learned DevOps - vagrant, docker, ansible, kubernetes, etc.",
+          "Learned Rust"
+        ]
+      }
+    ]
+  },
+  {
+    "year": 2023,
+    "months": [
+      {
+        "month": "April",
+        "events": [
+          "Learned Astro"
+        ]
+      }
+    ]
+  }
+]

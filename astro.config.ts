@@ -4,8 +4,7 @@ import remarkMath from 'remark-math';
 import remarkEmoji from 'remark-emoji';
 import svelte from "@astrojs/svelte";
 import mdx from '@astrojs/mdx';
-import yaml from '@rollup/plugin-yaml';
-import ruby from './src/assets/ruby';
+import remarkRuby from './src/assets/ruby';
 
 
 // https://astro.build/config
@@ -16,7 +15,7 @@ export default defineConfig({
     remarkPlugins: [
       [(remarkEmoji as any), {accessible: true}],
       remarkMath,
-      ruby,
+      remarkRuby,
     ],
     rehypePlugins: [
       [rehypeKatex, {output: 'mathml'}]
@@ -29,7 +28,4 @@ export default defineConfig({
     svelte(),
     mdx(),
   ],
-  vite: {
-    plugins: [yaml()]
-  }
 });
