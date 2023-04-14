@@ -4,7 +4,7 @@ import 'reveal.js/dist/theme/black.css';
 import 'reveal.js/plugin/highlight/monokai.css';
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
-import { compile } from '../../assets/reveal-ssr/markdown';
+import { render } from '../../assets/reveal-ssr/markdown';
 
 
 export async function getStaticPaths () {
@@ -13,7 +13,7 @@ export async function getStaticPaths () {
 }
 
 const { entry } = Astro.props;
-const slides = compile(entry.body);
+const slides = render(entry.body);
 ---
 
 <Base>

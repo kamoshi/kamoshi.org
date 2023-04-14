@@ -42,7 +42,7 @@ function codePassthrough() {
   }
 }
 
-const compiler = unified()
+const renderer = unified()
   .use(remarkParse)
   .use(remarkGfm)
   .use(codePassthrough)
@@ -59,10 +59,10 @@ function wrapSection(content: string): string {
   return `<section>${content}</section>`;
 }
 
-export function compile(text: string): string {
+export function render(text: string): string {
   return text
     .split(SPLIT_H)
-    .map(stacks => stacks.split(SPLIT_V).map(slide => String(compiler.processSync(slide))))
+    .map(stacks => stacks.split(SPLIT_V).map(slide => String(renderer.processSync(slide))))
     .map(stack => (stack.length > 1)
       ? wrapSection(stack.map(wrapSection).join(''))
       : wrapSection(stack[0]))
