@@ -2,9 +2,9 @@ import { defineConfig } from 'astro/config';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import remarkEmoji from 'remark-emoji';
-import svelte from "@astrojs/svelte";
 import mdx from '@astrojs/mdx';
 import remarkRuby from './src/assets/ruby';
+import solid from '@astrojs/solid-js';
 
 
 // https://astro.build/config
@@ -25,7 +25,7 @@ export default defineConfig({
     }
   },
   integrations: [
-    svelte(),
     mdx(),
+    solid()
   ],
 });
