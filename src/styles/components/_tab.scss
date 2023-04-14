@@ -1,0 +1,38 @@
+.c-tab {
+  width: auto;
+  margin: 0.5em 2em;
+  padding: 0.5em 1em;
+  background-color: white;
+  border: 1px gray dashed;
+  border-radius: 0.2em;
+
+  &__button {
+    cursor: pointer;
+    display: flex;
+    width: auto;
+    text-align: left;
+    background-color: unset;
+    border: unset;
+
+    &:focus-within,
+    &:hover {
+      .title {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .title {
+    margin-left: 0.5em;
+  }
+
+  .chevron {
+    display: block;
+    min-width: 1em;
+    transition: transform linear 100ms;
+  }
+
+  &.active .chevron {
+    transform: rotate(90deg);
+  }
+}
