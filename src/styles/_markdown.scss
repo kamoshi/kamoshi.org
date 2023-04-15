@@ -140,3 +140,15 @@
     margin-bottom: 0;
   }
 }
+
+.md-icon {
+  display: inline-block;
+  height: 1.2em;
+  width: auto;
+  vertical-align: middle;
+  margin: 0.1em 0;
+
+  &.big {
+    height: 4em;
+  }
+}
