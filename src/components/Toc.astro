@@ -33,15 +33,17 @@ function fold(headings: Heading[]) {
 
 <section class="p-toc">
   <h2>Content</h2>
-  <nav id="TableOfContents">
-    <ul>
+  <nav>
+    <ul class="p-toc__primary">
     {fold(headings).map(heading => (
-      <li>
+      <li class="p-toc__primary-item">
         <a href={`#${heading.slug}`}>{heading.text}</a>
         {heading.children && (
-          <ul>
+          <ul class="p-toc__nested">
             {heading.children?.map(child => (
-              <li><a href={`#${child.slug}`}>{child.text}</a></li>
+              <li class="p-toc__nested-item">
+                <a href={`#${child.slug}`}>{child.text}</a>
+              </li>
             ))}
           </ul>
         )}
