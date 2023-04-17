@@ -23,9 +23,7 @@ const { title, date, tags = [], github } = Astro.props;
     <section class="p_tags">
       <img class="p_tags__icon" width="123" height="105" src="/static/svg/tags.svg" alt="">
       <ul class="p_tags__list">
-        {tags.map(tag => (
-          <li><a href='{{ get_taxonomy_url(kind="tags", name=tag) | safe }}'>{tag}</a></li>
-        ))}
+        {tags.map(tag => <li><a href={`/tags/${tag}/`}>{tag}</a></li>)}
       </ul>
     </section>
   </div>

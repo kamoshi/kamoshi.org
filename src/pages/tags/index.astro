@@ -1,0 +1,13 @@
+---
+import List from "../../layouts/List.astro";
+import { getAllTags } from "./utils";
+
+
+const pages = [...await getAllTags()]
+  .map(tag => ({
+    title: tag,
+    slug: `/tags/${tag}/`
+  }));
+---
+
+<List title="Tags" pages={pages} />

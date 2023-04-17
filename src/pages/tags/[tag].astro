@@ -1,0 +1,29 @@
+---
+import dayjs from "dayjs";
+import List from "../../layouts/List.astro";
+import { getCollection } from 'astro:content';
+import { getAllTags } from "./utils";
+
+
+export async function getStaticPaths() {
+  return [...await getAllTags()].map(tag => ({params: {tag}}));
+}
+
+const tag = Astro.params.tag!;
+const predicate = (entry: any) => entry.data.tags?.includes(tag);
+
+const posts = (await Promise.all([
+    getCollection('posts', predicate),
+    getCollection('slides', predicate),
+    getCollection('aoc', predicate),
+  ]))
+  .flat()
+  .sort((a, b) => a.data.date < b.data.date ? 1 : -1)
+  .map(entry => ({
+    title: entry.data.title,
+    slug: `/${entry.collection}/${entry.slug}/`,
+    date: dayjs(entry.data.date),
+  }))
+---
+
+<List title={tag} pages={posts} />
