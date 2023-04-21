@@ -17,7 +17,7 @@ If you don't have any direction in life, then that means you just haven't imagin
 
 Following others and sticking to others is fine, as long as this doesn't mean you're giving up your own goals in the process. Just think about it, if you don't do what you should be doing to accomplish what you think is worthwhile, will you be proud of yourself in a couple of years? Or a decade? Of course, this doesn't mean you should only ever think about just yourself. Spending time with others is good too :slight_smile:
 
-Time is precious, in fact it is a single most presious thing in our possession. Each single possible moment and day in your life is unique. It's like a set of unique moments which you can use up to accomplish things you think are worthwhile - or not. Sometimes you should stop and think whether the way you are spending your time is worthwhile.
+Time is precious, in fact it is a single most precious thing in our possession. Each single possible moment and day in your life is unique. It's like a set of unique moments which you can use up to accomplish things you think are worthwhile - or not. Sometimes you should stop and think whether the way you are spending your time is worthwhile.
 
 ## Finishing thoughts
 

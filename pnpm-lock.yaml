@@ -3,7 +3,7 @@ lockfileVersion: '6.0'
 dependencies:
   '@astrojs/mdx':
     specifier: ^0.19.0
-    version: 0.19.0(astro@2.3.0)(rollup@3.20.6)
+    version: 0.19.0(astro@2.3.0)(rollup@3.20.7)
   '@astrojs/solid-js':
     specifier: ^2.1.0
     version: 2.1.0(@babel/core@7.21.4)(solid-js@1.7.3)
@@ -138,14 +138,14 @@ packages:
       - supports-color
     dev: false
 
-  /@astrojs/mdx@0.19.0(astro@2.3.0)(rollup@3.20.6):
+  /@astrojs/mdx@0.19.0(astro@2.3.0)(rollup@3.20.7):
     resolution: {integrity: sha512-McFpMV+npinIEKnY5t9hsdzLd76g78GgIRUPxem2OeXPNB8xr2pNS28GeU0+6Pn5STnB+sgcyyeqXLgzauOlMQ==}
     engines: {node: '>=16.12.0'}
     dependencies:
       '@astrojs/markdown-remark': 2.1.4(astro@2.3.0)
       '@astrojs/prism': 2.1.1
       '@mdx-js/mdx': 2.3.0
-      '@mdx-js/rollup': 2.3.0(rollup@3.20.6)
+      '@mdx-js/rollup': 2.3.0(rollup@3.20.7)
       acorn: 8.8.2
       es-module-lexer: 1.2.1
       estree-util-visit: 1.2.1
@@ -181,7 +181,7 @@ packages:
     dependencies:
       babel-preset-solid: 1.7.3(@babel/core@7.21.4)
       solid-js: 1.7.3
-      vitefu: 0.2.4(vite@4.2.2)
+      vitefu: 0.2.4(vite@4.3.1)
     transitivePeerDependencies:
       - '@babel/core'
       - vite
@@ -197,7 +197,7 @@ packages:
       dset: 3.1.2
       is-docker: 3.0.0
       is-wsl: 2.2.0
-      undici: 5.21.2
+      undici: 5.22.0
       which-pm-runs: 1.1.0
     transitivePeerDependencies:
       - supports-color
@@ -723,14 +723,14 @@ packages:
       - supports-color
     dev: false
 
-  /@mdx-js/rollup@2.3.0(rollup@3.20.6):
+  /@mdx-js/rollup@2.3.0(rollup@3.20.7):
     resolution: {integrity: sha512-wLvRfJS/M4UmdqTd+WoaySEE7q4BIejYf1xAHXYvtT1du/1Tl/z2450Gg2+Hu7fh05KwRRiehiTP9Yc/Dtn0fA==}
     peerDependencies:
       rollup: '>=2'
     dependencies:
       '@mdx-js/mdx': 2.3.0
-      '@rollup/pluginutils': 5.0.2(rollup@3.20.6)
-      rollup: 3.20.6
+      '@rollup/pluginutils': 5.0.2(rollup@3.20.7)
+      rollup: 3.20.7
       source-map: 0.7.4
       vfile: 5.3.7
     transitivePeerDependencies:
@@ -770,7 +770,7 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@rollup/pluginutils@5.0.2(rollup@3.20.6):
+  /@rollup/pluginutils@5.0.2(rollup@3.20.7):
     resolution: {integrity: sha512-pTd9rIsP92h+B6wWwFbW8RkZv4hiR/xKsqre4SIuAOaOEQRxi0lqLke9k2/7WegC85GgUs9pjmOjCUi3In4vwA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -782,7 +782,7 @@ packages:
       '@types/estree': 1.0.1
       estree-walker: 2.0.2
       picomatch: 2.3.1
-      rollup: 3.20.6
+      rollup: 3.20.7
     dev: false
 
   /@types/acorn@4.0.6:
@@ -1057,8 +1057,8 @@ packages:
       typescript: 5.0.4
       unist-util-visit: 4.1.2
       vfile: 5.3.7
-      vite: 4.2.2(sass@1.62.0)
-      vitefu: 0.2.4(vite@4.2.2)
+      vite: 4.3.1(sass@1.62.0)
+      vitefu: 0.2.4(vite@4.3.1)
       yargs-parser: 21.1.1
       zod: 3.21.4
     transitivePeerDependencies:
@@ -1138,8 +1138,8 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001480
-      electron-to-chromium: 1.4.368
+      caniuse-lite: 1.0.30001481
+      electron-to-chromium: 1.4.369
       node-releases: 2.0.10
       update-browserslist-db: 1.0.11(browserslist@4.21.5)
     dev: false
@@ -1163,8 +1163,8 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
-  /caniuse-lite@1.0.30001480:
-    resolution: {integrity: sha512-q7cpoPPvZYgtyC4VaBSN0Bt+PJ4c4EYRf0DrduInOz2SkFpHD5p3LnvEpqBp7UnJn+8x1Ogl1s38saUxe+ihQQ==}
+  /caniuse-lite@1.0.30001481:
+    resolution: {integrity: sha512-KCqHwRnaa1InZBtqXzP98LPg0ajCVujMKjqKDhZEthIpAsJl/YEIa3YvXjGXPVqzZVguccuu7ga9KOE1J9rKPQ==}
     dev: false
 
   /ccount@2.0.1:
@@ -1371,8 +1371,8 @@ packages:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
     dev: false
 
-  /electron-to-chromium@1.4.368:
-    resolution: {integrity: sha512-e2aeCAixCj9M7nJxdB/wDjO6mbYX+lJJxSJCXDzlr5YPGYVofuJwGN9nKg2o6wWInjX6XmxRinn3AeJMK81ltw==}
+  /electron-to-chromium@1.4.369:
+    resolution: {integrity: sha512-LfxbHXdA/S+qyoTEA4EbhxGjrxx7WK2h6yb5K2v0UCOufUKX+VZaHbl3svlzZfv9sGseym/g3Ne4DpsgRULmqg==}
     dev: false
 
   /emmet@2.4.2:
@@ -3101,8 +3101,8 @@ packages:
     engines: {node: '>=10.0.0'}
     dev: false
 
-  /rollup@3.20.6:
-    resolution: {integrity: sha512-2yEB3nQXp/tBQDN0hJScJQheXdvU2wFhh6ld7K/aiZ1vYcak6N/BKjY1QrU6BvO2JWYS8bEs14FRaxXosxy2zw==}
+  /rollup@3.20.7:
+    resolution: {integrity: sha512-P7E2zezKSLhWnTz46XxjSmInrbOCiul1yf+kJccMxT56vxjHwCbDfoLbiqFgu+WQoo9ij2PkraYaBstgB2prBA==}
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
@@ -3418,9 +3418,9 @@ packages:
       busboy: 1.6.0
     dev: false
 
-  /undici@5.21.2:
-    resolution: {integrity: sha512-f6pTQ9RF4DQtwoWSaC42P/NKlUjvezVvd9r155ohqkwFNRyBKM3f3pcty3ouusefNRyM25XhIQEbeQ46sZDJfQ==}
-    engines: {node: '>=12.18'}
+  /undici@5.22.0:
+    resolution: {integrity: sha512-fR9RXCc+6Dxav4P9VV/sp5w3eFiSdOjJYsbtWfd4s5L5C4ogyuVpdKIVHeW0vV1MloM65/f7W45nR9ZxwVdyiA==}
+    engines: {node: '>=14.0'}
     dependencies:
       busboy: 1.6.0
     dev: false
@@ -3564,8 +3564,8 @@ packages:
       vfile-message: 3.1.4
     dev: false
 
-  /vite@4.2.2(sass@1.62.0):
-    resolution: {integrity: sha512-PcNtT5HeDxb3QaSqFYkEum8f5sCVe0R3WK20qxgIvNBZPXU/Obxs/+ubBMeE7nLWeCo2LDzv+8hRYSlcaSehig==}
+  /vite@4.3.1(sass@1.62.0):
+    resolution: {integrity: sha512-EPmfPLAI79Z/RofuMvkIS0Yr091T2ReUoXQqc5ppBX/sjFRhHKiPPF/R46cTdoci/XgeQpB23diiJxq5w30vdg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
@@ -3591,14 +3591,13 @@ packages:
     dependencies:
       esbuild: 0.17.17
       postcss: 8.4.23
-      resolve: 1.22.2
-      rollup: 3.20.6
+      rollup: 3.20.7
       sass: 1.62.0
     optionalDependencies:
       fsevents: 2.3.2
     dev: false
 
-  /vitefu@0.2.4(vite@4.2.2):
+  /vitefu@0.2.4(vite@4.3.1):
     resolution: {integrity: sha512-fanAXjSaf9xXtOOeno8wZXIhgia+CZury481LsDaV++lSvcU2R9Ch2bPh3PYFyoHW+w9LqAeYRISVQjUIew14g==}
     peerDependencies:
       vite: ^3.0.0 || ^4.0.0
@@ -3606,7 +3605,7 @@ packages:
       vite:
         optional: true
     dependencies:
-      vite: 4.2.2(sass@1.62.0)
+      vite: 4.3.1(sass@1.62.0)
     dev: false
 
   /vscode-css-languageservice@6.2.4:

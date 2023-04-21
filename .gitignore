@@ -24,3 +24,6 @@ pnpm-debug.log*
 public/**/*.jpg
 public/**/*.png
 public/**/*.webp
+
+# obsidian
+.obsidian/
