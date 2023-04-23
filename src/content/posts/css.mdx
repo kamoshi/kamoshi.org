@@ -3,14 +3,15 @@ title: "CSS - How do you even write that?"
 date: 2022-10-01T21:06:44+02:00
 tags: ["webdev"]
 ---
+import Sidenote from '../../components/Sidenote.astro';
 
 ## Writing CSS is hard
 
 I've heard many people say that CSS is pretty difficult to write. There are hundreds of properties to remember, some of which aren't even compatible with some browsers yet. CSS spec is certainly full of landmines and edge cases which not a single human can fully remember... and yet, I do enjoy writing CSS. Or rather, I should say that I enjoy writing SCSS, but fundamentally it doesn't change all that much.
 
-{% sidenote() %}
+<Sidenote>
 According to the [index of CSS properties](https://www.w3.org/Style/CSS/all-properties.en.html) at the time of writing there are 158 properties with recommendation or note statuses. There are hundreds more properties with different statuses.
-{% end %}
+</Sidenote>
 
 Throughout the years CSS has gotten better. We can now use things such as flexboxes or grids, we can create beautiful animations without an ounce of JavaScript being involved. Of course, first we have to learn all the various properties, how to combine them together to create the desired effects. However, in my experience at least, this isn't even the hardest part about CSS. I know lots of properties and complex selectors, and how to use them, and I do admit it was pretty difficult to figure out all of this stuff myself. The only thing I know for certain now is that there is no single straightforward way to *structure* your CSS.
 
@@ -46,9 +47,9 @@ This might seem fairly reasonable at first, but there are a couple of problems t
 
 First thing is that we are using "modifier" classes to modify the `.blog-post` class, to give it some different look, possibly because of being used in a different context. The result of nesting rules like that is creating rules with high specificity, which are sometimes very hard to override. For instance, the `.blog-post header .title` rule has a specificity of (2, 1). We won't be able to override that style with a rule `.blog-post .title` (2, 0).
 
-{% sidenote() %}
+<Sidenote>
 Specificity is simply a number [calculated](https://specificity.keegan.st/) from the complexity of the selector. The higher the specificity, the more priority the CSS rule has. Many people argue that we should always aim for as low specificity as possible, which means we should use as simple rules as possible (but still specific!).
-{% end %}
+</Sidenote>
 
 Another problem is that we are using a very generic element `<header>` as a selector, which means that every single `<header>` that is a child of `<element class="blog-post">` will receive these styles. That could be a bad thing if we would like to use `<header>` element in semantically different contexts, for example as an article header and as a section header.
 
@@ -58,9 +59,9 @@ Third problem is that at some point we might realize that in fact certain elemen
 
 We all would like to write reusable styles, but I honestly feel like all this talk about reusability is kind of the wrong way to look at the problem. What if we tried to write a new CSS rule for every single piece of our website anew without reusing anything? Surely, we would just end up with a colossal CSS file spanning over 6000 CSS rules with a total size of about 500 kB. We wouldn't really reuse anything. What's the opposite of that? What if we tried to reuse every single CSS rule? Well, then we would have to write a single CSS rule per every property we use, and then use these classes to assign each property individually.
 
-{% sidenote() %}
+<Sidenote>
 The last idea is actually a thing, there are CSS frameworks out there which use this idea of "atomic CSS". One such example is [Tailwind CSS](https://tailwindcss.com/).
-{% end %}
+</Sidenote>
 
 If we only used a single class per each property in CSS and assigned many of such classes to each HTML tag, wouldn't we just end up doing exactly the same thing as in the first idea, except now by doing it within the `class` attribute? Consider this element:
 
@@ -74,9 +75,9 @@ I personally think that it is *possible* to find classes which are small enough 
 
 ## To BEM, or not to BEM?
 
-{% sidenote() %}
+<Sidenote>
 In short, [BEM](https://getbem.com/) is a naming convention which is all about writing class names in a very specific way. We write names as combinations of three parts: block, element and modifier, with the latter two being optional.
-{% end %}
+</Sidenote>
 
 One of the things which have helped me improve the state of my CSS stylesheets is trying to incorporate BEM into the way I write my rules. I won't explain what it is exactly, because that's not the point, but I'll try to summarize my findings.
 
