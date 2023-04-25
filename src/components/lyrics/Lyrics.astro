@@ -1,0 +1,8 @@
+---
+import { transform } from "./transform";
+
+const html = await Astro.slots.render('default');
+const lyrics = transform(html);
+---
+
+<section class="lyrics" set:html={lyrics}></section>

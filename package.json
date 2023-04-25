@@ -17,6 +17,7 @@
     "leaflet": "^1.9.3",
     "leaflet.markercluster": "^1.5.3",
     "lunr": "^2.3.9",
+    "node-html-parser": "^6.1.5",
     "rehype-katex": "^6.0.3",
     "rehype-raw": "^6.1.1",
     "rehype-stringify": "^9.0.3",

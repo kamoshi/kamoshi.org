@@ -27,3 +27,4 @@ public/**/*.webp
 
 # obsidian
 .obsidian/
+.stfolder/
