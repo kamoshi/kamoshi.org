@@ -1,14 +1,13 @@
 ---
 import List from "../../layouts/List.astro";
 import { getCollection } from 'astro:content';
+import { getAllCats } from "../../utils/songs";
 
-const posts = (await getCollection('songs'))
-  .sort((a, b) => a.data.date < b.data.date ? 1 : -1)
-  .map(entry => ({
-    title: entry.data.title,
-    slug: `/songs/${entry.slug}/`,
-  }))
+
+const pages = [...getAllCats(await getCollection('songs'))]
+  .sort((a, b) => a < b ? 1 : -1)
+  .map(catalog => ({ title: catalog, slug: `/songs/${catalog}/` }));
 
 ---
 
-<List title="Songs" pages={posts} />
+<List title="Songs" pages={pages} />

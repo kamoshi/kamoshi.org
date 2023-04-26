@@ -25,5 +25,16 @@ export const collections = {
       date: z.date(),
       tags: z.array(z.string()).optional(),
     })
+  }),
+  songs: defineCollection({
+    schema: z.object({
+      title: z.string(),
+      album: z.record(
+        z.string(),
+        z.object({
+          track: z.number()
+        })
+      )
+    })
   })
 }

@@ -5,6 +5,7 @@ import remarkEmoji from 'remark-emoji';
 import mdx from '@astrojs/mdx';
 import remarkRuby from './src/assets/ruby';
 import solid from '@astrojs/solid-js';
+import markdoc from '@astrojs/markdoc';
 
 
 // https://astro.build/config
@@ -26,6 +27,7 @@ export default defineConfig({
   },
   integrations: [
     mdx(),
-    solid()
+    solid(),
+    markdoc(undefined),
   ],
 });

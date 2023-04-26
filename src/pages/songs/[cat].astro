@@ -1,0 +1,24 @@
+---
+import List from "../../layouts/List.astro";
+import { getCollection } from 'astro:content';
+import { getAllCats } from "../../utils/songs";
+
+
+export async function getStaticPaths() {
+  const songs = await getCollection('songs');
+  const cats = getAllCats(songs);
+
+  return [...cats].map(cat => ({
+    params: {cat},
+    props: { 
+      songs: songs
+        .filter(entry => cat in entry.data.album)
+        .map(song => ({ title: song.data.title, slug: `/songs/${cat}/${song.slug}/` })) }
+  }))
+}
+
+const { cat } = Astro.params;
+const { songs } = Astro.props;
+---
+
+<List title={cat!} pages={songs} />

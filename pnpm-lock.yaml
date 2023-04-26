@@ -1,6 +1,9 @@
 lockfileVersion: '6.0'
 
 dependencies:
+  '@astrojs/markdoc':
+    specifier: ^0.1.1
+    version: 0.1.1(astro@2.3.1)
   '@astrojs/mdx':
     specifier: ^0.19.0
     version: 0.19.0(astro@2.3.1)(rollup@3.21.0)
@@ -116,6 +119,23 @@ packages:
       vscode-languageserver-textdocument: 1.0.8
       vscode-languageserver-types: 3.17.3
       vscode-uri: 3.0.7
+    dev: false
+
+  /@astrojs/markdoc@0.1.1(astro@2.3.1):
+    resolution: {integrity: sha512-NJgMTZWTCcL+4qmDim/wi53Mc6X7hk12hyI3JHWW7oiWVchdrvbdvG5i3c2bmT73+bMtG8XOEt2vvapQRixAKw==}
+    engines: {node: '>=16.12.0'}
+    peerDependencies:
+      astro: ^2.2.0
+    dependencies:
+      '@markdoc/markdoc': 0.2.2
+      astro: 2.3.1(sass@1.62.1)
+      esbuild: 0.17.18
+      gray-matter: 4.0.3
+      kleur: 4.1.5
+      zod: 3.21.4
+    transitivePeerDependencies:
+      - '@types/react'
+      - react
     dev: false
 
   /@astrojs/markdown-remark@2.1.4(astro@2.3.1):
@@ -702,6 +722,21 @@ packages:
     resolution: {integrity: sha512-4/RWEeXDO6bocPONheFe6gX/oQdP/bEpv0oL4HqjPP5DCenBSt0mHgahppY49N0CpsaqffdwPq+TlX9CYOq2Dw==}
     dev: false
 
+  /@markdoc/markdoc@0.2.2:
+    resolution: {integrity: sha512-0TiD9jmA5h5znN4lxo7HECAu3WieU5g5vUsfByeucrdR/x88hEilpt16EydFyJwJddQ/3w5HQgW7Ovy62r4cyw==}
+    engines: {node: '>=14.7.0'}
+    peerDependencies:
+      '@types/react': '*'
+      react: '*'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      react:
+        optional: true
+    optionalDependencies:
+      '@types/markdown-it': 12.2.3
+    dev: false
+
   /@mdx-js/mdx@2.3.0:
     resolution: {integrity: sha512-jLuwRlz8DQfQNiUCJR50Y09CGPq3fLtmtUQfVrj79E0JWu3dvsVcxVIcfhR5h0iXu+/z++zDrYeiJqifRynJkA==}
     dependencies:
@@ -873,15 +908,34 @@ packages:
       '@types/geojson': 7946.0.10
     dev: true
 
+  /@types/linkify-it@3.0.2:
+    resolution: {integrity: sha512-HZQYqbiFVWufzCwexrvh694SOim8z2d+xJl5UNamcvQFejLY/2YUtzXHYi3cHdI7PMlS8ejH2slRAOJQ32aNbA==}
+    dev: false
+    optional: true
+
   /@types/lunr@2.3.4:
     resolution: {integrity: sha512-j4x4XJwZvorEUbA519VdQ5b9AOU9TSvfi8tvxMAfP8XzNLtFex7A8vFQwqOx3WACbV0KMXbACV3cZl4/gynQ7g==}
     dev: true
+
+  /@types/markdown-it@12.2.3:
+    resolution: {integrity: sha512-GKMHFfv3458yYy+v/N8gjufHO6MSZKCOXpZc5GXIWWy8uldwfmPn98vp81gZ5f9SVw8YYBctgfJ22a2d7AOMeQ==}
+    requiresBuild: true
+    dependencies:
+      '@types/linkify-it': 3.0.2
+      '@types/mdurl': 1.0.2
+    dev: false
+    optional: true
 
   /@types/mdast@3.0.11:
     resolution: {integrity: sha512-Y/uImid8aAwrEA24/1tcRZwpxX3pIFTSilcNDKSPn+Y2iDywSEachzRuvgAYYLR3wpGXAsMbv5lvKLDZLeYPAw==}
     dependencies:
       '@types/unist': 2.0.6
     dev: false
+
+  /@types/mdurl@1.0.2:
+    resolution: {integrity: sha512-eC4U9MlIcu2q0KQmXszyn5Akca/0jrQmwDRgpAMJai7qBWq4amIQhZyNau4VYGtCeALvW1/NtjzJJ567aZxfKA==}
+    dev: false
+    optional: true
 
   /@types/mdx@2.0.4:
     resolution: {integrity: sha512-qCYrNdpKwN6YO6FVnx+ulfqifKlE3lQGsNhvDaW9Oxzyob/cRLBJWow8GHBBD4NxQ7BVvtsATgLsX0vZAWmtrg==}

@@ -4,13 +4,15 @@ import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
   return (await getCollection('songs'))
-    .map(entry => ({params: {slug: entry.slug}, props: {entry}}));
+    .map(song => Object.keys(song.data.album)
+      .map(cat => ({ params: {slug: `${cat}/${song.slug}`}, props: {song} })))
+    .flat()
 }
 
-const { entry } = Astro.props;
-const { Content } = await entry.render();
+const { song } = Astro.props;
+const { Content } = await song.render();
 ---
 
-<Lyrics frontmatter={entry.data}>
+<Lyrics frontmatter={song.data}>
   <Content />
 </Lyrics>
