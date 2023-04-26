@@ -1,7 +1,8 @@
 ---
-import List from "../../layouts/List.astro";
-import { getCollection } from 'astro:content';
-import { getAllCats } from "../../utils/songs";
+import Base from "../../layouts/Base.astro";
+import Header from '../../components/headers/Base.astro';
+import { CollectionEntry, getCollection } from 'astro:content';
+import { ALBUMS, getAllCats } from "../../utils/songs";
 
 
 export async function getStaticPaths() {
@@ -13,12 +14,33 @@ export async function getStaticPaths() {
     props: { 
       songs: songs
         .filter(entry => cat in entry.data.album)
-        .map(song => ({ title: song.data.title, slug: `/songs/${cat}/${song.slug}/` })) }
+        .map(song => ({ frontmatter: song.data, slug: `/songs/${cat}/${song.slug}/` }))
+    }
   }))
+}
+
+interface Props {
+  songs: Array<{
+    frontmatter: CollectionEntry<'songs'>['data'],
+    slug: string,
+  }>
 }
 
 const { cat } = Astro.params;
 const { songs } = Astro.props;
+const album = ALBUMS[cat!];
 ---
 
-<List title={cat!} pages={songs} />
+<Base>
+  <main class="l-songs-cat">
+    <article class="l-songs-cat__article">
+      <Header title={`${cat} - ${album.title}`} />
+      <div class="l-songs-cat__list">
+        {songs.map(song => [
+          <span>{song.frontmatter.album[cat!].track}</span>
+          <a href={song.slug}>{song.frontmatter.title}</a>
+        ])}
+      </div>
+    </article>
+  </main>
+</Base>

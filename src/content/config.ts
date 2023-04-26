@@ -29,10 +29,13 @@ export const collections = {
   songs: defineCollection({
     schema: z.object({
       title: z.string(),
+      composer: z.string().optional(),
+      lyrics: z.string().optional(),
       album: z.record(
         z.string(),
         z.object({
-          track: z.number()
+          track: z.number(),
+          vocal: z.array(z.string()).optional()
         })
       )
     })

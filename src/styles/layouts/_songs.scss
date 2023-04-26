@@ -1,0 +1,23 @@
+.l-songs-cat {
+  padding: 1.5em;
+
+  &__article {
+    max-width: 40em;
+    margin: 0 auto;
+  }
+
+  &__list {
+    display: grid;
+    grid-template-columns: 3em 1fr;
+  }
+}
+
+
+.l-songs-song {
+  padding: 1.5em;
+
+  &__page {
+    max-width: 40em;
+    margin: 0 auto;
+  }
+}
