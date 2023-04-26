@@ -12,7 +12,7 @@
   "dependencies": {
     "@astrojs/mdx": "^0.19.0",
     "@astrojs/solid-js": "^2.1.0",
-    "astro": "^2.3.0",
+    "astro": "^2.3.1",
     "dayjs": "^1.11.7",
     "leaflet": "^1.9.3",
     "leaflet.markercluster": "^1.5.3",
@@ -37,6 +37,6 @@
     "@types/lunr": "^2.3.4",
     "@types/reveal.js": "^4.4.2",
     "@types/unist": "^2.0.6",
-    "sass": "^1.62.0"
+    "sass": "^1.62.1"
   }
 }
