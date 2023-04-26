@@ -1,12 +1,25 @@
 ---
 import Base from "./Base.astro";
+import Header from '../components/headers/Base.astro';
 
+interface Props {
+  frontmatter: {
+    title: string;
+  };
+}
+
+const {frontmatter: {
+  title
+}} = Astro.props;
 ---
 
 <Base>
-  <main class="l_pages">
-    <article class="l_pages__list">
-      <slot/>
+  <main class="l-lyrics">
+    <article class="l-lyrics__page">
+      <Header title={title} />
+      <section class="markdown">
+        <slot/>
+      </section>
     </article>
   </main>
 </Base>

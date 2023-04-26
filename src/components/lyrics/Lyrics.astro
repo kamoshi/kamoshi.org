@@ -3,6 +3,17 @@ import { transform } from "./transform";
 
 const html = await Astro.slots.render('default');
 const lyrics = transform(html);
+const cols = Object.keys(lyrics[0]);
+
 ---
 
-<section class="lyrics" set:html={lyrics}></section>
+<table>
+  <tr>{cols.map(col => <th>{col}</th>)}</tr>
+  {lyrics.map(row =>
+    <tr>{cols.map(col =>
+      <td>
+        {row[col].map(line => <span>{line}</span><br/>)}
+      </td>
+    )}</tr>
+  )}
+</table>

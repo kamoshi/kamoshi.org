@@ -3,7 +3,7 @@ import Lyrics from "../../layouts/Lyrics.astro";
 import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
-  return (await getCollection('lyrics'))
+  return (await getCollection('songs'))
     .map(entry => ({params: {slug: entry.slug}, props: {entry}}));
 }
 
@@ -11,6 +11,6 @@ const { entry } = Astro.props;
 const { Content } = await entry.render();
 ---
 
-<Lyrics>
+<Lyrics frontmatter={entry.data}>
   <Content />
 </Lyrics>

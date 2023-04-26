@@ -62,26 +62,26 @@ function reduceStack(stack: Stack): Verse[] {
   return verses.reverse();
 }
 
-function toHtml(verses: Verse[]): string {
-  const keys = Object.keys(verses[0]);
-  const head = keys.map(lang => `<th>${lang}</th>`);
-  const rows = verses.map(verse =>
-    `<tr>${keys.map(lang =>
-      `<td>${verse[lang].map(line =>
-          `<span>${line}</span><br/>`).join('')}
-        </td>`).join('')}
-      </tr>`
-    )
-    .join('');
+// function toHtml(verses: Verse[]): string {
+//   const keys = Object.keys(verses[0]);
+//   const head = keys.map(lang => `<th>${lang}</th>`);
+//   const rows = verses.map(verse =>
+//     `<tr>${keys.map(lang =>
+//       `<td>${verse[lang].map(line =>
+//           `<span>${line}</span><br/>`).join('')}
+//         </td>`).join('')}
+//       </tr>`
+//     )
+//     .join('');
 
-  return [
-    "<table>",
-    `<tr>${head.join('')}</tr>`,
-    rows,
-    "</table>",
-  ].join('');
-}
+//   return [
+//     "<table>",
+//     `<tr>${head.join('')}</tr>`,
+//     rows,
+//     "</table>",
+//   ].join('');
+// }
 
 export function transform(html: string) {
-  return toHtml(reduceStack(toStack(html)));
+  return reduceStack(toStack(html));
 }

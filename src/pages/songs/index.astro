@@ -1,0 +1,14 @@
+---
+import List from "../../layouts/List.astro";
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('songs'))
+  .sort((a, b) => a.data.date < b.data.date ? 1 : -1)
+  .map(entry => ({
+    title: entry.data.title,
+    slug: `/songs/${entry.slug}/`,
+  }))
+
+---
+
+<List title="Posts" pages={posts} />
