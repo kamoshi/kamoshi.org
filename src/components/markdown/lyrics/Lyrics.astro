@@ -7,7 +7,7 @@ const cols = Object.keys(lyrics[0]);
 
 ---
 
-<table>
+<table class="c-lyrics">
   <tr>{cols.map(col => <th>{col}</th>)}</tr>
   {lyrics.map(row =>
     <tr>{cols.map(col =>

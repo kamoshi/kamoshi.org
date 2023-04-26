@@ -15,9 +15,11 @@
 
 .l-songs-song {
   padding: 1.5em;
+  display: grid;
+  grid-template-columns: 1fr 16em;
 
   &__page {
-    max-width: 40em;
+    width: 40em;
     margin: 0 auto;
   }
 }
