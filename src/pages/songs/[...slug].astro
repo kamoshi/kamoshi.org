@@ -40,22 +40,31 @@ const other = Object.keys(song.data.album)
       <Content />
     </article>
 
-    <aside class="l-songs-song__meta p-song-meta">
-      <h2>Metadata</h2>
-      <div>{metadata.circle}</div>
-      <div>{metadata.title}</div>
-      <div>{cat}</div>
-      <div>Track {metadata.track}</div>
-      <div>Composer: {metadata.composer}</div>
-      <div>Lyrics: {metadata.lyrics}</div>
-      {metadata.vocal && (
-        <div>
-          Vocal:
-          <ul>
-            {metadata.vocal.map(vocalist => <li>{vocalist}</li>)}
-          </ul>
-        </div>
-      )}
+    <aside class="l-songs-song__meta">
+      <section class="p-song-meta">
+        <div>{metadata.circle}</div>
+        <div>{metadata.title}</div>
+        <div>{cat}</div>
+        <div>Track {metadata.track}</div>
+        <div>Composer: {metadata.composer}</div>
+        <div>Lyrics: {metadata.lyrics}</div>
+        {metadata.vocal && (
+          <div>
+            Vocal:
+            <ul>
+              {metadata.vocal.map(vocalist => <li>{vocalist}</li>)}
+            </ul>
+          </div>
+        )}
+        {!!other.length && (
+          <div>
+            Other versions:
+            <ul>
+              {other.map(version => <li>{version.cat}</li>)}
+            </ul>
+          </div>
+        )}
+      </section>
     </aside>
   </main>
 </Base>

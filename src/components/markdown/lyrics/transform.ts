@@ -28,18 +28,20 @@ function toStack(html: string): Stack {
 
   const nodes = root.childNodes as HTMLElement[];
   nodes.reduce((lang, node) => {
-    switch (node.rawTagName) {
-      case 'h1': {
-        return node.text;
-      }
-      case 'ul': {
-        createVerse(stack, lang);
-        const lines = extractLines(node.childNodes);
-        stack[lang].at(-1)!.push(...lines);
-        return lang;
-      }
+    const tag = node.rawTagName;
+
+    // Change language context
+    if (tag.match(/h\d/))
+      return node.text;
+    
+    // Parse list as verse
+    if (tag === 'ul') {
+      createVerse(stack, lang);
+      const lines = extractLines(node.childNodes);
+      stack[lang].at(-1)!.push(...lines);
     }
-      return lang;
+
+    return lang;
   }, '');
 
   return stack;
