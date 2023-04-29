@@ -1,3 +1,18 @@
+.l-songs-aside {
+  padding: 1.5em;
+
+  &__page {
+    width: 40em;
+    margin: 0 auto;
+  }
+
+  @media (min-width: 65em) {
+    display: grid;
+    column-gap: 1em;
+    grid-template-columns: 1fr 20em;
+  }
+}
+
 .l-songs-circle {
   padding: 1.5em;
 
@@ -18,21 +33,5 @@
   &__list {
     display: grid;
     grid-template-columns: 3em 1fr;
-  }
-}
-
-
-.l-song {
-  padding: 1.5em;
-
-  &__page {
-    max-width: 40em;
-    margin: 0 auto;
-  }
-
-  @media (min-width: 50em) {
-    display: grid;
-    column-gap: 1em;
-    grid-template-columns: 1fr 20em;
   }
 }

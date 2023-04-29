@@ -1,7 +1,8 @@
 ---
 import Base from "@layouts/Base.astro";
-import Song from "@components/markdown/Song.astro";
-import Lyrics from "@components/markdown/Lyrics.astro";
+import Info from "@components/songs/Info.astro";
+import SongInfo from "@components/songs/SongInfo.astro";
+import Lyrics from "@components/songs/Lyrics.astro";
 import { CollectionEntry, getCollection } from "astro:content";
 import { ALBUMS } from "@utils/songs/data";
 
@@ -33,14 +34,13 @@ const metadata = {
   ...song.data,
   ...song.data.album[cat],
   ...ALBUMS[cat],
-  cat,
   other
 }
 ---
 
 <Base>
-  <main class="l-song">
-    <article class="l-song__page">
+  <main class="l-songs-aside">
+    <article class="l-songs-aside__page">
       <header class="p-header">
         <h1 class="p-header__heading">{song.data.title}</h1>
       </header>
@@ -48,7 +48,9 @@ const metadata = {
     </article>
 
     <aside class="l-song__aside">
-      <Song metadata={metadata} />
+      <Info image={metadata.cover} title={metadata.title} small={cat}>
+        <SongInfo metadata={metadata} />
+      </Info>
     </aside>
   </main>
 </Base>

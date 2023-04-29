@@ -3,6 +3,7 @@ import Base from "@layouts/Base.astro";
 import Header from '@components/headers/Base.astro';
 import { CollectionEntry, getCollection } from 'astro:content';
 import { ALBUMS, getAllCats, order } from "@utils/songs/data";
+import Info from "@components/songs/Info.astro";
 
 
 export async function getStaticPaths() {
@@ -30,21 +31,25 @@ interface Props {
   }>
 }
 
-const { cat } = Astro.params;
-const { songs } = Astro.props;
-const album = ALBUMS[cat!];
+const cat = Astro.params.cat!;
+const songs = Astro.props.songs;
+const album = ALBUMS[cat];
 ---
 
 <Base>
-  <main class="l-songs-cat">
-    <article class="l-songs-cat__article">
+  <main class="l-songs-aside">
+    <article class="l-songs-aside__page">
       <Header title={album.title} />
       <div class="l-songs-cat__list">
         {songs.map(song => [
-          <span>{song.frontmatter.album[cat!].track}</span>
+          <span>{song.frontmatter.album[cat].track}</span>
           <a href={song.slug}>{song.frontmatter.title}</a>
         ])}
       </div>
     </article>
+
+    <aside>
+      <Info image={album.cover} title={album.title} small={cat}/>
+    </aside>
   </main>
 </Base>
