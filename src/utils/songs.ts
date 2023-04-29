@@ -6,8 +6,12 @@ type Song = CollectionEntry<'songs'>;
 
 interface Metadata {
   [key: string]: {
+    /** Circle name */
     circle: string,
-    title: string
+    /** Album title */
+    title: string,
+    /** Path to album cover image */
+    cover: string,
   }
 }
 
@@ -28,10 +32,7 @@ function createMetadata(circles: CirclesSchema): Metadata {
   for (const circle of Object.keys(circles)) {
     const data = circles[circle];
     for (const cat of Object.keys(data.albums))
-      metadata[cat] = {
-        circle,
-        title: data.albums[cat].title,
-      }
+      metadata[cat] = { circle, ...data.albums[cat] }
   }
   return metadata;
 }

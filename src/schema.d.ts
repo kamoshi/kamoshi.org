@@ -6,6 +6,7 @@ interface CirclesSchema {
       /** Catalog number */
       [key: string]: {
         title: string;
+        cover: string;
       }
     }
   }

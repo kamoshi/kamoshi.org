@@ -1,0 +1,43 @@
+.c-song {
+  max-width: 20em;
+  margin-inline: auto;
+  padding: 0.5em;
+  background-color: white;
+  border-radius: 0.5em;
+  box-shadow: var(--shadow-l);
+
+  &__heading {
+    margin: 0;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    margin: 0.3em 0 0 0;
+
+  }
+
+  &__cat {
+    color: gray;
+    font-size: 0.8em;
+
+    &::before {
+      content: '(';
+    }
+    &::after {
+      content: ')';
+    }
+  }
+
+  &__table {
+    td:not(:last-child) {
+      padding-right: 0.5em;
+    }
+
+    ul {
+      margin: 0;
+      list-style: none;
+    }
+  }
+}

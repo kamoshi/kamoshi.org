@@ -1,5 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
+import Song from "../../components/markdown/Song.astro";
 import { CollectionEntry, getCollection } from "astro:content";
 import { ALBUMS } from "../../utils/songs";
 
@@ -19,52 +20,31 @@ interface Props {
 const { cat, song } = Astro.props;
 const { Content } = await song.render();
 
-const metadata = {
-  ...song.data,
-  ...song.data.album[cat],
-  ...ALBUMS[cat],
-}
-
 /** Other versions of this song */
 const other = Object.keys(song.data.album)
   .filter(other => other != cat)
   .map(cat => ({ cat, title: ALBUMS[cat].title }));
+
+const metadata = {
+  ...song.data,
+  ...song.data.album[cat],
+  ...ALBUMS[cat],
+  cat,
+  other
+}
 ---
 
 <Base>
-  <main class="l-songs-song">
-    <article class="l-songs-song__page">
+  <main class="l-song">
+    <article class="l-song__page">
       <header class="p-header">
         <h1 class="p-header__heading">{song.data.title}</h1>
       </header>
       <Content />
     </article>
 
-    <aside class="l-songs-song__meta">
-      <section class="p-song-meta">
-        <div>{metadata.circle}</div>
-        <div>{metadata.title}</div>
-        <div>{cat}</div>
-        <div>Track {metadata.track}</div>
-        <div>Composer: {metadata.composer}</div>
-        <div>Lyrics: {metadata.lyrics}</div>
-        {metadata.vocal && (
-          <div>
-            Vocal:
-            <ul>
-              {metadata.vocal.map(vocalist => <li>{vocalist}</li>)}
-            </ul>
-          </div>
-        )}
-        {!!other.length && (
-          <div>
-            Other versions:
-            <ul>
-              {other.map(version => <li>{version.cat}</li>)}
-            </ul>
-          </div>
-        )}
-      </section>
+    <aside class="l-song__aside">
+      <Song metadata={metadata} />
     </aside>
   </main>
 </Base>

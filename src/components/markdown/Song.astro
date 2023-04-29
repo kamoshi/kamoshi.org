@@ -1,0 +1,71 @@
+---
+interface Props {
+  metadata: {
+    cover: string;
+    title: string;
+    cat: string;
+    track: number;
+    circle: string;
+    composer?: string;
+    lyrics?: string;
+    vocal?: string[];
+    other: Array<{
+      cat: string;
+    }>;
+    origin?: string[]
+  }
+}
+
+const { metadata } = Astro.props;
+---
+
+<section class="c-song">
+  <a href={metadata.cover}><img src={metadata.cover} /></a>
+  <div class="c-song__title">
+    <h2 class="c-song__heading">{metadata.title}</h2>
+    <span class="c-song__cat">{metadata.cat}</span>
+  </div>
+  
+  <table class="c-song__table">
+    <tr>
+      <td>Track</td>
+      <td>{metadata.track}</td>
+    </tr>
+    <tr>
+      <td>Circle</td>
+      <td>{metadata.circle}</td>
+    </tr>
+    <tr>
+      <td>Composer</td>
+      <td>{metadata.composer}</td>
+    </tr>
+    <tr>
+      <td>Lyrics</td>
+      <td>{metadata.lyrics}</td>
+    </tr>
+    {!!metadata.vocal?.length &&
+      <tr>
+        <td>Vocal</td>
+        <td>
+          <ul>{metadata.vocal.map(vocalist => <li>{vocalist}</li>)}</ul>
+        </td>
+      </tr>
+    }
+    {!!metadata.origin?.length &&
+      <tr>
+        <td>Origin</td>
+        <td>
+          <ul>{metadata.origin.map(title => <li>{title}</li>)}</ul>
+        </td>
+      </tr>
+    }
+    {!!metadata.other?.length &&
+      <tr>
+        <td>Other versions</td>
+        <td>
+          <ul>{metadata.other.map(version => <li>{version.cat}</li>)}</ul>
+        </td>
+      </tr>
+    }
+  </table>
+</section>

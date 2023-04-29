@@ -2,7 +2,8 @@
   "Alstroemeria Records": {
     "albums": {
       "ARCD0051": {
-        "title": "Engaged Dancehall"
+        "title": "Engaged Dancehall",
+        "cover": "/static/albums/ARCD0051.jpg"
       }
     }
   }
