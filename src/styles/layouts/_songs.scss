@@ -1,8 +1,10 @@
 .l-songs-aside {
   padding: 1.5em;
+  font-size: var(--fs-sm);
 
   &__page {
-    width: 40em;
+    width: 100%;
+    max-width: 40em;
     margin: 0 auto;
   }
 
