@@ -1,11 +1,9 @@
-.l-album-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2em;
+.l-songs-circle {
+  padding: 1.5em;
 
-  &__item img {
-    width: 20em;
-    height: 20em;
+  &__article {
+    max-width: 48em;
+    margin: 0 auto;
   }
 }
 

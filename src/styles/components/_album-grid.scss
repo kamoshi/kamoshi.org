@@ -1,0 +1,26 @@
+.c-album-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  justify-content: center;
+
+  &__item {
+    padding: 0.5em;
+    background-color: white;
+    border-radius: 0.5em;
+    box-shadow: var(--shadow-l);
+    transition: box-shadow ease-in-out 0.2s;
+    text-decoration: none;
+  
+    &:hover {
+      box-shadow: var(--shadow-m);
+    }
+  }
+  &__image {
+    width: 12em;
+  }
+  &__title {
+    margin-top: 0.3em;
+    line-height: 1em;
+  }
+}

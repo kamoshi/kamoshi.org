@@ -1,6 +1,6 @@
 ---
 import Base from "@layouts/Base.astro";
-import Album from "@components/markdown/Album.astro";
+import Grid from "@components/markdown/AlbumGrid.astro";
 import Header from "@components/headers/Base.astro";
 import { CIRCLES } from "@utils/songs/data";
 
@@ -28,12 +28,10 @@ const items = Object.keys(albums)
 ---
 
 <Base>
-  <main>
-    <article>
+  <main class="l-songs-circle">
+    <article class="l-songs-circle__article">
       <Header title={CIRCLES[circle].name} />
-      <section class="l-album-grid">
-        {items.map(album => <Album album={album} />)}
-      </section>
+      <Grid albums={items} />
     </article>
   </main>
 </Base>
