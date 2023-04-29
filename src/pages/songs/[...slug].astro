@@ -1,9 +1,10 @@
 ---
 import Base from "../../layouts/Base.astro";
 import Song from "../../components/markdown/Song.astro";
+import Lyrics from "../../components/markdown/Lyrics.astro";
 import { CollectionEntry, getCollection } from "astro:content";
 import { ALBUMS } from "../../utils/songs/data";
-import Lyrics from "../../components/markdown/lyrics/Lyrics.astro";
+
 
 export async function getStaticPaths() {
   return (await getCollection('songs'))
@@ -19,7 +20,6 @@ interface Props {
 }
 
 const { cat, song } = Astro.props;
-const { Content } = await song.render();
 
 /** Other versions of this song */
 const other = Object.keys(song.data.album)
@@ -41,7 +41,7 @@ const metadata = {
       <header class="p-header">
         <h1 class="p-header__heading">{song.data.title}</h1>
       </header>
-      <Lyrics markdown={true}>{song.body}</Lyrics>
+      <Lyrics song={song.body} />
     </article>
 
     <aside class="l-song__aside">

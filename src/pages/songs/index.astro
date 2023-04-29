@@ -1,7 +1,7 @@
 ---
 import List from "../../layouts/List.astro";
 import { getCollection } from 'astro:content';
-import { ALBUMS, getAllCats } from "../../utils/songs";
+import { ALBUMS, getAllCats } from "../../utils/songs/data";
 
 
 const pages = [...getAllCats(await getCollection('songs'))]
