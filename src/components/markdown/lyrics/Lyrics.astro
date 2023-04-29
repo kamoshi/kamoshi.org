@@ -1,10 +1,10 @@
 ---
 import Ruby from "../Ruby.astro";
-import { transform } from "./transform";
+import { transform } from "../../../utils/songs/parse";
 
-const html = await Astro.slots.render('default');
-const lyrics = transform(html);
-const cols = Object.keys(lyrics[0]);
+const data = await Astro.slots.render('default');
+const lyrics = transform(data, true);
+const cols = lyrics.length ? Object.keys(lyrics[0]) : [];
 
 ---
 

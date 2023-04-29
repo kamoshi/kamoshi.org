@@ -2,7 +2,8 @@
 import Base from "../../layouts/Base.astro";
 import Song from "../../components/markdown/Song.astro";
 import { CollectionEntry, getCollection } from "astro:content";
-import { ALBUMS } from "../../utils/songs";
+import { ALBUMS } from "../../utils/songs/data";
+import Lyrics from "../../components/markdown/lyrics/Lyrics.astro";
 
 export async function getStaticPaths() {
   return (await getCollection('songs'))
@@ -40,7 +41,7 @@ const metadata = {
       <header class="p-header">
         <h1 class="p-header__heading">{song.data.title}</h1>
       </header>
-      <Content />
+      <Lyrics markdown={true}>{song.body}</Lyrics>
     </article>
 
     <aside class="l-song__aside">

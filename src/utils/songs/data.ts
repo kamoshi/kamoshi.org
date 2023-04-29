@@ -1,4 +1,4 @@
-import circles from "../data/circles.json";
+import circles from "../../data/circles.json";
 import type { CollectionEntry } from "astro:content";
 
 

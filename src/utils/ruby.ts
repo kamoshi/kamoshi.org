@@ -2,8 +2,6 @@ import type { Node, Parent } from 'unist';
 import { visit } from "unist-util-visit";
 
 
-const regex = /\[([^\]]+)\]\{([^}]+)\}/g;
-
 interface Ruby {
   text: string;
   ruby: string;
@@ -15,6 +13,7 @@ type Annotated =
 
 
 export function transform(input: string): Annotated[] {
+  const regex = /\[([^\]]+)\]\{([^}]+)\}/g;
   const parts: Annotated[] = [];
   let lastIndex = 0;
 
@@ -34,7 +33,6 @@ export function transform(input: string): Annotated[] {
   if (lastIndex < input.length)
     parts.push(input.slice(lastIndex));
 
-  regex.lastIndex = 0;
   return parts;
 }
 

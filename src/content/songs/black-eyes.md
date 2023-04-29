@@ -11,7 +11,6 @@ album:
       - Mei Ayakura
 ---
 
-{% lyrics %}
 # Japanese
 - 瞬きをして　切り取る時間
 - 何気なくても　大切な今を
@@ -37,4 +36,3 @@ album:
 - Kireina mama  nokosareteku
 - Itsuka  omoidashite
 - Iroasete  shimattemo
-{% /lyrics %}
