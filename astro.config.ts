@@ -3,7 +3,7 @@ import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import remarkEmoji from 'remark-emoji';
 import mdx from '@astrojs/mdx';
-import remarkRuby from './src/assets/ruby';
+import remarkRuby from './src/utils/ruby';
 import solid from '@astrojs/solid-js';
 import markdoc from '@astrojs/markdoc';
 

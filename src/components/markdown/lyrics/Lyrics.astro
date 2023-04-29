@@ -1,4 +1,5 @@
 ---
+import Ruby from "../Ruby.astro";
 import { transform } from "./transform";
 
 const html = await Astro.slots.render('default');
@@ -12,7 +13,7 @@ const cols = Object.keys(lyrics[0]);
   {lyrics.map(row =>
     <tr>{cols.map(col =>
       <td>
-        {row[col].map(line => <span>{line}</span><br/>)}
+        {row[col].map(line => <span><Ruby text={line}/></span><br/>)}
       </td>
     )}</tr>
   )}
