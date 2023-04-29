@@ -27,5 +27,5 @@ export default defineConfig({
   integrations: [
     mdx(),
     solid(),
-  ],
+  ]
 });

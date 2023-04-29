@@ -1,3 +1,14 @@
+.l-album-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2em;
+
+  &__item img {
+    width: 20em;
+    height: 20em;
+  }
+}
+
 .l-songs-cat {
   padding: 1.5em;
 

@@ -1,15 +1,18 @@
 ---
-import Base from "../../layouts/Base.astro";
-import Song from "../../components/markdown/Song.astro";
-import Lyrics from "../../components/markdown/Lyrics.astro";
+import Base from "@layouts/Base.astro";
+import Song from "@components/markdown/Song.astro";
+import Lyrics from "@components/markdown/Lyrics.astro";
 import { CollectionEntry, getCollection } from "astro:content";
-import { ALBUMS } from "../../utils/songs/data";
+import { ALBUMS } from "@utils/songs/data";
 
 
 export async function getStaticPaths() {
   return (await getCollection('songs'))
     .map(song => Object.keys(song.data.album)
-      .map(cat => ({ params: {slug: `${cat}/${song.slug}`}, props: {song, cat} })))
+      .map(cat => ({
+        params: { circle: ALBUMS[cat].circle, cat, song: song.slug},
+        props: { song, cat }
+      })))
     .flat()
 }
 

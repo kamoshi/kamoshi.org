@@ -1,10 +1,13 @@
 ---
+slug: dont-lose
 title: "Don't lose"
 origin:
   - 亡き王女の為のセプテット
 album:
   ARCD0054:
     track: 7
+    vocal:
+      - nomico
 ---
 
 # Japanese

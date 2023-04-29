@@ -1,9 +1,10 @@
 /** @file src/data/circles.json */
 interface CirclesSchema {
-  /** Circle name */
+  /** slug */
   [key: string]: {
+    name: string,
     albums: {
-      /** Catalog number */
+      /** catalog number */
       [key: string]: {
         title: string;
         cover: string;

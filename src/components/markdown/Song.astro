@@ -5,7 +5,7 @@ interface Props {
     title: string;
     cat: string;
     track: number;
-    circle: string;
+    name: string;
     composer?: string;
     lyrics?: string;
     vocal?: string[];
@@ -33,7 +33,7 @@ const { metadata } = Astro.props;
     </tr>
     <tr>
       <td>Circle</td>
-      <td>{metadata.circle}</td>
+      <td>{metadata.name}</td>
     </tr>
     <tr>
       <td>Composer</td>

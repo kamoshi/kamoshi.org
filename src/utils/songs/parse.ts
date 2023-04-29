@@ -15,6 +15,7 @@ function increaseStack(data: Stack, lang: string) {
 
 function fromMarkdown(markdown: string): Stack {
   const stack: Stack = {};
+  if (!markdown) return stack;
 
   let space = true;
   let lang = '';

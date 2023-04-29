@@ -6,8 +6,10 @@ type Song = CollectionEntry<'songs'>;
 
 interface Metadata {
   [key: string]: {
+    /** Circle slug */
+    circle: string;
     /** Circle name */
-    circle: string,
+    name: string,
     /** Album title */
     title: string,
     /** Path to album cover image */
@@ -15,6 +17,10 @@ interface Metadata {
   }
 }
 
+
+export function order(cat: string) {
+  return (a: Song, b: Song) => a.data.album[cat].track < b.data.album[cat].track ? -1 : 1;
+}
 
 export function getAllCats(songs: Song[]): Set<string> {
   return songs.reduce(
@@ -32,10 +38,10 @@ function createMetadata(circles: CirclesSchema): Metadata {
   for (const circle of Object.keys(circles)) {
     const data = circles[circle];
     for (const cat of Object.keys(data.albums))
-      metadata[cat] = { circle, ...data.albums[cat] }
+      metadata[cat] = { circle, name: data.name, ...data.albums[cat] }
   }
   return metadata;
 }
 
-
+export const CIRCLES: CirclesSchema = circles;
 export const ALBUMS: Metadata = createMetadata(circles);

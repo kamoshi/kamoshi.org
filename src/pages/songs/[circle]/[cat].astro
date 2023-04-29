@@ -1,8 +1,8 @@
 ---
-import Base from "../../layouts/Base.astro";
-import Header from '../../components/headers/Base.astro';
+import Base from "@layouts/Base.astro";
+import Header from '@components/headers/Base.astro';
 import { CollectionEntry, getCollection } from 'astro:content';
-import { ALBUMS, getAllCats } from "../../utils/songs/data";
+import { ALBUMS, getAllCats, order } from "@utils/songs/data";
 
 
 export async function getStaticPaths() {
@@ -10,11 +10,15 @@ export async function getStaticPaths() {
   const cats = getAllCats(songs);
 
   return [...cats].map(cat => ({
-    params: {cat},
+    params: { circle: ALBUMS[cat].circle, cat },
     props: { 
       songs: songs
         .filter(entry => cat in entry.data.album)
-        .map(song => ({ frontmatter: song.data, slug: `/songs/${cat}/${song.slug}/` }))
+        .sort(order(cat))
+        .map(song => ({
+          frontmatter: song.data,
+          slug: `/songs/${ALBUMS[cat].circle}/${cat}/${song.slug}/`
+        }))
     }
   }))
 }
@@ -34,7 +38,7 @@ const album = ALBUMS[cat!];
 <Base>
   <main class="l-songs-cat">
     <article class="l-songs-cat__article">
-      <Header title={`${cat} - ${album.title}`} />
+      <Header title={album.title} />
       <div class="l-songs-cat__list">
         {songs.map(song => [
           <span>{song.frontmatter.album[cat!].track}</span>

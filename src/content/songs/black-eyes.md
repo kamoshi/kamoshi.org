@@ -1,4 +1,5 @@
 ---
+slug: black-eyes
 title: Black Eyes
 composer: Kirin (EastNewSound)
 lyrics: Mei Ayakura

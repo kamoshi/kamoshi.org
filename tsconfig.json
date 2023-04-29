@@ -3,6 +3,12 @@
   "compilerOptions": {
     "allowJs": true,
     "jsx": "preserve",
-    "jsxImportSource": "solid-js"
-  }
+    "jsxImportSource": "solid-js",
+    "baseUrl": "src",
+    "paths": {
+      "@layouts/*": ["layouts/*"],
+      "@components/*": ["components/*"],
+      "@utils/*": ["utils/*"],
+    }
+  },
 }
