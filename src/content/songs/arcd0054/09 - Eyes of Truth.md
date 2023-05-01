@@ -1,6 +1,6 @@
 ---
 slug: eyes-of-truth
-title: Eyes of Truth(ALR Remix)
+title: Eyes of Truth (ALR Remix)
 composer: Masayoshi Minoshima
 lyrics: 溝口ゆうま
 origin:
