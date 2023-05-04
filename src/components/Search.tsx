@@ -1,23 +1,69 @@
-import { createSignal, onMount } from "solid-js";
-import dayjs from "dayjs";
-import lunr from "lunr";
+import { createResource, createSignal, For, onMount } from "solid-js";
 
+
+interface Pagefind {
+  search: (query: string) => Promise<PagefindResponse>;
+}
+
+interface PagefindResult {
+  id: string;
+  data: () => Promise<PagefindDocument>;
+}
+
+interface PagefindResponse {
+  results: PagefindResult[];
+}
+
+interface PagefindDocument {
+  url: string;
+  excerpt: string;
+  filters: {
+    author: string;
+  };
+  meta: {
+    title: string;
+    image: string;
+  };
+  content: string;
+  word_count: number;
+}
+
+
+async function loadPagefind(): Promise<Pagefind> {
+  const pf = "/_pagefind/pagefind.js";
+  return await import(/* @vite-ignore */ pf);
+}
+
+function Result(props: { page: PagefindResult }) {
+  const [data, setData] = createSignal<PagefindDocument>();
+
+  onMount(async () => await props.page.data().then(setData))
+
+  return (
+    <>
+      {data() && (
+        <a class="c-search__result" href={data()!.url}>
+          <header class="c-search__header">
+            <h2 class="c-search__title">{data()!.meta.title}</h2>
+            {/* <time class="c-search__date" datetime={dayjs().toISOString()}>{dayjs().format("MMM DD, YYYY")}</time> */}
+          </header>
+          <div class="c-search__excerpt" innerHTML={data()!.excerpt}></div>
+        </a>
+      ) || (
+        <div>Loading...</div>
+      )}
+    </>
+    
+  )
+}
 
 const KEY = 'q' as const;
 export default function Search() {
   const [query, setQuery] = createSignal('');
 
-  // Data loaded from server
-  let index: lunr.Index;
-  let metadata: any;
-  async function load() {
-    const data = await fetch('/search.json').then(r => r.json());
-    index = lunr.Index.load(data.index);
-    metadata = data.metadata;
-  }
-
-  // Dynamically calculated from query
-  const results = () => index?.search(query()) ?? [];
+  // Search
+  let pagefind: Pagefind;
+  const [pages] = createResource(query, async (query: string) => await pagefind.search(query));
 
   // Update URL query and history
   let debounce: number;
@@ -42,7 +88,8 @@ export default function Search() {
   }
 
   onMount(async () => {
-    await load().then(sync);
+    pagefind = await loadPagefind();
+    sync();
     window.addEventListener('popstate', sync);
   });
 
@@ -55,17 +102,10 @@ export default function Search() {
 
       {query() && (
         <section class="c-search__results">
-          <div>Showing results for "{query()}" ({results().length})</div>
-          {results().map(result => {
-            const meta = metadata[result.ref];
-            const date = dayjs(meta.date);
-            return (
-              <a class="c-search__result" href={result.ref}>
-                <span class="c-search__name">{meta.title}</span>
-                <time class="c-search__date" datetime={date.toISOString()}>{date.format("MMM DD, YYYY")}</time>
-              </a>
-            )
-          })}
+          <div>Showing results for "{query()}" ({pages()?.results.length || 0})</div>
+          {pages() && <For each={pages()!.results}>{(page, i) => (
+            <Result page={page} />
+          )}</For>}
         </section>
       ) || (
         <div>No results to show yet...</div>

@@ -21,13 +21,12 @@
   }
 
   &__result {
-    display: flex;
-    flex-direction: row;
     padding: 0.5em;
     background-color: white;
     box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
     transition: box-shadow linear 100ms;
     text-decoration: none;
+    color: var(--c-text);
 
     &:focus-within,
     &:hover {
@@ -35,8 +34,25 @@
     }
   }
 
+  &__header {
+    display: flex;
+  }
+
+  &__title {
+    font-size: 1.3em;
+    margin: 0;
+  }
+
   &__date {
     margin-left: auto;
-    color: rgb(65, 65, 65);
+  }
+
+  &__excerpt {
+    mark {
+      background-color: unset;
+      font-weight: 800;
+      text-decoration: underline;
+      color: var(--c-primary-d);
+    }
   }
 }

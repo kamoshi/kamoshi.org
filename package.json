@@ -10,13 +10,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^0.19.0",
-    "@astrojs/solid-js": "^2.1.0",
-    "astro": "^2.3.2",
+    "@astrojs/mdx": "^0.19.1",
+    "@astrojs/solid-js": "^2.1.1",
+    "astro": "^2.4.0",
+    "astro-pagefind": "^1.1.0",
     "dayjs": "^1.11.7",
     "leaflet": "^1.9.3",
     "leaflet.markercluster": "^1.5.3",
-    "lunr": "^2.3.9",
     "rehype-katex": "^6.0.3",
     "rehype-raw": "^6.1.1",
     "rehype-stringify": "^9.0.3",
@@ -26,7 +26,7 @@
     "remark-parse": "^10.0.1",
     "remark-rehype": "^10.1.0",
     "reveal.js": "^4.5.0",
-    "solid-js": "^1.7.3",
+    "solid-js": "^1.7.4",
     "unified": "^10.1.2",
     "unist-util-visit": "^4.1.2"
   },

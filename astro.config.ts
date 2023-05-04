@@ -5,6 +5,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkRuby from './src/utils/ruby';
 import mdx from '@astrojs/mdx';
 import solid from '@astrojs/solid-js';
+import pagefind from 'astro-pagefind';
 
 
 // https://astro.build/config
@@ -27,5 +28,6 @@ export default defineConfig({
   integrations: [
     mdx(),
     solid(),
+    pagefind(),
   ]
 });
