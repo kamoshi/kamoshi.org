@@ -12,6 +12,7 @@ import pagefind from 'astro-pagefind';
 export default defineConfig({
   site: 'https://kamoshi.org',
   trailingSlash: 'always',
+  compressHTML: true,
   markdown: {
     remarkPlugins: [
       [(remarkEmoji as any), {accessible: true}],
