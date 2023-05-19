@@ -1,0 +1,51 @@
+.l-repos {
+  padding: 1em;
+
+  &__article {
+    margin: 1em auto 1em auto;
+    max-width: 60em;
+  }
+}
+
+.repos {
+  display: flex;
+  color: unset;
+}
+
+.repo-item {
+  max-width: 16em;
+  padding: 0.5em;
+  background: white;
+  border-radius: 0.5em;
+  color: unset;
+  text-decoration: unset;
+  box-shadow: var(--shadow-l);
+  transition: box-shadow ease-in-out 0.1s;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding-bottom: 0.25em;
+    margin-bottom: 0.25em;
+    border-bottom: 1px solid lightgray;
+  }
+
+  &__icon {
+    max-height: 1.6em;
+  }
+
+  &__heading {
+    margin: 0;
+  }
+
+  &__tech {
+    display: flex;
+    gap: 0.25em;
+  }
+
+  &:focus-within,
+  &:hover {
+    box-shadow: var(--shadow-m);
+  }
+}
