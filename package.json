@@ -12,7 +12,7 @@
   "dependencies": {
     "@astrojs/mdx": "^0.19.2",
     "@astrojs/solid-js": "^2.2.0",
-    "astro": "^2.5.0",
+    "astro": "^2.5.1",
     "astro-pagefind": "^1.1.0",
     "dayjs": "^1.11.7",
     "leaflet": "^1.9.4",
@@ -38,5 +38,10 @@
     "@types/unist": "^2.0.6",
     "pagefind": "^0.12.0",
     "sass": "^1.62.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "rollup": "3.21.8"
+    }
   }
 }
