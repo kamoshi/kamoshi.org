@@ -3,22 +3,14 @@ layout: ../layouts/Home.astro
 title: "Welcome to kamoshi.org!"
 date: "2020–12–09"
 ---
-import Tab from '../components/Tab';
 
-# Welcome!
+# Welcome to my website!
 
-You have somehow found this little floating rock in the middle of the Internet! Some questions you might have while seeing this page are…
+You have found this little floating rock in the middle of the Internet! Congrats 🎉
 
-<Tab title="What is this place?" client:load>
-It's just my personal website which I use to play around with webdev and write random stuff. You can find here random stuff written by me, which might or might not be interesting. Who knows.
-</Tab>
-<Tab title="What can you find here?" client:load>
-Most of the stuff in here is pretty random, because I mostly just write and create for fun. There's a chance you might learn something yourself, but there's only one way to find out.
-</Tab>
-<Tab title="Why did I make this place?" client:load>
-No reason really, it was just a random idea that I had one summer. Afterwards I just started adding more and more stuff in my free time until I got to this point :smile:
-</Tab>
+This is just my personal website, which I use to play around with webdev and write about various topics. These things might or might not be interesting, and there's a chance you might learn a thing or two, but there's only one way to find out!
 
+This place is intentionally a mishmash of things I decided to write on the spur of the moment. It's not meant to be a "professional portfolio" website #6432, to the contrary - the more crude it is the better. I don't care what it is, because I don't need to care, and that leaves me free to experiment with the form.
 
 Now that you're here, please enjoy the transient writings that are currently present, here, at this time, for you. Why "Kamoshi"? It's a pretty long story…
 
