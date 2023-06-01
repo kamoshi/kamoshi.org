@@ -10,6 +10,9 @@ date: 2023-06-01T20:02:20.239Z
 - B. Milewski and I. Tabachnik, *Category Theory for Programmers*. Lightning Source UK, 2019.
   > This book touches upon abstract algebra and type theory in a way that is approachable for people with no applied mathematics background. A must-read for anyone interested in functional programming.
 
+- N. Indurkhya and F. J. Damerau, *Handbook of Natural Language Processing*. CRC Press, 2010. [doi:10.1201/9781420085938](https://doi.org/10.1201/9781420085938)
+  > A very comprehensive resource about NLP, which proved to be especially useful while I was writing my master's degree thesis.
+
 ## Japanese
 - J. Rubin, *Making Sense of Japanese: What the Textbooks Don’t Tell You*. Kodansha International, 2002.  
   > This is possibly the first place I came across that mentioned the existence of the so-called "null subject". The topics presented in this book are mainly useful for beginners struggling to grasp the difference between は and が.
