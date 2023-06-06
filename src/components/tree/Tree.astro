@@ -5,19 +5,20 @@ import type { Maybe } from "purify-ts";
 
 
 interface Props {
+  heading: string;
   tree: Tree;
   slug: string;
   prefix: Maybe<string>;
 }
 
-const { tree, slug, prefix } = Astro.props;
+const { heading, tree, slug, prefix } = Astro.props;
 ---
 
 <aside class="link-tree">
   <h2 class="link-tree__heading">
     {prefix.map(pathify).mapOrDefault(href =>
-      <a class="link-tree__heading-text" href={href}>Personal wiki</a>,
-      <span class="link-tree__heading-text">Personal Wiki</span>
+      <a class="link-tree__heading-text" href={href}>{heading}</a>,
+      <span class="link-tree__heading-text">{heading}</span>
     )}
   </h2>
   <nav class="link-tree__nav">

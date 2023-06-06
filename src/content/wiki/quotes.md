@@ -1,6 +1,5 @@
 ---
 title: Quotes
-date: 2023-05-01
 ---
 
 A collection of quotes I've found pretty memorable.

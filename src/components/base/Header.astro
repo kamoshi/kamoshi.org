@@ -1,6 +1,5 @@
 ---
 interface MenuItem {
-  identifier: string;
   name: string;
   url: string;
 }
@@ -8,42 +7,34 @@ interface MenuItem {
 /** Config for the menu displayed in site navbar. */
 const menu: MenuItem[] = [
   {
-    identifier: 'posts',
     name: 'Posts',
     url: '/posts/',
   },
   {
-    identifier: 'repos',
     name: 'Repos',
     url: '/repos/',
   },
   {
-    identifier: 'slides',
     name: 'Slides',
     url: '/slides/',
   },
   {
-    identifier: 'aoc',
-    name: 'AoC',
-    url: '/aoc/',
+    name: 'Wiki',
+    url: '/wiki/',
   },
   {
-    identifier: 'songs',
     name: 'Songs',
     url: '/songs/',
   },
   {
-    identifier: 'map',
     name: 'Map',
     url: '/map/',
   },
   {
-    identifier: 'about',
     name: 'About',
     url: '/about/',
   },
   {
-    identifier: 'search',
     name: 'Search',
     url: '/search/'
   }

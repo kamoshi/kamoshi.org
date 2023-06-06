@@ -1,6 +1,5 @@
 ---
-title: Recommended reading
-date: 2023-06-01T20:02:20.239Z
+title: Recommended Reading
 ---
 
 ## Programming
