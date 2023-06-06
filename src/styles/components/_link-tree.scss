@@ -1,20 +1,16 @@
-.main-wiki {
-  display: grid;
-  grid-template-columns: 16em 1fr 16em;
-}
-
 .link-tree {
   padding: 1em;
   overflow-y: auto;
 
   &__heading {
     border-bottom: 1px solid;
-    border-image: linear-gradient(to right, transparent, var(--c-primary), transparent) 1;
+    border-image: linear-gradient(to right, transparent, lightgray, transparent) 1;
 
     &-text {
       display: block;
       text-decoration: unset;
       text-align: center;
+      color: var(--c-primary);
     }
   }
 
@@ -31,16 +27,25 @@
     // &-list-item {
     // }
     &-list-text {
-      display: block;
+      padding-inline: 0.25em;
       text-decoration: unset;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
 
-      &.current {
+      &.link {
+        color: var(--c-primary);
+      }
+
+      &:not(.current):hover {
         text-decoration: underline;
+      }
+
+      &.current {
+        background-color: var(--c-primary);
+        border-radius: 0.33em;
+        color: white;
       }
     }
   }
 }
-

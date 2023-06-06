@@ -1,0 +1,16 @@
+.wiki-main {
+  display: grid;
+  grid-template-columns: 16em auto;
+
+  @media (min-width: 80rem) {
+    grid-template-columns: 16em auto 16em;
+  }
+}
+
+.wiki-article {
+  margin-inline: 1em;
+
+  @media (min-width: 80rem) {
+    margin-inline: 2em;
+  }
+}

@@ -1,5 +1,5 @@
 ---
-title: Recommended Reading
+title: Recommended reading
 ---
 
 ## Programming

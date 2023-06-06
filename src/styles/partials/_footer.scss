@@ -1,9 +1,20 @@
 .p-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 0.5em;
   background-color: var(--c-footer-bg);
 
   &__info {
     font-size: var(--fs-sm);
     color: var(--c-footer-text);
+
+    a {
+      color: var(--c-primary);
+    }
+  }
+
+  &__img-wrap {
+    display: block;
   }
 }

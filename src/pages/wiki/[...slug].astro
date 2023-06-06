@@ -20,9 +20,9 @@ const { Content } = await entry.render();
 ---
 
 <Base>
-  <main class="main-wiki">
+  <main class="wiki-main">
     <Tree heading="Personal Wiki" tree={tree} slug={entry.slug} prefix={Maybe.of("/wiki/")}/>
-    <article class="markdown">
+    <article class="wiki-article markdown">
       <h1>{entry.data.title}</h1>
       <Content />
     </article>

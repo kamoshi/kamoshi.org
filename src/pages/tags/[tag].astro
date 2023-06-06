@@ -15,7 +15,6 @@ const predicate = (entry: any) => entry.data.tags?.includes(tag);
 const posts = (await Promise.all([
     getCollection('posts', predicate),
     getCollection('slides', predicate),
-    getCollection('aoc', predicate),
   ]))
   .flat()
   .sort((a, b) => a.data.date < b.data.date ? 1 : -1)

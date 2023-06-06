@@ -9,9 +9,9 @@ const tree = collapse(await getCollection('wiki'));
 ---
 
 <Base>
-  <main class="main-wiki">
+  <main class="wiki-main">
     <Tree heading="Personal Wiki" tree={tree} slug="wiki" prefix={Maybe.of("wiki")} />
-    <article>
+    <article class="wiki-article">
       siema
     </article>
   </main>

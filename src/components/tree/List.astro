@@ -32,7 +32,7 @@ function compare(a: {title: string}, b: {title: string}) {
             {page.slug
               .chain(slug => prefix.map(prefix => pathify(prefix, slug)))
               .mapOrDefault(href =>
-                <a class="link-tree__nav-list-text" class:list={{ current: page.current }} href={href}>
+                <a class="link-tree__nav-list-text link" class:list={{ current: page.current }} href={href}>
                   {page.title}
                 </a>,
                 <span class="link-tree__nav-list-text">{page.title}</span>

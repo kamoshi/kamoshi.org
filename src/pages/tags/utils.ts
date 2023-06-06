@@ -5,7 +5,6 @@ export async function getAllTags() {
   return (await Promise.all([
       getCollection('posts'),
       getCollection('slides'),
-      getCollection('aoc'),
     ]))
     .flat()
     .reduce(
