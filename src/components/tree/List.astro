@@ -1,6 +1,6 @@
 ---
 import { Tree, pathify } from "@utils/tree";
-import { Maybe } from "purify-ts";
+import type { Maybe } from "purify-ts";
 
 
 interface Props {
@@ -18,9 +18,8 @@ const { tree, prefix } = Astro.props;
     <ul>
       {pages.map(page => 
         <li>
-          {Maybe.of(Maybe.catMaybes([prefix, page.slug]))
-            .filter(xs => xs.length > 0)
-            .map(xs => pathify(...xs))
+          {page.slug
+            .chain(slug => prefix.map(prefix => pathify(prefix, slug)))
             .mapOrDefault(href =>
               <a href={href}>{page.title}</a>,
               <span>{page.title}</span>

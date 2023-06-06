@@ -1,0 +1,17 @@
+---
+import Base from "@layouts/Base.astro";
+import Tree from "@components/tree/Tree.astro";
+import { collapse } from "@utils/tree";
+import { getCollection } from "astro:content";
+import { Maybe } from "purify-ts";
+
+const tree = collapse(await getCollection('wiki'));
+
+---
+
+<Base>
+  <main>
+    <Tree tree={tree} prefix={Maybe.of("wiki")}/>
+    siema
+  </main>
+</Base>
