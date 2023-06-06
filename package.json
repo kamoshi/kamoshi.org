@@ -10,9 +10,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^0.19.6",
+    "@astrojs/mdx": "^0.19.7",
     "@astrojs/solid-js": "^2.2.0",
-    "astro": "^2.6.0",
+    "astro": "^2.6.1",
     "astro-pagefind": "^1.2.0",
     "dayjs": "^1.11.8",
     "leaflet": "^1.9.4",
