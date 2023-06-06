@@ -1,0 +1,34 @@
+---
+import { Tree, pathify } from "@utils/tree";
+import { Maybe } from "purify-ts";
+
+
+interface Props {
+  tree: Tree;
+  prefix: Maybe<string>;
+}
+
+const { tree, prefix } = Astro.props;
+---
+
+{tree.children
+  .map(m => Object.values(m))
+  .filter(xs => xs.length > 0)
+  .map(pages => 
+    <ul>
+      {pages.map(page => 
+        <li>
+          {Maybe.of(Maybe.catMaybes([prefix, page.slug]))
+            .filter(xs => xs.length > 0)
+            .map(xs => pathify(...xs))
+            .mapOrDefault(href =>
+              <a href={href}>{page.title}</a>,
+              <span>{page.title}</span>
+          )}
+          <Astro.self tree={page} prefix={prefix} />
+        </li>
+      )}
+    </ul>
+).extract()}
+
+

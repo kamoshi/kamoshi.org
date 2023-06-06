@@ -1,0 +1,27 @@
+---
+import Tree from '@components/tree/Tree.astro';
+import Base from '@layouts/Base.astro';
+import type { InferGetStaticPropsType } from 'astro';
+import { getCollection } from 'astro:content';
+import { Maybe } from 'purify-ts';
+import { collapse } from '@utils/tree';
+
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+export async function getStaticPaths() {
+  const pages = await getCollection('wiki');
+  const tree = collapse(pages);
+
+  return pages.map(entry => ({params: {slug: entry.slug}, props: {tree, entry}}));
+}
+
+const { tree, entry } = Astro.props;
+const { Content } = await entry.render();
+---
+
+<Base>
+  <Tree tree={tree} prefix={Maybe.of("/wiki/")}/>
+  <main>
+    <Content />
+  </main>
+</Base>

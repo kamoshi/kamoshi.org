@@ -1,0 +1,26 @@
+---
+import List from "./List.astro";
+import { Tree, pathify } from "@utils/tree";
+import type { Maybe } from "purify-ts";
+
+
+interface Props {
+  tree: Tree;
+  prefix: Maybe<string>;
+}
+
+const { tree, prefix } = Astro.props;
+
+---
+
+<aside class="link-tree">
+  <h2 class="link-tree__heading">
+    {prefix.map(pathify).mapOrDefault(href =>
+      <a href={href}>Personal wiki</a>,
+      <span>Personal Wiki</span>
+    )}
+  </h2>
+  <section>
+    <List tree={tree} prefix={prefix} />
+  </section>
+</aside>
