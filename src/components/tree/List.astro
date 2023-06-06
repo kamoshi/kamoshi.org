@@ -10,6 +10,13 @@ interface Props {
 }
 
 const { tree, slug, prefix } = Astro.props;
+
+function compare(a: {title: string}, b: {title: string}) {
+  return a.title.localeCompare(b.title, "en", {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
 ---
 
 {tree.children
@@ -18,6 +25,7 @@ const { tree, slug, prefix } = Astro.props;
   .map(pages => 
     <ul class="link-tree__nav-list">
       {pages
+        .sort(compare)
         .map(page => ({...page, current: page.slug.mapOrDefault(other => other === pathify(slug), false)}))
         .map(page => 
           <li class="link-tree__nav-list-item">

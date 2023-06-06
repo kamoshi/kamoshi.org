@@ -30,7 +30,11 @@
     // &-list-item {
     // }
     &-list-text {
+      display: block;
       text-decoration: unset;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
 
       &.current {
         text-decoration: underline;
