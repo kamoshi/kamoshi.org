@@ -5,27 +5,32 @@ import type { Maybe } from "purify-ts";
 
 interface Props {
   tree: Tree;
+  slug: string;
   prefix: Maybe<string>;
 }
 
-const { tree, prefix } = Astro.props;
+const { tree, slug, prefix } = Astro.props;
 ---
 
 {tree.children
   .map(m => Object.values(m))
   .filter(xs => xs.length > 0)
   .map(pages => 
-    <ul>
-      {pages.map(page => 
-        <li>
-          {page.slug
-            .chain(slug => prefix.map(prefix => pathify(prefix, slug)))
-            .mapOrDefault(href =>
-              <a href={href}>{page.title}</a>,
-              <span>{page.title}</span>
-          )}
-          <Astro.self tree={page} prefix={prefix} />
-        </li>
+    <ul class="link-tree__nav-list">
+      {pages
+        .map(page => ({...page, current: page.slug.mapOrDefault(other => other === pathify(slug), false)}))
+        .map(page => 
+          <li class="link-tree__nav-list-item">
+            {page.slug
+              .chain(slug => prefix.map(prefix => pathify(prefix, slug)))
+              .mapOrDefault(href =>
+                <a class="link-tree__nav-list-text" class:list={{ current: page.current }} href={href}>
+                  {page.title}
+                </a>,
+                <span class="link-tree__nav-list-text">{page.title}</span>
+            )}
+            <Astro.self tree={page} slug={slug} prefix={prefix} />
+          </li>
       )}
     </ul>
 ).extract()}

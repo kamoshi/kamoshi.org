@@ -1,5 +1,5 @@
 ---
-title: "Hello"
+title: "Type Challenges"
 ---
 
 ## 4・Pick

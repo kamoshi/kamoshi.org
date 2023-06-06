@@ -1,0 +1,41 @@
+.main-wiki {
+  display: grid;
+  grid-template-columns: 16em 1fr;
+}
+
+.link-tree {
+  padding: 1em;
+  overflow-y: auto;
+
+  &__heading {
+    border-bottom: 1px solid black;
+
+    &-text {
+      display: block;
+      text-decoration: unset;
+      text-align: center;
+    }
+  }
+
+  &__nav {
+    &-list {
+      margin: 0;
+      padding-left: 0.5em;
+      list-style: none;
+
+      ul {
+        border-left: 1px solid lightgray;
+      }
+    }
+    // &-list-item {
+    // }
+    &-list-text {
+      text-decoration: unset;
+
+      &.current {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+

@@ -20,8 +20,10 @@ const { Content } = await entry.render();
 ---
 
 <Base>
-  <main>
-    <Tree tree={tree} prefix={Maybe.of("/wiki/")}/>
-    <Content />
+  <main class="main-wiki">
+    <Tree tree={tree} slug={entry.slug} prefix={Maybe.of("/wiki/")}/>
+    <article>
+      <Content />
+    </article>
   </main>
 </Base>

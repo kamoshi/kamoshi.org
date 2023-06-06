@@ -1,5 +1,5 @@
 ---
-title: "Hello"
+title: "TypeScript"
 slug: "typescript"
 ---
 Hello
