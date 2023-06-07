@@ -1,13 +1,13 @@
 ---
 import List from "./List.astro";
-import { Tree, pathify } from "@utils/tree";
+import { PageTree, pathify } from "@utils/tree";
 import type { Maybe } from "purify-ts";
 
 
 interface Props {
   heading: string;
-  tree: Tree;
-  slug: string;
+  tree: PageTree;
+  slug: Maybe<string>;
   prefix: Maybe<string>;
 }
 

@@ -6,14 +6,14 @@ interface Page {
   data: { title: string };
 }
 
-export interface Tree {
+export interface PageTree {
   title: string;
   slug: Maybe<string>;
-  children: Maybe<{ [key: string]: Tree }>;
+  children: Maybe<{ [key: string]: PageTree }>;
 }
 
-export function collapse(pages: Page[]): Tree {
-  const root: Tree = { title: '', slug: Maybe.empty(), children: Maybe.empty() };
+export function collapse(pages: Page[]): PageTree {
+  const root: PageTree = { title: '', slug: Maybe.empty(), children: Maybe.empty() };
 
   for (const page of pages) {
     const ptr = page.slug.split('/')

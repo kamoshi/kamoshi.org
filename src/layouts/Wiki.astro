@@ -1,0 +1,48 @@
+---
+import Base from "@layouts/Base.astro";
+import Tree from "@components/tree/Tree.astro";
+import { getCollection } from "astro:content";
+import { Maybe, MaybeAsync } from "purify-ts";
+import { collapse, type PageTree } from "@utils/tree";
+
+
+interface Props {
+  frontmatter: {
+    title: string;
+  };
+  slug?: string;
+  tree?: PageTree;
+}
+
+const {
+  frontmatter,
+  slug,
+  tree,
+} = Astro.props;
+
+
+function constructTree(tree?: PageTree) {
+  return MaybeAsync
+    .liftMaybe(Maybe.fromNullable(tree))
+    .alt(
+      MaybeAsync(async () => await getCollection('wiki'))
+        .map(collapse));
+} 
+
+const pageTree = (await constructTree(tree))
+  .orDefaultLazy(() => { throw new Error("Couldn't load page tree") });
+---
+
+<Base>
+  <main class="wiki-main">
+    <Tree heading="Personal Wiki"
+      tree={pageTree}
+      slug={Maybe.fromNullable(slug)}
+      prefix={Maybe.of("/wiki/")}
+    />
+    <article class="wiki-article markdown">
+      <h1>{frontmatter.title}</h1>
+      <slot />
+    </article>
+  </main>
+</Base>

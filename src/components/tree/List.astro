@@ -1,11 +1,11 @@
 ---
-import { Tree, pathify } from "@utils/tree";
-import type { Maybe } from "purify-ts";
+import { PageTree, pathify } from "@utils/tree";
+import { Maybe } from "purify-ts";
 
 
 interface Props {
-  tree: Tree;
-  slug: string;
+  tree: PageTree;
+  slug: Maybe<string>;
   prefix: Maybe<string>;
 }
 
@@ -17,6 +17,12 @@ function compare(a: {title: string}, b: {title: string}) {
     sensitivity: "base",
   });
 }
+
+function checkCurrent(checked: Maybe<string>)  {
+  return Maybe
+    .sequence([checked, slug])
+    .mapOrDefault(([a, b]) => a == pathify(b), false)
+}
 ---
 
 {tree.children
@@ -26,7 +32,7 @@ function compare(a: {title: string}, b: {title: string}) {
     <ul class="link-tree__nav-list">
       {pages
         .sort(compare)
-        .map(page => ({...page, current: page.slug.mapOrDefault(other => other === pathify(slug), false)}))
+        .map(page => ({...page, current: checkCurrent(page.slug) }))
         .map(page => 
           <li class="link-tree__nav-list-item">
             {page.slug

@@ -1,10 +1,8 @@
 ---
-import Tree from '@components/tree/Tree.astro';
-import Base from '@layouts/Base.astro';
 import type { InferGetStaticPropsType } from 'astro';
 import { getCollection } from 'astro:content';
-import { Maybe } from 'purify-ts';
 import { collapse } from '@utils/tree';
+import Wiki from '@layouts/Wiki.astro';
 
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
@@ -19,12 +17,6 @@ const { tree, entry } = Astro.props;
 const { Content } = await entry.render();
 ---
 
-<Base>
-  <main class="wiki-main">
-    <Tree heading="Personal Wiki" tree={tree} slug={entry.slug} prefix={Maybe.of("/wiki/")}/>
-    <article class="wiki-article markdown">
-      <h1>{entry.data.title}</h1>
-      <Content />
-    </article>
-  </main>
-</Base>
+<Wiki slug={entry.slug} frontmatter={entry.data} tree={tree}>
+  <Content />
+</Wiki>
