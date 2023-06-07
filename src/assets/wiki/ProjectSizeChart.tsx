@@ -4,23 +4,23 @@ import Chart from "chart.js/auto";
 
 
 const data = {
-  labels: ["June"],
+  labels: ["April", "May", "June"],
   datasets: [
     {
       label: "Markdown",
-      data: [2455],
+      data: [2173, 2430, 2455],
     },
     {
       label: "SCSS",
-      data: [1138],
+      data: [910, 1116, 1138],
     },
     {
       label: "TypeScript",
-      data: [1011],
+      data: [242, 517, 1011],
     },
     {
       label: "Astro",
-      data: [946]
+      data: [535, 845, 946]
     }
   ]
 };
