@@ -14,7 +14,7 @@ interface Props {
 const { heading, tree, slug, prefix } = Astro.props;
 ---
 
-<aside class="link-tree">
+<section class="link-tree">
   <h2 class="link-tree__heading">
     {prefix.map(pathify).mapOrDefault(href =>
       <a class="link-tree__heading-text" href={href}>{heading}</a>,
@@ -24,4 +24,4 @@ const { heading, tree, slug, prefix } = Astro.props;
   <nav class="link-tree__nav">
     <List tree={tree} slug={slug} prefix={prefix} />
   </nav>
-</aside>
+</section>

@@ -5,6 +5,13 @@
   @media (min-width: 80rem) {
     grid-template-columns: 16em auto 16em;
   }
+
+  .link-tree {
+    position: sticky;
+    top: 0;
+    height: fit-content;
+    max-height: 100vh;
+  }
 }
 
 .wiki-article {
