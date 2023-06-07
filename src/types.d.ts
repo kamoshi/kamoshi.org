@@ -1,3 +1,5 @@
+type TODO = any;
+
 /** @file src/data/circles.json */
 interface CirclesSchema {
   /** slug */
