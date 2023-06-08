@@ -40,7 +40,7 @@ function checkCurrent(checked: Maybe<string>)  {
             {page.slug
               .chain(slug => prefix.map(prefix => pathify(prefix, slug)))
               .map(href => (page.current)
-                ? <button class="link-tree__nav-list-text current">{page.title}</button>
+                ? <button id="current-page-button" class="link-tree__nav-list-text current">{page.title}</button>
                 : <a class="link-tree__nav-list-text link" href={href}>{page.title}</a>
               )
               .orDefault(<span class="link-tree__nav-list-text">{page.title}</span>)}
@@ -49,5 +49,3 @@ function checkCurrent(checked: Maybe<string>)  {
       )}
     </ul>
 ).extract()}
-
-

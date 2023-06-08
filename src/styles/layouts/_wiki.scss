@@ -1,17 +1,52 @@
 .wiki-main {
+  position: relative;
   display: grid;
-  grid-template-columns: 16em auto;
+  grid-template-columns: auto 1fr;
+
+  @media (min-width: 58rem) {
+    grid-template-columns: 16rem 1fr;
+  }
 
   @media (min-width: 80rem) {
-    grid-template-columns: 16em auto 16em;
+    grid-template-columns: 16rem 1fr 16rem;
+  }
+}
+
+.wiki-aside {
+  position: absolute;
+  width: 16rem;
+  height: 100%;
+  transition: margin-left linear 0.1s;
+  background-color: white;
+  box-shadow: var(--shadow-m);
+  z-index: 5;
+
+  @media (min-width: 58rem) {
+    position: static;
+    background-color: unset;
+    box-shadow: unset;
   }
 
   .link-tree {
     position: sticky;
     top: 0;
-    height: fit-content;
-    max-height: 100vh;
   }
+
+  &__slider {
+    position: absolute;
+    top: 0.5em;
+    right: -2em;
+    cursor: pointer;
+
+    @media (min-width: 58rem) {
+      display: none;
+    }
+  }
+}
+
+.wiki-icon {
+  max-height: 1.5em;
+  max-width: 1.5em;
 }
 
 .wiki-article {
@@ -19,5 +54,25 @@
 
   @media (min-width: 80rem) {
     margin-inline: 2em;
+  }
+}
+
+#wiki-aside-shown {
+  &:checked {
+    ~ .wiki-aside {
+      > .wiki-aside__slider {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  &:not(:checked) {
+    ~ .wiki-aside {
+      margin-left: -16rem;
+
+      @media (min-width: 58rem) {
+        margin-left: unset;
+      }
+    }
   }
 }

@@ -39,7 +39,18 @@ const pages = (await constructTree(Astro.props.tree))
 
 <Base>
   <main class="wiki-main">
-    <Tree heading="Personal Wiki" pages={pages} headings={headings} />
+    <!-- Slide in/out for mobile -->
+    <input id="wiki-aside-shown" type="checkbox" hidden/>
+
+    <aside class="wiki-aside">
+      <!-- Slide button -->
+      <label class="wiki-aside__slider" for="wiki-aside-shown">
+        <img class="wiki-icon" src="/static/svg/double-arrow.svg" width="24" height="24" />
+      </label>
+      <!-- Navigation tree -->
+      <Tree heading="Personal Wiki" pages={pages} headings={headings} />
+    </aside>
+
     <article class="wiki-article markdown">
       <h1>{frontmatter?.title}</h1>
       <slot />
