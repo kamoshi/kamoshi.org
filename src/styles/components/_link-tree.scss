@@ -2,7 +2,7 @@
   position: relative;
   max-height: 100vh;
   padding: 1em;
-  overflow-y: scroll;
+  overflow-y: auto;
 
   &__icon {
     max-height: 1.5em;
@@ -43,8 +43,9 @@
         border-left: 1px solid lightgray;
       }
     }
-    // &-list-item {
-    // }
+    &-list-item {
+      margin-block: 0.25em;
+    }
     &-list-text {
       padding-inline: 0.25em;
       text-decoration: unset;
