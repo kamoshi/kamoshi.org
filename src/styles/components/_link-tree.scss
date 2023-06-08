@@ -1,8 +1,21 @@
 .link-tree {
+  position: relative;
   padding: 1em;
   overflow-y: auto;
 
+  &__switch {
+    position: absolute;
+    top: 0.5em;
+    left: 0.5em;
+    cursor: pointer;
+
+    img {
+      max-height: 1.5em;
+    }
+  }
+
   &__heading {
+    margin-bottom: 0.5em;
     border-bottom: 1px solid;
     border-image: linear-gradient(to right, transparent, lightgray, transparent) 1;
 
@@ -43,9 +56,21 @@
 
       &.current {
         background-color: var(--c-primary);
+        border: unset;
         border-radius: 0.33em;
         color: white;
+        cursor: pointer;
       }
     }
   }
 }
+
+#link-tree-mode {
+  &:checked ~ .v-prime {
+    display: none;
+  }
+  &:not(:checked) ~ .v-alt {
+    display: none;
+  }
+}
+

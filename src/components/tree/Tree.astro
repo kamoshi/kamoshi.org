@@ -1,27 +1,65 @@
 ---
-import List from "./List.astro";
-import { PageTree, pathify } from "@utils/tree";
+import Pages from "./Pages.astro";
+import Headings from "./Headings.astro";
+import { pathify } from "@utils/tree";
 import type { Maybe } from "purify-ts";
+import type { MarkdownHeading } from "astro";
+import type { PagesProps } from "./Pages.astro";
 
 
 interface Props {
   heading: string;
-  tree: PageTree;
-  slug: Maybe<string>;
-  prefix: Maybe<string>;
+  pages: Maybe<PagesProps>;
+  headings: Maybe<MarkdownHeading[]>;
 }
 
-const { heading, tree, slug, prefix } = Astro.props;
+const { heading, pages, headings } = Astro.props;
 ---
 
 <section class="link-tree">
-  <h2 class="link-tree__heading">
-    {prefix.map(pathify).mapOrDefault(href =>
-      <a class="link-tree__heading-text" href={href}>{heading}</a>,
-      <span class="link-tree__heading-text">{heading}</span>
-    )}
-  </h2>
-  <nav class="link-tree__nav">
-    <List tree={tree} slug={slug} prefix={prefix} />
-  </nav>
+  <!-- Nav mode switch -->
+  <input id="link-tree-mode" type="checkbox" hidden />
+  <label id="link-tree-switch" class="link-tree__switch" 
+    for="link-tree-mode"
+    role="button"
+    tabindex="0"
+    title="Switch navigation mode">
+    <img src="/static/svg/change.svg" alt="Switch navigation mode" width="24" height="24"/>
+  </label>
+
+  <!-- Primary view displaying current headings -->
+  <div class="v-alt">
+    <h2 class="link-tree__heading">
+      <span class="link-tree__heading-text">Herein</span>
+    </h2>
+    <nav class="link-tree__nav">
+      <Headings headings={headings} />
+    </nav>
+  </div>
+
+  <!-- Optional view displaying page tree -->
+  <div class="v-prime">
+    <h2 class="link-tree__heading">
+      {pages.chain(x => x.prefix)
+        .map(pathify)
+        .mapOrDefault(href =>
+          <a class="link-tree__heading-text" href={href}>{heading}</a>,
+          <span class="link-tree__heading-text">{heading}</span>
+      )}
+    </h2>
+    <nav class="link-tree__nav">
+      {pages.map(pages => <Pages {...pages} />).extract()}
+    </nav>
+  </div>
+
+  <script>
+    const button = document.getElementById("link-tree-switch");
+
+    button?.addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        button!.click();
+      }
+    })
+  </script>
 </section>

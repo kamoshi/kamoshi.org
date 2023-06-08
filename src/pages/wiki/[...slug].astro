@@ -1,8 +1,8 @@
 ---
+import Wiki from '@layouts/Wiki.astro';
 import type { InferGetStaticPropsType } from 'astro';
 import { getCollection } from 'astro:content';
 import { collapse } from '@utils/tree';
-import Wiki from '@layouts/Wiki.astro';
 
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
@@ -14,9 +14,14 @@ export async function getStaticPaths() {
 }
 
 const { tree, entry } = Astro.props;
-const { Content } = await entry.render();
+const { headings, Content } = await entry.render();
 ---
 
-<Wiki slug={entry.slug} frontmatter={entry.data} tree={tree}>
+<Wiki
+  frontmatter={entry.data}
+  headings={headings}
+  slug={entry.slug}
+  tree={tree}
+  >
   <Content />
 </Wiki>

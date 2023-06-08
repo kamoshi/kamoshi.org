@@ -4,9 +4,11 @@ import Tree from "@components/tree/Tree.astro";
 import { getCollection } from "astro:content";
 import { Maybe, MaybeAsync } from "purify-ts";
 import { collapse, type PageTree } from "@utils/tree";
+import type { MarkdownHeading } from "astro";
 
 
 interface Props {
+  headings?: MarkdownHeading[];
   frontmatter: {
     title: string;
   };
@@ -14,11 +16,7 @@ interface Props {
   tree?: PageTree;
 }
 
-const {
-  frontmatter,
-  slug,
-  tree,
-} = Astro.props;
+const { frontmatter, slug } = Astro.props;
 
 
 function constructTree(tree?: PageTree) {
@@ -27,21 +25,23 @@ function constructTree(tree?: PageTree) {
     .alt(
       MaybeAsync(async () => await getCollection('wiki'))
         .map(collapse));
-} 
+}
 
-const pageTree = (await constructTree(tree))
-  .orDefaultLazy(() => { throw new Error("Couldn't load page tree") });
+const headings = Maybe.fromNullable(Astro.props.headings);
+const pages = (await constructTree(Astro.props.tree))
+  .map(tree => ({
+    tree,
+    slug: Maybe.fromNullable(slug),
+    prefix: Maybe.of("/wiki/")
+  }));
+
 ---
 
 <Base>
   <main class="wiki-main">
-    <Tree heading="Personal Wiki"
-      tree={pageTree}
-      slug={Maybe.fromNullable(slug)}
-      prefix={Maybe.of("/wiki/")}
-    />
+    <Tree heading="Personal Wiki" pages={pages} headings={headings} />
     <article class="wiki-article markdown">
-      <h1>{frontmatter.title}</h1>
+      <h1>{frontmatter?.title}</h1>
       <slot />
     </article>
   </main>
