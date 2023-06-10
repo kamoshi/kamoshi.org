@@ -1,6 +1,6 @@
 .link-tree {
   position: relative;
-  max-height: 100vh;
+  max-height: min(100vh, 100%);
   padding: 1em;
   overflow-y: auto;
 

@@ -1,13 +1,17 @@
+$bp-m: 58rem;
+$bp-l: 80rem;
+
+
 .wiki-main {
   position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
 
-  @media (min-width: 58rem) {
+  @media (min-width: $bp-m) {
     grid-template-columns: 16rem 1fr;
   }
 
-  @media (min-width: 80rem) {
+  @media (min-width: $bp-l) {
     grid-template-columns: 16rem 1fr 16rem;
   }
 }
@@ -17,11 +21,11 @@
   width: 16rem;
   height: 100%;
   transition: margin-left linear 0.1s;
-  background-color: white;
+  background-color: var(--c-bg-main);
   box-shadow: var(--shadow-m);
   z-index: 5;
 
-  @media (min-width: 58rem) {
+  @media (min-width: $bp-m) {
     position: static;
     background-color: unset;
     box-shadow: unset;
@@ -38,22 +42,9 @@
     right: -2em;
     cursor: pointer;
 
-    @media (min-width: 58rem) {
+    @media (min-width: $bp-m) {
       display: none;
     }
-  }
-}
-
-.wiki-icon {
-  max-height: 1.5em;
-  max-width: 1.5em;
-}
-
-.wiki-article {
-  margin-inline: 1em;
-
-  @media (min-width: 80rem) {
-    margin-inline: 2em;
   }
 }
 
@@ -70,9 +61,36 @@
     ~ .wiki-aside {
       margin-left: -16rem;
 
-      @media (min-width: 58rem) {
+      @media (min-width: $bp-m) {
         margin-left: unset;
       }
     }
+  }
+}
+
+.wiki-icon {
+  max-height: 1.5em;
+  max-width: 1.5em;
+}
+
+.wiki-article {
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 1em;
+  padding-top: 2em;
+  background-color: white;
+  box-shadow: var(--shadow-l);
+  transition: margin ease-in-out 0.2s, padding ease-in-out 0.2s;
+
+  @media (min-width: $bp-m) {
+    max-width: min(100%, 50em);
+    margin-block: 1em;
+    padding-top: 1em;
+    border-radius: 0.5em;
+  }
+
+  @media (min-width: $bp-l) {
+    margin-block: 2em;
+    padding: 2em;
   }
 }
