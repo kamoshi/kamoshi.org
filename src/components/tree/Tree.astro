@@ -1,10 +1,9 @@
 ---
 import Pages from "./Pages.astro";
 import Headings from "./Headings.astro";
-import { pathify } from "@utils/tree";
-import type { Maybe } from "purify-ts";
+import { Maybe } from "purify-ts";
 import type { MarkdownHeading } from "astro";
-import type { PagesProps } from "./Pages.astro";
+import type { PagesProps } from "./PagesList.astro";
 
 
 interface Props {
@@ -13,44 +12,60 @@ interface Props {
   headings: Maybe<MarkdownHeading[]>;
 }
 
+interface PagesView {
+  kind: "pages";
+  pages: PagesProps;
+}
+
+interface HeadingsView {
+  kind: "headings";
+  headings: MarkdownHeading[];
+}
+
+type Views =
+  | PagesView
+  | HeadingsView;
+
 const { heading, pages, headings } = Astro.props;
+
+const views = Maybe.catMaybes<Views>([
+  pages.map(pages => ({ kind: "pages", pages })),
+  headings.map(headings => ({ kind: "headings", headings })),
+])
 ---
 
 <section class="link-tree">
   <!-- Nav mode switch -->
-  <input id="link-tree-mode" type="checkbox" hidden />
-  <label id="link-tree-switch" class="link-tree__switch"
-    for="link-tree-mode"
-    role="button"
-    tabindex="0"
-    title="Switch navigation mode">
-    <img class="link-tree__icon" src="/static/svg/change.svg" alt="Switch navigation mode" width="24" height="24"/>
-  </label>
+  {views.length > 1 && (
+    <input id="link-tree-mode" type="checkbox" hidden />
+    <label id="link-tree-switch" class="link-tree__switch"
+      for="link-tree-mode"
+      role="button"
+      tabindex="0"
+      title="Switch navigation mode">
+      <img class="link-tree__icon" src="/static/svg/change.svg" alt="Switch navigation mode" width="24" height="24"/>
+    </label>
+  )}
 
-  <!-- Primary view displaying current headings -->
-  <div class="v-alt">
-    <h2 class="link-tree__heading">
-      <span class="link-tree__heading-text">Content</span>
-    </h2>
-    <nav class="link-tree__nav">
-      <Headings headings={headings} />
-    </nav>
-  </div>
-
-  <!-- Optional view displaying page tree -->
-  <div class="v-prime">
-    <h2 class="link-tree__heading">
-      {pages.chain(x => x.prefix)
-        .map(pathify)
-        .mapOrDefault(href =>
-          <a class="link-tree__heading-text" href={href}>{heading}</a>,
-          <span class="link-tree__heading-text">{heading}</span>
-      )}
-    </h2>
-    <nav class="link-tree__nav">
-      {pages.map(pages => <Pages {...pages} />).extract()}
-    </nav>
-  </div>
+  <!-- If >0 views to show -->
+  {views.length > 0 && (
+    <div class="v-prime">
+      {views[0].kind === 'pages'
+        && <Pages heading={heading} pages={Maybe.of(views[0].pages)} />}
+      {views[0].kind === 'headings'
+        && <Headings headings={views[0].headings}/>}
+    </div>
+  )}
+  
+  <!-- If >1 views to show -->
+  {views.length > 1 && (
+    <div class="v-alt">
+      {views[1].kind === 'pages'
+        && <Pages heading={heading} pages={Maybe.of(views[1].pages)} />}
+      {views[1].kind === 'headings'
+        && <Headings headings={views[1].headings}/>}
+    </div>
+  )}
 
   <script>
     const button = document.getElementById("link-tree-switch");

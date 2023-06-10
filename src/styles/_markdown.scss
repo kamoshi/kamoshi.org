@@ -1,6 +1,4 @@
 .markdown {
-  overflow-x: auto;
-
   > h1 {
     font-size: 2.227em;
   }
@@ -38,6 +36,14 @@
     }
   }
 
+  > ul, ol {
+    padding-left: 1em;
+
+    ul, ol {
+      padding-left: 1em;
+    }
+  }
+
   blockquote {
     position: relative;
     margin: 1em 2em;
@@ -57,6 +63,7 @@
   > table {
     margin: 1em auto 1em auto;
     border-collapse: collapse;
+    overflow-x: auto;
 
     th, td {
       padding: 0.2em 0.5em;
@@ -101,6 +108,32 @@
   .math-display {
     margin-block: 1em;
     font-size: 1.1em;
+    overflow-x: auto;
+  }
+
+  .marginnote {
+    display: block;
+    margin: 1em 1.5em;
+    padding-block: 0.5em;
+    border-block: 1px dashed gray;
+    color: gray;
+  
+    @media (min-width: 38em) {
+      float: right;
+      clear: right;
+      max-width: 14rem;
+      margin-right: 0;
+      text-align: justify;
+      hyphens: auto;
+    }
+  
+    @media (min-width: 80em) {
+      margin: 2em -17rem;
+    }
+
+    a {
+      color: var(--c-primary);
+    }
   }
 
   // TODO: clean this

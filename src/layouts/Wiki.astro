@@ -19,22 +19,23 @@ interface Props {
 const { frontmatter, slug } = Astro.props;
 
 
-function constructTree(tree?: PageTree) {
+function constructWikiTree(tree?: PageTree) {
   return MaybeAsync
     .liftMaybe(Maybe.fromNullable(tree))
     .alt(
       MaybeAsync(async () => await getCollection('wiki'))
-        .map(collapse));
+        .map(collapse))
+    .map(tree => ({
+      tree,
+      slug: Maybe.fromNullable(slug),
+      prefix: Maybe.of("/wiki/")
+    }));
 }
 
 const headings = Maybe.fromNullable(Astro.props.headings);
-const pages = (await constructTree(Astro.props.tree))
-  .map(tree => ({
-    tree,
-    slug: Maybe.fromNullable(slug),
-    prefix: Maybe.of("/wiki/")
-  }));
-
+const pages = Astro.url.pathname.startsWith("/wiki/")
+  ? await constructWikiTree(Astro.props.tree)
+  : Maybe.empty();
 ---
 
 <Base>
@@ -51,9 +52,13 @@ const pages = (await constructTree(Astro.props.tree))
       <Tree heading="Personal Wiki" pages={pages} headings={headings} />
     </aside>
 
-    <article class="wiki-article markdown">
-      <h1>{frontmatter?.title}</h1>
-      <slot />
+    <article class="wiki-article">
+      <heading class="markdown">
+        <h1>{frontmatter?.title}</h1>
+      </heading>
+      <section class="wiki-article__markdown markdown">
+        <slot />
+      </section>
     </article>
   </main>
 </Base>

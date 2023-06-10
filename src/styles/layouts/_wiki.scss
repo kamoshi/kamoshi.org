@@ -5,14 +5,14 @@ $bp-l: 80rem;
 .wiki-main {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
 
   @media (min-width: $bp-m) {
-    grid-template-columns: 16rem 1fr;
+    grid-template-columns: 16rem minmax(0, 1fr);
   }
 
   @media (min-width: $bp-l) {
-    grid-template-columns: 16rem 1fr 16rem;
+    grid-template-columns: 16rem minmax(0, 1fr) 16rem;
   }
 }
 
@@ -74,7 +74,7 @@ $bp-l: 80rem;
 }
 
 .wiki-article {
-  max-width: 100%;
+  min-width: 0;
   margin-inline: auto;
   padding: 1em;
   padding-top: 2em;
@@ -93,5 +93,9 @@ $bp-l: 80rem;
   @media (min-width: $bp-l) {
     margin-block: 2em;
     padding: 2em;
+  }
+
+  &__markdown {
+    max-width: calc(100vw - 2em);
   }
 }

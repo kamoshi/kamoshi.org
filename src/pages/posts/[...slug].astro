@@ -1,5 +1,5 @@
 ---
-import Article from '../../layouts/Article.astro';
+import Wiki from '@layouts/Wiki.astro';
 import { getCollection } from 'astro:content';
 
 
@@ -12,6 +12,6 @@ const { entry } = Astro.props;
 const { Content, headings } = await entry.render();
 ---
 
-<Article frontmatter={entry.data} headings={headings}>
+<Wiki frontmatter={entry.data} headings={headings}>
   <Content />
-</Article>
+</Wiki>

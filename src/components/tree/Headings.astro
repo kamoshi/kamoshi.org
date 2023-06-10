@@ -1,49 +1,20 @@
 ---
+import { Maybe } from 'purify-ts/Maybe';
+import HeadingsList from './HeadingsList.astro';
 import type { MarkdownHeading } from 'astro';
-import { Maybe } from 'purify-ts';
 
 
 interface Props {
-  headings: Maybe<MarkdownHeading[]>;
+  headings: MarkdownHeading[];
 }
-
-type Nested = MarkdownHeading & { children?: MarkdownHeading[] };
 
 
 const { headings } = Astro.props;
-
-function fold(headings: MarkdownHeading[]) {
-  const toc = [] as Nested[];
-  const map = new Map<number, Nested>();
-  for (const h of headings) {
-    const heading = { ...h };
-    map.set(heading.depth, heading);
-    if (heading.depth === 2)
-      toc.push(heading)
-    else {
-      const backref = map.get(heading.depth - 1)!;
-      backref.children
-        ? backref.children.push(heading)
-        : backref.children = [heading];
-    }
-  }
-  return toc;
-}
 ---
 
-{headings
-  .map(fold)
-  .map(headings => 
-    <ul class="link-tree__nav-list">
-      {headings.map(heading => 
-        <li class="link-tree__nav-list-item">
-          <a class="link-tree__nav-list-text link" href={`#${heading.slug}`}>
-            {heading.text}
-          </a>
-          <Astro.self headings={Maybe.fromNullable(heading.children)}/>
-        </li>
-      )}
-    </ul>
-  )
-  .extract()
-}
+<h2 class="link-tree__heading">
+  <span class="link-tree__heading-text">Content</span>
+</h2>
+<nav id="table-of-contents" class="link-tree__nav">
+  <HeadingsList headings={Maybe.of(headings)} />
+</nav>
