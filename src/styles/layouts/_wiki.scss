@@ -79,14 +79,15 @@ $bp-l: 80rem;
   padding: 1em;
   padding-top: 2em;
   background-color: white;
-  box-shadow: var(--shadow-l);
   transition: margin ease-in-out 0.2s, padding ease-in-out 0.2s;
 
   @media (min-width: $bp-m) {
     max-width: min(100%, 50em);
+    height: fit-content;
     margin-block: 1em;
     padding-top: 1em;
     border-radius: 0.5em;
+    box-shadow: var(--shadow-l);
   }
 
   @media (min-width: $bp-l) {
