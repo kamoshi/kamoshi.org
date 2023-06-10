@@ -8,6 +8,27 @@ interface Props {
   headings: MarkdownHeading[];
 }
 
+export type Nested = MarkdownHeading & { children?: MarkdownHeading[] };
+
+
+function fold(headings: MarkdownHeading[]): Nested[] {
+  const toc = [] as Nested[];
+  const map = new Map<number, Nested>();
+  for (const h of headings) {
+    const heading = { ...h };
+    map.set(heading.depth, heading);
+    if (heading.depth === 2)
+      toc.push(heading)
+    else {
+      const backref = map.get(heading.depth - 1)!;
+      backref.children
+        ? backref.children.push(heading)
+        : backref.children = [heading];
+    }
+  }
+  return toc;
+}
+
 
 const { headings } = Astro.props;
 ---
@@ -16,5 +37,7 @@ const { headings } = Astro.props;
   <span class="link-tree__heading-text">Content</span>
 </h2>
 <nav id="table-of-contents" class="link-tree__nav">
-  <HeadingsList headings={Maybe.of(headings)} />
+  <HeadingsList
+    headings={Maybe.of(headings).map(fold)}
+  />
 </nav>
