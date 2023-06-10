@@ -29,8 +29,11 @@ type Views =
 const { heading, pages, headings } = Astro.props;
 
 const views = Maybe.catMaybes<Views>([
-  pages.map(pages => ({ kind: "pages", pages })),
-  headings.map(headings => ({ kind: "headings", headings })),
+  pages
+    .map(pages => ({ kind: "pages", pages })),
+  headings
+    .filter(x => x.length > 0)
+    .map(headings => ({ kind: "headings", headings })),
 ])
 ---
 
