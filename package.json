@@ -12,7 +12,7 @@
   "dependencies": {
     "@astrojs/mdx": "^0.19.7",
     "@astrojs/solid-js": "^2.2.0",
-    "astro": "^2.6.1",
+    "astro": "^2.6.3",
     "astro-pagefind": "^1.2.0",
     "chart.js": "^4.3.0",
     "dayjs": "^1.11.8",
@@ -39,6 +39,6 @@
     "@types/reveal.js": "^4.4.2",
     "@types/unist": "^2.0.6",
     "pagefind": "^0.12.0",
-    "sass": "^1.62.1"
+    "sass": "^1.63.3"
   }
 }
