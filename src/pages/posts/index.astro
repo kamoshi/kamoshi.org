@@ -10,7 +10,7 @@ const posts = (await getCollection('posts'))
     path: `/posts/${entry.slug}/`,
     date: toTemporalInstant.call(entry.data.date).toZonedDateTimeISO("Europe/Warsaw"),
   }))
-  .sort((a, b) => Temporal.ZonedDateTime.compare(a.date, b.date))
+  .sort((a, b) => Temporal.ZonedDateTime.compare(a.date, b.date));
 
 ---
 
