@@ -1,0 +1,64 @@
+---
+import Base from "./Base.astro";
+import { Temporal } from "@js-temporal/polyfill";
+
+
+interface Props {
+  title: string;
+  pages: Page[];
+}
+
+interface Page {
+  title: string;
+  path: string;
+  date: Temporal.ZonedDateTime;
+}
+
+interface YearlyPosts {
+  [key: number]: Page[];
+}
+
+
+const { title, pages } = Astro.props;
+
+const yearly = pages
+  .reduce((acc, next) => {
+      const year = next.date.year;
+      (year in acc)
+        ? acc[year].push(next)
+        : acc[year] = [next];
+      return acc;
+    }, {} as YearlyPosts);
+
+function sorter(
+  a: {date: Temporal.ZonedDateTime},
+  b: {date: Temporal.ZonedDateTime}
+) {
+  return Temporal.ZonedDateTime.compare(b.date, a.date);
+}
+---
+
+<Base>
+  <main class="page-list-main">
+    <article class="page-list">
+      <header class="markdown">
+        <h1>{title}</h1>
+      </header>
+      {Object.entries(yearly)
+        .sort(([a, _a], [b, _b]) => a > b ? -1 : 1)
+        .map(([year, pages]: [string, Page[]]) => (
+          <section class="page-list-year">
+            <h2>{year}</h2>
+            {pages.sort(sorter).map(page => (
+              <a class="page-list-item" href={page.path}>
+                <h3 class="page-list-item__heading">{page.title}</h3>
+                <time class="page-list-item__date" datetime={page.date.toPlainDate().toString()}>
+                  {page.date.toLocaleString("en", { month: "2-digit", day: "2-digit"})}
+                </time>
+              </a>
+            ))}
+          </section>
+        ))}
+    </article>
+  </main>
+</Base>

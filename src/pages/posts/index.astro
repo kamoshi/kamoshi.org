@@ -1,17 +1,17 @@
 ---
-import dayjs from "dayjs";
-import List from "../../layouts/List.astro";
+import BetterList from "@layouts/BetterList.astro";
 import { getCollection } from 'astro:content';
+import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
 
 
 const posts = (await getCollection('posts'))
-  .sort((a, b) => a.data.date < b.data.date ? 1 : -1)
   .map(entry => ({
     title: entry.data.title,
-    slug: `/posts/${entry.slug}/`,
-    date: dayjs(entry.data.date),
+    path: `/posts/${entry.slug}/`,
+    date: toTemporalInstant.call(entry.data.date).toZonedDateTimeISO("Europe/Warsaw"),
   }))
+  .sort((a, b) => Temporal.ZonedDateTime.compare(a.date, b.date))
 
 ---
 
-<List title="Posts" pages={posts} />
+<BetterList title="Posts" pages={posts} />

@@ -40,6 +40,8 @@ const subtitles = [
   "You're looking at it!",
   "a2Ftb3NoaS5vcmc=",
   ":: (Thought a) => a -> String",
+  "Catch me if you can!",
+  "In the eye of the beholder",
 ];
 
 const chance = Math.round(1 / (subtitles.length + 1) * 10000) / 100;

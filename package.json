@@ -12,6 +12,7 @@
   "dependencies": {
     "@astrojs/mdx": "^0.19.7",
     "@astrojs/solid-js": "^2.2.0",
+    "@js-temporal/polyfill": "^0.4.4",
     "astro": "^2.6.3",
     "astro-pagefind": "^1.2.0",
     "chart.js": "^4.3.0",

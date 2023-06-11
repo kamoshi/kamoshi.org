@@ -1,0 +1,31 @@
+.page-list-main {
+  padding: 2em;
+}
+
+.page-list {
+  max-width: 48em;
+  margin-inline: auto;
+}
+
+.page-list-year {
+  margin-block: 1em;
+}
+
+.page-list-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  text-decoration: unset;
+
+  &__heading {
+    color: var(--c-primary);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  &__date {
+    color: var(--c-text-muted);
+    
+  }
+}
