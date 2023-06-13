@@ -22,13 +22,11 @@ $bp-l: 80rem;
   height: 100%;
   transition: margin-left linear 0.1s;
   background-color: var(--c-bg-main);
-  box-shadow: var(--shadow-m);
   z-index: 5;
 
   @media (min-width: $bp-m) {
     position: static;
     background-color: unset;
-    box-shadow: unset;
   }
 
   .link-tree {
@@ -51,6 +49,12 @@ $bp-l: 80rem;
 #wiki-aside-shown {
   &:checked {
     ~ .wiki-aside {
+      box-shadow: var(--shadow-m);
+
+      @media (min-width: $bp-m) {
+        box-shadow: unset;
+      }
+
       > .wiki-aside__slider {
         transform: rotate(180deg);
       }
