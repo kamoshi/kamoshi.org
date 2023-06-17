@@ -12,18 +12,22 @@
   "dependencies": {
     "@astrojs/mdx": "^0.19.7",
     "@astrojs/solid-js": "^2.2.0",
+    "@citation-js/plugin-bibtex": "^0.6.8",
     "@js-temporal/polyfill": "^0.4.4",
-    "astro": "^2.6.3",
+    "astro": "^2.6.4",
     "astro-pagefind": "^1.2.0",
     "chart.js": "^4.3.0",
+    "citation-js": "^0.6.8",
     "dayjs": "^1.11.8",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
+    "mdast-util-to-string": "^3.2.0",
     "purify-ts": "^2.0.1",
     "rehype-katex": "^6.0.3",
     "rehype-raw": "^6.1.1",
     "rehype-stringify": "^9.0.3",
-    "remark-emoji": "^3.1.1",
+    "remark-directive": "^2.0.1",
+    "remark-emoji": "^3.1.2",
     "remark-gfm": "^3.0.1",
     "remark-math": "^5.1.1",
     "remark-parse": "^10.0.2",
@@ -40,6 +44,6 @@
     "@types/reveal.js": "^4.4.2",
     "@types/unist": "^2.0.6",
     "pagefind": "^0.12.0",
-    "sass": "^1.63.3"
+    "sass": "^1.63.4"
   }
 }

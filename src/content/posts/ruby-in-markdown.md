@@ -11,11 +11,11 @@ Sadly, as far as I know CommonMark currently doesn't include anything about ruby
 
 | Language    | Example |
 | --------    | ------- |
-| Japanese    | [日本語]{にほんご}の[文法]{ぶんぽう}は[難]{むずか}しい |
-| Chinese     | [北]{Běi}[京]{jīng}<br/>[北]{ㄅㄟˇ}[京]{ㄐㄧㄥ} |
-| Korean      | [韓]{한}[國]{국} |
-| Vietnamese  | [河]{Hà}[內]{Nội} |
-| Other       | I [love]{like} ruby! |
+| Japanese    | :ruby[日本語]{help=に;ほん;ご}の:ruby[文法]{help=ぶん;ぽう}は:ruby[難]{help=むずか}しい |
+| Chinese     | :ruby[北京]{help=Běi;jīng}<br/>:ruby[北京]{help=ㄅㄟˇ;ㄐㄧㄥ} |
+| Korean      | :ruby[韓國]{help=한;국} |
+| Vietnamese  | :ruby[河內]{help=Hà;Nội} |
+| Other       | I :ruby[love]{help=like} ruby! |
 
 
 ## Remark
