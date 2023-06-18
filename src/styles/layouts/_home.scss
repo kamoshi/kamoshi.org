@@ -32,3 +32,13 @@
     max-width: 40em;
   }
 }
+
+.intro-jp {
+  writing-mode: vertical-rl;
+  max-height: 18em;
+
+  &__heading {
+    font-family: serif;
+    font-size: 2.5rem;
+  }
+}
