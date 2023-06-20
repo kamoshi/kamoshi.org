@@ -7,6 +7,23 @@ import Footer from "../components/base/Footer.astro";
 <html lang="en">
 	<Head/>
 	<body>
+    <script is:inline>
+      (() => {
+        const theme = (
+          localStorage?.getItem("theme") ||
+          window.matchMedia("(prefers-color-scheme: dark)").matches && "dark" ||
+          "light"
+        );
+        
+        const cl = document.body.classList;
+        switch (theme) {
+          case "light": return cl.remove("dark");
+          case "dark": return cl.add("dark");
+        }
+        localStorage?.setItem("theme", theme);
+      })();
+    </script>
+
     <slot name="header">
       <Header/>
     </slot>
