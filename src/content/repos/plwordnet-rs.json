@@ -1,6 +1,0 @@
-{
-  "type": "github",
-  "url": "https://github.com/kamoshi/plwordnet-rs",
-  "description": "Native Rust library facilitating the integration of plWordNet 4.2 lexical resources.",
-  "icons": ["rust"]
-}

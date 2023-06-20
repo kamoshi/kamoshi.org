@@ -30,14 +30,5 @@ export const collections = {
         })
       )
     })
-  }),
-  repos: defineCollection({
-    type: "data",
-    schema: z.object({
-      type: z.string(),
-      url: z.string(),
-      description: z.string(),
-      icons: z.array(z.string()),
-    })
   })
 }
