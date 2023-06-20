@@ -8,13 +8,13 @@ import { ALBUMS } from "@utils/songs/data";
 
 
 export async function getStaticPaths() {
-  return (await getCollection('songs'))
+  return []; /*(await getCollection('songs'))
     .map(song => Object.keys(song.data.album)
       .map(cat => ({
         params: { circle: ALBUMS[cat].circle, cat, song: song.slug},
         props: { song, cat }
       })))
-    .flat()
+    .flat()*/
 }
 
 

@@ -30,5 +30,10 @@ export const collections = {
         })
       )
     })
+  }),
+  wiki: defineCollection({
+    schema: z.object({
+      title: z.string(),
+    })
   })
 }
