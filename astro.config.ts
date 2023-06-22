@@ -30,6 +30,9 @@ export default defineConfig({
       theme: 'min-light'
     }
   },
+  experimental: {
+    assets: true,
+  },
   integrations: [
     mdx(),
     solid(),
