@@ -1,0 +1,13 @@
+---
+import { getEntryBySlug } from "astro:content";
+
+const intro = await getEntryBySlug("misc", "intro");
+const { Content } = await intro.render();
+---
+
+<section class="p-card intro-jp" lang="ja-JP">
+  <h2 class="intro-jp__heading">{intro.data.title}</h2>
+  <div class="intro-jp__text">
+    <Content />
+  </div>
+</section>

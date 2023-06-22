@@ -1,7 +1,9 @@
 ---
+import Intro from "@components/cards/Intro.astro";
 import ContactCard from "../components/cards/Contact.astro";
 import PhotoCard from "../components/cards/Photo.astro";
 import Base from "./Base.astro";
+
 ---
 <Base>
   <main class="l-home">
@@ -10,13 +12,7 @@ import Base from "./Base.astro";
     </article>
     <aside class="l-home__aside">
       <!--  -->
-      <section class="p-card intro-jp">
-        <h2 class="intro-jp__heading">かもし</h2>
-        <div class="intro-jp__text">
-          <p>初めましての方は初めまして、ポーランド出身で日本語を勉強している人です。間違いがあったらすみません。</p>
-          <p>こちらは個人的なウェブサイトで、「かもし」というのは個人サークル名といってもいいです。日本語を練習するため日本語を使って色々なことを書きます。英語も使います。趣味はプログラミングや日本語や日本の歌や同人など色々なことです。質問があったらメールを送信してくれてください。</p>
-        </div>
-      </section>
+      <Intro />
       <!--  -->
       <PhotoCard />
 			<!--  -->
