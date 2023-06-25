@@ -54,7 +54,7 @@ const pages = Astro.url.pathname.startsWith("/wiki/")
 
     <article class="wiki-article">
       <heading class="markdown">
-        <h1>{frontmatter?.title}</h1>
+        <h1 id="top">{frontmatter?.title}</h1>
       </heading>
       <section class="wiki-article__markdown markdown">
         <slot />
