@@ -15,7 +15,7 @@
     "@astrojs/solid-js": "^2.2.0",
     "@citation-js/plugin-bibtex": "^0.6.8",
     "@js-temporal/polyfill": "^0.4.4",
-    "astro": "^2.8.0",
+    "astro": "^2.8.1",
     "astro-pagefind": "^1.2.1",
     "chart.js": "^4.3.0",
     "citation-js": "^0.6.8",
@@ -34,7 +34,7 @@
     "remark-parse": "^10.0.2",
     "remark-rehype": "^10.1.0",
     "reveal.js": "^4.5.0",
-    "solid-js": "^1.7.7",
+    "solid-js": "^1.7.8",
     "unified": "^10.1.2",
     "unist-util-visit": "^4.1.2"
   },
@@ -42,7 +42,7 @@
     "@types/leaflet": "^1.9.3",
     "@types/leaflet.markercluster": "^1.5.1",
     "@types/reveal.js": "^4.4.2",
-    "@types/unist": "^2.0.6",
+    "@types/unist": "^2.0.7",
     "pagefind": "^0.12.0",
     "sass": "^1.63.6"
   }
