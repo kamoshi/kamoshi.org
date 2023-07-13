@@ -38,7 +38,7 @@ const pages = Astro.url.pathname.startsWith("/wiki/")
   : Maybe.empty();
 ---
 
-<Base>
+<Base title={frontmatter.title}>
   <main class="wiki-main">
     <!-- Slide in/out for mobile -->
     <input id="wiki-aside-shown" type="checkbox" hidden/>

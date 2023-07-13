@@ -3,40 +3,24 @@
 @use 'reset';
 @use 'fonts';
 @use 'base';
-@use 'utils';
 @use 'markdown';
 
 // Components
 @use 'components/map';
 @use 'components/search';
-@use 'components/tab';
-@use 'components/lyrics';
-@use 'components/song';
-@use 'components/album-grid';
 @use 'components/link-tree';
 @use 'components/bibliography';
 
 // Partials
-@use 'partials/nav';
+@use 'partials/navbar';
 @use 'partials/footer';
-@use 'partials/github';
-@use 'partials/header';
-@use 'partials/pagelist';
-@use 'partials/toc';
-@use 'partials/date';
-@use 'partials/tags';
 
 // Shortcodes
 @use 'shortcodes/timeline';
-@use 'shortcodes/gallery';
-@use 'shortcodes/tooltip';
-@use 'shortcodes/sidenote';
-@use 'shortcodes/collection';
+@use 'shortcodes/marginnote';
 
 // Layouts
 @use 'layouts/home';
-@use 'layouts/pages';
-@use 'layouts/article';
-@use 'layouts/songs';
-@use 'layouts/wiki';
-@use 'layouts/page-list';
+@use 'layouts/page';
+@use 'layouts/list';
+

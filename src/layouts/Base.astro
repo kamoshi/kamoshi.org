@@ -3,9 +3,19 @@ import '../styles/styles.scss';
 import Head from "../components/base/Head.astro";
 import Header from "../components/base/Header.astro";
 import Footer from "../components/base/Footer.astro";
+import { Maybe } from 'purify-ts';
+
+
+interface Props {
+  title?: string;
+}
+
+const {
+  title,
+} = Astro.props;
 ---
 <html lang="en">
-	<Head/>
+	<Head title={Maybe.fromNullable(title)}/>
 	<body>
     <script is:inline>
       (() => {

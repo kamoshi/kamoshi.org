@@ -1,5 +1,5 @@
 ---
-import BetterList from "@layouts/BetterList.astro";
+import List from "@layouts/List.astro";
 import { getCollection } from 'astro:content';
 import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
 
@@ -14,4 +14,5 @@ const posts = (await getCollection('posts'))
 
 ---
 
-<BetterList title="Posts" pages={posts} />
+<List title="Posts" pages={posts} />
+

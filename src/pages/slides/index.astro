@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
-import BetterList from '@layouts/BetterList.astro';
+import List from '@layouts/List.astro';
 
 
 const pages = (await getCollection('slides'))
@@ -13,4 +13,4 @@ const pages = (await getCollection('slides'))
   .sort((a, b) => Temporal.ZonedDateTime.compare(a.date, b.date));
 ---
 
-<BetterList title="Slides" pages={pages} />
+<List title="Slides" pages={pages} />

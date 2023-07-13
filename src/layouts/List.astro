@@ -1,4 +1,5 @@
 ---
+import { Maybe } from "purify-ts";
 import Base from "./Base.astro";
 import { Temporal } from "@js-temporal/polyfill";
 
@@ -38,7 +39,7 @@ function sorter(
 }
 ---
 
-<Base>
+<Base title={title}>
   <main class="page-list-main">
     <article class="page-list">
       <header class="markdown">

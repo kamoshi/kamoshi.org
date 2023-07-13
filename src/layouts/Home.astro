@@ -3,9 +3,10 @@ import Intro from "@components/cards/Intro.astro";
 import ContactCard from "../components/cards/Contact.astro";
 import PhotoCard from "../components/cards/Photo.astro";
 import Base from "./Base.astro";
+import { Maybe } from "purify-ts";
 
 ---
-<Base>
+<Base title={"Home"}>
   <main class="l-home">
     <article class="l-home__article markdown">
       <slot />
