@@ -73,10 +73,12 @@
     }
   
     &-main {
-      font-size: 2rem;
-      line-height: 1em;
-      font-family: 'Segoe Print', 'Bradley Hand', Chilanka, TSCu_Comic, casual, cursive;
       margin-bottom: -0.15em;
+
+      svg {
+        max-height: 2em;
+        width: auto;
+      }
     }
   
     &-sub {
