@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.8.3
     version: 2.8.3(sass@1.63.6)
   astro-pagefind:
-    specifier: ^1.2.1
-    version: 1.2.1(astro@2.8.3)
+    specifier: ^1.2.0
+    version: 1.2.0(astro@2.8.3)
   chart.js:
     specifier: ^4.3.0
     version: 4.3.0
@@ -1341,8 +1341,8 @@ packages:
     hasBin: true
     dev: false
 
-  /astro-pagefind@1.2.1(astro@2.8.3):
-    resolution: {integrity: sha512-Yi8+NEtEc5fz260hG+tnH3UOSPEEcgHxYDbDPxRFeJm/E5opBXz7Kx4D297f/SZhxkPPHzPgjJWD3+dCp95C8g==}
+  /astro-pagefind@1.2.0(astro@2.8.3):
+    resolution: {integrity: sha512-1l4RSz/Cm5jIHbgN+mZZ2jOjpB5gK0qWJDZ0zWqUcguX3NJxaS+pai/snGmBoxtEbOGXx/SjrhlSAq2inqwdQw==}
     peerDependencies:
       astro: ^2.0.4
     dependencies:
