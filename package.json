@@ -15,9 +15,9 @@
     "@astrojs/solid-js": "^2.2.0",
     "@citation-js/plugin-bibtex": "^0.6.8",
     "@js-temporal/polyfill": "^0.4.4",
-    "astro": "^2.9.0",
-    "astro-pagefind": "^1.2.2",
-    "chart.js": "^4.3.0",
+    "astro": "^2.9.2",
+    "astro-pagefind": "^1.2.3",
+    "chart.js": "^4.3.1",
     "citation-js": "^0.6.8",
     "dayjs": "^1.11.9",
     "leaflet": "^1.9.4",
@@ -44,6 +44,6 @@
     "@types/reveal.js": "^4.4.2",
     "@types/unist": "^2.0.7",
     "pagefind": "^0.12.0",
-    "sass": "^1.64.0"
+    "sass": "^1.64.1"
   }
 }
