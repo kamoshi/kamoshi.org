@@ -1027,7 +1027,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       jsbi: 4.3.0
-      tslib: 2.6.0
+      tslib: 2.6.1
     dev: false
 
   /@kurkle/color@0.3.2:
@@ -1092,7 +1092,7 @@ packages:
       is-glob: 4.0.3
       open: 9.1.0
       picocolors: 1.0.0
-      tslib: 2.6.0
+      tslib: 2.6.1
     dev: false
 
   /@polka/url@1.0.0-next.21:
@@ -1504,7 +1504,7 @@ packages:
     hasBin: true
     dependencies:
       caniuse-lite: 1.0.30001517
-      electron-to-chromium: 1.4.469
+      electron-to-chromium: 1.4.470
       node-releases: 2.0.13
       update-browserslist-db: 1.0.11(browserslist@4.21.9)
     dev: false
@@ -1803,8 +1803,8 @@ packages:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
     dev: false
 
-  /electron-to-chromium@1.4.469:
-    resolution: {integrity: sha512-HRN9XQjElxJBrdDky5iiUUr3eDwXGTg6Cp4IV8MuNc8VqMkYSneSnIe6poFKx9PsNzkudCgaWCBVxwDqirwQWQ==}
+  /electron-to-chromium@1.4.470:
+    resolution: {integrity: sha512-zZM48Lmy2FKWgqyvsX9XK+J6FfP7aCDUFLmgooLJzA7v1agCs/sxSoBpTIwDLhmbhpx9yJIxj2INig/ncjJRqg==}
     dev: false
 
   /emmet@2.4.5:
@@ -4026,7 +4026,7 @@ packages:
     engines: {node: ^14.18.0 || >=16.0.0}
     dependencies:
       '@pkgr/utils': 2.4.2
-      tslib: 2.6.0
+      tslib: 2.6.1
     dev: false
 
   /titleize@3.0.0:
@@ -4073,8 +4073,8 @@ packages:
       type-fest: 0.13.1
     dev: false
 
-  /tslib@2.6.0:
-    resolution: {integrity: sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==}
+  /tslib@2.6.1:
+    resolution: {integrity: sha512-t0hLfiEKfMUoqhG+U1oid7Pva4bbDPHYfJNiB7BiIjRkj1pyC++4N3huJfqY6aRH6VTB0rvtzQwjM4K6qpfOig==}
     dev: false
 
   /type-fest@0.13.1:

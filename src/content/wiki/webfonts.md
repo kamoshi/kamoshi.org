@@ -14,3 +14,4 @@ Unfortunately, the main issue with fonts built into browsers is their dependence
 ![Nimbus Sans](/static/wiki/nimbus-sans2.png)
 
 As a consequence, this misalignment causes the user interface to appear broken on Chrome, with the button texts not properly centered.
+
