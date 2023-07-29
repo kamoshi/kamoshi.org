@@ -3,7 +3,6 @@ import Intro from "@components/cards/Intro.astro";
 import ContactCard from "../components/cards/Contact.astro";
 import PhotoCard from "../components/cards/Photo.astro";
 import Base from "./Base.astro";
-import { Maybe } from "purify-ts";
 
 ---
 <Base title={"Home"}>
@@ -16,8 +15,9 @@ import { Maybe } from "purify-ts";
       <Intro />
       <!--  -->
       <PhotoCard />
-			<!--  -->
-			<ContactCard email="maciej@kamoshi.org" discord="kamov#2485" />
-		</aside>
-	</main>
+      <!--  -->
+      <ContactCard email="maciej@kamoshi.org" discord="kamov#2485" />
+    </aside>
+  </main>
 </Base>
+

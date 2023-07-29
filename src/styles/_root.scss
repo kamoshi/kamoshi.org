@@ -41,5 +41,18 @@
 }
 
 body.dark {
-  // todo dark mode
+  --c-primary-d: hsl(240, 21%, 35%);
+  --c-primary: hsl(240, 21%, 45%);
+  --c-primary-l: hsl(240, 21%, 55%);
+  --c-secondary: hsl(2, 58%, 52%);
+  --c-white: hsl(0, 0%, 98%);
+  --c-purewhite: hsl(0, 0%, 100%);
+  --c-black: hsl(0, 0%, 7%);
+  --c-text: hsl(0, 0%, 13%);
+  --c-text-muted: hsl(0, 0%, 40%);
+  --c-footer-bg: hsl(0, 0%, 93%);
+  --c-footer-text: hsl(0, 0%, 35%);
+  --c-timeline-bg: hsl(0, 0%, 78%);
+  --c-shadow: 0deg 0% 76%;
+  --c-bg-main: hsl(0, 0%, 98%);
 }

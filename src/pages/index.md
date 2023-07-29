@@ -30,7 +30,7 @@ I've been playing Hanafuda for a while now, so I decided to write a short introd
 Thanks for visiting! :smile:
 
 <div style="display: flex; justify-content: center">
-<pre style="display: block; font-family: Helvetica; font-size: 0.5rem">
+<pre style="display: block; font-family: sans-serif; font-size: 0.5rem">
 　　　　　　　　　　　　 ,､
 　　　　　　　　　　　／ﾊ＼
 　　　　　　　　　 _/-─-i‐ﾍ-　..,,_
