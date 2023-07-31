@@ -43,6 +43,14 @@ Btw, I moved from Kubuntu to Arch Linux. Kubuntu is a really sweet distribution 
 
 People say that installing Arch is hard, but honestly it really isn't. It just doesn't have a graphical installer that will do it all for you, and you also need to know how to use the command line interface. Some people don't know how to use terminals, if you're that person you shouldn't be using GNU/Linux in the first place... or you should start using it right now, because you're missing out!!!
 
+I now know why people like Arch so much.
+
+It is free of bloat. You aren't bombarded with packages you will never use and package managers which are pure overhead (looking at you Snap!). When you install Arch you only ever install what you really need. Personally - I don't even have any office suite installed, the only text editor I have right now is Neovim. And if I ever need more I will use `pacman`, it is that easy.
+
+The package repository for Arch Linux is really huge. When I used Kubuntu, there were things I had to install by downloading `.tar.gz` files or `.deb` packages. This contributed to the fact that the operating system was harder and harder to manage and keep up to date. With Arch everything I need is in the official package repository, or at least in the unofficial Arch User Repository. Downloading every program via your package manager is not only clean and convenient, but also feels like it's how GNU/Linux was meant to be used in the first place.
+
+On top of all that, Arch Linux is a rolling release distro, which means that everything I use is up-to-date. Right now the latest released Neovim version is 9.1, and my Neovim, which I installed with `pacman`, has version 9.1. When I used Kubuntu, the Neovim I had there had version 0.7.2, which was released (at the time of writing) a year ago. When you use Neovim installed via `apt` you can't use many plugins, because they are incompatible, so you end up downloading `.tar.gz` and using that instead. But then you miss out on all the good things your system's package manager provides. With Arch you get to use both package manager and up-to-date packages :heart:
+
 Below is an obligatory neofetch screenshot.
 
 ![Obligatory neofetch screengrab](../../assets/posts/arch.png)
