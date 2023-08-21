@@ -8,7 +8,7 @@ A thing that most people might find amazing about the Polish language is that it
 If you aren't sure what these are, here's an example in the English language:
 - Dog → Doggie (diminutive form)
 
-In Polish language there are *a lot* of words like that. For example the Polish word "kot" which means "cat", could transformed into:
+In Polish language there are *a lot* of words like that. For example the Polish word "kot" which means "cat", could be transformed into:
 > kot → kotek, koteczek, kociak, kociaczek
 
 A backpack carried by a little child on a way to school might be referred to as:
