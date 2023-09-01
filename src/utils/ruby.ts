@@ -20,12 +20,12 @@ export function transform(input: string): Annotated[] {
   while (true) {
     const match = regex.exec(input);
     if (!match) break;
-    
+
     const [full, text, ruby] = match;
 
     if (match.index > lastIndex)
       parts.push(input.slice(lastIndex, match.index));
-    
+
     parts.push({ text: text, ruby: ruby });
     lastIndex = regex.lastIndex;
   }

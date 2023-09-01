@@ -20,7 +20,7 @@ export default defineConfig({
       remarkDirective,
       [remarkRuby, {separator: ';'}],
       remarkBibliography,
-      [remarkEmoji as any, {accessible: true}],
+      [remarkEmoji, {accessible: true}],
       remarkMath,
     ],
     rehypePlugins: [
@@ -29,9 +29,6 @@ export default defineConfig({
     shikiConfig: {
       theme: 'min-light'
     }
-  },
-  experimental: {
-    assets: true,
   },
   integrations: [
     mdx(),
