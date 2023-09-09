@@ -22,7 +22,7 @@ function locateBibliography(tree: any) {
       template: "apa",
       lang: "en-US"
     });
-    
+
     parent.children.splice(index, 1, {
       type: "html",
       value: html,
