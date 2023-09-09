@@ -11,11 +11,11 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^1.0.0",
-    "@astrojs/solid-js": "^3.0.0",
+    "@astrojs/mdx": "^1.0.3",
+    "@astrojs/solid-js": "^3.0.1",
     "@citation-js/plugin-bibtex": "^0.6.8",
     "@js-temporal/polyfill": "^0.4.4",
-    "astro": "^3.0.6",
+    "astro": "^3.0.12",
     "astro-pagefind": "^1.2.3",
     "chart.js": "^4.4.0",
     "citation-js": "^0.6.8",
@@ -35,7 +35,7 @@
     "remark-rehype": "^10.1.0",
     "reveal.js": "^4.5.0",
     "solid-js": "^1.7.11",
-    "unified": "^11.0.2",
+    "unified": "^11.0.3",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
@@ -44,6 +44,7 @@
     "@types/reveal.js": "^4.4.2",
     "@types/unist": "^3.0.0",
     "pagefind": "^0.12.0",
-    "sass": "^1.66.1"
+    "sass": "^1.66.1",
+    "sharp": "^0.32.5"
   }
 }
