@@ -28,11 +28,12 @@ interface PagefindDocument {
   word_count: number;
 }
 
-
-async function loadPagefind(): Promise<Pagefind> {
-  const pf = "/_pagefind/pagefind.js";
-  return await import(/* @vite-ignore */ pf);
+const enum PagefindModule {
+  LINK = '/pagefind/pagefind.js',
 }
+
+const loadPagefind = () => import(/* @vite-ignore */PagefindModule.LINK) as Promise<Pagefind>;
+
 
 function Result(props: { page: PagefindResult }) {
   const [data, setData] = createSignal<PagefindDocument>();
@@ -53,7 +54,6 @@ function Result(props: { page: PagefindResult }) {
         <div>Loading...</div>
       )}
     </>
-    
   )
 }
 

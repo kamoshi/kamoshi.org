@@ -1,8 +1,6 @@
 import "@citation-js/plugin-bibtex";
 // @ts-ignore
 import Cite from "citation-js";
-import type { Root } from "remark-directive";
-import type { Plugin } from "unified";
 import { visit, EXIT, CONTINUE } from "unist-util-visit";
 import { toString } from "mdast-util-to-string";
 import { Maybe } from "purify-ts";
@@ -11,8 +9,8 @@ import { Maybe } from "purify-ts";
 function locateBibliography(tree: any) {
   let bibliography: Maybe<Cite> = Maybe.empty();
 
-  visit(tree, "containerDirective", (node, index, parent) => {
-    if (node.name !== "bib")
+  visit(tree, 'containerDirective', (node, index, parent) => {
+    if (node.name !== 'bib')
       return CONTINUE;
 
     const data = new Cite(toString(node));
@@ -57,11 +55,9 @@ function convertCitations(tree: any, data: Cite) {
 }
 
 
-export const remarkBibliography: Plugin<[], Root> = (options?: any) => {
+export default function remarkBibliography(options?: any) {
   return (tree: any) => {
     locateBibliography(tree)
       .ifJust(data => convertCitations(tree, data));
   }
 }
-
-export default remarkBibliography;

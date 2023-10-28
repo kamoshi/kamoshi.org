@@ -5,7 +5,7 @@ import { toString } from "mdast-util-to-string";
 
 
 interface Options {
-  separator: string;
+  sep: string;
 }
 
 type Pair = [string, string];
@@ -17,8 +17,8 @@ function toHtml([text, help]: Pair) {
 
 function createRuby(text: string, help: string, options?: Options) {
   const splitText = text.split('');
-  const splitHelp = help.split(options?.separator || ';');
-  
+  const splitHelp = help.split(options?.sep || ';');
+
   const pairs = (splitText.length === splitHelp.length)
     ? splitText.map((e, i) => [e, splitHelp[i]] as Pair)
     : [[text, help]] as Pair[];
@@ -27,7 +27,7 @@ function createRuby(text: string, help: string, options?: Options) {
 }
 
 
-export const remarkRuby: Plugin<[Options?], Root> = (options?: Options) => {
+export default function remarkRuby(options?: Options) {
   return (tree: any) => {
     visit(tree, "textDirective", (node, index, parent) => {
       if (node.name !== 'ruby')
@@ -46,5 +46,3 @@ export const remarkRuby: Plugin<[Options?], Root> = (options?: Options) => {
     })
   }
 }
-
-export default remarkRuby;
