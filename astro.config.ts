@@ -20,7 +20,7 @@ export default defineConfig({
       remarkDirective,
       // NOTE: pinned ^5.0.0
       remarkMath,
-      remarkEmoji,
+      [remarkEmoji, {accessible: true}],
       [remarkRuby, {sep: ';'}],
       remarkBib,
     ],
