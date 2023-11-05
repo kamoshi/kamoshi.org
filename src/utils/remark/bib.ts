@@ -10,7 +10,7 @@ function locateBibliography(tree: any) {
   let bibliography: Maybe<Cite> = Maybe.empty();
 
   visit(tree, 'containerDirective', (node, index, parent) => {
-    if (node.name !== 'bib')
+    if (node.name !== 'bibtex')
       return CONTINUE;
 
     const data = new Cite(toString(node));

@@ -24,7 +24,7 @@ It was a pretty fun and interesting adventure, difficult at times, but worth it 
 
 ## Bibliography
 
-:::bib
+:::bibtex
 @book{gamma1994design,
   title     = {Design Patterns: Elements of Reusable Object-Oriented Software},
   author    = {Gamma, E. and Helm, R. and Johnson, R. and Vlissides, J.},

@@ -16,7 +16,10 @@ I've come across 〜達 used for inanimate things several times with one example
   “目指したトコロは此処だったのか？”  
   今は先を急ぐ　**水達**に乗せられたまま  
 
-:::bib
+
+## Bibliography
+
+:::bibtex
 @book{dojg-advanced,
   title     = {A dictionary of advanced Japanese grammar},
   author    = {Makino, Seiichi and Tsutsui, Michio},
