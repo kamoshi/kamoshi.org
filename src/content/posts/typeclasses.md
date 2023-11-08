@@ -13,7 +13,7 @@ I've found them pretty confusing, but in reality they are an incredibly elegant 
 
 ## Why?
 
-In Haskell, we can write monomorphic functions which accepts concrete types.
+In Haskell, we can write monomorphic functions which accept concrete types.
 As an example, the function `add` shown below adds together two values of type `Int`.
 
 ```haskell
@@ -138,10 +138,100 @@ When `Num` is applied to `Int`, it becomes a constraint on the `Int` type, indic
 ```haskell
 Num Int :: Constraint
 ```
+Another example of a kind in Haskell is the kind of unary type constructors `* -> *`.
+These unary type constructors are similar to generic types in other languages because they accept a type parameter and produce a new type.
+The signature `* -> *` signifies that the type constructor transforms one concrete type into another concrete type.
+
+An example of a trivial type constructor `Item` is shown below.
+
+```haskell
+data Item a = MkItem a
+
+Item        :: * -> *
+Item Int    :: *
+Item String :: *
+```
+
+In this definition, `Item` is a unary type constructor because it takes a type parameter `a` and produces a new type `Item a`, where `a` can be any concrete type.
+
+A commonly used example of a unary type constructor in Haskell is the `Maybe` type.
+`Maybe` is used for representing optional values and handling potentially missing or undefined data in a type-safe manner.
+Its definition is as follows:
+
+```haskell
+data Maybe a = Nothing | Just a
+
+Maybe :: * -> *
+```
+
+Haskell type constructors can be parameterized with more than one type variable, as seen in the case of binary type constructors.
+An example of a binary type constructor is the `Either` data type:
+
+```haskell
+data Either a b = Left a | Right b
+
+Either            :: * -> * -> *
+Either String     :: * -> *
+Either String Int :: *
+```
+
+In this definition, `Either` is a binary type constructor because it requires two type parameters, `a` and `b`, to create a new type, `Either a b`.
+The `Either` type is often used for scenarios where a value can have one of two possible types, such as representing success or failure or providing an alternative to error handling.
+Conventionally, the `Left` value indicates error conditions, while the `Right` value signifies valid or correct values.
+
 
 ### Higher Kinded Types
 
-### The venerable monad
+In Haskell, understanding the concept of "Higher Kinded Types" is crucial for grasping how certain more abstract type classes work.
+HKTs involve type classes that are parameterized by type constructors, rather than just simple types.
+
+The `Functor` type class is an example of a HKT class.
+It defines two fundamental operations, `fmap` and `<$`, which operate on a type constructor `f`.
+
+The Functor type class is defined as follows:
+
+```haskell
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+  (<$) :: a -> f b -> f a
+
+Functor :: (* -> *) -> Constraint
+```
+
+The `Functor` type class is not constrained to specific types but is rather parameterized by type constructors.
+Its kind signature is `(* -> *) -> Constraint`, indicating that it works with type constructors.
+This allows it to be applied to types like `Maybe`, `List`, or other container types that accept a type argument.
+
+Similarly to `Functor`, the `Monad` type class is another example of a HKT type class.
+It defines functions for monadic operations, such as `>>=`, `>>`, and `return`.
+
+The definition of the `Monad` type class is as follows:
+
+```haskell
+class Monad m where
+  (>>=)  :: m a -> (  a -> m b) -> m b
+  (>>)   :: m a ->  m b         -> m b
+  return ::   a                 -> m a
+
+Monad :: (* -> *) -> Constraint
+```
+
+Like the `Functor` type class, the `Monad` type class is not tied to specific types but is parameterized by type constructors.
+Its kind signature is also `(* -> *) -> Constraint`.
+
+It is worth noting that type classes with a kind of `(* -> *) -> Constraint` can be applied to kinds like `* -> * -> *`.
+An example of this is the `Functor` instance of `Either`:
+
+```haskell
+instance Functor (Either a) where
+  fmap _ (Left x)   = Left x
+  fmap f (Right x)  = Right (f x)
+
+```
+
+In the instance declaration above, we specify that, for any type `a`, `Either a` is an instance of the `Functor` type class.
+This allows you to use the `fmap` function with `Either a`, providing a way to map over the second type argument of the `Either` type while keeping the first type argument fixed.
+
 
 ## Other languages
 
