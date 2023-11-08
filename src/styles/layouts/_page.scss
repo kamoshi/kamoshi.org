@@ -102,4 +102,14 @@ $bp-l: 80rem;
   &__markdown {
     max-width: calc(100vw - 2em);
   }
+
+  &.has-icon {
+    background-position: top right;
+    background-repeat: no-repeat;
+    background-size: 20% auto;
+
+    &.icon-haskell {
+      background-image: url("/static/sketch/haskell.png");
+    }
+  }
 }

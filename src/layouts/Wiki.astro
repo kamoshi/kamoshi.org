@@ -11,6 +11,7 @@ interface Props {
   headings?: MarkdownHeading[];
   frontmatter: {
     title: string;
+    icon?: string;
   };
   slug?: string;
   tree?: PageTree;
@@ -36,6 +37,13 @@ const headings = Maybe.fromNullable(Astro.props.headings);
 const pages = Astro.url.pathname.startsWith("/wiki/")
   ? await constructWikiTree(Astro.props.tree)
   : Maybe.empty();
+
+const {title, icon} = frontmatter || {};
+
+const classlist = [
+  'wiki-article',
+  ...icon ? ['has-icon', `icon-${icon}`] : []
+];
 ---
 
 <Base title={frontmatter.title}>
@@ -52,9 +60,9 @@ const pages = Astro.url.pathname.startsWith("/wiki/")
       <Tree heading="Personal Wiki" pages={pages} headings={headings} />
     </aside>
 
-    <article class="wiki-article">
-      <heading class="markdown">
-        <h1 id="top">{frontmatter?.title}</h1>
+    <article class:list={classlist}>
+      <heading class="markdown" >
+        <h1 id="top">{title}</h1>
       </heading>
       <section class="wiki-article__markdown markdown">
         <slot />

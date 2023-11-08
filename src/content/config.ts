@@ -6,7 +6,8 @@ export const collections = {
     schema: z.object({
       title: z.string(),
       date: z.date(),
-      tags: z.array(z.string()).optional(),
+      icon: z.string().optional(),
+      desc: z.string().optional(),
     })
   }),
   slides: defineCollection({
