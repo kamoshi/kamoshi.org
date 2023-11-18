@@ -1,14 +1,15 @@
 ---
-import dayjs from 'dayjs';
-const copyright = `Copyright &copy; ${dayjs().year()} Maciej Jur`;
-const email = "maciej@kamoshi.org";
+const year = new Date().getFullYear();
+const copy = `Copyright &copy; ${year} Maciej Jur`;
+const mail = "maciej@kamoshi.org";
+const href = `mailto:${mail}`;
 ---
-<footer class="p-footer flex flex-row items-center justify-between">
-  <div class="p-footer__info">
-    <div set:html={copyright}></div>
-    <div><a href={`mailto:${email}`}>{email}</a></div>
+<footer class="footer">
+  <div>
+    <div set:html={copy}></div>
+    <a href={href}>{mail}</a>
   </div>
-  <a class="p-footer__img-wrap" rel="license" href="http://creativecommons.org/licenses/by/4.0/">
-    <img alt="Creative Commons License" width="88" height="31" src="/static/svg/by.svg" />
+  <a class="footer__cc-wrap" rel="license" href="http://creativecommons.org/licenses/by/4.0/">
+    <img class="footer__cc-stamp" alt="Creative Commons License" width="88" height="31" src="/static/svg/by.svg"/>
   </a>
 </footer>

@@ -1,20 +1,21 @@
-.p-footer {
+.footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  max-height: min-content;
   padding: 0.5em;
+  font-size: var(--fs-sm);
   background-color: var(--c-footer-bg);
+  color: var(--c-footer-text);
 
-  &__info {
-    font-size: var(--fs-sm);
-    color: var(--c-footer-text);
-
-    a {
-      color: var(--c-primary);
-    }
+  a {
+    color: var(--c-primary);
   }
 
-  &__img-wrap {
+  &__cc-wrap {
     display: block;
+  }
+  &__cc-stamp {
+    height: 100%;
   }
 }

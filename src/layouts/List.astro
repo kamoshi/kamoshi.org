@@ -1,8 +1,10 @@
 ---
-import { Maybe } from "purify-ts";
 import Base from "./Base.astro";
+import Entry from "@components/list/Entry.astro";
 import { Temporal } from "@js-temporal/polyfill";
 
+
+type Date = Temporal.ZonedDateTime;
 
 interface Props {
   title: string;
@@ -11,32 +13,34 @@ interface Props {
 
 interface Page {
   title: string;
+  date: Date;
+  desc: string;
   path: string;
-  date: Temporal.ZonedDateTime;
 }
 
-interface YearlyPosts {
-  [key: number]: Page[];
+interface Sections {
+  [year: string]: Page[];
 }
 
+
+function compare(a: Page, b: Page) {
+  return Temporal.ZonedDateTime.compare(b.date, a.date);
+}
 
 const { title, pages } = Astro.props;
 
 const yearly = pages
-  .reduce((acc, next) => {
-      const year = next.date.year;
-      (year in acc)
-        ? acc[year].push(next)
-        : acc[year] = [next];
-      return acc;
-    }, {} as YearlyPosts);
+  .reduce<Sections>((acc, next) => {
+    const year = next.date.year;
+    (year in acc)
+      ? acc[year].push(next)
+      : acc[year] = [next];
+    return acc;
+  }, {});
 
-function sorter(
-  a: {date: Temporal.ZonedDateTime},
-  b: {date: Temporal.ZonedDateTime}
-) {
-  return Temporal.ZonedDateTime.compare(b.date, a.date);
-}
+const sections = Object.entries<Page[]>(yearly)
+  .sort((a, b) => a[0] > b[0] ? -1 : 1)
+  .map(([year, pages]) => ({ year, pages: pages.sort(compare) }));
 ---
 
 <Base title={title}>
@@ -45,21 +49,16 @@ function sorter(
       <header class="markdown">
         <h1>{title}</h1>
       </header>
-      {Object.entries(yearly)
-        .sort(([a, _a], [b, _b]) => a > b ? -1 : 1)
-        .map(([year, pages]: [string, Page[]]) => (
-          <section class="page-list-year">
+      {sections.map(({ year, pages }) => (
+        <section class="page-list-year">
+          <header class="page-list-year__header">
+            <div class="fleuron-l">&#9753;</div>
             <h2>{year}</h2>
-            {pages.sort(sorter).map(page => (
-              <a class="page-list-item" href={page.path}>
-                <h3 class="page-list-item__heading">{page.title}</h3>
-                <time class="page-list-item__date" datetime={page.date.toPlainDate().toString()}>
-                  {page.date.toLocaleString("en", { month: "2-digit", day: "2-digit"})}
-                </time>
-              </a>
-            ))}
-          </section>
-        ))}
+            <div class="fleuron-r">&#10087;</div>
+          </header>
+          {pages.map(page => <Entry {...page}/>)}
+        </section>
+      ))}
     </article>
   </main>
 </Base>

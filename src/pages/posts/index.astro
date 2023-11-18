@@ -1,17 +1,21 @@
 ---
 import List from "@layouts/List.astro";
 import { getCollection } from 'astro:content';
-import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
+import { toTemporalInstant } from "@js-temporal/polyfill";
 
 
-const posts = (await getCollection('posts'))
-  .map(entry => ({
+function map(entry: any) {
+  return {
     title: entry.data.title,
     path: `/posts/${entry.slug}/`,
     date: toTemporalInstant.call(entry.data.date).toZonedDateTimeISO("Europe/Warsaw"),
-  }))
-  .sort((a, b) => Temporal.ZonedDateTime.compare(a.date, b.date));
+    desc: entry.data.desc || '',
+  }
+}
 
+const collection = await getCollection('posts');
+
+const posts = collection.map(map);
 ---
 
 <List title="Posts" pages={posts} />

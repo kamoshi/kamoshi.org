@@ -20,8 +20,8 @@ export default defineConfig({
       remarkDirective,
       // NOTE: pinned ^5.0.0
       remarkMath,
-      [remarkEmoji as any, {accessible: true}],
-      [remarkRuby, {sep: ';'}],
+      [remarkEmoji, { accessible: true }],
+      [remarkRuby, { sep: ';' }],
       remarkBib,
     ],
     rehypePlugins: [
