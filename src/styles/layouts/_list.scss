@@ -16,14 +16,24 @@
 
   &__header {
     display: flex;
-    gap: 0.5em;
     align-items: center;
+    justify-content: center;
 
-    .fleuron-l {
-      margin-left: auto;
-    }
-    .fleuron-r {
-      margin-right: auto;
+    h2 {
+      &::before {
+        content: '\2766';
+        display: inline-block;
+        line-height: 1em;
+        margin-right: .5em;
+        transform: rotate(90deg);
+      }
+      &::after {
+        content: '\2766';
+        display: inline-block;
+        line-height: 1em;
+        margin-left: .5em;
+        transform: rotate(270deg);
+      }
     }
   }
 }
@@ -45,6 +55,7 @@
   &__header {
     display: flex;
     justify-content: space-between;
+    gap: 1em;
     color: black;
 
     time {
@@ -54,5 +65,7 @@
   &__desc {
     margin-top: 0.5em;
     color: black;
+    text-align: justify;
+    text-justify: auto;
   }
 }
