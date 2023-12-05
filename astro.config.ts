@@ -14,11 +14,12 @@ import remarkRuby       from './src/utils/remark/ruby';
 export default defineConfig({
   site: 'https://kamoshi.org',
   trailingSlash: 'always',
+  devToolbar: {
+    enabled: true,
+  },
   markdown: {
     remarkPlugins: [
-      // NOTE: pinned ^2.0.0
       remarkDirective,
-      // NOTE: pinned ^5.0.0
       remarkMath,
       [remarkEmoji, { accessible: true }],
       [remarkRuby, { sep: ';' }],
@@ -31,9 +32,6 @@ export default defineConfig({
     shikiConfig: {
       theme: 'min-light'
     },
-  },
-  experimental: {
-    devOverlay: true,
   },
   integrations: [
     mdx(),
