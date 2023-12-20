@@ -1,6 +1,5 @@
 import { defineConfig } from 'astro/config';
 import mdx              from '@astrojs/mdx';
-import solid            from '@astrojs/solid-js';
 import svelte           from '@astrojs/svelte';
 import pagefind         from 'astro-pagefind';
 import remarkDirective  from 'remark-directive';
@@ -28,7 +27,7 @@ export default defineConfig({
     ],
     rehypePlugins: [
       // https://katex.org/docs/options.html
-      [rehypeKatex, {output: 'mathml'}],
+      [rehypeKatex, { output: 'mathml' }],
     ],
     shikiConfig: {
       theme: 'min-light'
@@ -37,7 +36,6 @@ export default defineConfig({
   integrations: [
     mdx(),
     svelte({ compilerOptions: { runes: true } }),
-    solid(),
     pagefind(),
   ]
 });

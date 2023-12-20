@@ -1,6 +1,6 @@
-import { Maybe } from "purify-ts";
-import { onMount } from "solid-js";
+<script lang="ts">
 import Chart from "chart.js/auto";
+import { Maybe } from "purify-ts";
 
 
 const data = {
@@ -35,17 +35,15 @@ const options = {
   }
 };
 
-export default function ProjectSizeChart() {
-
-  onMount(() => Maybe
+$effect(() => {
+  Maybe
     .fromNullable(document.getElementById("project-size-chart") as HTMLCanvasElement)
     .chainNullable(e => e.getContext("2d"))
     .ifJust(ctx => new Chart(ctx, { type: "line", data, options }))
-  )
+})
+</script>
 
-  return (
-    <div style="width: 100%; height: 16em">
-      <canvas id="project-size-chart"></canvas>
-    </div>
-  )
-}
+
+<div style="width: 100%; height: 16em">
+  <canvas id="project-size-chart"></canvas>
+</div>
