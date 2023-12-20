@@ -1,10 +1,10 @@
 ---
 import Base from "../layouts/Base.astro";
-import Search from "../components/Search";
+import SiteSearch from '@components/search/search.svelte';
 ---
 
 <Base>
   <main>
-    <Search client:load/>
+    <SiteSearch client:load/>
   </main>
 </Base>
