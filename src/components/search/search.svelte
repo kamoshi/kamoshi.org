@@ -1,12 +1,19 @@
 <script lang="ts">
-import type { ChangeEventHandler } from 'svelte/elements';
+import type { ChangeEventHandler, UIEventHandler } from 'svelte/elements';
 
 let client = $state<Pagefind>();
 let query  = $state<string>('');
+let limit  = $state<number>(10);
 let result = $derived(client?.search(query));
 
+const require = (path: string) => import(/* @vite-ignore */path);
 
-function handler(): ChangeEventHandler<HTMLInputElement> {
+
+function sync(): void {
+  query = new URLSearchParams(window.location.search).get('q') || '';
+}
+
+function onInput(): ChangeEventHandler<HTMLInputElement> {
   let debounce: number | undefined;
 
   return event => {
@@ -20,12 +27,23 @@ function handler(): ChangeEventHandler<HTMLInputElement> {
   }
 }
 
-function sync() {
-  const params = new URLSearchParams(window.location.search);
-  query = params.get('q') || '';
-}
+function onScroll(): UIEventHandler<Window> {
+  let throttle = Date.now();
 
-const require = (path: string) => import(/* @vite-ignore */path);
+  return event => {
+    const now = Date.now();
+    if (throttle + 200 > now) return;
+
+    const { scrollHeight } = document.documentElement;
+    const { innerHeight, scrollY } = event.currentTarget;
+
+    const distance = scrollHeight - (innerHeight + scrollY);
+    if (distance < 100) {
+      limit += 5;
+      throttle = now;
+    }
+  }
+}
 
 $effect(() => {
   sync();
@@ -34,7 +52,9 @@ $effect(() => {
 </script>
 
 
-<svelte:window on:popstate={sync}/>
+<svelte:window
+  on:popstate={sync}
+  on:scroll={onScroll()}/>
 
 {#snippet tile(data: PagefindDocument)}
   <a class="c-search__result" href={data.url}>
@@ -53,7 +73,8 @@ $effect(() => {
   <h1>Search</h1>
   <input class="c-search__input" placeholder="Start typing here!"
     bind:value={query}
-    on:input={handler()}/>
+    on:input={onInput()}
+    on:input={() => limit = 10}/>
 
   {#if query && result}
     {#await result}
@@ -61,7 +82,7 @@ $effect(() => {
     {:then {results}}
       <section class="c-search__results">
         <div>Showing results for "{query}" ({results.length})</div>
-        {#each results as page (page.id)}
+        {#each results.slice(0, limit) as page (page.id)}
           {#await page.data()}
             Loading...
           {:then page}
