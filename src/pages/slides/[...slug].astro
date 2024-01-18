@@ -26,13 +26,14 @@ const slides = render(entry.body);
 
     Reveal.initialize({
       hash: true,
+      slideNumber: true,
       plugins: [
         Highlight,
       ]
     });
   </script>
 
-  <style is:global>
+  <style is:inline>
     .slides img {
       margin-left: auto;
       margin-right: auto;
