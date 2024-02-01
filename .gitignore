@@ -31,3 +31,6 @@ src/**/*.webp
 # obsidian
 .obsidian/
 .stfolder/
+
+# generated kanji
+public/static/kanji/*
