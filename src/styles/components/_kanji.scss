@@ -47,7 +47,7 @@
   }
 
   $side: 5em;
-  $radius: $side / 2;
+  $radius: math.div($side, 2);
 
   .spinner-wrap {
     display: flex;
