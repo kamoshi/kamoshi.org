@@ -32,5 +32,7 @@ src/**/*.webp
 .obsidian/
 .stfolder/
 
-# generated kanji
-public/static/kanji/*
+# Kanji generator
+tools/kklc/kklc.csv
+tools/kklc/target/
+public/static/kanji/

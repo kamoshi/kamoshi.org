@@ -1,19 +1,18 @@
+type Ruby = Array<[string, string]>;
+
 export interface KKLCEntry {
-  entry: number;
+  id: number;
   char: string;
-  meanings: string[];
-  on: string[];
-  kun: string[];
-  examples: Array<
-    [Array<[string, string]>, string]
-  >;
+  keys: string[];
   senses: string[];
+  onyomi: string[];
+  kunyomi: string[];
+  examples: Array<[string, Ruby]>;
 }
 
 
-async function chooseKanji(): Promise<number> {
+async function chooseId(): Promise<number> {
   const date = new Date().toLocaleDateString('en');
-  console.log(date);
   const data = new TextEncoder().encode(date);
 
   const hash = await crypto.subtle.digest('SHA-256', data);
@@ -23,10 +22,30 @@ async function chooseKanji(): Promise<number> {
 
   const min = 1;
   const max = 2300;
-  const id = min + (hashValue % (max - min + 1));
-  return id;
+  return min + (hashValue % (max - min + 1));
 }
 
-export async function fetchKanji(): Promise<KKLCEntry> {
-  return await fetch(`/static/kanji/${await chooseKanji()}.json`).then(res => res.json());
+function tryGetCache(id: number) {
+  const item = localStorage.getItem('kanji');
+  if (!item) return;
+
+  const cache = JSON.parse(item);
+  if (cache.id === id) {
+    return cache.data;
+  }
+}
+
+function insertCache(id: number, data: KKLCEntry) {
+  localStorage.setItem('kanji', JSON.stringify({ id, data }));
+}
+
+export async function getKanji(): Promise<KKLCEntry> {
+  const id = await chooseId();
+
+  const cache = tryGetCache(id);
+  if (cache) return cache;
+
+  const data = await fetch(`/static/kanji/${id}.json`).then(res => res.json());
+  insertCache(id, data);
+  return data;
 }

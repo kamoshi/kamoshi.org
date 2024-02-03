@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { fetchKanji, type KKLCEntry } from './data.svelte.ts';
+  import { getKanji, type KKLCEntry } from './data.svelte.ts';
 
   let state = $state<Promise<KKLCEntry>>(new Promise(() => {}));
 
-  $effect(() => void (state = fetchKanji()));
+  $effect(() => void (state = getKanji()));
 </script>
 
 
@@ -19,26 +19,26 @@
     </div>
     <div class="info-meta">
       <div class="info-key">
-        {state.meanings.join(', ')}
+        {state.keys.join(', ')}
       </div>
       <div class="info-on">
-        {state.on.join(', ')}
+        {state.onyomi.join(', ')}
       </div>
       <div class="info-kun">
-        {state.kun.join(', ')}
+        {state.kunyomi.join(', ')}
       </div>
     </div>
   </div>
-  <table>
+  <table class="examples">
     <tbody>
-    {#each state.examples as [example, meaning]}
+    {#each state.examples as [meaning, example]}
       <tr>
-        <td>
+        <td class="examples-ja">
           <ruby>
-            {#each example as [kanji, furigana]}{kanji}<rt>{furigana || ''}</rt>{/each}
+            {#each example as [expr, ruby]}{expr}<rt>{ruby||''}</rt>{/each}
           </ruby>
         </td>
-        <td>
+        <td class="examples-en">
           {meaning}
         </td>
       </tr>
