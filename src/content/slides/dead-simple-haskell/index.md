@@ -848,23 +848,146 @@ Empty
 -----
 
 ```haskell
-kill :: Box Cat -> Box Cat
+kill :: Cat -> Box Cat
 kill _ = Empty
 
-save :: Box Cat -> Box Cat
-save = id
+save :: Cat -> Box Cat
+save c = Has c
 ```
+
+<small>(no animals were harmed in the making of this slideshow)</small>
+
+---
+
+```haskell ignore
+kill :: Cat -> Box Cat
+kill _ = Empty
+
+save :: Cat -> Box Cat
+save c = Has c
+```
+
+![Kill](/static/content/slides/haskell-molecules/kill.png)
+
+---
+
+![Kill](/static/content/slides/haskell-molecules/kill.png)
+
+```haskell ignore
+λ> wrap kill `apply'` boxA
+Has Empty
+λ> wrap save `apply'` boxA
+Has (Has (Cat "Meow"))
+```
+
+---
 
 ```haskell
 class Chainable box where
   chain :: box a -> (a -> box b) -> box b
 ```
 
+---
+
+```haskell ignore
+class Chainable box where
+  chain :: box a -> (a -> box b) -> box b
+```
+
+```haskell
+instance Chainable Box where
+  chain Empty _ = Empty
+  chain (Has a) f = f a
+
+instance Chainable [] where
+  chain [] _ = []
+  chain xs f = [x' | x <- xs, x' <- f x]
+```
+
+---
+
+```haskell ignore
+instance Chainable Box where
+  chain Empty _ = Empty
+  chain (Has a) f = f a
+
+instance Chainable [] where
+  chain [] _ = []
+  chain xs f = [x' | x <- xs, x' <- f x]
+```
+
+![Save-kill](/static/content/slides/haskell-molecules/save-kill.png)
+
+---
+
+![Save-kill](/static/content/slides/haskell-molecules/save-kill.png)
+
+```haskell ignore
+λ> boxA `chain` save `chain` save `chain` save
+Has (Cat "Meow")
+λ> boxA `chain` save `chain` kill `chain` save
+Empty
+```
+
+---
+
+```haskell
+kill' :: Cat -> [Cat]
+kill' _ = []
+
+save' :: Cat -> [Cat]
+save' c = [c]
+
+clone :: Cat -> [Cat]
+clone (Cat c) = [Cat $ c <> "L" , Cat $ c <> "R"]
+```
+
+---
+
+```haskell ignore
+kill' :: Cat -> [Cat]
+kill' _ = []
+
+save' :: Cat -> [Cat]
+save' c = [c]
+
+clone :: Cat -> [Cat]
+clone (Cat c) = [Cat $ c <> "L" , Cat $ c <> "R"]
+```
+
+```haskell ignore
+λ> [catA] `chain` save' `chain` save' `chain` save'
+[Cat "Meow"]
+λ> [catA] `chain` save' `chain` clone `chain` save'
+[Cat "MeowL",Cat "MeowR"]
+λ> [catA] `chain` more' `chain` clone `chain` save'
+[Cat "MeowLL",Cat "MeowLR",Cat "MeowRL",Cat "MeowRR"]
+λ> [catA] `chain` clone `chain` clone `chain` kill'
+[]
+```
+
+---
+
+```haskell ignore
+λ> [catA] `chain` save' `chain` save' `chain` save'
+[Cat "Meow"]
+λ> [catA] `chain` save' `chain` clone `chain` save'
+[Cat "MeowL",Cat "MeowR"]
+λ> [catA] `chain` more' `chain` clone `chain` save'
+[Cat "MeowLL",Cat "MeowLR",Cat "MeowRL",Cat "MeowRR"]
+λ> [catA] `chain` clone `chain` clone `chain` kill'
+[]
+```
+
+![Chain list](/static/content/slides/haskell-molecules/chain-list.png)
+
+---
+
+![Callbacks](/static/content/slides/haskell-molecules/callbacks.jpg)
+
 -----
 
-In fact it all already exists.
-
-![This was all dream](/static/content/slides/haskell-molecules/_cave.jpg)
+![This was all dream](/static/content/slides/haskell-molecules/cave.png)
 
 ---
 
@@ -872,7 +995,69 @@ What's a `Mappable`?
 
 ---
 
-![It's a Functor](/static/content/slides/haskell-molecules/scoobydoo.jpg)
+It's a `Functor`
+
+![It's a Functor](/static/content/slides/haskell-molecules/its-functor.png)
+
+---
+
+It's a `Functor`
+
+```haskell ignore
+class Mappable box where
+  map' :: (a -> b) -> box a -> box b
+```
+
+```haskell ignore
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+  (<$) :: a -> f b -> f a
+```
+
+---
+
+It's a `Functor`
+
+```haskell ignore
+λ> map' (+1) []
+[]
+λ> map' (+1) [1, 2, 3]
+[2,3,4]
+λ> map' (*3) [1, 2, 3]
+[3,6,9]
+```
+
+```haskell ignore
+λ> fmap (+1) []
+[]
+λ> fmap (+1) [1, 2, 3]
+[2,3,4]
+λ> fmap (*3) [1, 2, 3]
+[3,6,9]
+λ> 1 <$ [1, 2, 3]
+[1,1,1]
+```
+
+---
+
+It's a `Functor`
+
+![Tardis](/static/content/slides/haskell-molecules/tardis.jpg)
+
+---
+
+It's a `Functor`
+
+![Tardis inside](/static/content/slides/haskell-molecules/tardis-inside.jpg)
+
+---
+
+```haskell ignore
+main :: IO ()
+main = print "Hello World!"
+```
+
+![Tardis inside](/static/content/slides/haskell-molecules/io.png)
 
 ---
 
@@ -880,7 +1065,73 @@ What's a `Appliable`?
 
 ---
 
-![It's a Functor](/static/content/slides/haskell-molecules/scoobydoo.jpg)
+It's an Applicative
+
+![It's an applicative](/static/content/slides/haskell-molecules/its-applicative.png)
+
+---
+
+It's an Applicative
+
+```haskell ignore
+class Appliable box where
+  wrap   :: a -> box a
+  apply' :: box (a -> b) -> box a -> box b
+```
+
+```haskell ignore
+class (Functor f) => Applicative f where
+  pure  :: a -> f a
+  (<*>) :: f (a -> b) -> f a -> f b
+```
+
+---
+
+It's an Applicative
+
+```haskell ignore
+λ> wrap merge `apply'` [catA] `apply'` []
+[]
+λ> wrap merge `apply'` [catA] `apply'` [catB]
+[Dog "Meow & Nyaa"]
+λ> wrap merge `apply'` [catA] `apply'` [catB, Cat "C"]
+[Dog "Meow & Nyaa",Dog "Meow & C"]
+```
+
+```haskell ignore
+λ> pure merge <*> [catA] <*> []
+[]
+λ> pure merge <*> [catA] <*> [catB]
+[Dog "Meow & Nyaa"]
+λ> pure merge <*> [catA] <*> [catB, Cat "C"]
+[Dog "Meow & Nyaa",Dog "Meow & C"]
+```
+
+---
+
+```haskell ignore
+λ> pure merge <*> [catA] <*> []
+[]
+λ> pure merge <*> [catA] <*> [catB]
+[Dog "Meow & Nyaa"]
+λ> pure merge <*> [catA] <*> [catB, Cat "C"]
+[Dog "Meow & Nyaa",Dog "Meow & C"]
+```
+
+```haskell ignore
+λ> merge <$> [catA] <*> []
+[]
+λ> merge <$> [catA] <*> [catB]
+[Dog "Meow & Nyaa"]
+λ> merge <$> [catA] <*> [catB, Cat "C"]
+[Dog "Meow & Nyaa",Dog "Meow & C"]
+```
+
+```haskell ignore
+merge :: Cat -> Cat -> Dog
+
+_ = merge catA catB
+```
 
 ---
 
@@ -888,14 +1139,57 @@ What's a `Chainable`?
 
 ---
 
-![It's a Functor](/static/content/slides/haskell-molecules/scoobydoo.jpg)
+It's a monad
+
+![It's a monad](/static/content/slides/haskell-molecules/its-monad.png)
 
 ---
 
-## Fun with monadic parsing
+It's a monad
 
+```haskell ignore
+class Chainable box where
+  chain :: box a -> (a -> box b) -> box b
+```
+
+```haskell ignore
+class Applicative m => Monad m where
+  (>>=) :: m a -> (a -> m b) -> m b
+
+  (>>) :: m a -> m b -> m b
+  m >> k = m >>= \_ -> k
+
+  return :: a -> m a
+  return = pure
+```
 
 ---
+
+It's a monad
+
+```haskell ignore
+λ> [catA] `chain` save' `chain` save' `chain` save'
+[Cat "Meow"]
+λ> [catA] `chain` save' `chain` clone `chain` save'
+[Cat "MeowL",Cat "MeowR"]
+λ> [catA] `chain` save' `chain` clone `chain` kill'
+[]
+```
+
+```haskell ignore
+λ> [catA] >>= save' >>= save' >>= save'
+[Cat "Meow"]
+λ> [catA] >>= save' >>= clone >>= save'
+[Cat "MeowL",Cat "MeowR"]
+λ> [catA] >>= save' >>= clone >>= kill'
+[]
+```
+
+---
+
+![Just one more typeclass bro](/static/content/slides/haskell-molecules/pepe.png)
+
+-----
 
 ## More here:
 
