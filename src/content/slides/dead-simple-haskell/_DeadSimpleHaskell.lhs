@@ -383,8 +383,8 @@ Type       | Inhibitants
 ---------- | -----------
 ()         | 1
 Bool       | 2
-() | Bool  | 1 + 2 = 3
-H' | Bool  | 3 + 2 = 5
+() \| Bool | 1 + 2 = 3
+H' \| Bool | 3 + 2 = 5
 
 ```haskell ignore
 data Either a b = Left a | Right b
