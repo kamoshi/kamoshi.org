@@ -15,6 +15,7 @@ export const collections = {
       title: z.string(),
       date: z.date(),
       tags: z.array(z.string()).optional(),
+      animate: z.boolean().optional(),
     })
   }),
   wiki: defineCollection({

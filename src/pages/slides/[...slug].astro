@@ -9,11 +9,16 @@ import { render } from '../../assets/reveal-ssr/markdown';
 
 export async function getStaticPaths () {
   return (await getCollection('slides'))
-    .map(entry => ({params: {slug: entry.slug}, props: {entry}}));
+    .map(entry => ({
+      params: { slug: entry.slug },
+      props: { entry }
+    }));
 }
 
 const { entry } = Astro.props;
-const slides = render(entry.body);
+
+const animate = entry.data.animate;
+const slides = render(entry.body, animate);
 ---
 
 <Base>
@@ -26,6 +31,7 @@ const slides = render(entry.body);
 
     Reveal.initialize({
       hash: true,
+      slideNumber: true,
       plugins: [
         Highlight,
       ]

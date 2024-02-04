@@ -26,7 +26,7 @@ const ESCAPED_CHARS: {[key: string]: string} = {
 const REGEX_HL_LINES = /\[([\s\d,|-]*)\]/;
 function transformCode(node: CodeNode, index: number, parent: Parent) {
   if (!node.meta || !REGEX_HL_LINES.test(node.meta)) return;
-  
+
   const langtag = node.lang ? ` class="${node.lang}" ` : ''
   const numbers = node.meta.match(REGEX_HL_LINES)![1];
   const escaped = node.value.replace(/[&<>"']/g, match => ESCAPED_CHARS[match] || '');
@@ -55,16 +55,21 @@ const SPLIT_H = /\n-----\n/;
 const SPLIT_V = /\n---\n/;
 
 
-function wrapSection(content: string): string {
-  return `<section>${content}</section>`;
+function wrapSection(animate: boolean, id: number) {
+  return (content: string): string => {
+    return animate
+      ? `<section data-auto-animate data-auto-animate-id="${id}">${content}</section>`
+      : `<section>${content}</section>`;
+  }
 }
 
-export function render(text: string): string {
+export function render(text: string, animate = false): string {
+  const wrapOuter = wrapSection(false, 0);
   return text
     .split(SPLIT_H)
     .map(stacks => stacks.split(SPLIT_V).map(slide => String(renderer.processSync(slide))))
-    .map(stack => (stack.length > 1)
-      ? wrapSection(stack.map(wrapSection).join(''))
-      : wrapSection(stack[0]))
+    .map((stack, i) => (stack.length > 1)
+      ? wrapOuter(stack.map(wrapSection(animate, i)).join(''))
+      : wrapOuter(stack[0]))
     .join('');
 }
