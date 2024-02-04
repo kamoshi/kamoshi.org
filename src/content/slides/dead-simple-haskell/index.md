@@ -581,21 +581,144 @@ mixNoble n1 n2 = toColor n1 <> "-" <> toColor n2
 
 ## Shrodinger's cat
 
-(A change of topic)
+![Cat in a box](/static/content/slides/haskell-molecules/cat.png)
 
 ---
+
+![Cat in a box](/static/content/slides/haskell-molecules/cat.png)
 
 ```haskell
 data Box a
   = Has a
   | Empty
+  deriving Show
+```
+
+---
+
+![Map](/static/content/slides/haskell-molecules/map.png)
+
+---
+
+![Map](/static/content/slides/haskell-molecules/map.png)
+
+```haskell
+class Mappable box where
+  map' :: (a -> b) -> box a -> box b
+```
+
+---
+
+```haskell ignore
+class Mappable box where
+  map' :: (a -> b) -> box a -> box b
+```
+
+```haskell
+instance Mappable Box where
+  map' _ Empty   = Empty
+  map' f (Has a) = Has (f a)
+
+instance Mappable [] where
+  map' _ [] = []
+  map' f xs = [f x | x <- xs]
+```
+
+---
+
+```haskell ignore
+instance Mappable [] where
+  map' _ [] = []
+  map' f xs = [f x | x <- xs]
+```
+
+![Cat list](/static/content/slides/haskell-molecules/cat-list.png)
+
+-----
+
+![Cat merge](/static/content/slides/haskell-molecules/cat-merge.png)
+
+---
+
+![Cat merge](/static/content/slides/haskell-molecules/cat-merge.png)
+
+```haskell
+data Cat = Cat String deriving Show
+data Dog = Dog String deriving Show
+
+merge :: Cat -> Cat -> Dog
+merge (Cat c1)  (Cat c2) = Dog $ c1 <> " & " <> c2
 ```
 
 ---
 
 ```haskell
-class Mappable box where
-  map' :: box a -> box b
+catA = Cat "Meow"
+catB = Cat "Nyaa"
+```
+
+```haskell ignore
+λ> merge catA catB
+Dog "Meow & Nyaa"
+```
+
+---
+
+```haskell
+boxA  = Has $ Cat "Meow" :: Box Cat
+boxB  = Has $ Cat "Nyaa" :: Box Cat
+empty = Empty            :: Box Cat
+```
+
+---
+
+```haskell ignore
+boxA  = Has $ Cat "Meow" :: Box Cat
+boxB  = Has $ Cat "Nyaa" :: Box Cat
+empty = Empty            :: Box Cat
+```
+
+```haskell ignore
+λ> merge boxA catB
+
+<interactive>:7:7: error:
+    • Couldn't match expected type ‘Cat’ with actual type ‘Box Cat’
+    • In the first argument of ‘merge’, namely ‘boxA’
+      In the expression: merge boxA catB
+      In an equation for ‘it’: it = merge boxA catB
+```
+
+---
+
+```haskell ignore
+boxA  = Has $ Cat "Meow" :: Box Cat
+boxB  = Has $ Cat "Nyaa" :: Box Cat
+empty = Empty            :: Box Cat
+```
+
+```haskell
+merge' :: Box Cat -> Box Cat -> Box Dog
+merge' Empty _ = Empty
+merge' _ Empty = Empty
+merge' (Has c1) (Has c2) = Has $ merge c1 c2
+```
+
+---
+
+```haskell ignore
+merge' :: Box Cat -> Box Cat -> Box Dog
+merge' Empty _ = Empty
+merge' _ Empty = Empty
+merge' (Has c1) (Has c2) = merge c1 c2
+```
+
+```haskell ignore
+λ> merge' boxA boxB
+Has (Dog "Meow & Nyaa")
+λ> merge' boxA (Has catB)
+Has (Dog "Meow & Nyaa")
+λ> merge' boxA empty
+Empty
 ```
 
 ---
@@ -607,6 +730,130 @@ class Appliable box where
 ```
 
 ---
+
+```haskell ignore
+class Appliable box where
+  wrap   :: a -> box a
+  apply' :: box (a -> b) -> box a -> box b
+```
+
+```haskell
+instance Appliable Box where
+  wrap = Has
+  apply' Empty _ = Empty
+  apply' _ Empty = Empty
+  apply' (Has f) (Has a) = Has $ f a
+
+instance Appliable [] where
+  wrap x = [x]
+  apply' [] _ = []
+  apply' _ [] = []
+  apply' fs xs = [f x | f <- fs, x <- xs]
+```
+
+---
+
+
+```haskell ignore
+instance Appliable Box where
+  wrap = Has
+  apply' Empty _ = Empty
+  apply' _ Empty = Empty
+  apply' (Has f) (Has a) = Has $ f a
+
+instance Appliable [] where
+  wrap x = [x]
+  apply' [] _ = []
+  apply' _ [] = []
+  apply' fs xs = [f x | f <- fs, x <- xs]
+```
+
+```haskell ignore
+λ> apply' (apply' (wrap merge) boxA) boxB
+Has (Dog "Meow & Nyaa")
+λ> apply' (apply' (wrap merge) boxA) empty
+Empty
+```
+
+---
+
+```haskell ignore
+instance Appliable Box where
+  wrap = Has
+  apply' Empty _ = Empty
+  apply' _ Empty = Empty
+  apply' (Has f) (Has a) = Has $ f a
+
+instance Appliable [] where
+  wrap x = [x]
+  apply' [] _ = []
+  apply' _ [] = []
+  apply' fs xs = [f x | f <- fs, x <- xs]
+```
+
+```haskell ignore
+λ> apply' (apply' (wrap merge) [Cat "A"]) [Cat "B1", Cat "B2"]
+[Dog "A & B1",Dog "A & B2"]
+λ> apply' (apply' (wrap merge) [Cat "A"]) []
+[]
+```
+
+---
+
+
+```haskell ignore
+λ> apply' (apply' (wrap merge) [Cat "A"]) [Cat "B1", Cat "B2"]
+[Dog "A & B1",Dog "A & B2"]
+λ> apply' (apply' (wrap merge) [Cat "A"]) []
+[]
+```
+
+```haskell ignore
+λ> wrap merge `apply'` [Cat "A"] `apply'` [Cat "B1", Cat "B2"]
+[Dog "A & B1",Dog "A & B2"]
+λ> wrap merge `apply'` [Cat "A"] `apply'` []
+[]
+```
+
+---
+
+```haskell ignore
+λ> wrap merge `apply'` [Cat "A"] `apply'` [Cat "B1", Cat "B2"]
+[Dog "A & B1",Dog "A & B2"]
+λ> wrap merge `apply'` [Cat "A"] `apply'` []
+[]
+```
+
+```haskell ignore
+λ> wrap merge `apply'` boxA `apply'` boxB
+Has (Dog "Meow & Nyaa")
+λ> wrap merge `apply'` boxA `apply'` empty
+Empty
+```
+
+---
+
+```haskell
+merge4 :: Cat -> Cat -> Cat -> Cat -> Dog
+merge4 (Cat a) (Cat b) (Cat c) (Cat d) = Dog $ a <> b <> c <> d
+```
+
+```haskell ignore
+λ> wrap merge4 `apply'` boxA `apply'` boxB `apply'` boxA `apply'` boxB
+Has (Dog "MeowNyaaMeowNyaa")
+λ> wrap merge4 `apply'` boxA `apply'` boxB `apply'` empty `apply'` boxB
+Empty
+```
+
+-----
+
+```haskell
+kill :: Box Cat -> Box Cat
+kill _ = Empty
+
+save :: Box Cat -> Box Cat
+save = id
+```
 
 ```haskell
 class Chainable box where
