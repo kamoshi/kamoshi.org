@@ -444,6 +444,88 @@ Crazy Void ()
 
 Σ = 0 + 1 + 0 × 1 + 1 = 2
 
+---
+
+How do lists fit into this?
+
+---
+
+How do lists fit into this?
+
+```haskell
+data List a
+  = Nil
+  | Cons a (List a)
+```
+```haskell
+-- [1, 2, 3] or 1 : 2 : 3 []
+list1 = Cons 1 (Cons 2 (Cons 3 Nil))
+-- []
+list2 = Nil
+```
+
+---
+
+```haskell ignore
+data List a
+  = Nil
+  | Cons a (List a)
+```
+
+x = 1 + a * x
+
+---
+
+```haskell ignore
+data List a
+  = Nil
+  | Cons a (List a)
+```
+
+```
+x = 1 + a * x
+x = 1 + a * (1 + a * x)
+x = 1 + a * (1 + a * (1 + a * (...)))
+```
+
+---
+
+```haskell ignore
+data List a
+  = Nil
+  | Cons a (List a)
+```
+
+```
+x = 1 + a * x
+x = 1 + a * (1 + a * x)
+x = 1 + a * (1 + a * (1 + a * (...)))
+```
+
+```
+x = 1 + a + a² + a³ + a⁴ + a⁵ + ...
+```
+
+---
+
+```haskell ignore
+data List a
+  = Nil
+  | Cons a (List a)
+```
+
+```
+x = 1 + a * x
+x = 1 + a * (1 + a * x)
+x = 1 + a * (1 + a * (1 + a * (...)))
+```
+
+```
+x = 1 + a + a² + a³ + a⁴ + a⁵ + ...
+```
+```haskell ignore
+data List a = () | (a) | (a, a) | (a, a, a) | ...
+```
 
 -----
 
@@ -598,6 +680,11 @@ data Box a
 
 ![Map](/static/content/slides/haskell-molecules/map.png)
 
+```haskell
+data Cat = Cat String deriving Show
+data Dog = Dog String deriving Show
+```
+
 ---
 
 ![Map](/static/content/slides/haskell-molecules/map.png)
@@ -618,7 +705,8 @@ class Mappable box where
 instance Mappable Box where
   map' _ Empty   = Empty
   map' f (Has a) = Has (f a)
-
+```
+```haskell
 instance Mappable [] where
   map' _ [] = []
   map' f xs = [f x | x <- xs]
@@ -634,6 +722,48 @@ instance Mappable [] where
 
 ![Cat list](/static/content/slides/haskell-molecules/cat-list.png)
 
+---
+
+![Cat list](/static/content/slides/haskell-molecules/cat-list.png)
+
+```haskell ignore
+λ> a = Has $ Cat "cat"
+λ> :type a
+a :: Box Cat
+λ> :type map' toDog a
+map' toDog a :: Box Dog
+λ> :type map toDog [Cat "a", Cat "b"]
+map toDog [Cat "a", Cat "b"] :: [Dog]
+```
+
+---
+
+```haskell
+toDog :: Cat -> Dog
+toDog (Cat name) = Dog name
+```
+
+```haskell
+convertAllCats :: Mappable box => box Cat -> box Dog
+convertAllCats cs = map' toDog cs
+```
+
+---
+
+Any "box" can go in 👍
+
+```haskell ignore
+convertAllCats :: Mappable box => box Cat -> box Dog
+convertAllCats cs = map' toDog cs
+```
+
+```haskell ignore
+λ> convertAllCats [Cat "a", Cat "b"]
+[Dog "a",Dog "b"]
+λ> convertAllCats $ Has $ Cat "a"
+Has (Dog "a")
+```
+
 -----
 
 ![Cat merge](/static/content/slides/haskell-molecules/cat-merge.png)
@@ -643,9 +773,6 @@ instance Mappable [] where
 ![Cat merge](/static/content/slides/haskell-molecules/cat-merge.png)
 
 ```haskell
-data Cat = Cat String deriving Show
-data Dog = Dog String deriving Show
-
 merge :: Cat -> Cat -> Dog
 merge (Cat c1)  (Cat c2) = Dog $ c1 <> " & " <> c2
 ```
@@ -662,6 +789,8 @@ catB = Cat "Nyaa"
 Dog "Meow & Nyaa"
 ```
 
+![Cat merge](/static/content/slides/haskell-molecules/merge.png)
+
 ---
 
 ```haskell
@@ -670,6 +799,8 @@ boxB  = Has $ Cat "Nyaa" :: Box Cat
 empty = Empty            :: Box Cat
 ```
 
+![Cat merge](/static/content/slides/haskell-molecules/merge-box.png)
+
 ---
 
 ```haskell ignore
@@ -677,6 +808,8 @@ boxA  = Has $ Cat "Meow" :: Box Cat
 boxB  = Has $ Cat "Nyaa" :: Box Cat
 empty = Empty            :: Box Cat
 ```
+
+![Cat merge](/static/content/slides/haskell-molecules/merge-box.png)
 
 ```haskell ignore
 λ> merge boxA catB
@@ -696,6 +829,8 @@ boxB  = Has $ Cat "Nyaa" :: Box Cat
 empty = Empty            :: Box Cat
 ```
 
+![Cat merge](/static/content/slides/haskell-molecules/merge-prim.png)
+
 ```haskell
 merge' :: Box Cat -> Box Cat -> Box Dog
 merge' Empty _ = Empty
@@ -711,6 +846,8 @@ merge' Empty _ = Empty
 merge' _ Empty = Empty
 merge' (Has c1) (Has c2) = merge c1 c2
 ```
+
+![Cat merge](/static/content/slides/haskell-molecules/merge-prim.png)
 
 ```haskell ignore
 λ> merge' boxA boxB
@@ -728,6 +865,8 @@ class Appliable box where
   wrap   :: a -> box a
   apply' :: box (a -> b) -> box a -> box b
 ```
+
+![Wrap apply](/static/content/slides/haskell-molecules/wrap-apply.png)
 
 ---
 
@@ -831,7 +970,11 @@ Has (Dog "Meow & Nyaa")
 Empty
 ```
 
+![Wrap apply](/static/content/slides/haskell-molecules/wrap-apply.png)
+
 ---
+
+![Wrap apply](/static/content/slides/haskell-molecules/wrap-apply.png)
 
 ```haskell
 merge4 :: Cat -> Cat -> Cat -> Cat -> Dog
@@ -848,11 +991,10 @@ Empty
 -----
 
 ```haskell
-kill :: Cat -> Box Cat
-kill _ = Empty
-
-save :: Cat -> Box Cat
-save c = Has c
+killOrSave :: Cat -> Box Cat
+killOrSave cat@(Cat name) = case name of
+  "Meow" -> Empty
+  _      -> Has cat
 ```
 
 <small>(no animals were harmed in the making of this slideshow)</small>
@@ -860,11 +1002,10 @@ save c = Has c
 ---
 
 ```haskell ignore
-kill :: Cat -> Box Cat
-kill _ = Empty
-
-save :: Cat -> Box Cat
-save c = Has c
+killOrSave :: Cat -> Box Cat
+killOrSave cat@(Cat name) = case name of
+  "Meow" -> Empty
+  _      -> Has cat
 ```
 
 ![Kill](/static/content/slides/haskell-molecules/kill.png)
@@ -874,10 +1015,12 @@ save c = Has c
 ![Kill](/static/content/slides/haskell-molecules/kill.png)
 
 ```haskell ignore
-λ> wrap kill `apply'` boxA
+λ> wrap killOrSave `apply'` Has (Cat "Meow")
 Has Empty
-λ> wrap save `apply'` boxA
-Has (Has (Cat "Meow"))
+λ> wrap killOrSave `apply'` Has (Cat "Nyaa")
+Has (Has (Cat "Nyaa"))
+λ> wrap killOrSave `apply'` Empty
+Empty
 ```
 
 ---
@@ -917,6 +1060,18 @@ instance Chainable [] where
 ```
 
 ![Save-kill](/static/content/slides/haskell-molecules/save-kill.png)
+
+---
+
+![Save-kill](/static/content/slides/haskell-molecules/save-kill.png)
+
+```haskell
+kill :: Cat -> Box Cat
+kill _ = Empty
+
+save :: Cat -> Box Cat
+save = Has
+```
 
 ---
 
