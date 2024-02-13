@@ -1,19 +1,35 @@
-#![deny(clippy::all)]
+mod captures;
 mod configs;
 
 use std::collections::HashMap;
 use tree_sitter_highlight::Highlighter;
 use tree_sitter_highlight::HighlightEvent;
-use configs::{CONFIGS, NAMES};
 
 
 #[macro_use]
 extern crate napi_derive;
 
 
+fn map_event(event: HighlightEvent, src: &str) -> HashMap<String, String> {
+    match event {
+        HighlightEvent::Source {start, end} => HashMap::from([
+            ("kind".into(), "text".into()),
+            ("text".into(), src[start..end].into())
+        ]),
+        HighlightEvent::HighlightStart(s) => HashMap::from([
+            ("kind".into(), "open".into()),
+            ("name".into(), captures::NAMES[s.0].into())
+        ]),
+        HighlightEvent::HighlightEnd => HashMap::from([
+            ("kind".into(), "close".into())
+        ]),
+    }
+}
+
+
 #[napi]
 pub fn hl(lang: String, src: String) -> Vec<HashMap<String, String>> {
-    let config = match CONFIGS.get(&*lang) {
+    let config = match configs::get_config(&lang) {
         Some(c) => c,
         None => return vec![
             HashMap::from([
@@ -24,31 +40,20 @@ pub fn hl(lang: String, src: String) -> Vec<HashMap<String, String>> {
     };
 
 
-    let mut highlighter = Highlighter::new();
-    let highlights = highlighter.highlight(
+    let mut hl = Highlighter::new();
+    let highlights = hl.highlight(
         &config,
         src.as_bytes(),
         None,
-        |key| CONFIGS.get(key).map(|arc| arc.as_ref())
+        |name| configs::get_config(name)
     ).unwrap();
 
     let mut out = vec![];
     for event in highlights {
-        match event.unwrap() {
-            HighlightEvent::Source {start, end} => out.push(HashMap::from([
-                ("kind".into(), "text".into()),
-                ("text".into(), src[start..end].into())
-            ])),
-            HighlightEvent::HighlightStart(s) => out.push(HashMap::from([
-                ("kind".into(), "open".into()),
-                ("name".into(), NAMES[s.0].into())
-            ])),
-            HighlightEvent::HighlightEnd => out.push(HashMap::from([
-                ("kind".into(), "close".into())
-            ]))
-        }
+        let event = event.unwrap();
+        let obj = map_event(event, &src);
+        out.push(obj);
     }
-
     out
 }
 

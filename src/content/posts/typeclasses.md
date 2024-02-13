@@ -226,7 +226,6 @@ An example of this is the `Functor` instance of `Either`:
 instance Functor (Either a) where
   fmap _ (Left x)   = Left x
   fmap f (Right x)  = Right (f x)
-
 ```
 
 In the instance declaration above, we specify that, for any type `a`, `Either a` is an instance of the `Functor` type class.

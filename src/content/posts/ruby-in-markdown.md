@@ -25,7 +25,7 @@ When looking for a way to extend remark I first looked for an existing plugin wh
 
 I was able to write a really simple and short solution using a pair of Regexes working in conjunction to split strings and replace custom ruby shorthands with HTML, which then passes through to Rehype.
 
-```ts
+```typescript
 import { visit } from "unist-util-visit";
 import type { Node } from "unist-util-visit/lib";
 

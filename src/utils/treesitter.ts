@@ -9,50 +9,54 @@ function text(value: string) {
   }
 }
 
-function span(classes: string[], value: string) {
+function span(name: string) {
   return {
     type: 'element',
     tagName: 'span',
     properties: {
-      className: classes.map(c => c.replace('.', '-')).join(' '),
+      className: name.replace('.', '-'),
     },
-    children: [
-      text(value),
-    ]
+    children: []
   }
 }
 
 
 export default function rehypeTreesitter() {
   return function (tree: any) {
-    visit(tree, null, (node, _, parent) => {
-      if (node.tagName !== 'code' || parent.tagName !== 'pre') return;
-      parent.properties.className = ['kanagawa'];
+    visit(tree, null, (node, _, above) => {
+      if (node.tagName !== 'code' || above.tagName !== 'pre') return;
+      const code = node.children?.[0].value || '';
+      const lang = node.properties.className?.[0].replace('language-', '') || '';
+      const parent = { ...above };
 
-      const code = node.children?.[0].value;
-      const lang = node.properties.className?.[0].replace('language-', '');
-      if (!lang || !code) return;
+      above.tagName = 'figure';
+      above.children = [parent];
+      above.properties = {
+        className: 'listing kanagawa',
+        ...!!lang && { "data-lang": lang },
+      };
 
-      const stack: string[] = [];
-      const children = (node.children = [] as any[] );
-      const events = treesitter.hl(lang, code);
+      const root = { children: [] };
+      const ptrs: any[] = [root];
 
-      for (const event of events) {
+      for (const event of treesitter.hl(lang, code)) {
         switch (event.kind) {
           case 'text': {
-            const child = (stack.length)
-              ? span(stack, event.text)
-              : text(event.text);
-            children.push(child);
+            const inserted = text(event.text);
+            ptrs.at(-1).children.push(inserted);
           } break;
           case 'open': {
-            stack.push(event.name);
+            const inserted = span(event.name);
+            ptrs.at(-1).children.push(inserted);
+            ptrs.push(inserted);
           } break;
           case 'close': {
-            stack.pop();
+            ptrs.pop();
           } break;
         }
       }
+
+      node.children = root.children;
     });
   };
 }

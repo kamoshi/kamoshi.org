@@ -40,50 +40,57 @@
 
 .kanagawa {
   background-color: var(--kngw-sumiInk1);
+  border: 0.25rem solid var(--kngw-sumiInk3);
   color: var(--kngw-fujiWhite);
 
-  .string {
-    color: var(--kngw-springGreen);
+  &::before {
+    background: var(--kngw-sumiInk3);
   }
 
-  .type, .type-builtin {
-    color: var(--kngw-waveAqua2);
-  }
+  // Identifiers
+  .variable-builtin { color: var(--kngw-waveRed); }
+  .variable-parameter { color: var(--kngw-springViolet2); }
 
-  .keyword {
-    color: var(--kngw-oniViolet);
-  }
+  .constant { color: var(--kngw-surimiOrange); }
 
-  .constructor {
-    color: var(--kngw-springBlue);
-  }
+  .label { color: var(--kngw-oniViolet); }
 
-  .tag {
-    color: var(--kngw-springBlue);
-  }
+  // Literals
+  .string { color: var(--kngw-springGreen); }
+  .string-special { color: var(--kngw-boatYellow2); }
 
-  .variable {
-    color: var(--kngw-fujiWhite);
-  }
+  .number { color: var(--kngw-sakuraPink); }
+  .number-float { color: var(--kngw-sakuraPink); };
 
-  .operator, .string-special {
-    color: var(--kngw-boatYellow2);
-  }
+  // Types
+  .type { color: var(--kngw-waveAqua2); }
+  .type-builtin { color: var(--kngw-waveAqua2); }
 
-  .comment {
-    color: var(--kngw-fujiGray);
-  }
+  .attribute { color: var(--kngw-carpYellow); }
+  .property { color: var(--kngw-carpYellow); }
 
-  .include {
-    color: var(--kngw-oniViolet);
-  }
+  // Functions
+  .function { color: var(--kngw-crystalBlue); }
+  .function-macro { color: var(--kngw-waveRed); }
+  .function-method { color: var(--kngw-crystalBlue) }
 
-  .function {
-    color: var(--kngw-crystalBlue);
-  }
+  .constructor { color: var(--kngw-springBlue); }
+  .operator { color: var(--kngw-boatYellow2); }
 
-  .property, .attribute {
-    color: var(--kngw-carpYellow);
-  }
+  // Keywords
+  .keyword { color: var(--kngw-oniViolet); }
+
+  .keyword-return { color: var(--kngw-peachRed); }
+  .keyword-debug { color: var(--kngw-peachRed); }
+  .keyword-exception { color: var(--kngw-peachRed); }
+
+  // Punctuation
+  .punctuation-delimiter { color: var(--kngw-springViolet2); }
+  .punctuation-bracket { color: var(--kngw-springViolet2); }
+
+  // Comments
+  .comment { color: var(--kngw-fujiGray); }
+
+  // Markup
+  .tag { color: var(--kngw-springBlue); }
 }
-
