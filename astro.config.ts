@@ -8,6 +8,7 @@ import rehypeKatex      from 'rehype-katex';
 import remarkEmoji      from 'remark-emoji';
 import remarkBib        from './src/utils/remark/bib';
 import remarkRuby       from './src/utils/remark/ruby';
+import rehypeTreesitter from './src/utils/treesitter';
 
 
 // https://astro.build/config
@@ -18,6 +19,7 @@ export default defineConfig({
     enabled: true,
   },
   markdown: {
+    syntaxHighlight: false,
     remarkPlugins: [
       remarkDirective,
       remarkMath,
@@ -28,10 +30,8 @@ export default defineConfig({
     rehypePlugins: [
       // https://katex.org/docs/options.html
       [rehypeKatex, { output: 'mathml' }],
+      rehypeTreesitter,
     ],
-    shikiConfig: {
-      theme: 'min-light'
-    },
   },
   integrations: [
     mdx(),

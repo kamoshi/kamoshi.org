@@ -1,0 +1,89 @@
+:root {
+  --kngw-fujiWhite:      #DCD7BA; // Default foreground
+  --kngw-oldForeground:  #C8C093; // Dark foreground (statuslines)
+  --kngw-sumiInk0:       #16161D; // Dark background (statuslines and floating windows)
+  --kngw-sumiInk1:       #1F1F28; // Default background
+  --kngw-sumiInk2:       #2A2A37; // Lighter background (colorcolumn, folds)
+  --kngw-sumiInk3:       #363646; // Lighter background (cursorline)
+  --kngw-sumiInk4:       #54546D; // Darker foreground (line numbers, fold column, non-text characters), float borders
+  --kngw-waveBlue1:      #223249; // Popup background, visual selection background
+  --kngw-waveBlue2:      #2D4F67; // Popup selection background, search background
+  --kngw-winterGreen:    #2B3328; // Diff Add (background)
+  --kngw-winterYellow:   #49443C; // Diff Change (background)
+  --kngw-winterRed:      #43242B; // Diff Deleted (background)
+  --kngw-winterBlue:     #252535; // Diff Line (background)
+  --kngw-autumnGreen:    #76946A; // Git Add
+  --kngw-autumnRed:      #C34043; // Git Delete
+  --kngw-autumnYellow:   #DCA561; // Git Change
+  --kngw-samuraiRed:     #E82424; // Diagnostic Error
+  --kngw-roninYellow:    #FF9E3B; // Diagnostic Warning
+  --kngw-waveAqua1:      #6A9589; // Diagnostic Info
+  --kngw-dragonBlue:     #658594; // Diagnostic Hint
+  --kngw-fujiGray:       #727169; // Comments
+  --kngw-springViolet1:  #938AA9; // Light foreground
+  --kngw-oniViolet:      #957FB8; // Statements and Keywords
+  --kngw-crystalBlue:    #7E9CD8; // Functions and Titles
+  --kngw-springViolet2:  #9CABCA; // Brackets and punctuation
+  --kngw-springBlue:     #7FB4CA; // Specials and builtin functions
+  --kngw-lightBlue:      #A3D4D5; // Not used
+  --kngw-waveAqua2:      #7AA89F; // Types
+  --kngw-springGreen:    #98BB6C; // Strings
+  --kngw-boatYellow1:    #938056; // Not used
+  --kngw-boatYellow2:    #C0A36E; // Operators, RegEx
+  --kngw-carpYellow:     #E6C384; // Identifiers
+  --kngw-sakuraPink:     #D27E99; // Numbers
+  --kngw-waveRed:        #E46876; // Standout specials 1 (builtin variables)
+  --kngw-peachRed:       #FF5D62; // Standout specials 2 (exception handling, return)
+  --kngw-surimiOrange:   #FFA066; // Constants, imports, booleans
+  --kngw-katanaGray:     #717C7C; // Deprecated
+}
+
+.kanagawa {
+  background-color: var(--kngw-sumiInk1);
+  color: var(--kngw-fujiWhite);
+
+  .string {
+    color: var(--kngw-springGreen);
+  }
+
+  .type, .type-builtin {
+    color: var(--kngw-waveAqua2);
+  }
+
+  .keyword {
+    color: var(--kngw-oniViolet);
+  }
+
+  .constructor {
+    color: var(--kngw-springBlue);
+  }
+
+  .tag {
+    color: var(--kngw-springBlue);
+  }
+
+  .variable {
+    color: var(--kngw-fujiWhite);
+  }
+
+  .operator, .string-special {
+    color: var(--kngw-boatYellow2);
+  }
+
+  .comment {
+    color: var(--kngw-fujiGray);
+  }
+
+  .include {
+    color: var(--kngw-oniViolet);
+  }
+
+  .function {
+    color: var(--kngw-crystalBlue);
+  }
+
+  .property, .attribute {
+    color: var(--kngw-carpYellow);
+  }
+}
+
