@@ -23,6 +23,8 @@ pub static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| 
         ("js", "javascript"),
         ("md", "markdown"),
         ("mdx", "markdown"),
+        ("query", "scheme"),
+        ("scm", "scheme"),
         ("scss", "css"),
         ("ts", "typescript")
     ])
@@ -87,6 +89,18 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
             )
         ),
         (
+            "jsx",
+            config_for(
+                tree_sitter_javascript::language(),
+                &format!("{} {}",
+                    tree_sitter_javascript::HIGHLIGHT_QUERY,
+                    tree_sitter_javascript::JSX_HIGHLIGHT_QUERY
+                ),
+                tree_sitter_javascript::INJECTION_QUERY,
+                tree_sitter_javascript::LOCALS_QUERY,
+            )
+        ),
+        (
             "markdown",
             config_for(
                 tree_sitter_md::language(),
@@ -114,15 +128,52 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
             )
         ),
         (
+            "scheme",
+            config_for(
+                tree_sitter_scheme::language(),
+                tree_sitter_scheme::HIGHLIGHTS_QUERY,
+                "",
+                ""
+            )
+        ),
+        (
+            "toml",
+            config_for(
+                tree_sitter_toml::language(),
+                tree_sitter_toml::HIGHLIGHT_QUERY,
+                "",
+                ""
+            )
+        ),
+        (
+            "tsx",
+            config_for(
+                tree_sitter_typescript::language_tsx(),
+                &format!("{} {} {}",
+                    tree_sitter_javascript::HIGHLIGHT_QUERY,
+                    tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
+                    tree_sitter_typescript::HIGHLIGHT_QUERY,
+                ),
+                tree_sitter_javascript::INJECTION_QUERY,
+                &format!("{} {}",
+                    tree_sitter_javascript::LOCALS_QUERY,
+                    tree_sitter_typescript::LOCALS_QUERY
+                )
+            )
+        ),
+        (
             "typescript",
             config_for(
                 tree_sitter_typescript::language_typescript(),
-                &format!("{}\n{}",
+                &format!("{} {}",
                     tree_sitter_javascript::HIGHLIGHT_QUERY,
                     tree_sitter_typescript::HIGHLIGHT_QUERY
                 ),
                 tree_sitter_javascript::INJECTION_QUERY,
-                tree_sitter_typescript::LOCALS_QUERY,
+                &format!("{} {}",
+                    tree_sitter_javascript::LOCALS_QUERY,
+                    tree_sitter_typescript::LOCALS_QUERY
+                ),
             )
         ),
     ])
