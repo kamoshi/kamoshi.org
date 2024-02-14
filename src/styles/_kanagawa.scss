@@ -40,7 +40,7 @@
 
 .kanagawa {
   background-color: var(--kngw-sumiInk1);
-  border: 0.25rem solid var(--kngw-sumiInk3);
+  border-color: var(--kngw-sumiInk3);
   color: var(--kngw-fujiWhite);
 
   &::before {

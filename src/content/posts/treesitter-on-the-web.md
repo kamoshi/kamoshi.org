@@ -62,6 +62,7 @@ Next we need to import all the external libraries required to compile for Node.
 napi = { version = "2.12.2", default-features = false, features = ["napi4"] }
 napi-derive = "2.12.2"
 ```
+
 In this section we define the dependencies required for the project. We need to 
 use the `napi` crate. The feature flag indicates compatibility with Node.js N-API version 4.
 The comment provides a link to the Node.js documentation explaining the N-API version matrix.
@@ -78,6 +79,7 @@ In this section, we define build dependencies. Build dependencies are dependenci
 lto = true
 strip = "symbols"
 ```
+
 We can add Treesitter dependencies like this.
 
 ```toml
@@ -91,7 +93,6 @@ tree-sitter-astro = { git = "https://github.com/virchau13/tree-sitter-astro.git"
 tree-sitter-css = "0.20.0"
 tree-sitter-html = "0.20.0"
 tree-sitter-javascript = "0.20.3"
-
 ```
 
 In Rust we need to create a function which will be callable from the JavaScript
