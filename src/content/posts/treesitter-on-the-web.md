@@ -1,6 +1,10 @@
 ---
 title: Bringing treesitter to the Internet
 date: 2024-02-14T18:32:41.645Z
+desc: >
+    Are we stuck using regex based syntax highlighters forever?
+    What if there is an alternative we could use on the web?
+    In this article I try to use a real parser to highlight syntax in code blocks.
 ---
 
 Recently, there has been a complete rewrite of [Shiki](https://github.com/shikijs/shiki),
@@ -72,7 +76,8 @@ The comment provides a link to the Node.js documentation explaining the N-API ve
 napi-build = "2.0.1"
 ```
 
-In this section, we define build dependencies. Build dependencies are dependencies that are only needed during the build process, such as compiler plugins or code generation tools.
+In this section, we define build dependencies. Build dependencies are dependencies
+that are only needed during the build process, such as compiler plugins or code generation tools.
 
 ```toml
 [profile.release]
