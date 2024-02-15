@@ -1,3 +1,7 @@
+update:
+	pnpm update
+	pnpm update svelte@next
+
 dev:
 	pnpm run astro dev
 

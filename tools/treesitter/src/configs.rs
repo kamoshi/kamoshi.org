@@ -49,7 +49,7 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
                 tree_sitter_astro::language(),
                 query!("astro/highlights"),
                 query!("astro/injections"),
-                ""
+                "",
             )
         ),
         (
@@ -83,7 +83,10 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
             "javascript",
             config_for(
                 tree_sitter_javascript::language(),
-                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                &format!("{} {}",
+                    query!("ecma/highlights"),
+                    tree_sitter_javascript::HIGHLIGHT_QUERY,
+                ),
                 tree_sitter_javascript::INJECTION_QUERY,
                 tree_sitter_javascript::LOCALS_QUERY,
             )
@@ -92,9 +95,10 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
             "jsx",
             config_for(
                 tree_sitter_javascript::language(),
-                &format!("{} {}",
+                &format!("{} {} {}",
+                    query!("ecma/highlights"),
                     tree_sitter_javascript::HIGHLIGHT_QUERY,
-                    tree_sitter_javascript::JSX_HIGHLIGHT_QUERY
+                    tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
                 ),
                 tree_sitter_javascript::INJECTION_QUERY,
                 tree_sitter_javascript::LOCALS_QUERY,
@@ -106,7 +110,7 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
                 tree_sitter_md::language(),
                 tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
                 tree_sitter_md::INJECTION_QUERY_BLOCK,
-                ""
+                "",
             )
         ),
         (
@@ -115,7 +119,7 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
                 tree_sitter_regex::language(),
                 query!("regex/highlights"),
                 "",
-                ""
+                "",
             )
         ),
         (
@@ -133,7 +137,7 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
                 tree_sitter_scheme::language(),
                 tree_sitter_scheme::HIGHLIGHTS_QUERY,
                 "",
-                ""
+                "",
             )
         ),
         (
@@ -142,14 +146,15 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
                 tree_sitter_toml::language(),
                 tree_sitter_toml::HIGHLIGHT_QUERY,
                 "",
-                ""
+                "",
             )
         ),
         (
             "tsx",
             config_for(
                 tree_sitter_typescript::language_tsx(),
-                &format!("{} {} {}",
+                &format!("{} {} {} {}",
+                    query!("ecma/highlights"),
                     tree_sitter_javascript::HIGHLIGHT_QUERY,
                     tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
                     tree_sitter_typescript::HIGHLIGHT_QUERY,
@@ -165,9 +170,10 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
             "typescript",
             config_for(
                 tree_sitter_typescript::language_typescript(),
-                &format!("{} {}",
+                &format!("{} {} {}",
+                    query!("ecma/highlights"),
                     tree_sitter_javascript::HIGHLIGHT_QUERY,
-                    tree_sitter_typescript::HIGHLIGHT_QUERY
+                    tree_sitter_typescript::HIGHLIGHT_QUERY,
                 ),
                 tree_sitter_javascript::INJECTION_QUERY,
                 &format!("{} {}",

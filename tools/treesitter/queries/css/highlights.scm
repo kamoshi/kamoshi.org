@@ -1,10 +1,38 @@
-(comment) @comment
+[
+  "@media"
+  "@charset"
+  "@namespace"
+  "@supports"
+  "@keyframes"
+  (at_keyword)
+] @keyword.directive
+
+"@import" @keyword.import
 
 [
-  (tag_name)
+  (to)
+  (from)
+] @keyword
+
+(comment) @comment @spell
+
+(tag_name) @tag
+
+(class_name) @type
+
+(id_name) @constant
+
+[
+  (property_name)
+  (feature_name)
+] @property
+
+[
   (nesting_selector)
   (universal_selector)
-] @tag
+] @character.special
+
+(function_name) @function
 
 [
   "~"
@@ -19,60 +47,59 @@
   "~="
   "$="
   "*="
+] @operator
+
+[
   "and"
   "or"
   "not"
   "only"
-] @operator
+] @keyword.operator
 
-(attribute_selector (plain_value) @string)
+(important) @type.qualifier
 
-(attribute_name) @attribute
-(pseudo_element_selector (tag_name) @attribute)
-(pseudo_class_selector (class_name) @attribute)
+(attribute_selector
+  (plain_value) @string)
 
-[
-  (class_name)
-  (id_name)
-  (namespace_name)
-  (property_name)
-  (feature_name)
-] @property
+(pseudo_element_selector
+  "::"
+  (tag_name) @attribute)
 
-(function_name) @function
+(pseudo_class_selector
+  (class_name) @attribute)
 
-(
-  [
-    (property_name)
-    (plain_value)
-  ] @variable.special
-  (#match? @variable.special "^--")
-)
+(attribute_name) @tag.attribute
+
+(namespace_name) @module
+
+((property_name) @variable
+  (#lua-match? @variable "^[-][-]"))
+
+((plain_value) @variable
+  (#lua-match? @variable "^[-][-]"))
 
 [
-  "@media"
-  "@import"
-  "@charset"
-  "@namespace"
-  "@supports"
-  "@keyframes"
-  (at_keyword)
-  (to)
-  (from)
-  (important)
-]  @keyword
+  (string_value)
+  (color_value)
+  (unit)
+] @string
 
-(string_value) @string
-(color_value) @string.special
+(integer_value) @number
+
+(float_value) @number.float
 
 [
-  (integer_value)
-  (float_value)
-] @number
-
-(unit) @type
-
-[
+  "#"
   ","
+  "."
   ":"
+  "::"
+  ";"
 ] @punctuation.delimiter
+
+[
+  "{"
+  ")"
+  "("
+  "}"
+] @punctuation.bracket

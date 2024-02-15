@@ -80,10 +80,16 @@
 
   // Keywords
   .keyword { color: var(--kngw-oniViolet); }
-
+  .keyword-coroutine { color: var(--kngw-oniViolet); }
+  .keyword-function { color: var(--kngw-oniViolet); }
+  .keyword-operator { color: var(--kngw-boatYellow2); }
+  .keyword-import { color: var(--kngw-oniViolet); }
+  .keyword-repeat { color: var(--kngw-oniViolet); }
   .keyword-return { color: var(--kngw-peachRed); }
   .keyword-debug { color: var(--kngw-peachRed); }
   .keyword-exception { color: var(--kngw-peachRed); }
+
+  .keyword-conditional { color: var(--kngw-oniViolet); }
 
   // Punctuation
   .punctuation-delimiter { color: var(--kngw-springViolet2); }
