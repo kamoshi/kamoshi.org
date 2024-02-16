@@ -180,7 +180,7 @@ export const { hl } = require('./treesitter.linux-x64-gnu.node');
 
 Once we have this library we can load it inside Node (almost) like any other module.
 
-```
+```node
 Welcome to Node.js v21.6.1.
 Type ".help" for more information.
 > const treesitter = await import('./dist/index.js')
