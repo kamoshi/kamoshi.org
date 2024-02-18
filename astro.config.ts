@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import sitemap          from '@astrojs/sitemap';
 import mdx              from '@astrojs/mdx';
 import svelte           from '@astrojs/svelte';
 import pagefind         from 'astro-pagefind';
@@ -15,9 +16,6 @@ import rehypeTreesitter from './src/utils/treesitter';
 export default defineConfig({
   site: 'https://kamoshi.org',
   trailingSlash: 'always',
-  devToolbar: {
-    enabled: true,
-  },
   markdown: {
     syntaxHighlight: false,
     remarkPlugins: [
@@ -37,5 +35,6 @@ export default defineConfig({
     mdx(),
     svelte({ compilerOptions: { runes: true } }),
     pagefind(),
+    sitemap()
   ]
 });
