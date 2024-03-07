@@ -23,6 +23,7 @@ pub static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| 
         ("js", "javascript"),
         ("md", "markdown"),
         ("mdx", "markdown"),
+        ("py", "python"),
         ("query", "scheme"),
         ("scm", "scheme"),
         ("scss", "css"),
@@ -110,6 +111,15 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
                 tree_sitter_md::language(),
                 tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
                 tree_sitter_md::INJECTION_QUERY_BLOCK,
+                "",
+            )
+        ),
+        (
+            "python",
+            config_for(
+                tree_sitter_python::language(),
+                tree_sitter_python::HIGHLIGHT_QUERY,
+                "",
                 "",
             )
         ),

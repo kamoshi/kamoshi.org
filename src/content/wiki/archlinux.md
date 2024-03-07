@@ -148,3 +148,10 @@ SDL_IM_MODULE=fcitx
 GLFW_IM_MODULE=ibus
 ```
 
+### KDE Plasma 6
+
+> Detect GTK_IM_MODULE and QT_IM_MODULE being set and Wayland Input method
+> frontend is working. It is recommended to unset GTK_IM_MODULE and
+> QT_IM_MODULE and use Wayland input method frontend instead. For more details
+> see https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland#KDE_Plasma 
+
