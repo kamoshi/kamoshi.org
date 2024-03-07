@@ -27,10 +27,10 @@ export function collapse(pages: Page[]): PageTree {
         ptr.children = ptr.children
           .ifJust(trie => trie[slug] = next)
           .altLazy(() => Maybe.of({[slug]: next}));
-        
+
         return next;
       }, root);
-    
+
     ptr.slug = Maybe.of(`/${page.slug}/`);
     ptr.title = page.data.title;
   }
