@@ -1,17 +1,5 @@
 # build output
 dist/
-# generated types
-.astro/
-
-# dependencies
-node_modules/
-
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
 
 # environment variables
 .env
@@ -28,11 +16,10 @@ src/**/*.jpg
 src/**/*.png
 src/**/*.webp
 
-# obsidian
-.obsidian/
-.stfolder/
-
 # Kanji generator
 tools/kklc/kklc.csv
 tools/kklc/target/
 public/static/kanji/
+
+# Rust
+target/
