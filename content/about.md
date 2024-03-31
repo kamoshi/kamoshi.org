@@ -1,9 +1,7 @@
 ---
-layout: ../layouts/Wiki.astro
 title: "About me"
 date: 2021-09-10T19:34:01+02:00
 ---
-import Timeline from "@components/Timeline.astro";
 
 I studied Computer Science at a university and I have professional experience
 as a TypeScript developer. I can use languages such as Rust, C#, TypeScript or
@@ -21,23 +19,6 @@ ahead of me, I am determined to achieve fluency in Japanese language in the
 future.
 
 
-一番好きな同人サークルは
-
-- Alstroemeria Records（音楽）
-- Shibayan Records（音楽）
-- Syrufit（音楽）
-- 凋叶棕（音楽）
-- azmaya（同人誌）
-- へ蝶々（同人誌）
-
-※　Syrufitさんはもう活動を停止しました。
-
-
-## Timeline
-
-<Timeline />
-
-
 ## Q&A
 
 **Q. Why did you create this website?**
@@ -47,6 +28,13 @@ I currently know about running a website and web development is a direct result
 of me working on this. The CSS styles, for example, were all hand rolled by
 myself. To simplify everything it's a static website served from Nginx, this
 way I don't have to do nearly any maintenance work.
+
+**Q. Can I take a look at the source code?**
+
+Sure thing! The source code is available in
+[a repository on GitHub](https://github.com/kamoshi/kamoshi.org),
+and you're welcome to learn. I have just one request please, if you would like
+to use this code for your own website do allow others to learn from it too!
 
 **Q. What's your setup?**
 

@@ -66,12 +66,12 @@
         transform: scale(1) rotate(360deg);
       }
     }
-  
+
     &-text {
       display: flex;
       flex-direction: column;
     }
-  
+
     &-main {
       margin-bottom: -0.15em;
 
@@ -80,7 +80,7 @@
         width: auto;
       }
     }
-  
+
     &-sub {
       align-self: flex-start;
       max-width: max-content;
@@ -88,9 +88,6 @@
       white-space: nowrap;
       font-size: 0.675rem;
       line-height: 1.2em;
-      animation:
-        typing 1.25s steps(20, end) forwards,
-        blink-caret .75s step-end 4;
     }
   }
 
@@ -114,11 +111,11 @@
       font-size: 1.2rem;
       text-decoration: none;
       color: var(--c-white);
-  
+
       @media (min-width: consts.$bp-md) {
         border-radius: 5px;
       }
-  
+
       &:hover {
         background-color: hsla(0, 0%, 0%, 0.20);
       }
@@ -141,13 +138,13 @@
       position: relative;
       transition: background-color 100ms linear;
       @extend %burger-line;
-      
+
       &::before {
         top: -0.8rem;
         @extend %burger-line;
         @extend %burger-wing;
       }
-  
+
       &::after {
         top: 0.8rem;
         @extend %burger-line;
@@ -155,14 +152,4 @@
       }
     }
   }
-}
-
-@keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes blink-caret {
-  from, to { border-right: 2px solid white; }
-  50% { border-right: transparent; }
 }

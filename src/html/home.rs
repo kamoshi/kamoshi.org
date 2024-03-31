@@ -45,9 +45,9 @@ fn photo() -> impl Renderable {
             h2 .p-card__heading {
                 "Image of the Month"
             }
-            a .home-card-image__link href="TODO" {
+            a .home-card-image__link href="/static/IMG_20231029_111650.jpg" {
                 img .home-card-image__image
-                    src="TODO"
+                    src="/static/IMG_20231029_111650.jpg"
                     alt="Autumn park with colorful trees and fallen leaves";
             }
         }
@@ -66,7 +66,7 @@ pub fn home<'data, 'home, R>(main: R) -> impl Renderable + 'home
             }
             aside .l-home__aside {
                 (intro())
-                (kanji())
+                // (kanji())
                 (photo())
             }
         }

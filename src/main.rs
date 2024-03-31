@@ -284,7 +284,6 @@ fn main() {
     println!("{}", String::from_utf8(res.stdout).unwrap());
 
     let res = Command::new("esbuild")
-        .arg("js/splash.js")
         .arg("js/reveal.js")
         .arg("js/photos.ts")
         .arg("--format=esm")

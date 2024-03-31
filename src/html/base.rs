@@ -55,7 +55,7 @@ pub fn navbar() -> impl Renderable {
                             (Raw(include_str!("logotype.svg")))
                         }
                         div #p-nav-splash .p-nav__logo-sub {
-                          "Doesn't require JavaScript!"
+                          "夢現の遥か彼方"
                         }
                     }
                 }
@@ -73,10 +73,6 @@ pub fn navbar() -> impl Renderable {
                         }
                     }
                 }
-            }
-
-            script type="module" {
-                (Raw("import 'splash';"))
             }
         }
     )
