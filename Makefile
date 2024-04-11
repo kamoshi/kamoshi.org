@@ -1,19 +1,8 @@
-update:
-	pnpm update
-	pnpm update svelte@next
-
-dev:
-	pnpm run astro dev
-
 build:
-	pnpm run astro build
+	cargo run
 
 deploy: build
-	rsync -Pavz ./dist/ kamoshi:/var/www/kamoshi.org --delete
+	rsync -Pavz ./dist/ kamoshi:/var/www/kamoshi.org --delete --mkpath
 
-preview: build
-	pnpm run astro preview
-
-treesitter:
-	cd ./tools/treesitter; \
-		pnpm run build
+serve:
+	python -m http.server -d ./dist

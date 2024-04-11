@@ -12,9 +12,9 @@ dist/
 public/**/*.jpg
 public/**/*.png
 public/**/*.webp
-src/**/*.jpg
-src/**/*.png
-src/**/*.webp
+content/**/*.jpg
+content/**/*.png
+content/**/*.webp
 
 # Kanji generator
 tools/kklc/kklc.csv

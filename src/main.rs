@@ -193,6 +193,13 @@ fn transform<T>(meta: gen::Source) -> gen::Asset
 }
 
 fn main() {
+    let xd = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .output()
+        .unwrap();
+
+    println!("{:?}", String::from_utf8(xd.stdout).unwrap());
+
     if fs::metadata("dist").is_ok() {
         println!("Cleaning dist");
         fs::remove_dir_all("dist").unwrap();
