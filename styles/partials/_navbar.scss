@@ -1,0 +1,155 @@
+@use '../consts' as consts;
+
+
+%burger-line {
+  height: 0.15em;
+  width: 100%;
+  background-color: var(--c-white);
+}
+
+%burger-wing {
+  content: "";
+  position: absolute;
+  transition: transform 100ms ease-in-out;
+}
+
+#p-nav-toggle:checked {
+  ~ .p-nav__bar .p-nav__burger-icon {
+    background-color: transparent;
+
+    &::before {
+      transform: translateY(0.8rem) rotateZ(45deg);
+    }
+
+    &::after {
+      transform: translateY(-0.8rem) rotateZ(-45deg);
+    }
+  }
+
+  ~ .p-nav__menu {
+    display: block;
+
+    @media (min-width: consts.$bp-md) {
+      display: inline-flex;
+    }
+  }
+}
+
+.p-nav {
+  background: var(--momiji);
+  background-color: var(--c-primary);
+
+  @media (min-width: consts.$bp-md) {
+    display: flex;
+    gap: 0.5em;
+  }
+
+  &__bar {
+    display: flex;
+    height: 4em;
+  }
+
+  &__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-right: auto;
+    padding: 0.5em;
+    color: white;
+    text-decoration: none;
+    font-family: Arial, Helvetica, sans-serif;
+
+    &-icon {
+      transition: transform 0.5s ease-in-out;
+
+      &:hover {
+        transform: scale(1) rotate(360deg);
+      }
+    }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    &-main {
+      margin-bottom: -0.15em;
+
+      svg {
+        max-height: 2em;
+        width: auto;
+      }
+    }
+
+    &-sub {
+      align-self: flex-start;
+      max-width: max-content;
+      overflow: hidden;
+      white-space: nowrap;
+      font-size: 0.675rem;
+      line-height: 1.2em;
+    }
+  }
+
+  &__menu {
+    display: none;
+    list-style-type: none;
+
+    @media (min-width: consts.$bp-md) {
+      display: flex;
+      align-items: center;
+      gap: 0.25em;
+    }
+
+    &-item {
+      text-align: center;
+    }
+
+    &-link {
+      display: block;
+      padding: 0.2em 0.3em;
+      font-size: 1.2rem;
+      text-decoration: none;
+      color: var(--c-white);
+
+      @media (min-width: consts.$bp-md) {
+        border-radius: 5px;
+      }
+
+      &:hover {
+        background-color: hsla(0, 0%, 0%, 0.20);
+      }
+    }
+  }
+
+  &__burger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4em;
+    padding: 1em;
+    cursor: pointer;
+
+    @media (min-width: consts.$bp-md) {
+      display: none;
+    }
+
+    &-icon {
+      position: relative;
+      transition: background-color 100ms linear;
+      @extend %burger-line;
+
+      &::before {
+        top: -0.8rem;
+        @extend %burger-line;
+        @extend %burger-wing;
+      }
+
+      &::after {
+        top: 0.8rem;
+        @extend %burger-line;
+        @extend %burger-wing;
+      }
+    }
+  }
+}
