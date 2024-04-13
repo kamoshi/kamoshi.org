@@ -1,7 +1,9 @@
 .footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-column-gap: 0.25em;
+  justify-items: center;
+
   max-height: min-content;
   padding: 0.5em;
   font-size: var(--fs-sm);
@@ -10,6 +12,14 @@
 
   a {
     color: var(--c-primary);
+  }
+
+  .left {
+    margin-right: auto;
+  }
+
+  .right {
+    margin-left: auto;
   }
 
   &__cc-wrap {

@@ -1,6 +1,8 @@
 use chrono::{self, Datelike};
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
+use crate::REPO;
+
 
 pub fn head(title: &str) -> impl Renderable + '_ {
     maud_move!(
@@ -83,10 +85,11 @@ pub fn footer() -> impl Renderable {
     let copy = format!("Copyright &copy; {} Maciej Jur", year);
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{}", mail);
+    let repo = format!("{}/tree/{}", &REPO.link, &REPO.hash);
 
     maud_move!(
         footer .footer {
-            div {
+            div .left {
                 div {
                     (Raw(copy))
                 }
@@ -94,7 +97,10 @@ pub fn footer() -> impl Renderable {
                     (mail)
                 }
             }
-            a .footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {
+            a href=(repo) {
+                "view source"
+            }
+            a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {
                 img .footer__cc-stamp alt="Creative Commons License" width="88" height="31" src="/static/svg/by.svg";
             }
         }

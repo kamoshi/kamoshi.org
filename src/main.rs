@@ -1,15 +1,39 @@
+use std::process::Command;
 use std::{collections::HashMap, path::Path};
 use std::fs;
 use chrono::Datelike;
 use grass;
 use html::LinkableData;
 use hypertext::{Raw, Renderable};
+use once_cell::sync::Lazy;
 
 mod md;
 mod html;
 mod ts;
 mod gen;
 mod utils;
+
+
+#[derive(Debug)]
+struct RepoInfo {
+    pub link: String,
+    pub hash: String,
+}
+
+
+static REPO: Lazy<RepoInfo> = Lazy::new(|| RepoInfo {
+    link: "https://github.com/kamoshi/kamoshi.org".into(),
+    hash: String::from_utf8(
+        Command::new("git")
+            .args(["rev-parse", "HEAD"])
+            .output()
+            .unwrap()
+            .stdout
+    )
+        .unwrap()
+        .trim()
+        .into()
+});
 
 
 trait Transformable {
@@ -193,12 +217,7 @@ fn transform<T>(meta: gen::Source) -> gen::Asset
 }
 
 fn main() {
-    let xd = Command::new("git")
-        .args(["rev-parse", "HEAD"])
-        .output()
-        .unwrap();
-
-    println!("{:?}", String::from_utf8(xd.stdout).unwrap());
+    println!("{:?}", &*REPO);
 
     if fs::metadata("dist").is_ok() {
         println!("Cleaning dist");
@@ -280,8 +299,6 @@ fn main() {
 
     let css = grass::from_path("styles/styles.scss", &grass::Options::default()).unwrap();
     fs::write("dist/styles.css", css).unwrap();
-
-    use std::process::Command;
 
     let res = Command::new("pagefind")
         .args(&["--site", "dist"])
