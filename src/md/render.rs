@@ -75,5 +75,3 @@ pub fn render(raw: &str) -> String {
     String::from_utf8(html).unwrap()
 }
 
-
-

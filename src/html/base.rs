@@ -5,6 +5,8 @@ use crate::REPO;
 
 
 pub fn head(title: &str) -> impl Renderable + '_ {
+    let title = format!("{} | kamoshi.org", title);
+
     maud_move!(
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1";
@@ -81,8 +83,7 @@ pub fn navbar() -> impl Renderable {
 }
 
 pub fn footer() -> impl Renderable {
-    let year = chrono::Utc::now().year();
-    let copy = format!("Copyright &copy; {} Maciej Jur", year);
+    let copy = format!("Copyright &copy; {} Maciej Jur", &REPO.year);
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{}", mail);
     let repo = format!("{}/tree/{}", &REPO.link, &REPO.hash);
@@ -97,8 +98,13 @@ pub fn footer() -> impl Renderable {
                     (mail)
                 }
             }
-            a href=(repo) {
-                "view source"
+            div .repo {
+                a href=(repo) {
+                    (&REPO.hash)
+                }
+                div {
+                    (&REPO.date)
+                }
             }
             a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {
                 img .footer__cc-stamp alt="Creative Commons License" width="88" height="31" src="/static/svg/by.svg";

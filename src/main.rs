@@ -1,7 +1,7 @@
 use std::process::Command;
 use std::{collections::HashMap, path::Path};
 use std::fs;
-use chrono::Datelike;
+use chrono::{Datelike, Utc};
 use grass;
 use html::LinkableData;
 use hypertext::{Raw, Renderable};
@@ -15,25 +15,48 @@ mod utils;
 
 
 #[derive(Debug)]
-struct RepoInfo {
+struct BuildInfo {
+    pub year: i32,
+    pub date: String,
     pub link: String,
     pub hash: String,
 }
 
 
-static REPO: Lazy<RepoInfo> = Lazy::new(|| RepoInfo {
-    link: "https://github.com/kamoshi/kamoshi.org".into(),
-    hash: String::from_utf8(
-        Command::new("git")
-            .args(["rev-parse", "HEAD"])
-            .output()
+static REPO: Lazy<BuildInfo> = Lazy::new(|| {
+    let time = chrono::Utc::now();
+
+    BuildInfo {
+        year: time.year(),
+        date: time.format("%Y/%m/%d %H:%M").to_string(),
+        link: "https://github.com/kamoshi/kamoshi.org".into(),
+        hash: String::from_utf8(
+            Command::new("git")
+                .args(["rev-parse", "--short", "HEAD"])
+                .output()
+                .unwrap()
+                .stdout
+        )
             .unwrap()
-            .stdout
-    )
-        .unwrap()
-        .trim()
-        .into()
+            .trim()
+            .into()
+    }
 });
+
+/// This struct allows for querying the website hierarchy
+struct Everything<'a> {
+    assets: &'a [&'a gen::Asset],
+}
+
+impl Everything<'_> {
+    fn get_linkable(&self, path: &str) -> Vec<LinkableData> {
+        let pattern = glob::Pattern::new(path).unwrap();
+        self.assets.iter()
+            .filter(|f| pattern.matches_path(&f.out))
+            .filter_map(|f| f.link.clone())
+            .collect()
+    }
+}
 
 
 trait Transformable {
@@ -157,15 +180,7 @@ fn transform<T>(meta: gen::Source) -> gen::Asset
                 let (fm, md) = md::preflight::<T>(&data);
                 let link = T::as_link(&fm, Path::new("/").join(&loc).to_str().unwrap().to_owned());
 
-                let call = move |assets: &[&gen::Asset]| {
-                    // let lib = assets.iter().filter_map(|&a| match &a.kind {
-                    //     gen::AssetKind::Bib(lib) => Some(lib),
-                    //     _ => None,
-                    // }).next();
-                    //
-                    // println!("{:?}", lib);
-
-
+                let call = move |_: &Everything| {
                     let data = T::render(&md);
                     let data = T::transform(&fm, Raw(data)).render().into();
                     data
@@ -217,8 +232,6 @@ fn transform<T>(meta: gen::Source) -> gen::Asset
 }
 
 fn main() {
-    println!("{:?}", &*REPO);
-
     if fs::metadata("dist").is_ok() {
         println!("Cleaning dist");
         fs::remove_dir_all("dist").unwrap();
@@ -245,22 +258,12 @@ fn main() {
                     path: "content/index.md".into()
                 }
             }.into(),
-            gen::Virtual("posts/index.html".into(), Box::new(|assets| {
-                let pattern = glob::Pattern::new("posts/**/*.html").unwrap();
-                let posts = assets.iter()
-                    .filter(|f| pattern.matches_path(&f.out))
-                    .filter_map(|f| f.link.clone())
-                    .collect();
-                to_list(posts)
-            })).into(),
-            gen::Virtual("slides/index.html".into(), Box::new(|assets| {
-                let pattern = glob::Pattern::new("slides/**/*.html").unwrap();
-                let posts = assets.iter()
-                    .filter(|f| pattern.matches_path(&f.out))
-                    .filter_map(|f| f.link.clone())
-                    .collect();
-                to_list(posts)
-            })).into(),
+            gen::Virtual("posts/index.html".into(), Box::new(|all|
+                to_list(all.get_linkable("posts/**/*.html"))
+            )).into(),
+            gen::Virtual("slides/index.html".into(), Box::new(|all|
+                to_list(all.get_linkable("slides/**/*.html"))
+            )).into(),
         ],
         gen::gather("content/about.md", &["md"].into())
             .into_iter()

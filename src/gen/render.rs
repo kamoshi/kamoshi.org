@@ -3,10 +3,11 @@ use std::path::{Path, PathBuf};
 use std::io::Write;
 
 use crate::html::LinkableData;
+use crate::Everything;
 
 
 pub enum AssetKind {
-    Html(Box<dyn Fn(&[&Asset]) -> String>),
+    Html(Box<dyn Fn(&Everything) -> String>),
     Image,
     Unknown,
     Bib(hayagriva::Library),
@@ -19,13 +20,13 @@ pub struct Asset {
     pub meta: super::Source,
 }
 
-pub struct Virtual(pub PathBuf, pub Box<dyn Fn(&[&Asset]) -> String>);
+pub struct Virtual(pub PathBuf, pub Box<dyn Fn(&Everything) -> String>);
 
 impl Virtual {
     pub fn new<P, F>(path: P, call: F) -> Self
         where
             P: AsRef<Path>,
-            F: Fn(&[&Asset]) -> String + 'static
+            F: Fn(&Everything) -> String + 'static
     {
         Self(path.as_ref().into(), Box::new(call))
     }
@@ -58,16 +59,18 @@ pub fn render(items: &[Item]) {
         })
         .collect();
 
+    let everything = Everything { assets: &assets };
+
     for item in items {
         match item {
-            Item::Real(real) => render_real(real, &assets),
-            Item::Fake(fake) => render_fake(fake, &assets),
+            Item::Real(real) => render_real(real, &everything),
+            Item::Fake(fake) => render_fake(fake, &everything),
         }
     }
 }
 
 
-fn render_real(item: &Asset, assets: &[&Asset]) {
+fn render_real(item: &Asset, assets: &Everything) {
     match &item.kind {
         AssetKind::Html(render) => {
             let i = &item.meta.path;
@@ -98,7 +101,7 @@ fn render_real(item: &Asset, assets: &[&Asset]) {
     }
 }
 
-fn render_fake(item: &Virtual, assets: &[&Asset]) {
+fn render_fake(item: &Virtual, assets: &Everything) {
     let Virtual(out, render) = item;
 
     let o = Path::new("dist").join(&out);

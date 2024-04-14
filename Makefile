@@ -2,7 +2,7 @@ build:
 	cargo run
 
 deploy: build
-	rsync -Pavz ./dist/ kamoshi:/var/www/kamoshi.org --delete --mkpath
+	rsync -Pavzq ./dist/ kamoshi:/var/www/kamoshi.org --delete
 
 serve:
 	python -m http.server -d ./dist
