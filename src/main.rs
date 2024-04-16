@@ -1,7 +1,7 @@
 use std::process::Command;
 use std::{collections::HashMap, path::Path};
 use std::fs;
-use chrono::{Datelike, Utc};
+use chrono::Datelike;
 use grass;
 use html::LinkableData;
 use hypertext::{Raw, Renderable};
@@ -12,6 +12,7 @@ mod html;
 mod ts;
 mod gen;
 mod utils;
+mod text;
 
 
 #[derive(Debug)]
@@ -90,7 +91,7 @@ impl Transformable for md::Post {
     }
 
     fn render(data: &str) -> String {
-        md::render(data)
+        text::md::parse(data)
     }
 }
 
@@ -115,7 +116,7 @@ impl Transformable for md::Slide {
     fn render(data: &str) -> String {
         data
             .split("\n-----\n")
-            .map(|chunk| chunk.split("\n---\n").map(md::render).collect::<Vec<_>>())
+            .map(|chunk| chunk.split("\n---\n").map(text::md::parse).collect::<Vec<_>>())
             .map(|stack| match stack.len() > 1 {
                 true  => format!("<section>{}</section>", stack.into_iter().map(|slide| format!("<section>{slide}</section>")).collect::<String>()),
                 false => format!("<section>{}</section>", stack[0])
@@ -138,7 +139,7 @@ impl Transformable for md::Wiki {
     }
 
     fn render(data: &str) -> String {
-        md::render(data)
+        text::md::parse(data)
     }
 }
 
@@ -246,7 +247,7 @@ fn main() {
             gen::Asset {
                 kind: gen::AssetKind::Html(Box::new(|_| {
                     let data = std::fs::read_to_string("content/index.md").unwrap();
-                    let data = md::render(&data);
+                    let data = text::md::parse(&data);
                     html::home(Raw(data)).render().to_owned().into()
                 })),
                 out: "index.html".into(),

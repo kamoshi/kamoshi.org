@@ -1,6 +1,6 @@
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::md::render;
+use crate::text::md::parse;
 
 use super::page;
 
@@ -21,7 +21,7 @@ const INTRO: &str = r#"
 fn intro() -> impl Renderable {
     maud!(
         section .p-card.intro-jp lang="ja-JP" {
-            (Raw(render(INTRO)))
+            (Raw(parse(INTRO)))
         }
     )
 }

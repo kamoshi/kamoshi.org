@@ -1,7 +1,3 @@
----
-title: "Test"
-date: 2021-09-10T19:34:01+02:00
----
 # Welcome to my website! :heart:
 
 You have found this little floating rock in the middle of the Internet! Congrats 🎉

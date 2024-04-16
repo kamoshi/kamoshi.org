@@ -6,16 +6,15 @@ tags: [Japanese, zola, hugo, astro]
 
 Sadly, as far as I know CommonMark currently doesn't include anything about ruby in its spec. On top of that ruby is pretty uncommon, so it is pretty rare for any ruby extensions to exist. As I move through any new frameworks, I will try to document any simple solutions that I figure out.
 
-
 ## Examples
 
 | Language    | Example |
 | --------    | ------- |
-| Japanese    | :ruby[日本語]{help=に;ほん;ご}の:ruby[文法]{help=ぶん;ぽう}は:ruby[難]{help=むずか}しい |
-| Chinese     | :ruby[北京]{help=Běi;jīng}<br/>:ruby[北京]{help=ㄅㄟˇ;ㄐㄧㄥ} |
-| Korean      | :ruby[韓國]{help=한;국} |
-| Vietnamese  | :ruby[河內]{help=Hà;Nội} |
-| Other       | I :ruby[love]{help=like} ruby! |
+| Japanese    | [日本語]{にほんご}の[文法]{ぶんぽう}は[難]{むずか}しい |
+| Chinese     | [北京]{Běijīng}<br/>[北京]{ㄅㄟˇㄐㄧㄥ} |
+| Korean      | [韓國]{한국} |
+| Vietnamese  | [河內]{HàNội} |
+| Other       | I [love]{like} ruby! |
 
 
 ## Remark
