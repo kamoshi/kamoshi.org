@@ -115,10 +115,14 @@ fn make_emoji(event: Event) -> Event {
                     let buf = buf.get_or_insert_with(|| String::with_capacity(text.len()));
                     buf.push_str(&text[top..old-1]);
                     buf.push_str(emoji.as_str());
-                    top = idx;
+                    top = idx + 1;
                 }
 
                 old = idx + 1;
+            }
+
+            if let Some(ref mut buf) = buf {
+                buf.push_str(&text[top..]);
             }
 
             match buf {
