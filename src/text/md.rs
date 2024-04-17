@@ -35,6 +35,7 @@ static KATEX_B: Lazy<katex::Opts> = Lazy::new(||
 pub fn parse(text: &str) -> String {
     let stream = Parser::new_ext(text, *OPTS)
         .map(make_math)
+        .map(make_emoji)
         .collect::<Vec<_>>();
 
     let stream = make_code(stream)
@@ -97,5 +98,34 @@ fn make_ruby(event: Event) -> Vec<Event> {
             buff
         },
         _ => vec![event],
+    }
+}
+
+fn make_emoji(event: Event) -> Event {
+    match event {
+        Event::Text(ref text) => {
+            let mut buf = None;
+            let mut top = 0;
+            let mut old = 0;
+
+            for (idx, _) in text.match_indices(':') {
+                let key = &text[old..idx];
+
+                if let Some(emoji) = emojis::get_by_shortcode(key) {
+                    let buf = buf.get_or_insert_with(|| String::with_capacity(text.len()));
+                    buf.push_str(&text[top..old-1]);
+                    buf.push_str(emoji.as_str());
+                    top = idx;
+                }
+
+                old = idx + 1;
+            }
+
+            match buf {
+                None      => event,
+                Some(buf) => Event::Text(buf.into())
+            }
+        },
+        _ => event,
     }
 }
