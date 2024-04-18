@@ -1,10 +1,9 @@
 use hypertext::Renderable;
 use once_cell::sync::Lazy;
-use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd};
+use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd, TextMergeStream};
+use regex::Regex;
 
 use crate::ts;
-
-use super::ruby;
 
 
 static OPTS: Lazy<Options> = Lazy::new(||
@@ -33,7 +32,8 @@ static KATEX_B: Lazy<katex::Opts> = Lazy::new(||
 
 
 pub fn parse(text: &str) -> String {
-    let stream = Parser::new_ext(text, *OPTS)
+    let stream = Parser::new_ext(text, *OPTS);
+    let stream = TextMergeStream::new(stream)
         .map(make_math)
         .map(make_emoji)
         .collect::<Vec<_>>();
@@ -83,20 +83,50 @@ fn make_code(es: Vec<Event>) -> Vec<Event> {
     buff
 }
 
+static RE_RUBY: Lazy<Regex> = Lazy::new(||
+    Regex::new(r"\[([^\]]+)\]\{([^}]+)\}").unwrap()
+);
+
+#[derive(Debug)]
+enum Annotated<'a> {
+    Text(&'a str),
+    Ruby(&'a str, &'a str),
+}
+
+
+fn annotate(input: &str) -> Vec<Annotated> {
+    let mut parts: Vec<Annotated> = Vec::new();
+    let mut last_index = 0;
+
+    for cap in RE_RUBY.captures_iter(input) {
+        let text = cap.get(1).unwrap().as_str();
+        let ruby = cap.get(2).unwrap().as_str();
+        let index = cap.get(0).unwrap().start();
+
+        if index > last_index {
+            parts.push(Annotated::Text(&input[last_index..index]));
+        }
+
+        parts.push(Annotated::Ruby(text, ruby));
+        last_index = cap.get(0).unwrap().end();
+    }
+
+    if last_index < input.len() {
+        parts.push(Annotated::Text(&input[last_index..]));
+    }
+
+    parts
+}
+
 fn make_ruby(event: Event) -> Vec<Event> {
     match event {
-        Event::Text(text) => {
-            let mut buff = Vec::new();
-
-            for item in ruby::annotate(&text) {
-                match item {
-                    ruby::Annotated::Text(text) => buff.push(Event::Text(text.to_owned().into())),
-                    ruby::Annotated::Ruby(t, f) => buff.push(Event::InlineHtml(format!("<ruby>{t}<rp>(</rp><rt>{f}</rt><rp>)</rp></ruby>").into())),
-                };
-            }
-
-            buff
-        },
+        Event::Text(ref text) => annotate(&text)
+            .into_iter()
+            .map(|el| match el {
+                Annotated::Text(text) => Event::Text(text.to_owned().into()),
+                Annotated::Ruby(t, f) => Event::InlineHtml(format!("<ruby>{t}<rp>(</rp><rt>{f}</rt><rp>)</rp></ruby>").into()),
+            })
+            .collect(),
         _ => vec![event],
     }
 }
