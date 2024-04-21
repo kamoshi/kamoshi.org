@@ -12,29 +12,31 @@ use super::Link;
 
 #[derive(Debug)]
 struct TreeNode {
-    pub name: String,
-    pub children: HashMap<String, TreeNode>,
+    pub link: Option<Link>,
+    pub subs: HashMap<String, TreeNode>,
 }
 
 impl TreeNode {
-    fn new(name: &str) -> Self {
+    fn new() -> Self {
         TreeNode {
-            name: name.to_string(),
-            children: HashMap::new(),
+            link: None,
+            subs: HashMap::new(),
         }
     }
 
     fn add_link(&mut self, link: &Link) {
-        let mut current_node = self;
-        for component in link.path.split('/').filter(|s| !s.is_empty()) {
-            current_node = current_node.children.entry(component.to_string())
-                .or_insert(TreeNode::new(component));
+        let mut ptr = self;
+        for part in link.path.split('/').filter(|s| !s.is_empty()) {
+            ptr = ptr.subs
+                .entry(part.to_string())
+                .or_insert(TreeNode::new());
         }
+        ptr.link = Some(link.clone());
     }
 }
 
 fn tree(sack: &Sack) -> impl Renderable {
-    let mut tree = TreeNode::new("wiki");
+    let mut tree = TreeNode::new();
     for link in sack.get_links_2("wiki/**/*.html") {
         tree.add_link(&link);
     };
@@ -49,53 +51,41 @@ fn tree(sack: &Sack) -> impl Renderable {
           // )}
         }
         nav .link-tree__nav {
-          // {pages.map(pages => <PagesList {...pages} />).extract()}
-            (level(&tree))
+            (list(&tree))
         }
     )
 }
 
-fn level(tree: &TreeNode) -> impl Renderable + '_ {
-    for (key, next) in tree.children.iter() {
-        println!("{key}");
-        level(next);
+fn list(tree: &TreeNode) -> impl Renderable + '_ {
+    let subs = {
+        let mut subs: Vec<_> = tree.subs.iter().collect();
+        subs.sort_by(|a, b| a.0.cmp(b.0));
+        subs
     };
+
     maud_move!(
         ul .link-tree__nav-list {
-            @for (key, next) in tree.children.iter() {
+            @for (key, next) in subs {
                 li .link-tree__nav-list-item {
-                    span .link-tree__nav-list-text { (key) }
-                    @if next.children.len() > 0 {
-                        (level(next))
+                    span .link-tree__nav-list-text {
+                        @if let Some(ref link) = next.link {
+                            a .link-tree__nav-list-text.link href=(&link.path) {
+                                (&link.name)
+                            }
+                        } @else {
+                            span .link-tree__nav-list-text {
+                                (key)
+                            }
+                        }
+                    }
+                    @if next.subs.len() > 0 {
+                        (list(next))
                     }
                 }
             }
         }
     )
 }
-
-// {tree.children
-//   .map(m => Object.values(m))
-//   .filter(xs => xs.length > 0)
-//   .map(pages =>
-//     <ul class="link-tree__nav-list">
-//       {pages
-//         .sort(compare)
-//         .map(page => ({...page, current: checkCurrent(page.slug) }))
-//         .map(page =>
-//           <li class="link-tree__nav-list-item">
-//             {page.slug
-//               .chain(slug => prefix.map(prefix => pathify(prefix, slug)))
-//               .map(href => (page.current)
-//                 ? <button id="current-page-button" class="link-tree__nav-list-text current">{page.title}</button>
-//                 : <a class="link-tree__nav-list-text link" href={href}>{page.title}</a>
-//               )
-//               .orDefault(<span class="link-tree__nav-list-text">{page.title}</span>)}
-//             <Astro.self tree={page} slug={slug} prefix={prefix} />
-//           </li>
-//       )}
-//     </ul>
-// ).extract()}
 
 
 pub fn wiki<'data, 'html, 'sack, T>(
