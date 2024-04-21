@@ -1,9 +1,14 @@
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 use crate::md::Post;
 use crate::html::page;
+use crate::text::md::Outline;
 
 
-pub fn post<'fm, 'md, 'post, T>(fm: &'fm Post, content: T) -> impl Renderable + 'post
+pub fn post<'fm, 'md, 'post, T>(
+    fm: &'fm Post,
+    content: T,
+    outline: Outline,
+) -> impl Renderable + 'post
     where
         'fm: 'post,
         'md: 'post,
@@ -20,8 +25,22 @@ pub fn post<'fm, 'md, 'post, T>(fm: &'fm Post, content: T) -> impl Renderable + 
                 label .wiki-aside__slider for="wiki-aside-shown" {
                     img .wiki-icon src="/static/svg/double-arrow.svg" width="24" height="24";
                 }
-                // Navigation tree
-                // <Tree heading="Personal Wiki" pages={pages} headings={headings} />
+                section .link-tree {
+                    h2 .link-tree__heading {
+                        a .link-tree__heading-text href="#top" { "Content" }
+                    }
+                    nav #table-of-contents .link-tree__nav {
+                        ul .link-tree__nav-list {
+                            @for (title, id) in outline.0 {
+                                li .link-tree__nav-list-item {
+                                    a .link-tree__nav-list-text.link href=(format!("#{id}")) {
+                                        (title)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             article .wiki-article /*class:list={classlist)*/ {

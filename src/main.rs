@@ -6,6 +6,7 @@ use grass;
 use html::LinkableData;
 use hypertext::{Raw, Renderable};
 use once_cell::sync::Lazy;
+use text::md::Outline;
 
 mod md;
 mod html;
@@ -61,7 +62,7 @@ impl Everything<'_> {
 
 
 trait Transformable {
-    fn transform<'f, 'm, 'html, T>(&'f self, content: T) -> impl Renderable + 'html
+    fn transform<'f, 'm, 'html, T>(&'f self, content: T, outline: Outline) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
@@ -69,16 +70,16 @@ trait Transformable {
 
     fn as_link(&self, path: String) -> Option<html::LinkableData>;
 
-    fn render(data: &str) -> String;
+    fn render(data: &str) -> (Outline, String);
 }
 
 impl Transformable for md::Post {
-    fn transform<'f, 'm, 'html, T>(&'f self, content: T) -> impl Renderable + 'html
+    fn transform<'f, 'm, 'html, T>(&'f self, content: T, outline: Outline) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
             T: Renderable + 'm {
-        html::post(self, content)
+        html::post(self, content, outline)
     }
 
     fn as_link(&self, path: String) -> Option<html::LinkableData> {
@@ -90,13 +91,13 @@ impl Transformable for md::Post {
         })
     }
 
-    fn render(data: &str) -> String {
+    fn render(data: &str) -> (Outline, String) {
         text::md::parse(data)
     }
 }
 
 impl Transformable for md::Slide {
-    fn transform<'f, 'm, 'html, T>(&'f self, content: T) -> impl Renderable + 'html
+    fn transform<'f, 'm, 'html, T>(&'f self, content: T, _: Outline) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
@@ -113,32 +114,33 @@ impl Transformable for md::Slide {
         })
     }
 
-    fn render(data: &str) -> String {
-        data
+    fn render(data: &str) -> (Outline, String) {
+        let html = data
             .split("\n-----\n")
-            .map(|chunk| chunk.split("\n---\n").map(text::md::parse).collect::<Vec<_>>())
+            .map(|chunk| chunk.split("\n---\n").map(text::md::parse).map(|e| e.1).collect::<Vec<_>>())
             .map(|stack| match stack.len() > 1 {
                 true  => format!("<section>{}</section>", stack.into_iter().map(|slide| format!("<section>{slide}</section>")).collect::<String>()),
                 false => format!("<section>{}</section>", stack[0])
             })
-            .collect::<String>()
+            .collect::<String>();
+        (Outline(vec![]), html)
     }
 }
 
 impl Transformable for md::Wiki {
-    fn transform<'f, 'm, 'html, T>(&'f self, content: T) -> impl Renderable + 'html
+    fn transform<'f, 'm, 'html, T>(&'f self, content: T, outline: Outline) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
             T: Renderable + 'm {
-        html::wiki(self, content)
+        html::wiki(self, content, outline)
     }
 
     fn as_link(&self, _: String) -> Option<html::LinkableData> {
         None
     }
 
-    fn render(data: &str) -> String {
+    fn render(data: &str) -> (Outline, String) {
         text::md::parse(data)
     }
 }
@@ -182,9 +184,8 @@ fn transform<T>(meta: gen::Source) -> gen::Asset
                 let link = T::as_link(&fm, Path::new("/").join(&loc).to_str().unwrap().to_owned());
 
                 let call = move |_: &Everything| {
-                    let data = T::render(&md);
-                    let data = T::transform(&fm, Raw(data)).render().into();
-                    data
+                    let (outline, html) = T::render(&md);
+                    T::transform(&fm, Raw(html), outline).render().into()
                 };
 
                 gen::Asset {
@@ -247,8 +248,8 @@ fn main() {
             gen::Asset {
                 kind: gen::AssetKind::Html(Box::new(|_| {
                     let data = std::fs::read_to_string("content/index.md").unwrap();
-                    let data = text::md::parse(&data);
-                    html::home(Raw(data)).render().to_owned().into()
+                    let (outline, html) = text::md::parse(&data);
+                    html::home(Raw(html)).render().to_owned().into()
                 })),
                 out: "index.html".into(),
                 link: None,

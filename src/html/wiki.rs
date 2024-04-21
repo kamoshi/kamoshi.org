@@ -1,9 +1,14 @@
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 use crate::md::Wiki;
 use crate::html::page;
+use crate::text::md::Outline;
 
 
-pub fn wiki<'data, 'html, T>(fm: &'data Wiki, content: T) -> impl Renderable + 'html
+pub fn wiki<'data, 'html, T>(
+    fm: &'data Wiki,
+    content: T,
+    outline: Outline,
+) -> impl Renderable + 'html
     where
         'data: 'html,
         T: Renderable + 'data

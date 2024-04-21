@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use hypertext::Renderable;
 use once_cell::sync::Lazy;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd, TextMergeStream};
@@ -30,10 +32,18 @@ static KATEX_B: Lazy<katex::Opts> = Lazy::new(||
         .unwrap()
 );
 
+pub struct Outline(pub Vec<(String, String)>);
 
-pub fn parse(text: &str) -> String {
-    let stream = Parser::new_ext(text, *OPTS);
-    let stream = TextMergeStream::new(stream)
+
+pub fn parse(text: &str) -> (Outline, String) {
+    let (outline, stream) = {
+        let stream = Parser::new_ext(text, *OPTS);
+        let mut stream: Vec<_> = TextMergeStream::new(stream).collect();
+        let outline = set_heading_ids(&mut stream);
+        (outline, stream)
+    };
+
+    let stream = stream.into_iter()
         .map(make_math)
         .map(make_emoji)
         .collect::<Vec<_>>();
@@ -44,7 +54,42 @@ pub fn parse(text: &str) -> String {
 
     let mut html = String::new();
     pulldown_cmark::html::push_html(&mut html, stream.into_iter());
-    html
+
+    (outline, html)
+}
+
+fn set_heading_ids(events: &mut [Event]) -> Outline {
+    let mut cnt = HashMap::<String, i32>::new();
+    let mut out = Vec::new();
+    let mut buf = String::new();
+    let mut ptr = None;
+
+    for event in events {
+        match event {
+            Event::Start(ref mut tag @ Tag::Heading {..}) => {
+                ptr = Some(tag);
+            },
+            Event::Text(ref text) if ptr.is_some() => {
+                buf.push_str(text)
+            },
+            Event::End(TagEnd::Heading(..)) => {
+                let txt = std::mem::take(&mut buf);
+                let url = txt.to_lowercase().replace(' ', "-");
+                let url = match cnt.get_mut(&url) {
+                    Some(ptr) => { *ptr += 1; format!("{url}-{ptr}") },
+                    None      => { cnt.insert(url.clone(), 0); url },
+                };
+                match ptr.take().unwrap() {
+                    Tag::Heading { ref mut id, .. } => *id = Some(url.clone().into()),
+                    _ => unreachable!(),
+                }
+                out.push((txt, url));
+            },
+            _ => (),
+        }
+    };
+
+    Outline(out)
 }
 
 fn make_math(event: Event) -> Event {
