@@ -1,32 +1,45 @@
+use std::fmt::Debug;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use std::io::Write;
 
-use crate::html::LinkableData;
-use crate::Everything;
+use crate::html::Linkable;
+use crate::Sack;
 
 
 pub enum AssetKind {
-    Html(Box<dyn Fn(&Everything) -> String>),
+    Html(Box<dyn Fn(&Sack) -> String>),
     Image,
     Unknown,
     Bib(hayagriva::Library),
 }
 
+impl Debug for AssetKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Html(ptr) => f.debug_tuple("Html").field(&"ptr").finish(),
+            Self::Image => write!(f, "Image"),
+            Self::Unknown => write!(f, "Unknown"),
+            Self::Bib(arg0) => f.debug_tuple("Bib").field(arg0).finish(),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Asset {
     pub kind: AssetKind,
     pub out: PathBuf,
-    pub link: Option<LinkableData>,
+    pub link: Option<Linkable>,
     pub meta: super::Source,
 }
 
-pub struct Virtual(pub PathBuf, pub Box<dyn Fn(&Everything) -> String>);
+pub struct Virtual(pub PathBuf, pub Box<dyn Fn(&Sack) -> String>);
 
 impl Virtual {
     pub fn new<P, F>(path: P, call: F) -> Self
         where
             P: AsRef<Path>,
-            F: Fn(&Everything) -> String + 'static
+            F: Fn(&Sack) -> String + 'static
     {
         Self(path.as_ref().into(), Box::new(call))
     }
@@ -59,7 +72,7 @@ pub fn render(items: &[Item]) {
         })
         .collect();
 
-    let everything = Everything { assets: &assets };
+    let everything = Sack { assets: &assets };
 
     for item in items {
         match item {
@@ -70,7 +83,7 @@ pub fn render(items: &[Item]) {
 }
 
 
-fn render_real(item: &Asset, assets: &Everything) {
+fn render_real(item: &Asset, assets: &Sack) {
     match &item.kind {
         AssetKind::Html(render) => {
             let i = &item.meta.path;
@@ -101,7 +114,7 @@ fn render_real(item: &Asset, assets: &Everything) {
     }
 }
 
-fn render_fake(item: &Virtual, assets: &Everything) {
+fn render_fake(item: &Virtual, assets: &Sack) {
     let Virtual(out, render) = item;
 
     let o = Path::new("dist").join(&out);

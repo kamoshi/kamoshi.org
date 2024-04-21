@@ -15,4 +15,4 @@ pub use show::show;
 pub use special::{map, search};
 pub use wiki::wiki;
 
-pub use list::LinkableData;
+pub use list::{Linkable, Link, LinkDate};

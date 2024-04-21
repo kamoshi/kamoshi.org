@@ -3,18 +3,29 @@ use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 use crate::html::page;
 
 
-#[derive(Clone)]
-pub struct LinkableData {
+#[derive(Debug, Clone)]
+pub struct Link {
     pub path: String,
     pub name: String,
-    pub date: DateTime<Utc>,
     pub desc: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LinkDate {
+    pub link: Link,
+    pub date: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub enum Linkable {
+    Link(Link),
+    Date(LinkDate),
 }
 
 
 pub fn list<'data, 'list>(
     title: &'data str,
-    groups: &'data [(i32, Vec<LinkableData>)]
+    groups: &'data [(i32, Vec<LinkDate>)]
 ) -> impl Renderable + 'list
     where
         'data: 'list
@@ -36,7 +47,7 @@ pub fn list<'data, 'list>(
     page(title, list)
 }
 
-fn section(year: i32, group: &[LinkableData]) -> impl Renderable + '_ {
+fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {
     maud_move!(
         section .page-list-year {
             header .page-list-year__header {
@@ -49,19 +60,19 @@ fn section(year: i32, group: &[LinkableData]) -> impl Renderable + '_ {
     )
 }
 
-fn link(data: &LinkableData) -> impl Renderable + '_ {
+fn link(data: &LinkDate) -> impl Renderable + '_ {
     let time = data.date.format("%m/%d");
     maud_move!(
-        a .page-item href=(&data.path) {
+        a .page-item href=(&data.link.path) {
             div .page-item__header {
                 h3 {
-                    (&data.name)
+                    (&data.link.name)
                 }
                 time datetime=(data.date.to_rfc3339()) {
                     (time.to_string())
                 }
             }
-            @if let Some(ref desc) = data.desc {
+            @if let Some(ref desc) = data.link.desc {
                 div .page-item__desc {
                     (desc)
                 }

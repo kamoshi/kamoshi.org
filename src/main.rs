@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path};
 use std::fs;
 use chrono::Datelike;
 use grass;
-use html::LinkableData;
+use html::{Link, LinkDate, Linkable};
 use hypertext::{Raw, Renderable};
 use once_cell::sync::Lazy;
 use text::md::Outline;
@@ -46,49 +46,78 @@ static REPO: Lazy<BuildInfo> = Lazy::new(|| {
 });
 
 /// This struct allows for querying the website hierarchy
-struct Everything<'a> {
+#[derive(Debug)]
+struct Sack<'a> {
     assets: &'a [&'a gen::Asset],
 }
 
-impl Everything<'_> {
-    fn get_linkable(&self, path: &str) -> Vec<LinkableData> {
+impl Sack<'_> {
+    fn get_links(&self, path: &str) -> Vec<LinkDate> {
         let pattern = glob::Pattern::new(path).unwrap();
         self.assets.iter()
             .filter(|f| pattern.matches_path(&f.out))
-            .filter_map(|f| f.link.clone())
+            .filter_map(|f| match &f.link {
+                Some(Linkable::Date(link)) => Some(link.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn get_links_2(&self, path: &str) -> Vec<Link> {
+        let pattern = glob::Pattern::new(path).unwrap();
+        self.assets.iter()
+            .filter(|f| pattern.matches_path(&f.out))
+            .filter_map(|f| match &f.link {
+                Some(Linkable::Link(link)) => Some(link.clone()),
+                _ => None,
+            })
             .collect()
     }
 }
 
 
 trait Transformable {
-    fn transform<'f, 'm, 'html, T>(&'f self, content: T, outline: Outline) -> impl Renderable + 'html
+    fn transform<'f, 'm, 'html, 'sack, T>(
+        &'f self,
+        content: T,
+        outline: Outline,
+        sack: &'sack Sack,
+    ) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
+            'sack: 'html,
             T: Renderable + 'm;
 
-    fn as_link(&self, path: String) -> Option<html::LinkableData>;
+    fn as_link(&self, path: String) -> Option<Linkable>;
 
     fn render(data: &str) -> (Outline, String);
 }
 
 impl Transformable for md::Post {
-    fn transform<'f, 'm, 'html, T>(&'f self, content: T, outline: Outline) -> impl Renderable + 'html
+    fn transform<'f, 'm, 'html, 'sack, T>(
+        &'f self,
+        content: T,
+        outline: Outline,
+        sack: &'sack Sack,
+    ) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
+            'sack: 'html,
             T: Renderable + 'm {
         html::post(self, content, outline)
     }
 
-    fn as_link(&self, path: String) -> Option<html::LinkableData> {
-        Some(html::LinkableData {
-            path: path.strip_suffix("index.html").unwrap().to_owned(),
-            name: self.title.to_owned(),
+    fn as_link(&self, path: String) -> Option<Linkable> {
+        Some(Linkable::Date(LinkDate {
+            link: Link {
+                path: path.strip_suffix("index.html").unwrap().to_owned(),
+                name: self.title.to_owned(),
+                desc: self.desc.to_owned(),
+            },
             date: self.date.to_owned(),
-            desc: self.desc.to_owned(),
-        })
+        }))
     }
 
     fn render(data: &str) -> (Outline, String) {
@@ -97,21 +126,29 @@ impl Transformable for md::Post {
 }
 
 impl Transformable for md::Slide {
-    fn transform<'f, 'm, 'html, T>(&'f self, content: T, _: Outline) -> impl Renderable + 'html
+    fn transform<'f, 'm, 'html, 'sack, T>(
+        &'f self,
+        content: T,
+        _: Outline,
+        sack: &'sack Sack,
+    ) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
+            'sack: 'html,
             T: Renderable + 'm {
         html::show(self, content)
     }
 
-    fn as_link(&self, path: String) -> Option<html::LinkableData> {
-        Some(html::LinkableData {
-            path: path.strip_suffix("index.html").unwrap().to_owned(),
-            name: self.title.to_owned(),
+    fn as_link(&self, path: String) -> Option<Linkable> {
+        Some(Linkable::Date(LinkDate {
+            link: Link {
+                path: path.strip_suffix("index.html").unwrap().to_owned(),
+                name: self.title.to_owned(),
+                desc: self.desc.to_owned(),
+            },
             date: self.date.to_owned(),
-            desc: self.desc.to_owned(),
-        })
+        }))
     }
 
     fn render(data: &str) -> (Outline, String) {
@@ -128,16 +165,26 @@ impl Transformable for md::Slide {
 }
 
 impl Transformable for md::Wiki {
-    fn transform<'f, 'm, 'html, T>(&'f self, content: T, outline: Outline) -> impl Renderable + 'html
+    fn transform<'f, 'm, 'html, 'sack, T>(
+        &'f self,
+        content: T,
+        outline: Outline,
+        sack: &'sack Sack,
+    ) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
+            'sack: 'html,
             T: Renderable + 'm {
-        html::wiki(self, content, outline)
+        html::wiki(self, content, outline, sack)
     }
 
-    fn as_link(&self, _: String) -> Option<html::LinkableData> {
-        None
+    fn as_link(&self, path: String) -> Option<Linkable> {
+        Some(Linkable::Link(Link {
+            path: path.strip_suffix("index.html").unwrap().to_owned(),
+            name: self.title.to_owned(),
+            desc: None,
+        }))
     }
 
     fn render(data: &str) -> (Outline, String) {
@@ -146,7 +193,7 @@ impl Transformable for md::Wiki {
 }
 
 
-fn to_list(list: Vec<LinkableData>) -> String {
+fn to_list(list: Vec<LinkDate>) -> String {
     let mut groups = HashMap::<i32, Vec<_>>::new();
 
     for page in list {
@@ -183,9 +230,9 @@ fn transform<T>(meta: gen::Source) -> gen::Asset
                 let (fm, md) = md::preflight::<T>(&data);
                 let link = T::as_link(&fm, Path::new("/").join(&loc).to_str().unwrap().to_owned());
 
-                let call = move |_: &Everything| {
+                let call = move |everything: &Sack| {
                     let (outline, html) = T::render(&md);
-                    T::transform(&fm, Raw(html), outline).render().into()
+                    T::transform(&fm, Raw(html), outline, everything).render().into()
                 };
 
                 gen::Asset {
@@ -248,7 +295,7 @@ fn main() {
             gen::Asset {
                 kind: gen::AssetKind::Html(Box::new(|_| {
                     let data = std::fs::read_to_string("content/index.md").unwrap();
-                    let (outline, html) = text::md::parse(&data);
+                    let (_, html) = text::md::parse(&data);
                     html::home(Raw(html)).render().to_owned().into()
                 })),
                 out: "index.html".into(),
@@ -261,10 +308,10 @@ fn main() {
                 }
             }.into(),
             gen::Virtual("posts/index.html".into(), Box::new(|all|
-                to_list(all.get_linkable("posts/**/*.html"))
+                to_list(all.get_links("posts/**/*.html"))
             )).into(),
             gen::Virtual("slides/index.html".into(), Box::new(|all|
-                to_list(all.get_linkable("slides/**/*.html"))
+                to_list(all.get_links("slides/**/*.html"))
             )).into(),
         ],
         gen::gather("content/about.md", &["md"].into())

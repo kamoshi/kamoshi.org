@@ -4,6 +4,28 @@ use crate::html::page;
 use crate::text::md::Outline;
 
 
+pub fn tree(outline: Outline) -> impl Renderable {
+    maud_move!(
+        section .link-tree {
+            h2 .link-tree__heading {
+                a .link-tree__heading-text href="#top" { "Content" }
+            }
+            nav #table-of-contents .link-tree__nav {
+                ul .link-tree__nav-list {
+                    @for (title, id) in outline.0 {
+                        li .link-tree__nav-list-item {
+                            a .link-tree__nav-list-text.link href=(format!("#{id}")) {
+                                (title)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+
 pub fn post<'fm, 'md, 'post, T>(
     fm: &'fm Post,
     content: T,
@@ -25,22 +47,7 @@ pub fn post<'fm, 'md, 'post, T>(
                 label .wiki-aside__slider for="wiki-aside-shown" {
                     img .wiki-icon src="/static/svg/double-arrow.svg" width="24" height="24";
                 }
-                section .link-tree {
-                    h2 .link-tree__heading {
-                        a .link-tree__heading-text href="#top" { "Content" }
-                    }
-                    nav #table-of-contents .link-tree__nav {
-                        ul .link-tree__nav-list {
-                            @for (title, id) in outline.0 {
-                                li .link-tree__nav-list-item {
-                                    a .link-tree__nav-list-text.link href=(format!("#{id}")) {
-                                        (title)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                (tree(outline))
             }
 
             article .wiki-article /*class:list={classlist)*/ {
