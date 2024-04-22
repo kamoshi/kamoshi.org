@@ -184,9 +184,9 @@ fn transform<T>(meta: gen::Source) -> Asset
                 let (fm, md) = md::preflight::<T>(&data);
                 let link = T::as_link(&fm, Utf8Path::new("/").join(dir));
 
-                let call = move |everything: &Sack| {
+                let call = move |sack: &Sack| {
                     let (outline, html) = T::render(&md);
-                    T::transform(&fm, Raw(html), outline, everything).render().into()
+                    T::transform(&fm, Raw(html), outline, sack).render().into()
                 };
 
                 gen::Asset {
