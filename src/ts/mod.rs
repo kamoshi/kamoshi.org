@@ -1,7 +1,7 @@
 use std::borrow::Cow;
+
 use hypertext::{html_elements, maud_move, Raw, Renderable, GlobalAttributes};
-use tree_sitter_highlight::Highlighter;
-use tree_sitter_highlight::HighlightEvent;
+use tree_sitter_highlight::{Highlighter, HighlightEvent};
 
 mod captures;
 mod configs;
@@ -33,7 +33,7 @@ pub fn highlight<'data, 'html>(
 }
 
 fn to_html(lang: &str, code: &str) -> String {
-    return get_events(lang, code)
+    get_events(lang, code)
         .into_iter()
         .map(|event| match event {
             Event::Write(text) => Cow::from(
@@ -56,7 +56,7 @@ fn get_events(lang: &str, src: &str) -> Vec<Event> {
 
     let mut hl = Highlighter::new();
     let highlights = hl.highlight(
-        &config,
+        config,
         src.as_bytes(),
         None,
         |name| configs::get_config(name)

@@ -1,45 +1,16 @@
-use std::collections::HashMap;
-
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 
-use crate::md::Wiki;
-use crate::html::page;
-use crate::text::md::Outline;
-use crate::Sack;
+use crate::{
+    gen::{Sack, TreePage},
+    html::page,
+    md::Wiki,
+    text::md::Outline
+};
 
-use super::Link;
 
-
-#[derive(Debug)]
-struct TreeNode {
-    pub link: Option<Link>,
-    pub subs: HashMap<String, TreeNode>,
-}
-
-impl TreeNode {
-    fn new() -> Self {
-        TreeNode {
-            link: None,
-            subs: HashMap::new(),
-        }
-    }
-
-    fn add_link(&mut self, link: &Link) {
-        let mut ptr = self;
-        for part in link.path.split('/').filter(|s| !s.is_empty()) {
-            ptr = ptr.subs
-                .entry(part.to_string())
-                .or_insert(TreeNode::new());
-        }
-        ptr.link = Some(link.clone());
-    }
-}
 
 fn tree(sack: &Sack) -> impl Renderable {
-    let mut tree = TreeNode::new();
-    for link in sack.get_links_2("wiki/**/*.html") {
-        tree.add_link(&link);
-    };
+    let tree = sack.get_tree("wiki/**/*.html");
 
     maud_move!(
         h2 .link-tree__heading {
@@ -56,7 +27,7 @@ fn tree(sack: &Sack) -> impl Renderable {
     )
 }
 
-fn list(tree: &TreeNode) -> impl Renderable + '_ {
+fn list(tree: &TreePage) -> impl Renderable + '_ {
     let subs = {
         let mut subs: Vec<_> = tree.subs.iter().collect();
         subs.sort_by(|a, b| a.0.cmp(b.0));
@@ -69,7 +40,7 @@ fn list(tree: &TreeNode) -> impl Renderable + '_ {
                 li .link-tree__nav-list-item {
                     span .link-tree__nav-list-text {
                         @if let Some(ref link) = next.link {
-                            a .link-tree__nav-list-text.link href=(&link.path) {
+                            a .link-tree__nav-list-text.link href=(link.path.as_str()) {
                                 (&link.name)
                             }
                         } @else {
@@ -78,7 +49,7 @@ fn list(tree: &TreeNode) -> impl Renderable + '_ {
                             }
                         }
                     }
-                    @if next.subs.len() > 0 {
+                    @if !next.subs.is_empty() {
                         (list(next))
                     }
                 }
@@ -91,7 +62,7 @@ fn list(tree: &TreeNode) -> impl Renderable + '_ {
 pub fn wiki<'data, 'html, 'sack, T>(
     fm: &'data Wiki,
     content: T,
-    outline: Outline,
+    _: Outline,
     sack: &'sack Sack,
 ) -> impl Renderable + 'html
     where

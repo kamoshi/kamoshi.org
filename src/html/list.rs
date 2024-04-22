@@ -1,3 +1,4 @@
+use camino::Utf8PathBuf;
 use chrono::{DateTime, Utc};
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 use crate::html::page;
@@ -5,7 +6,7 @@ use crate::html::page;
 
 #[derive(Debug, Clone)]
 pub struct Link {
-    pub path: String,
+    pub path: Utf8PathBuf,
     pub name: String,
     pub desc: Option<String>,
 }
@@ -63,7 +64,7 @@ fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {
 fn link(data: &LinkDate) -> impl Renderable + '_ {
     let time = data.date.format("%m/%d");
     maud_move!(
-        a .page-item href=(&data.link.path) {
+        a .page-item href=(data.link.path.as_str()) {
             div .page-item__header {
                 h3 {
                     (&data.link.name)

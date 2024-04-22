@@ -1,4 +1,3 @@
-use chrono::{self, Datelike};
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
 use crate::REPO;

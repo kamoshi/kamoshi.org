@@ -49,7 +49,6 @@ fn to_source(path: Utf8PathBuf, exts: &HashSet<&'static str>) -> Source {
 pub fn gather(pattern: &str, exts: &HashSet<&'static str>) -> Vec<Source> {
     glob(pattern)
         .unwrap()
-        .into_iter()
         .filter_map(|path| {
             let path = path.unwrap();
             let path = Utf8PathBuf::from_path_buf(path).expect("Filename is not valid UTF8");

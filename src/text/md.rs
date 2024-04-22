@@ -165,7 +165,7 @@ fn annotate(input: &str) -> Vec<Annotated> {
 
 fn make_ruby(event: Event) -> Vec<Event> {
     match event {
-        Event::Text(ref text) => annotate(&text)
+        Event::Text(ref text) => annotate(text)
             .into_iter()
             .map(|el| match el {
                 Annotated::Text(text) => Event::Text(text.to_owned().into()),

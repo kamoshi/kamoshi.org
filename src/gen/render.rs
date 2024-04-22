@@ -18,10 +18,10 @@ pub enum AssetKind {
 impl Debug for AssetKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Html(ptr) => f.debug_tuple("Html").field(&"ptr").finish(),
+            Self::Html(ptr) => f.debug_tuple("Html").field(&format!("{:p}", *ptr)).finish(),
             Self::Image => write!(f, "Image"),
             Self::Unknown => write!(f, "Unknown"),
-            Self::Bib(arg0) => f.debug_tuple("Bib").field(arg0).finish(),
+            Self::Bib(bib) => f.debug_tuple("Bib").field(bib).finish(),
         }
     }
 }
@@ -66,62 +66,62 @@ impl From<Virtual> for Item {
 
 pub fn render(items: &[Item]) {
     let assets: Vec<&Asset> = items
-        .into_iter()
+        .iter()
         .filter_map(|item| match item {
             Item::Real(a) => Some(a),
             Item::Fake(_) => None,
         })
         .collect();
 
-    let everything = Sack { assets: &assets };
+    let sack = Sack::new(&assets);
 
     for item in items {
         match item {
-            Item::Real(real) => render_real(real, &everything),
-            Item::Fake(fake) => render_fake(fake, &everything),
+            Item::Real(real) => render_real(real, &sack),
+            Item::Fake(fake) => render_fake(fake, &sack),
         }
     }
 }
 
 
-fn render_real(item: &Asset, assets: &Sack) {
+fn render_real(item: &Asset, sack: &Sack) {
     match &item.kind {
         AssetKind::Html(render) => {
             let i = &item.meta.path;
             let o = Utf8Path::new("dist").join(&item.out);
 
-            fs::create_dir_all(&o.parent().unwrap()).unwrap();
+            fs::create_dir_all(o.parent().unwrap()).unwrap();
 
             let mut file = File::create(&o).unwrap();
-            file.write_all(render(assets).as_bytes()).unwrap();
+            file.write_all(render(sack).as_bytes()).unwrap();
 
             println!("HTML: {} -> {}", i, o);
         },
         AssetKind::Image => {
             let i = &item.meta.path;
             let o = Utf8Path::new("dist").join(&item.out);
-            fs::create_dir_all(&o.parent().unwrap()).unwrap();
-            fs::copy(&i, &o).unwrap();
+            fs::create_dir_all(o.parent().unwrap()).unwrap();
+            fs::copy(i, &o).unwrap();
             println!("Image: {} -> {}", i, o);
         },
         AssetKind::Bib(_) => (),
         AssetKind::Unknown => {
             let i = &item.meta.path;
             let o = Utf8Path::new("dist").join(&item.out);
-            fs::create_dir_all(&o.parent().unwrap()).unwrap();
-            fs::copy(&i, &o).unwrap();
+            fs::create_dir_all(o.parent().unwrap()).unwrap();
+            fs::copy(i, &o).unwrap();
             println!("Unknown: {} -> {}", i, o);
         },
     }
 }
 
-fn render_fake(item: &Virtual, assets: &Sack) {
+fn render_fake(item: &Virtual, sack: &Sack) {
     let Virtual(out, render) = item;
 
-    let o = Utf8Path::new("dist").join(&out);
-    fs::create_dir_all(&o.parent().unwrap()).unwrap();
+    let o = Utf8Path::new("dist").join(out);
+    fs::create_dir_all(o.parent().unwrap()).unwrap();
 
     let mut file = File::create(&o).unwrap();
-    file.write_all(render(assets).as_bytes()).unwrap();
+    file.write_all(render(sack).as_bytes()).unwrap();
     println!("Virtual: -> {}", o);
 }
