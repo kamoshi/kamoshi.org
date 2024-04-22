@@ -55,7 +55,7 @@ impl Sack<'_> {
     fn get_links(&self, path: &str) -> Vec<LinkDate> {
         let pattern = glob::Pattern::new(path).unwrap();
         self.assets.iter()
-            .filter(|f| pattern.matches_path(&f.out))
+            .filter(|f| pattern.matches_path(f.out.as_ref()))
             .filter_map(|f| match &f.link {
                 Some(Linkable::Date(link)) => Some(link.clone()),
                 _ => None,
@@ -66,7 +66,7 @@ impl Sack<'_> {
     fn get_links_2(&self, path: &str) -> Vec<Link> {
         let pattern = glob::Pattern::new(path).unwrap();
         self.assets.iter()
-            .filter(|f| pattern.matches_path(&f.out))
+            .filter(|f| pattern.matches_path(f.out.as_ref()))
             .filter_map(|f| match &f.link {
                 Some(Linkable::Link(link)) => Some(link.clone()),
                 _ => None,

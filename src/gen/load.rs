@@ -1,6 +1,6 @@
 use std::collections::HashSet ;
-use std::path::PathBuf;
 
+use camino::Utf8PathBuf;
 use glob::glob;
 
 
@@ -14,27 +14,27 @@ pub enum SourceKind {
 pub struct Source {
     pub kind: SourceKind,
     pub ext: String,
-    pub dirs: PathBuf,
-    pub path: PathBuf,
+    pub dirs: Utf8PathBuf,
+    pub path: Utf8PathBuf,
 }
 
 
-fn to_source(path: PathBuf, exts: &HashSet<&'static str>) -> Source {
-    let dirs = path.parent().unwrap();
-    let ext = path.extension().unwrap().to_str().unwrap();
+fn to_source(path: Utf8PathBuf, exts: &HashSet<&'static str>) -> Source {
+    let dir = path.parent().unwrap();
+    let ext = path.extension().unwrap();
 
     if !exts.contains(ext) {
         return Source {
             kind: SourceKind::Asset,
             ext: ext.to_owned(),
-            dirs: dirs.to_owned(),
+            dirs: dir.to_owned(),
             path,
         };
     }
 
-    let dirs = match path.file_stem().unwrap().to_str().unwrap() {
-        "index" => dirs.to_owned(),
-        name    => dirs.join(name),
+    let dirs = match path.file_stem().unwrap() {
+        "index" => dir.to_owned(),
+        name    => dir.join(name),
     };
 
     Source {
@@ -52,6 +52,7 @@ pub fn gather(pattern: &str, exts: &HashSet<&'static str>) -> Vec<Source> {
         .into_iter()
         .filter_map(|path| {
             let path = path.unwrap();
+            let path = Utf8PathBuf::from_path_buf(path).expect("Filename is not valid UTF8");
 
             match path.is_dir() {
                 true  => None,

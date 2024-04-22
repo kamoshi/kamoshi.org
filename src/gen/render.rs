@@ -1,7 +1,8 @@
 use std::fmt::Debug;
 use std::fs::{self, File};
-use std::path::{Path, PathBuf};
 use std::io::Write;
+
+use camino::{Utf8Path, Utf8PathBuf};
 
 use crate::html::Linkable;
 use crate::Sack;
@@ -28,17 +29,17 @@ impl Debug for AssetKind {
 #[derive(Debug)]
 pub struct Asset {
     pub kind: AssetKind,
-    pub out: PathBuf,
+    pub out: Utf8PathBuf,
     pub link: Option<Linkable>,
     pub meta: super::Source,
 }
 
-pub struct Virtual(pub PathBuf, pub Box<dyn Fn(&Sack) -> String>);
+pub struct Virtual(pub Utf8PathBuf, pub Box<dyn Fn(&Sack) -> String>);
 
 impl Virtual {
     pub fn new<P, F>(path: P, call: F) -> Self
         where
-            P: AsRef<Path>,
+            P: AsRef<Utf8Path>,
             F: Fn(&Sack) -> String + 'static
     {
         Self(path.as_ref().into(), Box::new(call))
@@ -87,29 +88,29 @@ fn render_real(item: &Asset, assets: &Sack) {
     match &item.kind {
         AssetKind::Html(render) => {
             let i = &item.meta.path;
-            let o = Path::new("dist").join(&item.out);
+            let o = Utf8Path::new("dist").join(&item.out);
 
             fs::create_dir_all(&o.parent().unwrap()).unwrap();
 
             let mut file = File::create(&o).unwrap();
             file.write_all(render(assets).as_bytes()).unwrap();
 
-            println!("HTML: {} -> {}", i.to_str().unwrap(), o.to_str().unwrap());
+            println!("HTML: {} -> {}", i, o);
         },
         AssetKind::Image => {
             let i = &item.meta.path;
-            let o = Path::new("dist").join(&item.out);
+            let o = Utf8Path::new("dist").join(&item.out);
             fs::create_dir_all(&o.parent().unwrap()).unwrap();
             fs::copy(&i, &o).unwrap();
-            println!("Image: {} -> {}", i.to_str().unwrap(), o.to_str().unwrap());
+            println!("Image: {} -> {}", i, o);
         },
         AssetKind::Bib(_) => (),
         AssetKind::Unknown => {
             let i = &item.meta.path;
-            let o = Path::new("dist").join(&item.out);
+            let o = Utf8Path::new("dist").join(&item.out);
             fs::create_dir_all(&o.parent().unwrap()).unwrap();
             fs::copy(&i, &o).unwrap();
-            println!("Unknown: {} -> {}", i.to_str().unwrap(), o.to_str().unwrap());
+            println!("Unknown: {} -> {}", i, o);
         },
     }
 }
@@ -117,10 +118,10 @@ fn render_real(item: &Asset, assets: &Sack) {
 fn render_fake(item: &Virtual, assets: &Sack) {
     let Virtual(out, render) = item;
 
-    let o = Path::new("dist").join(&out);
+    let o = Utf8Path::new("dist").join(&out);
     fs::create_dir_all(&o.parent().unwrap()).unwrap();
 
     let mut file = File::create(&o).unwrap();
     file.write_all(render(assets).as_bytes()).unwrap();
-    println!("Virtual: -> {}", o.to_str().unwrap());
+    println!("Virtual: -> {}", o);
 }
