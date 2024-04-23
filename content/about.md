@@ -1,22 +1,30 @@
 ---
-title: "About me"
+title: About me
 date: 2021-09-10T19:34:01+02:00
 ---
 
-I studied Computer Science at a university and I have professional experience
-as a TypeScript developer. I can use languages such as Rust, C#, TypeScript or
-Python to write efficient software. I'm also interested in functional
-programming and I have experience in using languages like Scala or OCaml. I
-have a lot of experience in web development and I can use several different
-frameworks, such as Angular, SolidJS, Svelte or Vue.
+I enjoy learning new things.
 
-I'm interested in Japanese history, spanning from ancient times to the modern
-era. Additionally, I'm interested in Japanese mythology including, but not
-limited to, supernatural beings, such as 神, 妖怪, 幽霊, and more. Since 2016,
-I've been learning Japanese, as I believe that it will allow me to better
-understand some aspects of Japanese culture. Although I still have a long way
-ahead of me, I am determined to achieve fluency in Japanese language in the
-future.
+When I was younger I was lucky enough to be able to play around with computers
+and programming languages, but at the time I didn't yet realize how deep it all
+really is. I was barely writing my first programs in Lua, PHP, or JavaScript
+back then.
+
+When I was about 16 years old, by chance, I came across a bunch of
+[Japanese](https://youtu.be/SfnbdZR2KOo) [songs](https://youtu.be/M5xgGWeK1lQ)
+and I decided that I should learn this beautiful language. It's one thing to
+start learning a language and another to actually follow through and learn it,
+and well, I guess I'm just this crazy.
+
+Once it was the time to go to a university I decided to study computer science,
+and that is where I actually learned what computer science really is or what
+implications it has. I came across language like OCaml and Scala which
+absolutely blew my mind.
+
+Throughout the years that I could spend at the university I had the privilege
+to learn commonly used programming languages like C#, Java, TypeScript, Python,
+C++, and other useful technologies. I also went out of my own way to learn
+Haskell and Rust.
 
 
 ## Q&A
@@ -25,16 +33,16 @@ future.
 
 I decided to create it as a way to practice my skills, and indeed a lot of what
 I currently know about running a website and web development is a direct result
-of me working on this. The CSS styles, for example, were all hand rolled by
-myself. To simplify everything it's a static website served from Nginx, this
-way I don't have to do nearly any maintenance work.
+of me working on this. To simplify everything it's a static website served from
+Nginx, this way I don't have to do nearly any maintenance work.
 
 **Q. Can I take a look at the source code?**
 
 Sure thing! The source code is available in
 [a repository on GitHub](https://github.com/kamoshi/kamoshi.org),
-and you're welcome to learn. I have just one request please, if you would like
-to use this code for your own website do allow others to learn from it too!
+and you're welcome to learn. I just have one single request please, if you
+would like to use this code for your own website do allow others to learn from
+it too!
 
 **Q. What's your setup?**
 
