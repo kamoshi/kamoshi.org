@@ -19,7 +19,7 @@ const INTRO: &str = r#"
 
 
 fn intro() -> impl Renderable {
-    let (_, html) = parse(INTRO);
+    let (_, html, _) = parse(INTRO, None);
     maud!(
         section .p-card.intro-jp lang="ja-JP" {
             (Raw(html))

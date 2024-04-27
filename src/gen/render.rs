@@ -73,12 +73,10 @@ pub fn render(items: &[Item]) {
         })
         .collect();
 
-    let sack = Sack::new(&assets);
-
     for item in items {
         match item {
-            Item::Real(real) => render_real(real, &sack),
-            Item::Fake(fake) => render_fake(fake, &sack),
+            Item::Real(real) => render_real(real, &Sack::new(&assets, &real.out)),
+            Item::Fake(fake) => render_fake(fake, &Sack::new(&assets, &fake.0)),
         }
     }
 }

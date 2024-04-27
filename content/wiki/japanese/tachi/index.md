@@ -15,17 +15,3 @@ I've come across 〜達 used for inanimate things several times with one example
   奈落への滝が嗤い続け轟く  
   “目指したトコロは此処だったのか？”  
   今は先を急ぐ　**水達**に乗せられたまま  
-
-
-## Bibliography
-
-:::bibtex
-@book{dojg-advanced,
-  title     = {A dictionary of advanced Japanese grammar},
-  author    = {Makino, Seiichi and Tsutsui, Michio},
-  isbn      = {9784789012959},
-  lccn      = {2017414531},
-  year      = {2008},
-  publisher = {Japan Times}
-}
-:::

@@ -6,6 +6,7 @@ mod list;
 mod show;
 mod special;
 mod wiki;
+mod misc;
 
 pub use home::home;
 pub use page::page;

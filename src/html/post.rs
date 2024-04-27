@@ -1,35 +1,16 @@
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
-use crate::md::Post;
+
+use crate::html::misc::{show_bibliography, show_outline};
 use crate::html::page;
+use crate::md::Post;
 use crate::text::md::Outline;
-
-
-pub fn tree(outline: Outline) -> impl Renderable {
-    maud_move!(
-        section .link-tree {
-            h2 .link-tree__heading {
-                a .link-tree__heading-text href="#top" { "Content" }
-            }
-            nav #table-of-contents .link-tree__nav {
-                ul .link-tree__nav-list {
-                    @for (title, id) in outline.0 {
-                        li .link-tree__nav-list-item {
-                            a .link-tree__nav-list-text.link href=(format!("#{id}")) {
-                                (title)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    )
-}
 
 
 pub fn post<'fm, 'md, 'post, T>(
     fm: &'fm Post,
     content: T,
     outline: Outline,
+    bib: Option<Vec<String>>,
 ) -> impl Renderable + 'post
     where
         'fm: 'post,
@@ -47,7 +28,7 @@ pub fn post<'fm, 'md, 'post, T>(
                 label .wiki-aside__slider for="wiki-aside-shown" {
                     img .wiki-icon src="/static/svg/double-arrow.svg" width="24" height="24";
                 }
-                (tree(outline))
+                (show_outline(outline))
             }
 
             article .wiki-article /*class:list={classlist)*/ {
@@ -56,6 +37,10 @@ pub fn post<'fm, 'md, 'post, T>(
                 }
                 section .wiki-article__markdown.markdown {
                     (content)
+                }
+
+                @if let Some(bib) = bib {
+                    (show_bibliography(bib))
                 }
             }
         }

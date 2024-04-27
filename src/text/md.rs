@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use hayagriva::{archive::ArchivedStyle, citationberg::{IndependentStyle, Locale, Style}, BibliographyDriver, BibliographyRequest, CitationItem, CitationRequest, Library};
 use hypertext::Renderable;
 use once_cell::sync::Lazy;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd, TextMergeStream};
@@ -32,10 +33,19 @@ static KATEX_B: Lazy<katex::Opts> = Lazy::new(||
         .unwrap()
 );
 
+static LOCALE: Lazy<Vec<Locale>> = Lazy::new(|| hayagriva::archive::locales());
+
+static STYLE: Lazy<IndependentStyle> = Lazy::new(||
+    match ArchivedStyle::InstituteOfPhysicsNumeric.get() {
+        Style::Independent(style) => style,
+        Style::Dependent(_)       => unreachable!(),
+    }
+);
+
 pub struct Outline(pub Vec<(String, String)>);
 
 
-pub fn parse(text: &str) -> (Outline, String) {
+pub fn parse(text: &str, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
     let (outline, stream) = {
         let stream = Parser::new_ext(text, *OPTS);
         let mut stream: Vec<_> = TextMergeStream::new(stream).collect();
@@ -50,12 +60,113 @@ pub fn parse(text: &str) -> (Outline, String) {
 
     let stream = make_code(stream)
         .into_iter()
-        .flat_map(make_ruby);
+        .flat_map(make_ruby)
+        .flat_map(make_cite)
+        .collect::<Vec<_>>();
+
+    let (stream, bib) = match lib {
+        Some(lib) => make_bib(stream, lib),
+        None      => (stream, None),
+    };
 
     let mut html = String::new();
     pulldown_cmark::html::push_html(&mut html, stream.into_iter());
 
-    (outline, html)
+    (outline, html, bib)
+}
+
+fn make_bib<'a, 'b>(stream: Vec<Event<'a>>, lib: &'b Library) -> (Vec<Event<'a>>, Option<Vec<String>>) {
+    let mut driver = BibliographyDriver::new();
+
+    for event in stream.iter() {
+        match event {
+            Event::InlineMath(ref text) => match lib.get(text) {
+                Some(entry) => driver.citation(CitationRequest::from_items(vec![CitationItem::with_entry(entry)], &STYLE, &LOCALE)),
+                None        => (),
+            },
+            _ => (),
+        }
+    }
+
+    let res = driver.finish(BibliographyRequest { style: &STYLE, locale: None, locale_files: &LOCALE });
+
+    let mut n = 0;
+    let stream = stream.into_iter()
+        .map(|event| match event {
+            Event::InlineMath(_) => {
+                let rf = match res.citations.get(n) {
+                    Some(rf) => rf,
+                    None     => return event,
+                };
+                let rf = rf.citation.to_string().replace("\u{1b}[0m", "");
+                let rf = format!("<cite>{}</cite>", rf);
+                n += 1;
+                Event::InlineHtml(rf.into())
+            },
+            _ => event
+        })
+        .collect();
+
+    let bib = match res.bibliography {
+        Some(ref bib) => {
+            let test = bib.items.iter()
+                .map(|x| x.content.to_string()
+                    .replace("\u{1b}[0m", "")
+                    .replace("\u{01b}[3mA", "")
+                )
+                .collect::<Vec<_>>();
+            Some(test)
+        },
+        None => None,
+    };
+
+    (stream, bib)
+}
+
+static RE_CITE: Lazy<Regex> = Lazy::new(|| Regex::new(r":cite\[([^\]]+)\]").unwrap());
+
+#[derive(Debug)]
+enum Annotated_<'a> {
+    Text(&'a str),
+    Cite(&'a str),
+}
+
+fn annotate_(input: &str) -> Vec<Annotated_> {
+    let mut parts: Vec<Annotated_> = Vec::new();
+    let mut last_index = 0;
+
+    for cap in RE_CITE.captures_iter(input) {
+        let cite = cap.get(1).unwrap().as_str();
+        let index = cap.get(0).unwrap().start();
+
+        if index > last_index {
+            parts.push(Annotated_::Text(&input[last_index..index]));
+        }
+
+        parts.push(Annotated_::Cite(cite));
+        last_index = cap.get(0).unwrap().end();
+    }
+
+    if last_index < input.len() {
+        parts.push(Annotated_::Text(&input[last_index..]));
+    }
+
+    parts
+}
+
+fn make_cite(event: Event) -> Vec<Event> {
+    match event {
+        Event::Text(ref text) => {
+            annotate_(text)
+                .into_iter()
+                .map(|e| match e {
+                    Annotated_::Text(text) => Event::Text(text.to_owned().into()),
+                    Annotated_::Cite(cite) => Event::InlineMath(cite.to_owned().into()),
+                })
+                .collect()
+        },
+        _ => vec![event],
+    }
 }
 
 fn set_heading_ids(events: &mut [Event]) -> Outline {

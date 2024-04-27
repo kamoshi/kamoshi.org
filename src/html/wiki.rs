@@ -1,62 +1,10 @@
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 
-use crate::{
-    gen::{Sack, TreePage},
-    html::page,
-    md::Wiki,
-    text::md::Outline
-};
-
-
-
-fn tree(sack: &Sack) -> impl Renderable {
-    let tree = sack.get_tree("wiki/**/*.html");
-
-    maud_move!(
-        h2 .link-tree__heading {
-          // {pages.chain(x => x.prefix)
-          //   .map(pathify)
-          //   .mapOrDefault(href =>
-          //     <a class="link-tree__heading-text" href={href}>{heading}</a>,
-          //     <span class="link-tree__heading-text">{heading}</span>
-          // )}
-        }
-        nav .link-tree__nav {
-            (list(&tree))
-        }
-    )
-}
-
-fn list(tree: &TreePage) -> impl Renderable + '_ {
-    let subs = {
-        let mut subs: Vec<_> = tree.subs.iter().collect();
-        subs.sort_by(|a, b| a.0.cmp(b.0));
-        subs
-    };
-
-    maud_move!(
-        ul .link-tree__nav-list {
-            @for (key, next) in subs {
-                li .link-tree__nav-list-item {
-                    span .link-tree__nav-list-text {
-                        @if let Some(ref link) = next.link {
-                            a .link-tree__nav-list-text.link href=(link.path.as_str()) {
-                                (&link.name)
-                            }
-                        } @else {
-                            span .link-tree__nav-list-text {
-                                (key)
-                            }
-                        }
-                    }
-                    @if !next.subs.is_empty() {
-                        (list(next))
-                    }
-                }
-            }
-        }
-    )
-}
+use crate::gen::Sack;
+use crate::html::misc::show_page_tree;
+use crate::html::{misc::show_bibliography, page};
+use crate::md::Wiki;
+use crate::text::md::Outline;
 
 
 pub fn wiki<'data, 'html, 'sack, T>(
@@ -64,6 +12,7 @@ pub fn wiki<'data, 'html, 'sack, T>(
     content: T,
     _: Outline,
     sack: &'sack Sack,
+    bib: Option<Vec<String>>,
 ) -> impl Renderable + 'html
     where
         'sack: 'html,
@@ -84,7 +33,7 @@ pub fn wiki<'data, 'html, 'sack, T>(
                 // Navigation tree
                 section .link-tree {
                     div {
-                        (tree(sack))
+                        (show_page_tree(sack, "wiki/**/*.html"))
                     }
                 }
             }
@@ -95,6 +44,10 @@ pub fn wiki<'data, 'html, 'sack, T>(
                 }
                 section .wiki-article__markdown.markdown {
                     (content)
+                }
+
+                @if let Some(bib) = bib {
+                    (show_bibliography(bib))
                 }
             }
         }

@@ -3,6 +3,7 @@ mod render;
 mod sack;
 
 use camino::Utf8PathBuf;
+use hayagriva::Library;
 use hypertext::Renderable;
 
 pub use load::{gather, Source, SourceKind};
@@ -19,6 +20,7 @@ pub trait Content {
         content: T,
         outline: Outline,
         sack: &'s Sack,
+        bib: Option<Vec<String>>,
     ) -> impl Renderable + 'html
         where
             'f: 'html,
@@ -28,5 +30,5 @@ pub trait Content {
 
     fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable>;
 
-    fn render(data: &str) -> (Outline, String);
+    fn render(data: &str, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>);
 }

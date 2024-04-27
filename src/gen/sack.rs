@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
+use camino::Utf8PathBuf;
+use hayagriva::Library;
+
 use crate::html::{Link, LinkDate, Linkable};
 
-use super::Asset;
+use super::{Asset, AssetKind};
 
 
 #[derive(Debug)]
@@ -35,11 +38,12 @@ impl TreePage {
 #[derive(Debug)]
 pub struct Sack<'a> {
     assets: &'a [&'a Asset],
+    path: &'a Utf8PathBuf,
 }
 
 impl<'a> Sack<'a> {
-    pub fn new(assets: &'a [&'a Asset]) -> Self {
-        Self { assets }
+    pub fn new(assets: &'a [&'a Asset], path: &'a Utf8PathBuf) -> Self {
+        Self { assets, path }
     }
 
     pub fn get_links(&self, path: &str) -> Vec<LinkDate> {
@@ -68,5 +72,22 @@ impl<'a> Sack<'a> {
         };
 
         tree
+    }
+
+    pub fn get_library(&self) -> Option<&Library> {
+        let glob = format!("{}/*.bib", self.path.parent()?);
+        let glob = glob::Pattern::new(&glob).unwrap();
+        let opts = glob::MatchOptions {
+            case_sensitive: true,
+            require_literal_separator: true,
+            require_literal_leading_dot: false,
+        };
+
+        self.assets.iter()
+            .filter(|asset| glob.matches_path_with(asset.out.as_ref(), opts))
+            .find_map(|asset| match asset.kind {
+                AssetKind::Bib(ref lib) => Some(lib),
+                _ => None
+            })
     }
 }

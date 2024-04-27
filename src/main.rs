@@ -5,6 +5,7 @@ use std::fs;
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::Datelike;
 use gen::{Asset, Sack, Content};
+use hayagriva::Library;
 use html::{Link, LinkDate, Linkable};
 use hypertext::{Raw, Renderable};
 use once_cell::sync::Lazy;
@@ -54,13 +55,14 @@ impl Content for md::Post {
         content: T,
         outline: Outline,
         _: &'s Sack,
+        bib: Option<Vec<String>>,
     ) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
             's: 'html,
             T: Renderable + 'm {
-        html::post(self, content, outline)
+        html::post(self, content, outline, bib)
     }
 
     fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
@@ -74,8 +76,8 @@ impl Content for md::Post {
         }))
     }
 
-    fn render(data: &str) -> (Outline, String) {
-        text::md::parse(data)
+    fn render(data: &str, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
+        text::md::parse(data, lib)
     }
 }
 
@@ -85,6 +87,7 @@ impl Content for md::Slide {
         content: T,
         _: Outline,
         _: &'s Sack,
+        bib: Option<Vec<String>>,
     ) -> impl Renderable + 'html
         where
             'f: 'html,
@@ -105,16 +108,16 @@ impl Content for md::Slide {
         }))
     }
 
-    fn render(data: &str) -> (Outline, String) {
+    fn render(data: &str, _: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
         let html = data
             .split("\n-----\n")
-            .map(|chunk| chunk.split("\n---\n").map(text::md::parse).map(|e| e.1).collect::<Vec<_>>())
+            .map(|chunk| chunk.split("\n---\n").map(|s| text::md::parse(s, None)).map(|e| e.1).collect::<Vec<_>>())
             .map(|stack| match stack.len() > 1 {
                 true  => format!("<section>{}</section>", stack.into_iter().map(|slide| format!("<section>{slide}</section>")).collect::<String>()),
                 false => format!("<section>{}</section>", stack[0])
             })
             .collect::<String>();
-        (Outline(vec![]), html)
+        (Outline(vec![]), html, None)
     }
 }
 
@@ -124,13 +127,14 @@ impl Content for md::Wiki {
         content: T,
         outline: Outline,
         sack: &'s Sack,
+        bib: Option<Vec<String>>,
     ) -> impl Renderable + 'html
         where
             'f: 'html,
             'm: 'html,
             's: 'html,
             T: Renderable + 'm {
-        html::wiki(self, content, outline, sack)
+        html::wiki(self, content, outline, sack, bib)
     }
 
     fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
@@ -141,8 +145,8 @@ impl Content for md::Wiki {
         }))
     }
 
-    fn render(data: &str) -> (Outline, String) {
-        text::md::parse(data)
+    fn render(data: &str, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
+        text::md::parse(data, lib)
     }
 }
 
@@ -185,8 +189,9 @@ fn transform<T>(meta: gen::Source) -> Asset
                 let link = T::as_link(&fm, Utf8Path::new("/").join(dir));
 
                 let call = move |sack: &Sack| {
-                    let (outline, html) = T::render(&md);
-                    T::transform(&fm, Raw(html), outline, sack).render().into()
+                    let lib = sack.get_library();
+                    let (outline, html, bib) = T::render(&md, lib);
+                    T::transform(&fm, Raw(html), outline, sack, bib).render().into()
                 };
 
                 gen::Asset {
@@ -249,7 +254,7 @@ fn main() {
             gen::Asset {
                 kind: gen::AssetKind::Html(Box::new(|_| {
                     let data = std::fs::read_to_string("content/index.md").unwrap();
-                    let (_, html) = text::md::parse(&data);
+                    let (_, html, bib) = text::md::parse(&data, None);
                     html::home(Raw(html)).render().to_owned().into()
                 })),
                 out: "index.html".into(),

@@ -1,5 +1,9 @@
-.csl-bib-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
+.bibliography {
+  li {
+    padding-left: 0.7em;
+
+    &::marker {
+      content: '[' counter(list-item) ']';
+    }
+  }
 }
