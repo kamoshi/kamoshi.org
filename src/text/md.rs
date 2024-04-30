@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use hayagriva::{archive::ArchivedStyle, citationberg::{IndependentStyle, Locale, Style}, BibliographyDriver, BibliographyRequest, CitationItem, CitationRequest, Library};
+use hayagriva::{archive::ArchivedStyle, citationberg::{IndependentStyle, Locale, Style}, BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest, Library};
 use hypertext::Renderable;
 use once_cell::sync::Lazy;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd, TextMergeStream};
@@ -93,32 +93,29 @@ fn make_bib<'a, 'b>(stream: Vec<Event<'a>>, lib: &'b Library) -> (Vec<Event<'a>>
     let mut n = 0;
     let stream = stream.into_iter()
         .map(|event| match event {
-            Event::InlineMath(_) => {
-                let rf = match res.citations.get(n) {
-                    Some(rf) => rf,
-                    None     => return event,
+            Event::InlineMath(name) => {
+                let mut buffer = String::from("<cite>");
+                match res.citations.get(n) {
+                    Some(rf) => rf.citation.write_buf(&mut buffer, BufWriteFormat::Html).unwrap(),
+                    None     => buffer.push_str(&name),
                 };
-                let rf = rf.citation.to_string().replace("\u{1b}[0m", "");
-                let rf = format!("<cite>{}</cite>", rf);
+                buffer.push_str("</cite>");
                 n += 1;
-                Event::InlineHtml(rf.into())
+                Event::InlineHtml(buffer.into())
             },
             _ => event
         })
         .collect();
 
-    let bib = match res.bibliography {
-        Some(ref bib) => {
-            let test = bib.items.iter()
-                .map(|x| x.content.to_string()
-                    .replace("\u{1b}[0m", "")
-                    .replace("\u{01b}[3mA", "")
-                )
-                .collect::<Vec<_>>();
-            Some(test)
-        },
-        None => None,
-    };
+    let bib = res.bibliography.map(|bib|
+        bib.items.iter()
+            .map(|x| {
+                let mut buffer = String::new();
+                x.content.write_buf(&mut buffer, BufWriteFormat::Html).unwrap();
+                buffer
+            })
+            .collect::<Vec<_>>()
+    );
 
     (stream, bib)
 }

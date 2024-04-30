@@ -1,4 +1,4 @@
-use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
+use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 
 use crate::gen::{Sack, TreePage};
 use crate::text::md::Outline;
@@ -36,7 +36,7 @@ pub fn show_bibliography(bib: Vec<String>) -> impl Renderable {
             ol .bibliography {
                 @for item in bib {
                     li {
-                        (item)
+                        (Raw(item))
                     }
                 }
             }
