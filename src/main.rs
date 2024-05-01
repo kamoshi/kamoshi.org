@@ -4,13 +4,15 @@ use std::fs;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::Datelike;
-use gen::{Asset, AssetKind, Content, PipelineItem, Sack, StaticItemKind};
+use gen::{Asset, AssetKind, Content, FileItemKind, Output, PipelineItem, Sack};
 use hayagriva::Library;
 use html::{Link, LinkDate, Linkable};
 use hypertext::{Raw, Renderable};
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use text::md::Outline;
+
+use crate::gen::Dynamic;
 
 mod md;
 mod html;
@@ -177,16 +179,23 @@ fn to_index<T>(item: PipelineItem) -> PipelineItem
         T: for<'de> Deserialize<'de> + Content + 'static,
 {
     let meta = match item {
-        PipelineItem::Skip(meta) if matches!(meta.kind, StaticItemKind::Index) => meta,
+        PipelineItem::Skip(meta) if matches!(meta.kind, FileItemKind::Index) => meta,
         _ => return item,
     };
 
-    let dir = meta.dir.strip_prefix("content").unwrap();
-    match meta.ext.as_str() {
-        "md" | "mdx" | "lhs" => {
-            let path = dir.join("index.html");
+    // FIXME: clean this up
+    let dir = meta.path.parent().unwrap();
+    let ext = meta.path.extension().unwrap();
+    let dir = dir.strip_prefix("content").unwrap();
+    let dir = match meta.path.file_stem().unwrap() {
+        "index" => dir.to_owned(),
+        name    => dir.join(name),
+    };
+    let path = dir.join("index.html");
 
-            let data = fs::read_to_string(&meta.src).unwrap();
+    match ext {
+        "md" | "mdx" | "lhs" => {
+            let data = fs::read_to_string(&meta.path).unwrap();
             let (fm, md) = md::preflight::<T>(&data);
             let link = T::as_link(&fm, Utf8Path::new("/").join(dir));
 
@@ -196,11 +205,13 @@ fn to_index<T>(item: PipelineItem) -> PipelineItem
                 T::transform(&fm, Raw(html), outline, sack, bib).render().into()
             };
 
-            gen::Asset {
-                kind: gen::AssetKind::Html(Box::new(call)),
-                out: path,
+            Output {
+                kind: Asset {
+                    kind: gen::AssetKind::Html(Box::new(call)),
+                    meta,
+                }.into(),
+                path,
                 link,
-                meta,
             }.into()
         },
         _ => meta.into(),
@@ -209,29 +220,33 @@ fn to_index<T>(item: PipelineItem) -> PipelineItem
 
 fn to_bundle(item: PipelineItem) -> PipelineItem {
     let meta = match item {
-        PipelineItem::Skip(meta) if matches!(meta.kind, StaticItemKind::Bundle) => meta,
+        PipelineItem::Skip(meta) if matches!(meta.kind, FileItemKind::Bundle) => meta,
         _ => return item,
     };
 
-    let dir = meta.dir.strip_prefix("content").unwrap();
-    let out = dir.join(meta.src.file_name().unwrap()).to_owned();
+    let dirs = meta.path.strip_prefix("content").unwrap().parent().unwrap();
+    let path = dirs.join(meta.path.file_name().unwrap()).to_owned();
 
-    match meta.ext.as_str() {
-        "jpg" | "png" | "gif" => gen::Asset {
-            kind: gen::AssetKind::Image,
-            out,
+    match meta.path.extension().unwrap() {
+        "jpg" | "png" | "gif" => Output {
+            kind: Asset {
+                kind: AssetKind::Image,
+                meta,
+            }.into(),
+            path,
             link: None,
-            meta,
         }.into(),
         "bib" => {
-            let data = fs::read_to_string(&meta.src).unwrap();
+            let data = fs::read_to_string(&meta.path).unwrap();
             let data = hayagriva::io::from_biblatex_str(&data).unwrap();
 
-            Asset {
-                kind: AssetKind::Bib(data),
-                out,
+            Output {
+                kind: Asset {
+                    kind: AssetKind::Bibtex(data),
+                    meta,
+                }.into(),
+                path,
                 link: None,
-                meta,
             }.into()
         },
         _ => meta.into(),
@@ -247,7 +262,7 @@ fn main() {
 
     fs::create_dir("dist").unwrap();
 
-    let assets: Vec<Asset> = vec![
+    let assets: Vec<Output> = vec![
         gen::gather("content/about.md", &["md"].into())
             .into_iter()
             .map(to_index::<md::Post> as fn(PipelineItem) -> PipelineItem),
@@ -266,52 +281,60 @@ fn main() {
         .map(to_bundle)
         .filter_map(|item| match item {
             PipelineItem::Skip(skip) => {
-                println!("Skipping {}", skip.src);
+                println!("Skipping {}", skip.path);
                 None
             },
             PipelineItem::Take(take) => Some(take),
         })
         .collect();
 
-    let assets: Vec<Vec<gen::Item>> = vec![
-        assets.into_iter()
-            .map(Into::into)
-            .collect(),
+    let assets: Vec<Output> = vec![
+        assets,
         vec![
-            gen::Virtual::new("map/index.html", |_| html::map().render().to_owned().into()).into(),
-            gen::Virtual::new("search/index.html", |_| html::search().render().to_owned().into()).into(),
-            gen::Asset {
-                kind: gen::AssetKind::Html(Box::new(|_| {
-                    let data = std::fs::read_to_string("content/index.md").unwrap();
-                    let (_, html, bib) = text::md::parse(&data, None);
-                    html::home(Raw(html)).render().to_owned().into()
-                })),
-                out: "index.html".into(),
+            Output {
+                kind: Dynamic::new(|_| html::map().render().to_owned().into()).into(),
+                path: "map/index.html".into(),
                 link: None,
-                meta: gen::StaticItem {
-                    kind: gen::StaticItemKind::Index,
-                    ext: "md".into(),
-                    dir: "".into(),
-                    src: "content/index.md".into()
-                }
+            },
+            Output {
+                kind: Dynamic::new(|_| html::search().render().to_owned().into()).into(),
+                path: "search/index.html".into(),
+                link: None,
+            },
+            Output {
+                kind: Asset {
+                    kind: gen::AssetKind::Html(Box::new(|_| {
+                        let data = std::fs::read_to_string("content/index.md").unwrap();
+                        let (_, html, bib) = text::md::parse(&data, None);
+                        html::home(Raw(html)).render().to_owned().into()
+                    })).into(),
+                    meta: gen::FileItem {
+                        kind: gen::FileItemKind::Index,
+                        path: "content/index.md".into()
+                    }
+                }.into(),
+                path: "index.html".into(),
+                link: None,
             }.into(),
-            gen::Virtual("posts/index.html".into(), Box::new(|all|
-                to_list(all.get_links("posts/**/*.html"))
-            )).into(),
-            gen::Virtual("slides/index.html".into(), Box::new(|all|
-                to_list(all.get_links("slides/**/*.html"))
-            )).into(),
+            Output {
+                kind: Dynamic::new(|sack| to_list(sack.get_links("posts/**/*.html"))).into(),
+                path: "posts/index.html".into(),
+                link: None,
+            },
+            Output {
+                kind: Dynamic::new(|sack| to_list(sack.get_links("slides/**/*.html"))).into(),
+                path: "slides/index.html".into(),
+                link: None,
+            },
         ],
-    ];
-
-    let all: Vec<gen::Item> = assets
+    ]
         .into_iter()
         .flatten()
         .collect();
 
     {
         let now = std::time::Instant::now();
-        gen::render(&all);
+        gen::render_all(&assets);
         println!("Elapsed: {:.2?}", now.elapsed());
     }
 

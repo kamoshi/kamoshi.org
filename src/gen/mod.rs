@@ -1,19 +1,17 @@
 mod load;
-mod render;
 mod sack;
 
 use camino::Utf8PathBuf;
 use hayagriva::Library;
 use hypertext::Renderable;
 
-pub use load::{gather, StaticItem, StaticItemKind, Asset, AssetKind, PipelineItem};
-pub use render::{render, Virtual, Item};
+pub use load::{gather, render_all, FileItem, FileItemKind, Asset, AssetKind, PipelineItem, Dynamic, Output};
 pub use sack::{TreePage, Sack};
 
 use crate::{html::Linkable, text::md::Outline};
 
 
-/// Represents a piece of content that can be rendered into a page.
+/// Represents a piece of content that can be rendered as a page.
 pub trait Content {
     fn transform<'f, 'm, 's, 'html, T>(
         &'f self,

@@ -5,7 +5,7 @@ use hayagriva::Library;
 
 use crate::html::{Link, LinkDate, Linkable};
 
-use super::{Asset, AssetKind};
+use super::{load::{Output, OutputKind}, AssetKind};
 
 
 #[derive(Debug)]
@@ -34,22 +34,25 @@ impl TreePage {
 }
 
 
-/// This struct allows for querying the website hierarchy.
+/// This struct allows for querying the website hierarchy. Separate instance of this struct is
+/// passed to each closure contained by some rendered assets.
 pub struct Sack<'a> {
-    assets: &'a [&'a Asset],
+    /// Literally everything
+    hole: &'a [Output],
+    /// Current path for page
     path: &'a Utf8PathBuf,
 }
 
 impl<'a> Sack<'a> {
-    pub fn new(assets: &'a [&'a Asset], path: &'a Utf8PathBuf) -> Self {
-        Self { assets, path }
+    pub fn new(hole: &'a [Output], path: &'a Utf8PathBuf) -> Self {
+        Self { hole, path }
     }
 
     pub fn get_links(&self, path: &str) -> Vec<LinkDate> {
-        let pattern = glob::Pattern::new(path).unwrap();
-        self.assets.iter()
-            .filter(|f| pattern.matches_path(f.out.as_ref()))
-            .filter_map(|f| match &f.link {
+        let pattern = glob::Pattern::new(path).expect("Bad glob pattern");
+        self.hole.iter()
+            .filter(|item| pattern.matches_path(item.path.as_ref()))
+            .filter_map(|item| match &item.link {
                 Some(Linkable::Date(link)) => Some(link.clone()),
                 _ => None,
             })
@@ -57,10 +60,10 @@ impl<'a> Sack<'a> {
     }
 
     pub fn get_tree(&self, path: &str) -> TreePage {
-        let glob = glob::Pattern::new(path).unwrap();
-        let list = self.assets.iter()
-            .filter(|f| glob.matches_path(f.out.as_ref()))
-            .filter_map(|f| match &f.link {
+        let glob = glob::Pattern::new(path).expect("Bad glob pattern");
+        let list = self.hole.iter()
+            .filter(|item| glob.matches_path(item.path.as_ref()))
+            .filter_map(|item| match &item.link {
                 Some(Linkable::Link(link)) => Some(link.clone()),
                 _ => None,
             });
@@ -75,18 +78,22 @@ impl<'a> Sack<'a> {
 
     pub fn get_library(&self) -> Option<&Library> {
         let glob = format!("{}/*.bib", self.path.parent()?);
-        let glob = glob::Pattern::new(&glob).unwrap();
+        let glob = glob::Pattern::new(&glob).expect("Bad glob pattern");
         let opts = glob::MatchOptions {
             case_sensitive: true,
             require_literal_separator: true,
             require_literal_leading_dot: false,
         };
 
-        self.assets.iter()
-            .filter(|asset| glob.matches_path_with(asset.out.as_ref(), opts))
+        self.hole.iter()
+            .filter(|item| glob.matches_path_with(item.path.as_ref(), opts))
+            .filter_map(|asset| match asset.kind {
+                OutputKind::Real(ref real) => Some(real),
+                _ => None,
+            })
             .find_map(|asset| match asset.kind {
-                AssetKind::Bib(ref lib) => Some(lib),
-                _ => None
+                AssetKind::Bibtex(ref lib) => Some(lib),
+                _ => None,
             })
     }
 }
