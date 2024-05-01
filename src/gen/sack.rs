@@ -35,7 +35,6 @@ impl TreePage {
 
 
 /// This struct allows for querying the website hierarchy.
-#[derive(Debug)]
 pub struct Sack<'a> {
     assets: &'a [&'a Asset],
     path: &'a Utf8PathBuf,

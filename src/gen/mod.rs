@@ -6,8 +6,8 @@ use camino::Utf8PathBuf;
 use hayagriva::Library;
 use hypertext::Renderable;
 
-pub use load::{gather, Source, SourceKind};
-pub use render::{render, Asset, AssetKind, Virtual, Item};
+pub use load::{gather, StaticItem, StaticItemKind, Asset, AssetKind, PipelineItem};
+pub use render::{render, Virtual, Item};
 pub use sack::{TreePage, Sack};
 
 use crate::{html::Linkable, text::md::Outline};

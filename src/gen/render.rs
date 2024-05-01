@@ -1,38 +1,12 @@
-use std::fmt::Debug;
 use std::fs::{self, File};
 use std::io::Write;
 
 use camino::{Utf8Path, Utf8PathBuf};
 
-use crate::html::Linkable;
 use crate::Sack;
 
+use super::{Asset, AssetKind};
 
-pub enum AssetKind {
-    Html(Box<dyn Fn(&Sack) -> String>),
-    Image,
-    Unknown,
-    Bib(hayagriva::Library),
-}
-
-impl Debug for AssetKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Html(ptr) => f.debug_tuple("Html").field(&format!("{:p}", *ptr)).finish(),
-            Self::Image => write!(f, "Image"),
-            Self::Unknown => write!(f, "Unknown"),
-            Self::Bib(bib) => f.debug_tuple("Bib").field(bib).finish(),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Asset {
-    pub kind: AssetKind,
-    pub out: Utf8PathBuf,
-    pub link: Option<Linkable>,
-    pub meta: super::Source,
-}
 
 pub struct Virtual(pub Utf8PathBuf, pub Box<dyn Fn(&Sack) -> String>);
 
@@ -85,7 +59,7 @@ pub fn render(items: &[Item]) {
 fn render_real(item: &Asset, sack: &Sack) {
     match &item.kind {
         AssetKind::Html(render) => {
-            let i = &item.meta.path;
+            let i = &item.meta.src;
             let o = Utf8Path::new("dist").join(&item.out);
 
             fs::create_dir_all(o.parent().unwrap()).unwrap();
@@ -96,15 +70,15 @@ fn render_real(item: &Asset, sack: &Sack) {
             println!("HTML: {} -> {}", i, o);
         },
         AssetKind::Image => {
-            let i = &item.meta.path;
+            let i = &item.meta.src;
             let o = Utf8Path::new("dist").join(&item.out);
             fs::create_dir_all(o.parent().unwrap()).unwrap();
             fs::copy(i, &o).unwrap();
             println!("Image: {} -> {}", i, o);
         },
         AssetKind::Bib(_) => (),
-        AssetKind::Unknown => {
-            let i = &item.meta.path;
+        AssetKind::Other => {
+            let i = &item.meta.src;
             let o = Utf8Path::new("dist").join(&item.out);
             fs::create_dir_all(o.parent().unwrap()).unwrap();
             fs::copy(i, &o).unwrap();
