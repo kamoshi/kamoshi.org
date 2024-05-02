@@ -185,7 +185,6 @@ fn to_index<T>(item: PipelineItem) -> PipelineItem
 
     // FIXME: clean this up
     let dir = meta.path.parent().unwrap();
-    let ext = meta.path.extension().unwrap();
     let dir = dir.strip_prefix("content").unwrap();
     let dir = match meta.path.file_stem().unwrap() {
         "index" => dir.to_owned(),
@@ -193,8 +192,8 @@ fn to_index<T>(item: PipelineItem) -> PipelineItem
     };
     let path = dir.join("index.html");
 
-    match ext {
-        "md" | "mdx" | "lhs" => {
+    match meta.path.extension() {
+        Some("md" | "mdx" | "lhs") => {
             let data = fs::read_to_string(&meta.path).unwrap();
             let (fm, md) = md::preflight::<T>(&data);
             let link = T::as_link(&fm, Utf8Path::new("/").join(dir));
@@ -227,16 +226,20 @@ fn to_bundle(item: PipelineItem) -> PipelineItem {
     let dirs = meta.path.strip_prefix("content").unwrap().parent().unwrap();
     let path = dirs.join(meta.path.file_name().unwrap()).to_owned();
 
-    match meta.path.extension().unwrap() {
-        "jpg" | "png" | "gif" => Output {
-            kind: Asset {
-                kind: AssetKind::Image,
-                meta,
-            }.into(),
-            path,
-            link: None,
-        }.into(),
-        "bib" => {
+    match meta.path.extension() {
+        // any image
+        Some("jpg" | "png" | "gif") => {
+            Output {
+                kind: Asset {
+                    kind: AssetKind::Image,
+                    meta,
+                }.into(),
+                path,
+                link: None,
+            }.into()
+        },
+        // bibliography
+        Some("bib") => {
             let data = fs::read_to_string(&meta.path).unwrap();
             let data = hayagriva::io::from_biblatex_str(&data).unwrap();
 
@@ -262,7 +265,7 @@ fn main() {
 
     fs::create_dir("dist").unwrap();
 
-    let assets: Vec<Output> = vec![
+    let assets: Vec<Output> = [
         gen::gather("content/about.md", &["md"].into())
             .into_iter()
             .map(to_index::<md::Post> as fn(PipelineItem) -> PipelineItem),
