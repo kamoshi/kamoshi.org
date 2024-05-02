@@ -183,9 +183,7 @@ fn to_index<T>(item: PipelineItem) -> PipelineItem
         _ => return item,
     };
 
-    // FIXME: clean this up
-    let dir = meta.path.parent().unwrap();
-    let dir = dir.strip_prefix("content").unwrap();
+    let dir = meta.path.parent().unwrap().strip_prefix("content").unwrap();
     let dir = match meta.path.file_stem().unwrap() {
         "index" => dir.to_owned(),
         name    => dir.join(name),
@@ -223,8 +221,7 @@ fn to_bundle(item: PipelineItem) -> PipelineItem {
         _ => return item,
     };
 
-    let dirs = meta.path.strip_prefix("content").unwrap().parent().unwrap();
-    let path = dirs.join(meta.path.file_name().unwrap()).to_owned();
+    let path = meta.path.strip_prefix("content").unwrap().to_owned();
 
     match meta.path.extension() {
         // any image
@@ -308,7 +305,7 @@ fn main() {
                 kind: Asset {
                     kind: gen::AssetKind::Html(Box::new(|_| {
                         let data = std::fs::read_to_string("content/index.md").unwrap();
-                        let (_, html, bib) = text::md::parse(&data, None);
+                        let (_, html, _) = text::md::parse(&data, None);
                         html::home(Raw(html)).render().to_owned().into()
                     })).into(),
                     meta: gen::FileItem {

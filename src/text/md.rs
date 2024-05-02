@@ -88,6 +88,9 @@ fn make_bib<'a, 'b>(stream: Vec<Event<'a>>, lib: &'b Library) -> (Vec<Event<'a>>
         }
     }
 
+    // add fake citation to make all entries show up
+    driver.citation(CitationRequest::from_items(lib.iter().map(CitationItem::with_entry).collect(), &STYLE, &LOCALE));
+
     let res = driver.finish(BibliographyRequest { style: &STYLE, locale: None, locale_files: &LOCALE });
 
     let mut n = 0;

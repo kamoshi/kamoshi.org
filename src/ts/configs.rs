@@ -24,14 +24,15 @@ pub static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| 
         ("md", "markdown"),
         ("mdx", "markdown"),
         ("py", "python"),
-        ("query", "query"),
-        // ("scm", "scheme"),
-        ("scss", "scss"),
+        ("query", "scheme"),
+        ("scm", "scheme"),
+        ("scss", "css"),
         ("ts", "javascript"),
         ("typescript", "javascript")
     ])
 });
 
+#[inline(always)]
 fn config_for(
     lang: Language,
     highlights: &str,
@@ -139,6 +140,15 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
                 tree_sitter_rust::language(),
                 tree_sitter_rust::HIGHLIGHT_QUERY,
                 tree_sitter_rust::INJECTIONS_QUERY,
+                "",
+            )
+        ),
+        (
+            "scheme",
+            config_for(
+                tree_sitter_scheme::language(),
+                tree_sitter_scheme::HIGHLIGHTS_QUERY,
+                "",
                 "",
             )
         ),

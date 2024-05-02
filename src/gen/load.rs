@@ -1,4 +1,6 @@
-use std::{collections::HashSet, fs::{self, File}, io::Write} ;
+use std::collections::HashSet;
+use std::fs::{self, File};
+use std::io::Write;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use glob::glob;
