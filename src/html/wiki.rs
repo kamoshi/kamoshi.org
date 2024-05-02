@@ -53,5 +53,5 @@ pub fn wiki<'data, 'html, 'sack, T>(
         }
     );
 
-    page(&fm.title, main)
+    page(&fm.title, main, sack.get_file())
 }

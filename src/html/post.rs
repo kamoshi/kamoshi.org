@@ -1,21 +1,24 @@
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 
+use crate::gen::Sack;
 use crate::html::misc::{show_bibliography, show_outline};
 use crate::html::page;
 use crate::md::Post;
 use crate::text::md::Outline;
 
 
-pub fn post<'fm, 'md, 'post, T>(
-    fm: &'fm Post,
+pub fn post<'f, 'm, 's, 'html, T>(
+    fm: &'f Post,
     content: T,
     outline: Outline,
     bib: Option<Vec<String>>,
-) -> impl Renderable + 'post
+    sack: &'s Sack,
+) -> impl Renderable + 'html
     where
-        'fm: 'post,
-        'md: 'post,
-        T: Renderable + 'md
+        'f: 'html,
+        'm: 'html,
+        's: 'html,
+        T: Renderable + 'm
 {
     let main = maud_move!(
         main .wiki-main {
@@ -46,5 +49,5 @@ pub fn post<'fm, 'md, 'post, T>(
         }
     );
 
-    page(&fm.title, main)
+    page(&fm.title, main, sack.get_file())
 }

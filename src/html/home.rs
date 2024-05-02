@@ -73,5 +73,5 @@ pub fn home<'data, 'home, R>(main: R) -> impl Renderable + 'home
         }
     );
 
-    page("Home", main)
+    page("Home", main, None)
 }

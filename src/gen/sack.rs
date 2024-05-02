@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use hayagriva::Library;
 
 use crate::html::{Link, LinkDate, Linkable};
@@ -41,11 +41,13 @@ pub struct Sack<'a> {
     hole: &'a [Output],
     /// Current path for page
     path: &'a Utf8PathBuf,
+    /// Original file location
+    file: Option<&'a Utf8PathBuf>,
 }
 
 impl<'a> Sack<'a> {
-    pub fn new(hole: &'a [Output], path: &'a Utf8PathBuf) -> Self {
-        Self { hole, path }
+    pub fn new(hole: &'a [Output], path: &'a Utf8PathBuf, file: Option<&'a Utf8PathBuf>) -> Self {
+        Self { hole, path, file }
     }
 
     pub fn get_links(&self, path: &str) -> Vec<LinkDate> {
@@ -95,5 +97,15 @@ impl<'a> Sack<'a> {
                 AssetKind::Bibtex(ref lib) => Some(lib),
                 _ => None,
             })
+    }
+
+    /// Get the path for output
+    pub fn get_path(&self) -> &'a Utf8Path {
+        self.path.as_path()
+    }
+
+    /// Get the path for original file location
+    pub fn get_file(&self) -> Option<&'a Utf8Path> {
+        self.file.map(Utf8PathBuf::as_ref)
     }
 }

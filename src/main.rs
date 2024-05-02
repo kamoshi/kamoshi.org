@@ -57,7 +57,7 @@ impl Content for md::Post {
         &'f self,
         content: T,
         outline: Outline,
-        _: &'s Sack,
+        sack: &'s Sack,
         bib: Option<Vec<String>>,
     ) -> impl Renderable + 'html
         where
@@ -65,7 +65,7 @@ impl Content for md::Post {
             'm: 'html,
             's: 'html,
             T: Renderable + 'm {
-        html::post(self, content, outline, bib)
+        html::post(self, content, outline, bib, sack)
     }
 
     fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {

@@ -12,7 +12,7 @@ pub fn map() -> impl Renderable {
                 (Raw("import 'photos';"))
             }
         }
-    ))
+    ), None)
 }
 
 pub fn search() -> impl Renderable {
@@ -20,5 +20,5 @@ pub fn search() -> impl Renderable {
         main {
 
         }
-    ))
+    ), None)
 }

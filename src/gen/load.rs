@@ -137,7 +137,11 @@ fn to_source(path: Utf8PathBuf, exts: &HashSet<&'static str>) -> FileItem {
 
 pub fn render_all(items: &[Output]) {
     for item in items {
-        render(item, &Sack::new(items, &item.path));
+        let file = match &item.kind {
+            OutputKind::Real(a) => Some(&a.meta.path),
+            OutputKind::Fake(_) => None,
+        };
+        render(item, &Sack::new(items, &item.path, file));
     }
 }
 

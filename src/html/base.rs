@@ -1,3 +1,4 @@
+use camino::Utf8Path;
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
 use crate::REPO;
@@ -81,11 +82,15 @@ pub fn navbar() -> impl Renderable {
     )
 }
 
-pub fn footer() -> impl Renderable {
+pub fn footer(path: Option<&Utf8Path>) -> impl Renderable {
     let copy = format!("Copyright &copy; {} Maciej Jur", &REPO.year);
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{}", mail);
-    let repo = format!("{}/tree/{}", &REPO.link, &REPO.hash);
+    let link = Utf8Path::new(&REPO.link).join("tree").join(&REPO.hash);
+    let link = match path {
+        Some(path) => link.join(path),
+        None       => link,
+    };
 
     maud_move!(
         footer .footer {
@@ -98,7 +103,7 @@ pub fn footer() -> impl Renderable {
                 }
             }
             div .repo {
-                a href=(repo) {
+                a href=(link.as_str()) {
                     (&REPO.hash)
                 }
                 div {

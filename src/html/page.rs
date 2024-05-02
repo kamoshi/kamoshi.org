@@ -1,3 +1,4 @@
+use camino::Utf8Path;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use crate::html::base::{head, navbar, footer};
 
@@ -19,10 +20,14 @@ pub fn bare<'data, 'html, R>(title: &'data str, main: R) -> impl Renderable + 'h
     )
 }
 
-pub fn page<'data, 'main, 'page, T>(title: &'data str, main: T) -> impl Renderable + 'page
+pub fn page<'data, 'main, 'html, T>(
+    title: &'data str,
+    main: T,
+    path: Option<&'data Utf8Path>,
+) -> impl Renderable + 'html
     where
-        'main : 'page,
-        'data : 'page,
+        'main : 'html,
+        'data : 'html,
         T: Renderable + 'main
 {
     maud_move!(
@@ -33,7 +38,7 @@ pub fn page<'data, 'main, 'page, T>(title: &'data str, main: T) -> impl Renderab
             body {
                 (navbar())
                 (main)
-                (footer())
+                (footer(path))
             }
         }
     )

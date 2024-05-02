@@ -45,7 +45,7 @@ pub fn list<'data, 'list>(
         }
     );
 
-    page(title, list)
+    page(title, list, None)
 }
 
 fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {
