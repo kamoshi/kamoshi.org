@@ -1,9 +1,10 @@
-use std::process::Command;
 use std::collections::HashMap;
 use std::fs;
+use std::process::Command;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::Datelike;
+use clap::{Parser, ValueEnum};
 use gen::{Asset, AssetKind, Content, FileItemKind, Output, PipelineItem, Sack};
 use hayagriva::Library;
 use html::{Link, LinkDate, Linkable};
@@ -13,6 +14,7 @@ use serde::Deserialize;
 use text::md::Outline;
 
 use crate::gen::Dynamic;
+use crate::build::build_styles;
 
 mod md;
 mod html;
@@ -20,6 +22,21 @@ mod ts;
 mod gen;
 mod utils;
 mod text;
+mod watch;
+mod build;
+
+
+#[derive(Parser, Debug, Clone)]
+struct Args {
+    #[clap(value_enum, index = 1, default_value = "build")]
+    mode: Mode,
+}
+
+#[derive(ValueEnum, Debug, Clone, Copy)]
+enum Mode {
+    Build,
+    Watch,
+}
 
 
 #[derive(Debug)]
@@ -254,7 +271,7 @@ fn to_bundle(item: PipelineItem) -> PipelineItem {
 }
 
 
-fn main() {
+fn build() {
     if fs::metadata("dist").is_ok() {
         println!("Cleaning dist");
         fs::remove_dir_all("dist").unwrap();
@@ -340,8 +357,7 @@ fn main() {
 
     utils::copy_recursively(std::path::Path::new("public"), std::path::Path::new("dist")).unwrap();
 
-    let css = grass::from_path("styles/styles.scss", &grass::Options::default()).unwrap();
-    fs::write("dist/styles.css", css).unwrap();
+    build_styles();
 
     let res = Command::new("pagefind")
         .args(["--site", "dist"])
@@ -362,4 +378,17 @@ fn main() {
         .unwrap();
 
     println!("{}", String::from_utf8(res.stderr).unwrap());
+
+}
+
+fn main() {
+    let args = Args::parse();
+
+    match args.mode {
+        Mode::Build => build(),
+        Mode::Watch => {
+            build();
+            watch::watch().unwrap()
+        },
+    }
 }

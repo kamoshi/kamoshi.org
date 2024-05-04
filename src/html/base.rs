@@ -4,6 +4,25 @@ use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderabl
 use crate::REPO;
 
 
+const JS_RELOAD: &str = r#"
+const socket = new WebSocket("ws://localhost:1337");
+socket.addEventListener("message", (event) => {
+    console.log(event);
+    window.location.reload();
+});
+"#;
+
+const JS_IMPORTS: &str = r#"
+{
+    "imports": {
+        "splash": "/js/splash.js",
+        "reveal": "/js/reveal.js",
+        "photos": "/js/photos.js",
+    }
+}
+"#;
+
+
 pub fn head(title: &str) -> impl Renderable + '_ {
     let title = format!("{} | kamoshi.org", title);
 
@@ -13,16 +32,6 @@ pub fn head(title: &str) -> impl Renderable + '_ {
         title {
             (title)
         }
-
-        script type="importmap" {(Raw(r#"
-            {
-                "imports": {
-                    "splash": "/js/splash.js",
-                    "reveal": "/js/reveal.js",
-                    "photos": "/js/photos.js"
-                }
-            }
-        "#))}
 
         // link rel="sitemap" href="/sitemap.xml";
 
@@ -34,6 +43,10 @@ pub fn head(title: &str) -> impl Renderable + '_ {
         link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
+
+        script type="importmap" {(Raw(JS_IMPORTS))}
+
+        script { (Raw(JS_RELOAD)) }
     )
 }
 

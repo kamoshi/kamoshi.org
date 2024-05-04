@@ -1,28 +1,40 @@
 .markdown {
-  > h1 {
-    font-size: 2.0274rem;
+  h1 {
+    font-size: 2.5rem;
   }
 
-  > h2 {
-    font-size: 1.802rem;
+  h2 {
+    font-size: 1.8rem;
   }
 
-  > h3 {
-    font-size: 1.602rem;
+  h3 {
+    font-size: 1.5rem;
   }
 
-  > h4, > h5, > h6 {
-    font-size: 1.424rem;
+  h4, > h5, > h6 {
+    font-size: 1.2rem;
   }
 
-  > p {
+  p {
     margin: 0.5em 0;
-    line-height: 1.5em;
     hyphens: auto;
     text-align: justify;
+    line-height: 1.5em;
   }
 
-  a:not([class]) {
+  ul, ol {
+    padding-left: 1em;
+
+    ul, ol {
+      padding-left: 1em;
+    }
+  }
+
+  li {
+    line-height: 1.5em;
+  }
+
+  a {
     color: var(--c-primary);
     font-family: var(--serif);
     font-weight: 500;
@@ -44,13 +56,6 @@
     }
   }
 
-  > ul, ol {
-    padding-left: 1em;
-
-    ul, ol {
-      padding-left: 1em;
-    }
-  }
 
   img:not([class]) {
     max-width: 100%;
