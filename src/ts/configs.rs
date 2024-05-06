@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use once_cell::sync::Lazy;
-use tree_sitter::Language;
 use tree_sitter_highlight::HighlightConfiguration;
 
 use super::captures;
@@ -17,6 +16,19 @@ macro_rules! query {
     };
 }
 
+macro_rules! language {
+    ($name:expr, $lang:expr, $highlights:expr, $injections:expr, $locals:expr $(,)?) => {
+        (
+            $name,
+            {
+                let mut config = HighlightConfiguration::new($lang, $name, $highlights, $injections, $locals).unwrap();
+                config.configure(captures::NAMES);
+                config
+            }
+        )
+    };
+}
+
 pub static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     HashMap::from([
         ("hs", "haskell"),
@@ -24,174 +36,148 @@ pub static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| 
         ("md", "markdown"),
         ("mdx", "markdown"),
         ("py", "python"),
-        ("query", "scheme"),
         ("scm", "scheme"),
-        ("scss", "css"),
         ("ts", "javascript"),
         ("typescript", "javascript")
     ])
 });
 
-#[inline(always)]
-fn config_for(
-    lang: Language,
-    highlights: &str,
-    injections: &str,
-    locals: &str,
-) -> HighlightConfiguration {
-    let mut config = HighlightConfiguration::new(lang, highlights, injections, locals).unwrap();
-    config.configure(captures::NAMES);
-    config
-}
 
 pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::new(|| {
     HashMap::from([
-        (
-            "astro",
-            config_for(
-                tree_sitter_astro::language(),
-                query!("astro/highlights"),
-                query!("astro/injections"),
-                "",
-            )
-        ),
-        (
+        // (
+        //     "astro",
+        //     config_for(
+        //         tree_sitter_astro::language(),
+        //         query!("astro/highlights"),
+        //         query!("astro/injections"),
+        //         "",
+        //     )
+        // ),
+        language!(
             "css",
-            config_for(
-                tree_sitter_css::language(),
-                query!("css/highlights"),
-                "",
-                "",
-            )
+            tree_sitter_css::language(),
+            tree_sitter_css::HIGHLIGHTS_QUERY,
+            "",
+            "",
         ),
-        (
+        language!(
             "haskell",
-            config_for(
-                tree_sitter_haskell::language(),
-                tree_sitter_haskell::HIGHLIGHTS_QUERY,
-                "",
-                tree_sitter_haskell::LOCALS_QUERY,
-            )
+            tree_sitter_haskell::language(),
+            tree_sitter_haskell::HIGHLIGHTS_QUERY,
+            "",
+            tree_sitter_haskell::LOCALS_QUERY,
         ),
-        (
-            "html",
-            config_for(
-                tree_sitter_html::language(),
-                tree_sitter_html::HIGHLIGHTS_QUERY,
-                tree_sitter_html::INJECTIONS_QUERY,
-                "",
-            )
-        ),
-        (
+        // (
+        //     "html",
+        //     config_for(
+        //         tree_sitter_html::language(),
+        //         "html",
+        //         tree_sitter_html::HIGHLIGHTS_QUERY,
+        //         tree_sitter_html::INJECTIONS_QUERY,
+        //         "",
+        //     )
+        // ),
+        language!(
             "javascript",
-            config_for(
-                tree_sitter_javascript::language(),
-                &format!("{} {}",
-                    query!("ecma/highlights"),
-                    tree_sitter_javascript::HIGHLIGHT_QUERY,
-                ),
-                tree_sitter_javascript::INJECTION_QUERY,
-                tree_sitter_javascript::LOCALS_QUERY,
-            )
+            tree_sitter_javascript::language(),
+            &format!("{} {}",
+                query!("ecma/highlights"),
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+            ),
+            tree_sitter_javascript::INJECTIONS_QUERY,
+            tree_sitter_javascript::LOCALS_QUERY,
         ),
-        (
+        language!(
             "jsx",
-            config_for(
-                tree_sitter_javascript::language(),
-                &format!("{} {} {}",
-                    query!("ecma/highlights"),
-                    tree_sitter_javascript::HIGHLIGHT_QUERY,
-                    tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
-                ),
-                tree_sitter_javascript::INJECTION_QUERY,
-                tree_sitter_javascript::LOCALS_QUERY,
-            )
+            tree_sitter_javascript::language(),
+            &format!("{} {} {}",
+                query!("ecma/highlights"),
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
+            ),
+            tree_sitter_javascript::INJECTIONS_QUERY,
+            tree_sitter_javascript::LOCALS_QUERY,
         ),
-        (
+        language!(
             "markdown",
-            config_for(
-                tree_sitter_md::language(),
-                tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
-                tree_sitter_md::INJECTION_QUERY_BLOCK,
-                "",
-            )
+            tree_sitter_md::language(),
+            tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
+            tree_sitter_md::INJECTION_QUERY_BLOCK,
+            "",
         ),
-        (
+        language!(
             "python",
-            config_for(
-                tree_sitter_python::language(),
-                tree_sitter_python::HIGHLIGHT_QUERY,
-                "",
-                "",
-            )
+            tree_sitter_python::language(),
+            tree_sitter_python::HIGHLIGHTS_QUERY,
+            "",
+            "",
         ),
-        (
+        language!(
             "regex",
-            config_for(
-                tree_sitter_regex::language(),
-                query!("regex/highlights"),
-                "",
-                "",
-            )
+            tree_sitter_regex::language(),
+            query!("regex/highlights"),
+            "",
+            "",
         ),
-        (
+        language!(
             "rust",
-            config_for(
-                tree_sitter_rust::language(),
-                tree_sitter_rust::HIGHLIGHT_QUERY,
-                tree_sitter_rust::INJECTIONS_QUERY,
-                "",
-            )
+            tree_sitter_rust::language(),
+            tree_sitter_rust::HIGHLIGHTS_QUERY,
+            tree_sitter_rust::INJECTIONS_QUERY,
+            "",
         ),
-        (
-            "scheme",
-            config_for(
-                tree_sitter_scheme::language(),
-                tree_sitter_scheme::HIGHLIGHTS_QUERY,
-                "",
-                "",
-            )
+        language!(
+            "scss",
+            tree_sitter_scss::language(),
+            &format!("{} {}",
+                tree_sitter_css::HIGHLIGHTS_QUERY,
+                tree_sitter_scss::HIGHLIGHTS_QUERY,
+            ),
+            "",
+            "",
         ),
-        (
+        language!(
+            "query",
+            tree_sitter_query::language(),
+            tree_sitter_query::HIGHLIGHTS_QUERY,
+            "",
+            "",
+        ),
+        language!(
             "toml",
-            config_for(
-                tree_sitter_toml::language(),
-                tree_sitter_toml::HIGHLIGHT_QUERY,
-                "",
-                "",
-            )
+            tree_sitter_toml_ng::language(),
+            tree_sitter_toml_ng::HIGHLIGHTS_QUERY,
+            "",
+            "",
         ),
-        (
+        language!(
             "typescript",
-            config_for(
-                tree_sitter_typescript::language_typescript(),
-                &format!("{} {} {}",
-                    query!("ecma/highlights"),
-                    tree_sitter_javascript::HIGHLIGHT_QUERY,
-                    tree_sitter_typescript::HIGHLIGHT_QUERY,
-                ),
-                tree_sitter_javascript::INJECTION_QUERY,
-                &format!("{} {}",
-                    tree_sitter_javascript::LOCALS_QUERY,
-                    tree_sitter_typescript::LOCALS_QUERY
-                ),
+            tree_sitter_typescript::language_typescript(),
+            &format!("{} {} {}",
+                query!("ecma/highlights"),
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_typescript::HIGHLIGHTS_QUERY,
+            ),
+            tree_sitter_javascript::INJECTIONS_QUERY,
+            &format!("{} {}",
+                tree_sitter_javascript::LOCALS_QUERY,
+                tree_sitter_typescript::LOCALS_QUERY,
             )
         ),
-        (
+        language!(
             "tsx",
-            config_for(
-                tree_sitter_typescript::language_tsx(),
-                &format!("{} {} {} {}",
-                    query!("ecma/highlights"),
-                    tree_sitter_javascript::HIGHLIGHT_QUERY,
-                    tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
-                    tree_sitter_typescript::HIGHLIGHT_QUERY,
-                ),
-                tree_sitter_javascript::INJECTION_QUERY,
-                &format!("{} {}",
-                    tree_sitter_javascript::LOCALS_QUERY,
-                    tree_sitter_typescript::LOCALS_QUERY
-                )
+            tree_sitter_typescript::language_tsx(),
+            &format!("{} {} {} {}",
+                query!("ecma/highlights"),
+                tree_sitter_javascript::HIGHLIGHT_QUERY,
+                tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
+                tree_sitter_typescript::HIGHLIGHTS_QUERY,
+            ),
+            tree_sitter_javascript::INJECTIONS_QUERY,
+            &format!("{} {}",
+                tree_sitter_javascript::LOCALS_QUERY,
+                tree_sitter_typescript::LOCALS_QUERY,
             )
         ),
     ])
