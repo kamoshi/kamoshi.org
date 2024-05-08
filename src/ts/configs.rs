@@ -16,12 +16,27 @@ macro_rules! query {
     };
 }
 
+macro_rules! insert {
+    ($_:tt $e:expr) => { $e };
+}
+
+macro_rules! merge {
+    ([$($e:expr),+ $(,)?]) => { &format!(concat!($(insert!($e "{} ")),*), $($e),* ) };
+    ($e:expr)              => { $e };
+}
+
 macro_rules! language {
     ($name:expr, $lang:expr, $highlights:expr, $injections:expr, $locals:expr $(,)?) => {
         (
             $name,
             {
-                let mut config = HighlightConfiguration::new($lang, $name, $highlights, $injections, $locals).unwrap();
+                let mut config = HighlightConfiguration::new(
+                    $lang,
+                    $name,
+                    $highlights,
+                    $injections,
+                    $locals,
+                ).unwrap();
                 config.configure(captures::NAMES);
                 config
             }
@@ -68,34 +83,31 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
             "",
             tree_sitter_haskell::LOCALS_QUERY,
         ),
-        // (
-        //     "html",
-        //     config_for(
-        //         tree_sitter_html::language(),
-        //         "html",
-        //         tree_sitter_html::HIGHLIGHTS_QUERY,
-        //         tree_sitter_html::INJECTIONS_QUERY,
-        //         "",
-        //     )
-        // ),
+        language!(
+            "html",
+            tree_sitter_html::language(),
+            tree_sitter_html::HIGHLIGHTS_QUERY,
+            tree_sitter_html::INJECTIONS_QUERY,
+            "",
+        ),
         language!(
             "javascript",
             tree_sitter_javascript::language(),
-            &format!("{} {}",
+            merge!([
                 query!("ecma/highlights"),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
-            ),
+            ]),
             tree_sitter_javascript::INJECTIONS_QUERY,
             tree_sitter_javascript::LOCALS_QUERY,
         ),
         language!(
             "jsx",
             tree_sitter_javascript::language(),
-            &format!("{} {} {}",
+            merge!([
                 query!("ecma/highlights"),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
                 tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
-            ),
+            ]),
             tree_sitter_javascript::INJECTIONS_QUERY,
             tree_sitter_javascript::LOCALS_QUERY,
         ),
@@ -130,10 +142,10 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
         language!(
             "scss",
             tree_sitter_scss::language(),
-            &format!("{} {}",
+            merge!([
                 tree_sitter_css::HIGHLIGHTS_QUERY,
                 tree_sitter_scss::HIGHLIGHTS_QUERY,
-            ),
+            ]),
             "",
             "",
         ),
@@ -154,31 +166,31 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
         language!(
             "typescript",
             tree_sitter_typescript::language_typescript(),
-            &format!("{} {} {}",
+            merge!([
                 query!("ecma/highlights"),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
                 tree_sitter_typescript::HIGHLIGHTS_QUERY,
-            ),
+            ]),
             tree_sitter_javascript::INJECTIONS_QUERY,
-            &format!("{} {}",
+            merge!([
                 tree_sitter_javascript::LOCALS_QUERY,
                 tree_sitter_typescript::LOCALS_QUERY,
-            )
+            ])
         ),
         language!(
             "tsx",
             tree_sitter_typescript::language_tsx(),
-            &format!("{} {} {} {}",
+            merge!([
                 query!("ecma/highlights"),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
                 tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
                 tree_sitter_typescript::HIGHLIGHTS_QUERY,
-            ),
+            ]),
             tree_sitter_javascript::INJECTIONS_QUERY,
-            &format!("{} {}",
+            merge!([
                 tree_sitter_javascript::LOCALS_QUERY,
                 tree_sitter_typescript::LOCALS_QUERY,
-            )
+            ]),
         ),
     ])
 });
