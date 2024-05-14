@@ -17,12 +17,15 @@ macro_rules! query {
 }
 
 macro_rules! insert {
-    ($_:tt $e:expr) => { $e };
+    ($_:tt $str:literal) => {
+        $str
+    };
 }
 
 macro_rules! merge {
-    ([$($e:expr),+ $(,)?]) => { &format!(concat!($(insert!($e "{} ")),*), $($e),* ) };
-    ($e:expr)              => { $e };
+    [$($any:expr),+ $(,)?] => {
+        &format!(concat!($(insert!($any "{} ")),*), $($any),* )
+    };
 }
 
 macro_rules! language {
@@ -44,7 +47,7 @@ macro_rules! language {
     };
 }
 
-pub static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(||
     HashMap::from([
         ("hs", "haskell"),
         ("js", "javascript"),
@@ -52,13 +55,12 @@ pub static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| 
         ("mdx", "markdown"),
         ("py", "python"),
         ("scm", "scheme"),
-        ("ts", "javascript"),
+        ("ts", "typescript"),
         ("typescript", "javascript")
     ])
-});
+);
 
-
-pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::new(|| {
+static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::new(||
     HashMap::from([
         // (
         //     "astro",
@@ -80,7 +82,7 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
             "haskell",
             tree_sitter_haskell::language(),
             tree_sitter_haskell::HIGHLIGHTS_QUERY,
-            "",
+            tree_sitter_haskell::INJECTIONS_QUERY,
             tree_sitter_haskell::LOCALS_QUERY,
         ),
         language!(
@@ -93,21 +95,21 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
         language!(
             "javascript",
             tree_sitter_javascript::language(),
-            merge!([
+            merge![
                 query!("ecma/highlights"),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
-            ]),
+            ],
             tree_sitter_javascript::INJECTIONS_QUERY,
             tree_sitter_javascript::LOCALS_QUERY,
         ),
         language!(
             "jsx",
             tree_sitter_javascript::language(),
-            merge!([
+            merge![
                 query!("ecma/highlights"),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
                 tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
-            ]),
+            ],
             tree_sitter_javascript::INJECTIONS_QUERY,
             tree_sitter_javascript::LOCALS_QUERY,
         ),
@@ -116,6 +118,13 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
             tree_sitter_md::language(),
             tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
             tree_sitter_md::INJECTION_QUERY_BLOCK,
+            "",
+        ),
+        language!(
+            "markdown_inline",
+            tree_sitter_md::inline_language(),
+            tree_sitter_md::HIGHLIGHT_QUERY_INLINE,
+            tree_sitter_md::INJECTION_QUERY_INLINE,
             "",
         ),
         language!(
@@ -128,7 +137,7 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
         language!(
             "regex",
             tree_sitter_regex::language(),
-            query!("regex/highlights"),
+            tree_sitter_regex::HIGHLIGHTS_QUERY,
             "",
             "",
         ),
@@ -142,10 +151,10 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
         language!(
             "scss",
             tree_sitter_scss::language(),
-            merge!([
+            merge![
                 tree_sitter_css::HIGHLIGHTS_QUERY,
                 tree_sitter_scss::HIGHLIGHTS_QUERY,
-            ]),
+            ],
             "",
             "",
         ),
@@ -166,34 +175,34 @@ pub static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::
         language!(
             "typescript",
             tree_sitter_typescript::language_typescript(),
-            merge!([
+            merge![
                 query!("ecma/highlights"),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
                 tree_sitter_typescript::HIGHLIGHTS_QUERY,
-            ]),
+            ],
             tree_sitter_javascript::INJECTIONS_QUERY,
-            merge!([
+            merge![
                 tree_sitter_javascript::LOCALS_QUERY,
                 tree_sitter_typescript::LOCALS_QUERY,
-            ])
+            ]
         ),
         language!(
             "tsx",
             tree_sitter_typescript::language_tsx(),
-            merge!([
+            merge![
                 query!("ecma/highlights"),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
                 tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
                 tree_sitter_typescript::HIGHLIGHTS_QUERY,
-            ]),
+            ],
             tree_sitter_javascript::INJECTIONS_QUERY,
-            merge!([
+            merge![
                 tree_sitter_javascript::LOCALS_QUERY,
                 tree_sitter_typescript::LOCALS_QUERY,
-            ]),
+            ],
         ),
     ])
-});
+);
 
 
 pub fn get_config(name: &str) -> Option<&'static HighlightConfiguration> {

@@ -17,7 +17,7 @@ const JS_IMPORTS: &str = r#"
     "imports": {
         "splash": "/js/splash.js",
         "reveal": "/js/reveal.js",
-        "photos": "/js/photos.js",
+        "photos": "/js/photos.js"
     }
 }
 "#;
@@ -99,7 +99,7 @@ pub fn footer(path: Option<&Utf8Path>) -> impl Renderable {
     let copy = format!("Copyright &copy; {} Maciej Jur", &REPO.year);
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{}", mail);
-    let link = Utf8Path::new(&REPO.link).join("tree").join(&REPO.hash);
+    let link = Utf8Path::new(&REPO.link).join("src/commit").join(&REPO.hash);
     let link = match path {
         Some(path) => link.join(path),
         None       => link,

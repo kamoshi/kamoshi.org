@@ -38,7 +38,6 @@ enum Mode {
     Watch,
 }
 
-
 #[derive(Debug)]
 struct BuildInfo {
     pub year: i32,
@@ -54,7 +53,7 @@ static REPO: Lazy<BuildInfo> = Lazy::new(|| {
     BuildInfo {
         year: time.year(),
         date: time.format("%Y/%m/%d %H:%M").to_string(),
-        link: "https://github.com/kamoshi/kamoshi.org".into(),
+        link: "https://git.kamoshi.org/kamov/website".into(),
         hash: String::from_utf8(
             Command::new("git")
                 .args(["rev-parse", "--short", "HEAD"])
