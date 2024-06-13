@@ -1,10 +1,14 @@
 { pkgs ? import <nixpkgs> {} }:
 
 pkgs.mkShell {
-  buildInputs = with pkgs; [
-    rust-analyzer
-    rustfmt
-    clippy
-    cargo
-  ];
+	buildInputs = with pkgs; [
+		cargo
+		clippy
+		rustfmt
+		rust-analyzer
+		pagefind
+		esbuild
+		nodePackages.pnpm
+		python3
+	];
 }

@@ -323,7 +323,7 @@ fn build() {
                         let data = std::fs::read_to_string("content/index.md").unwrap();
                         let (_, html, _) = text::md::parse(&data, None);
                         html::home(Raw(html)).render().to_owned().into()
-                    })).into(),
+                    })),
                     meta: gen::FileItem {
                         kind: gen::FileItemKind::Index,
                         path: "content/index.md".into()
@@ -331,7 +331,7 @@ fn build() {
                 }.into(),
                 path: "index.html".into(),
                 link: None,
-            }.into(),
+            },
             Output {
                 kind: Dynamic::new(|sack| to_list(sack.get_links("posts/**/*.html"))).into(),
                 path: "posts/index.html".into(),
@@ -377,7 +377,6 @@ fn build() {
         .unwrap();
 
     println!("{}", String::from_utf8(res.stderr).unwrap());
-
 }
 
 fn main() {
