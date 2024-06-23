@@ -162,7 +162,7 @@ static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::new(
             "query",
             tree_sitter_query::language(),
             tree_sitter_query::HIGHLIGHTS_QUERY,
-            "",
+            tree_sitter_query::INJECTIONS_QUERY,
             "",
         ),
         language!(
