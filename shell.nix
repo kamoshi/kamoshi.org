@@ -4,11 +4,14 @@ pkgs.mkShell {
 	buildInputs = with pkgs; [
 		cargo
 		clippy
-		rustfmt
-		rust-analyzer
-		pagefind
 		esbuild
 		nodePackages.pnpm
+		pagefind
 		python3
+		rust-analyzer
+		rustc
+		rustfmt
 	];
+
+	RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
 }

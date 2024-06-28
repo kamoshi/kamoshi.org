@@ -33,7 +33,7 @@ static KATEX_B: Lazy<katex::Opts> = Lazy::new(||
         .unwrap()
 );
 
-static LOCALE: Lazy<Vec<Locale>> = Lazy::new(|| hayagriva::archive::locales());
+static LOCALE: Lazy<Vec<Locale>> = Lazy::new(hayagriva::archive::locales);
 
 static STYLE: Lazy<IndependentStyle> = Lazy::new(||
     match ArchivedStyle::InstituteOfPhysicsNumeric.get() {
@@ -202,6 +202,7 @@ fn set_heading_ids(events: &mut [Event]) -> Outline {
 
     Outline(out)
 }
+
 
 fn make_math(event: Event) -> Event {
     match event {

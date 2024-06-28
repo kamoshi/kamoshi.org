@@ -106,7 +106,7 @@ impl Content for md::Slide {
         content: T,
         _: Outline,
         _: &'s Sack,
-        bib: Option<Vec<String>>,
+        _bib: Option<Vec<String>>,
     ) -> impl Renderable + 'html
         where
             'f: 'html,

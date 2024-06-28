@@ -82,7 +82,7 @@ pub fn watch() -> Result<()> {
     let thread_i = new_thread_ws_incoming(server, client.clone());
     let (tx_reload, thread_o) = new_thread_ws_reload(client.clone());
 
-    while let Ok(ev) = rx.recv().unwrap() {
+    while let Ok(_ev) = rx.recv().unwrap() {
         build_styles();
         tx_reload.send(()).unwrap();
     }
