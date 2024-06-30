@@ -907,6 +907,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "npezza93-tree-sitter-nix"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0398a0cd89e29f25d2f2141b05020e475907e39f7e5886f77f528f862586d13b"
+dependencies = [
+ "cc",
+ "tree-sitter",
+]
+
+[[package]]
 name = "num-traits"
 version = "0.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1259,6 +1269,7 @@ dependencies = [
  "katex",
  "notify",
  "notify-debouncer-mini",
+ "npezza93-tree-sitter-nix",
  "once_cell",
  "pulldown-cmark",
  "regex",

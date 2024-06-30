@@ -128,6 +128,13 @@ static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::new(
             "",
         ),
         language!(
+            "nix",
+            tree_sitter_nix::language(),
+            tree_sitter_nix::HIGHLIGHTS_QUERY,
+            "",
+            "",
+        ),
+        language!(
             "python",
             tree_sitter_python::language(),
             tree_sitter_python::HIGHLIGHTS_QUERY,
