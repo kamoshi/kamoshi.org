@@ -372,7 +372,7 @@ fn build() {
         .arg("--format=esm")
         .arg("--bundle")
         .arg("--splitting")
-        //.arg("--minify")
+        .arg("--minify")
         .arg("--outdir=dist/js/")
         .output()
         .unwrap();
