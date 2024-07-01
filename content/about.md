@@ -38,17 +38,17 @@ Nginx, this way I don't have to do nearly any maintenance work.
 
 **Q. Can I take a look at the source code?**
 
-Sure thing! The source code is available in
-[a repository on GitHub](https://github.com/kamoshi/kamoshi.org),
-and you're welcome to learn. I just have one single request please, if you
-would like to use this code for your own website do allow others to learn from
-it too!
+Sure thing! The source code is available either in a repository on
+[my private Forgejo instance](https://git.kamoshi.org/kamov/website) or
+[on Codeberg](https://codeberg.org/kamov/website) (mirror), and you're welcome
+to learn. I just have one single request please, if you would like to use this
+code for your own website do allow others to learn from it too!
 
 **Q. What's your setup?**
 
-I currently use Arch Linux with KDE Plasma desktop as my daily driver. For
-editing code I use Neovim with plugins. I also have a server running NixOS,
-it's the same server which serves this website.
+I currently use NixOS with KDE Plasma desktop as my daily driver. For editing
+code I use Neovim with plugins. I also have a server running NixOS, it's the
+same server which serves this website.
 
 **Q. Why do you use Neovim?**
 
