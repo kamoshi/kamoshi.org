@@ -15,9 +15,8 @@ socket.addEventListener("message", (event) => {
 const JS_IMPORTS: &str = r#"
 {
     "imports": {
-        "splash": "/js/splash.js",
-        "reveal": "/js/reveal.js",
-        "photos": "/js/photos.js"
+        "reveal": "/js/vanilla/reveal.js",
+        "photos": "/js/vanilla/photos.js"
     }
 }
 "#;

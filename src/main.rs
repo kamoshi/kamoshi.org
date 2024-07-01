@@ -366,12 +366,13 @@ fn build() {
     println!("{}", String::from_utf8(res.stdout).unwrap());
 
     let res = Command::new("esbuild")
-        .arg("js/reveal.js")
-        .arg("js/photos.ts")
+        .arg("js/vanilla/reveal.js")
+        .arg("js/vanilla/photos.ts")
+        .arg("js/search/dist/search.js")
         .arg("--format=esm")
         .arg("--bundle")
         .arg("--splitting")
-        .arg("--minify")
+        //.arg("--minify")
         .arg("--outdir=dist/js/")
         .output()
         .unwrap();

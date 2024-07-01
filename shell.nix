@@ -5,6 +5,7 @@ pkgs.mkShell {
 		cargo
 		clippy
 		esbuild
+		nodejs
 		nodePackages.pnpm
 		pagefind
 		python3

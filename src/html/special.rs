@@ -17,8 +17,7 @@ pub fn map() -> impl Renderable {
 
 pub fn search() -> impl Renderable {
     page("Search", maud!(
-        main {
-
-        }
+        main #app {}
+        script type="module" src="/js/search/dist/search.js" {}
     ), None)
 }
