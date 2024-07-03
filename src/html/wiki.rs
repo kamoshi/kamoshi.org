@@ -1,13 +1,48 @@
+use camino::Utf8PathBuf;
+use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
+use serde::Deserialize;
 
-use crate::gen::Sack;
-use crate::html::misc::show_page_tree;
-use crate::html::{misc::show_bibliography, page};
-use crate::md::Wiki;
+use crate::pipeline::{Content, Sack};
 use crate::text::md::Outline;
+use crate::{Link, Linkable};
 
+/// Represents a wiki page
+#[derive(Deserialize, Debug, Clone)]
+pub struct Wiki {
+    pub title: String,
+}
 
-pub fn wiki<'data, 'html, 'sack, T>(
+impl Content for Wiki {
+    fn transform<'f, 'm, 's, 'html, T>(
+        &'f self,
+        content: T,
+        outline: Outline,
+        sack: &'s Sack,
+        bib: Option<Vec<String>>,
+    ) -> impl Renderable + 'html
+        where
+            'f: 'html,
+            'm: 'html,
+            's: 'html,
+            T: Renderable + 'm {
+        wiki(self, content, outline, sack, bib)
+    }
+
+    fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
+        Some(Linkable::Link(Link {
+            path,
+            name: self.title.to_owned(),
+            desc: None,
+        }))
+    }
+
+    fn parse(data: &str, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
+        crate::text::md::parse(data, lib)
+    }
+}
+
+fn wiki<'data, 'html, 'sack, T>(
     fm: &'data Wiki,
     content: T,
     _: Outline,
@@ -33,7 +68,7 @@ pub fn wiki<'data, 'html, 'sack, T>(
                 // Navigation tree
                 section .link-tree {
                     div {
-                        (show_page_tree(sack, "wiki/**/*.html"))
+                        (crate::html::misc::show_page_tree(sack, "wiki/**/*.html"))
                     }
                 }
             }
@@ -47,11 +82,11 @@ pub fn wiki<'data, 'html, 'sack, T>(
                 }
 
                 @if let Some(bib) = bib {
-                    (show_bibliography(bib))
+                    (crate::html::misc::show_bibliography(bib))
                 }
             }
         }
     );
 
-    page(&fm.title, main, sack.get_file())
+    crate::html::page(&fm.title, main, sack.get_file())
 }

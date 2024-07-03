@@ -1,11 +1,54 @@
+use camino::Utf8PathBuf;
+use chrono::{DateTime, Utc};
+use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
+use serde::Deserialize;
 
-use crate::gen::Sack;
-use crate::html::misc::{show_bibliography, show_outline};
-use crate::html::page;
-use crate::md::Post;
+use crate::pipeline::{Content, Sack};
 use crate::text::md::Outline;
+use crate::{Linkable, LinkDate};
 
+/// Represents a simple post.
+#[derive(Deserialize, Debug, Clone)]
+pub(crate) struct Post {
+    pub(crate) title: String,
+    #[serde(with = "super::isodate")]
+    pub(crate) date: DateTime<Utc>,
+    pub(crate) desc: Option<String>,
+}
+
+impl Content for Post {
+    fn parse(data: &str, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
+        crate::text::md::parse(data, lib)
+    }
+
+    fn transform<'f, 'm, 's, 'html, T>(
+        &'f self,
+        content: T,
+        outline: Outline,
+        sack: &'s Sack,
+        bib: Option<Vec<String>>,
+    ) -> impl Renderable + 'html
+    where
+        'f: 'html,
+        'm: 'html,
+        's: 'html,
+        T: Renderable + 'm,
+    {
+        post(self, content, outline, bib, sack)
+    }
+
+    fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
+        Some(Linkable::Date(LinkDate {
+            link: crate::Link {
+                path,
+                name: self.title.to_owned(),
+                desc: self.desc.to_owned(),
+            },
+            date: self.date.to_owned(),
+        }))
+    }
+}
 
 pub fn post<'f, 'm, 's, 'html, T>(
     fm: &'f Post,
@@ -31,7 +74,7 @@ pub fn post<'f, 'm, 's, 'html, T>(
                 label .wiki-aside__slider for="wiki-aside-shown" {
                     img .wiki-icon src="/static/svg/double-arrow.svg" width="24" height="24";
                 }
-                (show_outline(outline))
+                (crate::html::misc::show_outline(outline))
             }
 
             article .wiki-article /*class:list={classlist)*/ {
@@ -43,11 +86,11 @@ pub fn post<'f, 'm, 's, 'html, T>(
                 }
 
                 @if let Some(bib) = bib {
-                    (show_bibliography(bib))
+                    (crate::html::misc::show_bibliography(bib))
                 }
             }
         }
     );
 
-    page(&fm.title, main, sack.get_file())
+    crate::html::page(&fm.title, main, sack.get_file())
 }

@@ -1,35 +1,14 @@
+use crate::{html::page, LinkDate};
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Utc};
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
-use crate::html::page;
-
-
-#[derive(Debug, Clone)]
-pub struct Link {
-    pub path: Utf8PathBuf,
-    pub name: String,
-    pub desc: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct LinkDate {
-    pub link: Link,
-    pub date: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone)]
-pub enum Linkable {
-    Link(Link),
-    Date(LinkDate),
-}
-
 
 pub fn list<'data, 'list>(
     title: &'data str,
-    groups: &'data [(i32, Vec<LinkDate>)]
+    groups: &'data [(i32, Vec<LinkDate>)],
 ) -> impl Renderable + 'list
-    where
-        'data: 'list
+where
+    'data: 'list,
 {
     let list = maud_move!(
         main .page-list-main {

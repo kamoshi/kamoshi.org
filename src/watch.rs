@@ -72,7 +72,7 @@ pub fn watch() -> Result<()> {
     let client = Arc::new(Mutex::new(vec![]));
 
     let (tx, rx) = std::sync::mpsc::channel();
-    let mut debouncer = new_debouncer(Duration::from_secs(1), tx).unwrap();
+    let mut debouncer = new_debouncer(Duration::from_secs(2), tx).unwrap();
 
     debouncer
         .watcher()

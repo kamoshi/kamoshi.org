@@ -1,31 +1,5 @@
-use chrono::{DateTime, Utc};
 use gray_matter::{engine::YAML, Matter};
 use serde::Deserialize;
-
-
-/// Represents a simple post
-#[derive(Deserialize, Debug, Clone)]
-pub struct Post {
-    pub title: String,
-    #[serde(with = "isodate")]
-    pub date: DateTime<Utc>,
-    pub desc: Option<String>,
-}
-
-/// Represents a slideshow
-#[derive(Deserialize, Debug, Clone)]
-pub struct Slide {
-    pub title: String,
-    #[serde(with = "isodate")]
-    pub date: DateTime<Utc>,
-    pub desc: Option<String>,
-}
-
-/// Represents a wiki page
-#[derive(Deserialize, Debug, Clone)]
-pub struct Wiki {
-    pub title: String,
-}
 
 
 pub fn preflight<T>(raw: &str) -> (T, String)

@@ -1,30 +1,25 @@
-use std::collections::HashMap;
+mod build;
+mod html;
+mod md;
+mod pipeline;
+mod text;
+mod ts;
+mod utils;
+mod watch;
+
 use std::fs;
 use std::process::Command;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use chrono::Datelike;
+use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use gen::{Asset, AssetKind, Content, FileItemKind, Output, PipelineItem, Sack};
-use hayagriva::Library;
-use html::{Link, LinkDate, Linkable};
+use pipeline::{Asset, AssetKind, Content, FileItemKind, Output, PipelineItem, Sack};
 use hypertext::{Raw, Renderable};
 use once_cell::sync::Lazy;
 use serde::Deserialize;
-use text::md::Outline;
 
-use crate::gen::Dynamic;
+use crate::pipeline::Virtual;
 use crate::build::build_styles;
-
-mod md;
-mod html;
-mod ts;
-mod gen;
-mod utils;
-mod text;
-mod watch;
-mod build;
-
 
 #[derive(Parser, Debug, Clone)]
 struct Args {
@@ -68,127 +63,25 @@ static REPO: Lazy<BuildInfo> = Lazy::new(|| {
 });
 
 
-impl Content for md::Post {
-    fn transform<'f, 'm, 's, 'html, T>(
-        &'f self,
-        content: T,
-        outline: Outline,
-        sack: &'s Sack,
-        bib: Option<Vec<String>>,
-    ) -> impl Renderable + 'html
-        where
-            'f: 'html,
-            'm: 'html,
-            's: 'html,
-            T: Renderable + 'm {
-        html::post(self, content, outline, bib, sack)
-    }
-
-    fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
-        Some(Linkable::Date(LinkDate {
-            link: Link {
-                path,
-                name: self.title.to_owned(),
-                desc: self.desc.to_owned(),
-            },
-            date: self.date.to_owned(),
-        }))
-    }
-
-    fn render(data: &str, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
-        text::md::parse(data, lib)
-    }
+#[derive(Debug, Clone)]
+pub struct Link {
+    pub path: Utf8PathBuf,
+    pub name: String,
+    pub desc: Option<String>,
 }
 
-impl Content for md::Slide {
-    fn transform<'f, 'm, 's, 'html, T>(
-        &'f self,
-        content: T,
-        _: Outline,
-        _: &'s Sack,
-        _bib: Option<Vec<String>>,
-    ) -> impl Renderable + 'html
-        where
-            'f: 'html,
-            'm: 'html,
-            's: 'html,
-            T: Renderable + 'm {
-        html::show(self, content)
-    }
-
-    fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
-        Some(Linkable::Date(LinkDate {
-            link: Link {
-                path,
-                name: self.title.to_owned(),
-                desc: self.desc.to_owned(),
-            },
-            date: self.date.to_owned(),
-        }))
-    }
-
-    fn render(data: &str, _: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
-        let html = data
-            .split("\n-----\n")
-            .map(|chunk| chunk.split("\n---\n").map(|s| text::md::parse(s, None)).map(|e| e.1).collect::<Vec<_>>())
-            .map(|stack| match stack.len() > 1 {
-                true  => format!("<section>{}</section>", stack.into_iter().map(|slide| format!("<section>{slide}</section>")).collect::<String>()),
-                false => format!("<section>{}</section>", stack[0])
-            })
-            .collect::<String>();
-        (Outline(vec![]), html, None)
-    }
+#[derive(Debug, Clone)]
+pub struct LinkDate {
+    pub link: Link,
+    pub date: DateTime<Utc>,
 }
 
-impl Content for md::Wiki {
-    fn transform<'f, 'm, 's, 'html, T>(
-        &'f self,
-        content: T,
-        outline: Outline,
-        sack: &'s Sack,
-        bib: Option<Vec<String>>,
-    ) -> impl Renderable + 'html
-        where
-            'f: 'html,
-            'm: 'html,
-            's: 'html,
-            T: Renderable + 'm {
-        html::wiki(self, content, outline, sack, bib)
-    }
-
-    fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
-        Some(Linkable::Link(Link {
-            path,
-            name: self.title.to_owned(),
-            desc: None,
-        }))
-    }
-
-    fn render(data: &str, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
-        text::md::parse(data, lib)
-    }
+#[derive(Debug, Clone)]
+pub enum Linkable {
+    Link(Link),
+    Date(LinkDate),
 }
 
-
-fn to_list(list: Vec<LinkDate>) -> String {
-    let mut groups = HashMap::<i32, Vec<_>>::new();
-
-    for page in list {
-        groups.entry(page.date.year()).or_default().push(page);
-    }
-
-    let mut groups: Vec<_> = groups
-        .into_iter()
-        .map(|(k, mut v)| {
-            v.sort_by(|a, b| b.date.cmp(&a.date));
-            (k, v)
-        })
-        .collect();
-
-    groups.sort_by(|a, b| b.0.cmp(&a.0));
-
-    html::list("", &groups).render().into()
-}
 
 fn to_index<T>(item: PipelineItem) -> PipelineItem
     where
@@ -214,13 +107,13 @@ fn to_index<T>(item: PipelineItem) -> PipelineItem
 
             let call = move |sack: &Sack| {
                 let lib = sack.get_library();
-                let (outline, html, bib) = T::render(&md, lib);
+                let (outline, html, bib) = T::parse(&md, lib);
                 T::transform(&fm, Raw(html), outline, sack, bib).render().into()
             };
 
             Output {
                 kind: Asset {
-                    kind: gen::AssetKind::Html(Box::new(call)),
+                    kind: pipeline::AssetKind::Html(Box::new(call)),
                     meta,
                 }.into(),
                 path,
@@ -279,18 +172,18 @@ fn build() {
     fs::create_dir("dist").unwrap();
 
     let assets: Vec<Output> = [
-        gen::gather("content/about.md", &["md"].into())
+        pipeline::gather("content/about.md", &["md"].into())
             .into_iter()
-            .map(to_index::<md::Post> as fn(PipelineItem) -> PipelineItem),
-        gen::gather("content/posts/**/*", &["md", "mdx"].into())
+            .map(to_index::<crate::html::Post> as fn(PipelineItem) -> PipelineItem),
+        pipeline::gather("content/posts/**/*", &["md", "mdx"].into())
             .into_iter()
-            .map(to_index::<md::Post>),
-        gen::gather("content/slides/**/*", &["md", "lhs"].into())
+            .map(to_index::<crate::html::Post>),
+        pipeline::gather("content/slides/**/*", &["md", "lhs"].into())
             .into_iter()
-            .map(to_index::<md::Slide>),
-        gen::gather("content/wiki/**/*", &["md"].into())
+            .map(to_index::<crate::html::Slideshow>),
+        pipeline::gather("content/wiki/**/*", &["md"].into())
             .into_iter()
-            .map(to_index::<md::Wiki>),
+            .map(to_index::<crate::html::Wiki>),
     ]
         .into_iter()
         .flatten()
@@ -308,24 +201,24 @@ fn build() {
         assets,
         vec![
             Output {
-                kind: Dynamic::new(|_| html::map().render().to_owned().into()).into(),
+                kind: Virtual::new(|_| crate::html::map().render().to_owned().into()).into(),
                 path: "map/index.html".into(),
                 link: None,
             },
             Output {
-                kind: Dynamic::new(|_| html::search().render().to_owned().into()).into(),
+                kind: Virtual::new(|_| crate::html::search().render().to_owned().into()).into(),
                 path: "search/index.html".into(),
                 link: None,
             },
             Output {
                 kind: Asset {
-                    kind: gen::AssetKind::Html(Box::new(|_| {
+                    kind: pipeline::AssetKind::Html(Box::new(|_| {
                         let data = std::fs::read_to_string("content/index.md").unwrap();
                         let (_, html, _) = text::md::parse(&data, None);
-                        html::home(Raw(html)).render().to_owned().into()
+                        crate::html::home(Raw(html)).render().to_owned().into()
                     })),
-                    meta: gen::FileItem {
-                        kind: gen::FileItemKind::Index,
+                    meta: pipeline::FileItem {
+                        kind: pipeline::FileItemKind::Index,
                         path: "content/index.md".into()
                     }
                 }.into(),
@@ -333,12 +226,12 @@ fn build() {
                 link: None,
             },
             Output {
-                kind: Dynamic::new(|sack| to_list(sack.get_links("posts/**/*.html"))).into(),
+                kind: Virtual::new(|sack| crate::html::to_list(sack.get_links("posts/**/*.html"))).into(),
                 path: "posts/index.html".into(),
                 link: None,
             },
             Output {
-                kind: Dynamic::new(|sack| to_list(sack.get_links("slides/**/*.html"))).into(),
+                kind: Virtual::new(|sack| crate::html::to_list(sack.get_links("slides/**/*.html"))).into(),
                 path: "slides/index.html".into(),
                 link: None,
             },
@@ -350,7 +243,7 @@ fn build() {
 
     {
         let now = std::time::Instant::now();
-        gen::render_all(&assets);
+        pipeline::render_all(&assets);
         println!("Elapsed: {:.2?}", now.elapsed());
     }
 

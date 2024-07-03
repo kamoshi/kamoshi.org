@@ -1,11 +1,11 @@
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::gen::{Sack, TreePage};
+use crate::pipeline::{Sack, TreePage};
 use crate::text::md::Outline;
 
 
 /// Render the outline for a document
-pub fn show_outline(outline: Outline) -> impl Renderable {
+pub(crate) fn show_outline(outline: Outline) -> impl Renderable {
     maud_move!(
         section .link-tree {
             h2 .link-tree__heading {
@@ -27,7 +27,7 @@ pub fn show_outline(outline: Outline) -> impl Renderable {
 }
 
 /// Render the bibliography for a document
-pub fn show_bibliography(bib: Vec<String>) -> impl Renderable {
+pub(crate) fn show_bibliography(bib: Vec<String>) -> impl Renderable {
     maud_move!(
         section .markdown {
             h2 {
@@ -45,7 +45,7 @@ pub fn show_bibliography(bib: Vec<String>) -> impl Renderable {
 }
 
 /// Render the page tree
-pub fn show_page_tree(sack: &Sack, glob: &str) -> impl Renderable {
+pub(crate) fn show_page_tree(sack: &Sack, glob: &str) -> impl Renderable {
     let tree = sack.get_tree(glob);
 
     maud_move!(

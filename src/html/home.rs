@@ -2,9 +2,6 @@ use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderabl
 
 use crate::text::md::parse;
 
-use super::page;
-
-
 const INTRO: &str = r#"
 ## かもし
 
@@ -16,7 +13,6 @@ const INTRO: &str = r#"
 英語も使います。趣味はプログラミングや日本語や日本の歌や同人など色々なことです。
 質問があったらメールを送信してくれてください。
 "#;
-
 
 fn intro() -> impl Renderable {
     let (_, html, _) = parse(INTRO, None);
@@ -56,9 +52,9 @@ fn photo() -> impl Renderable {
 }
 
 pub fn home<'data, 'home, R>(main: R) -> impl Renderable + 'home
-    where
-        'data: 'home,
-        R: Renderable + 'data
+where
+    'data: 'home,
+    R: Renderable + 'data,
 {
     let main = maud_move!(
         main .l-home {
@@ -73,5 +69,5 @@ pub fn home<'data, 'home, R>(main: R) -> impl Renderable + 'home
         }
     );
 
-    page("Home", main, None)
+    crate::html::page("Home", main, None)
 }
