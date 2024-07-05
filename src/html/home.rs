@@ -1,6 +1,6 @@
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::{pipeline::Sack, text::md::parse};
+use crate::{pipeline::Sack, text::md::parse, LinkDate, Linkable};
 
 const INTRO: &str = r#"
 ## かもし
@@ -23,19 +23,6 @@ fn intro() -> impl Renderable {
 	)
 }
 
-// fn kanji() -> impl Renderable {
-// 	maud!(
-// 		section .p-card {
-// 			h2 .p-card__heading {
-// 				"Kanji of the Day"
-// 			}
-// 			div {
-// 				// <Widget client:load/>
-// 			}
-// 		}
-// 	)
-// }
-
 fn photo() -> impl Renderable {
 	maud!(
 		section .p-card.home-card-image {
@@ -46,6 +33,31 @@ fn photo() -> impl Renderable {
 				img .home-card-image__image
 					src="/static/IMG_20231029_111650.jpg"
 					alt="Autumn park with colorful trees and fallen leaves";
+			}
+		}
+	)
+}
+
+fn latest(sack: &Sack) -> impl Renderable {
+	let links = {
+		let mut links = sack.get_links("**");
+		links.sort_by(|a, b| b.date.cmp(&a.date));
+		links
+	};
+
+	maud_move!(
+		section .p-card {
+			h2 .p-card__heading {
+				"Latest"
+			}
+			ol .p-card__latest {
+				@for link in links.iter().take(5) {
+					li {
+						a href=(link.link.path.as_str()) {
+							(&link.link.name)
+						}
+					}
+				}
 			}
 		}
 	)
@@ -68,6 +80,7 @@ where
 				(intro())
 				// (kanji())
 				(photo())
+				(latest(sack))
 			}
 		}
 	);
