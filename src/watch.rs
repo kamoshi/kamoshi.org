@@ -1,3 +1,4 @@
+use std::env;
 use std::io::Result;
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
@@ -6,89 +7,110 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+use camino::Utf8PathBuf;
 use notify::RecursiveMode;
 use notify_debouncer_mini::new_debouncer;
 use tungstenite::WebSocket;
 
-use crate::build::build_styles;
-
+use crate::build::{build_content, build_styles};
+use crate::pipeline::Output;
+use crate::{BuildContext, Source};
 
 fn new_thread_ws_incoming(
-    server: TcpListener,
-    client: Arc<Mutex<Vec<WebSocket<TcpStream>>>>,
+	server: TcpListener,
+	client: Arc<Mutex<Vec<WebSocket<TcpStream>>>>,
 ) -> JoinHandle<()> {
-    std::thread::spawn(move || {
-        for stream in server.incoming() {
-            let socket = tungstenite::accept(stream.unwrap()).unwrap();
-            client.lock().unwrap().push(socket);
-        }
-    })
+	std::thread::spawn(move || {
+		for stream in server.incoming() {
+			let socket = tungstenite::accept(stream.unwrap()).unwrap();
+			client.lock().unwrap().push(socket);
+		}
+	})
 }
 
 fn new_thread_ws_reload(
-    client: Arc<Mutex<Vec<WebSocket<TcpStream>>>>,
+	client: Arc<Mutex<Vec<WebSocket<TcpStream>>>>,
 ) -> (Sender<()>, JoinHandle<()>) {
-    let (tx, rx) = std::sync::mpsc::channel();
+	let (tx, rx) = std::sync::mpsc::channel();
 
-    let thread = std::thread::spawn(move || {
-        while rx.recv().is_ok() {
-            let mut clients = client.lock().unwrap();
-            let mut broken = vec![];
+	let thread = std::thread::spawn(move || {
+		while rx.recv().is_ok() {
+			let mut clients = client.lock().unwrap();
+			let mut broken = vec![];
 
-            for (i, socket) in clients.iter_mut().enumerate() {
-                match socket.send("reload".into()) {
-                    Ok(_) => {}
-                    Err(tungstenite::error::Error::Io(e)) => {
-                        if e.kind() == std::io::ErrorKind::BrokenPipe {
-                            broken.push(i);
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Error: {:?}", e);
-                    }
-                }
-            }
+			for (i, socket) in clients.iter_mut().enumerate() {
+				match socket.send("reload".into()) {
+					Ok(_) => {}
+					Err(tungstenite::error::Error::Io(e)) => {
+						if e.kind() == std::io::ErrorKind::BrokenPipe {
+							broken.push(i);
+						}
+					}
+					Err(e) => {
+						eprintln!("Error: {:?}", e);
+					}
+				}
+			}
 
-            for i in broken.into_iter().rev() {
-                clients.remove(i);
-            }
+			for i in broken.into_iter().rev() {
+				clients.remove(i);
+			}
 
-            // Close all but the last 10 connections
-            let len = clients.len();
-            if len > 10 {
-                for mut socket in clients.drain(0..len - 10) {
-                    socket.close(None).ok();
-                }
-            }
-        }
-    });
+			// Close all but the last 10 connections
+			let len = clients.len();
+			if len > 10 {
+				for mut socket in clients.drain(0..len - 10) {
+					socket.close(None).ok();
+				}
+			}
+		}
+	});
 
-    (tx, thread)
+	(tx, thread)
 }
 
+pub fn watch(ctx: &BuildContext, sources: &[Source]) -> Result<()> {
+	let root = env::current_dir().unwrap();
+	let server = TcpListener::bind("127.0.0.1:1337")?;
+	let client = Arc::new(Mutex::new(vec![]));
 
-pub fn watch() -> Result<()> {
-    let server = TcpListener::bind("127.0.0.1:1337")?;
-    let client = Arc::new(Mutex::new(vec![]));
+	let (tx, rx) = std::sync::mpsc::channel();
+	let mut debouncer = new_debouncer(Duration::from_millis(250), tx).unwrap();
 
-    let (tx, rx) = std::sync::mpsc::channel();
-    let mut debouncer = new_debouncer(Duration::from_secs(2), tx).unwrap();
+	debouncer
+		.watcher()
+		.watch(Path::new("styles"), RecursiveMode::Recursive)
+		.unwrap();
 
-    debouncer
-        .watcher()
-        .watch(Path::new("./styles"), RecursiveMode::Recursive)
-        .unwrap();
+	debouncer
+		.watcher()
+		.watch(Path::new("content"), RecursiveMode::Recursive)
+		.unwrap();
 
-    let thread_i = new_thread_ws_incoming(server, client.clone());
-    let (tx_reload, thread_o) = new_thread_ws_reload(client.clone());
+	let thread_i = new_thread_ws_incoming(server, client.clone());
+	let (tx_reload, thread_o) = new_thread_ws_reload(client.clone());
 
-    while let Ok(_ev) = rx.recv().unwrap() {
-        build_styles();
-        tx_reload.send(()).unwrap();
-    }
+	while let Ok(events) = rx.recv().unwrap() {
+		let items = events
+			.into_iter()
+			.filter_map(|event| {
+				Utf8PathBuf::from_path_buf(event.path)
+					.ok()
+					.and_then(|path| path.strip_prefix(&root).ok().map(ToOwned::to_owned))
+					.and_then(|path| sources.iter().find_map(|s| s.get_maybe(&path)))
+			})
+			.filter_map(Option::from)
+			.collect::<Vec<Output>>();
 
-    thread_i.join().unwrap();
-    thread_o.join().unwrap();
+		let items = items.iter().collect::<Vec<_>>();
 
-    Ok(())
+		build_content(ctx, &items);
+		build_styles();
+		tx_reload.send(()).unwrap();
+	}
+
+	thread_i.join().unwrap();
+	thread_o.join().unwrap();
+
+	Ok(())
 }

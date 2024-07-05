@@ -2,8 +2,8 @@
 //! loading the data from hard drive, and then processing it further depending on the file type.
 
 use std::collections::{HashMap, HashSet};
-use std::fs::{self, File};
-use std::io::Write;
+use std::fmt::Debug;
+use std::usize;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use glob::glob;
@@ -68,6 +68,20 @@ pub(crate) enum AssetKind {
 	Image,
 }
 
+impl Debug for AssetKind {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::Html(fun) => {
+				// rust mental gymnastics moment
+				let ptr = &**fun as *const dyn Fn(&Sack) -> String as *const () as usize;
+				f.debug_tuple("Html").field(&ptr).finish()
+			},
+			Self::Bibtex(b) => f.debug_tuple("Bibtex").field(b).finish(),
+			Self::Image => write!(f, "Image"),
+		}
+	}
+}
+
 impl AssetKind {
 	pub fn html(f: impl Fn(&Sack) -> String + 'static) -> Self {
 		Self::Html(Box::new(f))
@@ -75,6 +89,7 @@ impl AssetKind {
 }
 
 /// Asset corresponding to a file on disk.
+#[derive(Debug)]
 pub(crate) struct Asset {
 	/// The kind of a processed asset.
 	pub kind: AssetKind,
@@ -84,7 +99,7 @@ pub(crate) struct Asset {
 
 /// Dynamically generated asset not corresponding to any file on disk. This is useful when the
 /// generated page is not a content page, e.g. page list.
-pub(crate) struct Virtual(Box<dyn Fn(&Sack) -> String>);
+pub(crate) struct Virtual(pub Box<dyn Fn(&Sack) -> String>);
 
 impl Virtual {
 	pub fn new(call: impl Fn(&Sack) -> String + 'static) -> Self {
@@ -92,7 +107,16 @@ impl Virtual {
 	}
 }
 
+impl Debug for Virtual {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		// rust mental gymnastics moment
+		let ptr = &*self.0 as *const dyn Fn(&Sack) -> String as *const () as usize;
+		f.debug_tuple("Virtual").field(&ptr).finish()
+	}
+}
+
 /// The kind of an output item.
+#[derive(Debug)]
 pub(crate) enum OutputKind {
 	/// Marks an output item which corresponds to a file on disk.
 	Asset(Asset),
@@ -113,6 +137,7 @@ impl From<Virtual> for OutputKind {
 }
 
 /// Renderable output
+#[derive(Debug)]
 pub(crate) struct Output {
 	/// The kind of an output item
 	pub(crate) kind: OutputKind,
@@ -124,6 +149,7 @@ pub(crate) struct Output {
 
 /// Items currently in the pipeline. In order for an item to be rendered, it needs to be marked as
 /// `Take`, which means it needs to have an output location assigned to itself.
+#[derive(Debug)]
 pub(crate) enum PipelineItem {
 	/// Unclaimed file.
 	Skip(FileItem),
@@ -143,16 +169,25 @@ impl From<Output> for PipelineItem {
 	}
 }
 
+impl From<PipelineItem> for Option<Output> {
+	fn from(value: PipelineItem) -> Self {
+		match value {
+			PipelineItem::Skip(_) => None,
+			PipelineItem::Take(e) => Some(e),
+		}
+	}
+}
+
 /// This struct allows for querying the website hierarchy. It is passed to each rendered website
 /// page, so that it can easily access the website metadata.
 pub(crate) struct Sack<'a> {
 	pub ctx: &'a BuildContext,
 	/// Literally all of the content
-	hole: &'a [Output],
+	pub hole: &'a [&'a Output],
 	/// Current path for the page being rendered
-	path: &'a Utf8PathBuf,
+	pub path: &'a Utf8PathBuf,
 	/// Original file location for this page
-	file: Option<&'a Utf8PathBuf>,
+	pub file: Option<&'a Utf8PathBuf>,
 }
 
 impl<'a> Sack<'a> {
@@ -254,7 +289,7 @@ pub fn gather(pattern: &str, exts: &HashSet<&'static str>) -> Vec<PipelineItem> 
 		.collect()
 }
 
-fn to_source(path: Utf8PathBuf, exts: &HashSet<&'static str>) -> FileItem {
+pub(crate) fn to_source(path: Utf8PathBuf, exts: &HashSet<&'static str>) -> FileItem {
 	let hit = path.extension().map_or(false, |ext| exts.contains(ext));
 
 	let kind = match hit {
@@ -263,52 +298,4 @@ fn to_source(path: Utf8PathBuf, exts: &HashSet<&'static str>) -> FileItem {
 	};
 
 	FileItem { kind, path }
-}
-
-pub fn render_all(ctx: &BuildContext, items: &[Output]) {
-	for item in items {
-		let file = match &item.kind {
-			OutputKind::Asset(a) => Some(&a.meta.path),
-			OutputKind::Virtual(_) => None,
-		};
-		render(
-			item,
-			Sack {
-				ctx,
-				hole: items,
-				path: &item.path,
-				file,
-			},
-		);
-	}
-}
-
-fn render(item: &Output, sack: Sack) {
-	let o = Utf8Path::new("dist").join(&item.path);
-	fs::create_dir_all(o.parent().unwrap()).unwrap();
-
-	match item.kind {
-		OutputKind::Asset(ref real) => {
-			let i = &real.meta.path;
-
-			match &real.kind {
-				AssetKind::Html(closure) => {
-					let mut file = File::create(&o).unwrap();
-					file.write_all(closure(&sack).as_bytes()).unwrap();
-					println!("HTML: {} -> {}", i, o);
-				}
-				AssetKind::Bibtex(_) => {}
-				AssetKind::Image => {
-					fs::create_dir_all(o.parent().unwrap()).unwrap();
-					fs::copy(i, &o).unwrap();
-					println!("Image: {} -> {}", i, o);
-				}
-			};
-		}
-		OutputKind::Virtual(Virtual(ref closure)) => {
-			let mut file = File::create(&o).unwrap();
-			file.write_all(closure(&sack).as_bytes()).unwrap();
-			println!("Virtual: -> {}", o);
-		}
-	}
 }
