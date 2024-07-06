@@ -23,9 +23,9 @@ pub(crate) fn build_styles() {
 	fs::write("dist/styles.css", css).unwrap();
 }
 
-pub(crate) fn build_content(ctx: &BuildContext, content: &[&Output]) {
+pub(crate) fn build_content(ctx: &BuildContext, pending: &[&Output], hole: &[&Output]) {
 	let now = std::time::Instant::now();
-	render_all(ctx, content);
+	render_all(ctx, pending, hole);
 	println!("Elapsed: {:.2?}", now.elapsed());
 }
 
@@ -72,8 +72,8 @@ fn copy_recursively(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<
 	Ok(())
 }
 
-fn render_all(ctx: &BuildContext, items: &[&Output]) {
-	for item in items {
+fn render_all(ctx: &BuildContext, pending: &[&Output], hole: &[&Output]) {
+	for item in pending {
 		let file = match &item.kind {
 			OutputKind::Asset(a) => Some(&a.meta.path),
 			OutputKind::Virtual(_) => None,
@@ -82,7 +82,7 @@ fn render_all(ctx: &BuildContext, items: &[&Output]) {
 			item,
 			Sack {
 				ctx,
-				hole: items,
+				hole,
 				path: &item.path,
 				file,
 			},

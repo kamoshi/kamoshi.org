@@ -41,7 +41,7 @@ pub(crate) trait Content {
 
 /// Marks whether the item should be treated as a content page, converted into a standalone HTML
 /// page, or as a bundled asset.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum FileItemKind {
 	/// Marks items converted to `index.html`.
 	Index,
@@ -50,7 +50,7 @@ pub(crate) enum FileItemKind {
 }
 
 /// Metadata for a single item consumed by SSG.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct FileItem {
 	/// The kind of an item from disk.
 	pub kind: FileItemKind,

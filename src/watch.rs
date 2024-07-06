@@ -1,13 +1,15 @@
+use std::collections::HashMap;
 use std::env;
 use std::io::Result;
 use std::net::{TcpListener, TcpStream};
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use notify::RecursiveMode;
 use notify_debouncer_mini::new_debouncer;
 use tungstenite::WebSocket;
@@ -69,7 +71,7 @@ fn new_thread_ws_reload(
 	(tx, thread)
 }
 
-pub fn watch(ctx: &BuildContext, sources: &[Source]) -> Result<()> {
+pub fn watch(ctx: &BuildContext, sources: &[Source], state: Vec<Output>) -> Result<()> {
 	let root = env::current_dir().unwrap();
 	let server = TcpListener::bind("127.0.0.1:1337")?;
 	let client = Arc::new(Mutex::new(vec![]));
@@ -90,27 +92,60 @@ pub fn watch(ctx: &BuildContext, sources: &[Source]) -> Result<()> {
 	let thread_i = new_thread_ws_incoming(server, client.clone());
 	let (tx_reload, thread_o) = new_thread_ws_reload(client.clone());
 
+	let mut state: Vec<Rc<Output>> = state.into_iter().map(Rc::new).collect();
+
 	while let Ok(events) = rx.recv().unwrap() {
-		let items = events
+		let paths: Vec<Utf8PathBuf> = events
 			.into_iter()
 			.filter_map(|event| {
 				Utf8PathBuf::from_path_buf(event.path)
 					.ok()
 					.and_then(|path| path.strip_prefix(&root).ok().map(ToOwned::to_owned))
-					.and_then(|path| sources.iter().find_map(|s| s.get_maybe(&path)))
 			})
-			.filter_map(Option::from)
-			.collect::<Vec<Output>>();
+			.collect();
 
-		let items = items.iter().collect::<Vec<_>>();
+		let mut dirty = false;
 
-		build_content(ctx, &items);
-		build_styles();
-		tx_reload.send(()).unwrap();
+		{
+			let items: Vec<Rc<Output>> = paths
+				.iter()
+				.filter_map(|path| sources.iter().find_map(|s| s.get_maybe(path)))
+				.filter_map(Option::from)
+				.map(Rc::new)
+				.collect();
+
+			if !items.is_empty() {
+				let state_next = update_stream(&state, &items);
+				let abc: Vec<&Output> = items.iter().map(AsRef::as_ref).collect();
+				let xyz: Vec<&Output> = state_next.iter().map(AsRef::as_ref).collect();
+				build_content(ctx, &abc, &xyz);
+				state = state_next;
+				dirty = true;
+			}
+		}
+
+		if paths.iter().any(|path| path.starts_with("styles")) {
+			build_styles();
+			dirty = true;
+		}
+
+		if dirty {
+			tx_reload.send(()).unwrap();
+		}
 	}
 
 	thread_i.join().unwrap();
 	thread_o.join().unwrap();
 
 	Ok(())
+}
+
+fn update_stream(old: &[Rc<Output>], new: &[Rc<Output>]) -> Vec<Rc<Output>> {
+	let mut map: HashMap<&Utf8Path, Rc<Output>> = HashMap::new();
+
+	for output in old.iter().chain(new) {
+		map.insert(&*output.path, output.clone());
+	}
+
+	map.into_values().collect()
 }

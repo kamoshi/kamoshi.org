@@ -105,7 +105,7 @@ fn main() {
 		},
 	];
 
-	let special = &[
+	let special = vec![
 		Output {
 			kind: Virtual::new(|sack| crate::html::map(sack).render().to_owned().into()).into(),
 			path: "map/index.html".into(),
@@ -159,11 +159,11 @@ fn main() {
 
 	match args.mode {
 		Mode::Build => {
-			build(&ctx, sources, special);
+			let _ = build(&ctx, sources, special);
 		}
 		Mode::Watch => {
-			build(&ctx, sources, special);
-			watch::watch(&ctx, sources).unwrap()
+			let state = build(&ctx, sources, special);
+			watch::watch(&ctx, sources, state).unwrap()
 		}
 	}
 }
@@ -198,7 +198,7 @@ impl Source {
 	}
 }
 
-fn build(ctx: &BuildContext, sources: &[Source], special: &[Output]) {
+fn build(ctx: &BuildContext, sources: &[Source], special: Vec<Output>) -> Vec<Output> {
 	crate::build::clean_dist();
 
 	let sources: Vec<_> = sources
@@ -208,13 +208,15 @@ fn build(ctx: &BuildContext, sources: &[Source], special: &[Output]) {
 		.filter_map(Option::from)
 		.collect();
 
-	let assets: Vec<_> = sources.iter().chain(special).collect();
+	let assets: Vec<_> = sources.iter().chain(special.iter()).collect();
 
-	crate::build::build_content(ctx, &assets);
+	crate::build::build_content(ctx, &assets, &assets);
 	crate::build::build_static();
 	crate::build::build_styles();
 	crate::build::build_pagefind();
 	crate::build::build_js();
+
+	sources.into_iter().chain(special).collect()
 }
 
 pub fn parse_frontmatter<D>(raw: &str) -> (D, String)
