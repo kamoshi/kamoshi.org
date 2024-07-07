@@ -34,7 +34,7 @@ I've decided to ditch fully-featured IDEs such as IntelliJ and lighter editors s
 
 I also like the fact that the entire config for Neovim can be stored in a git repository. I uploaded mine to a [GitHub repository](https://github.com/kamoshi/dotfiles/tree/main/nvim) for anyone curious. You can use Lua to configure this editor instead of Vimscript, which is pretty cool, I like Lua.
 
-![Neovim screengrab](@assets/posts/neovim.png)
+![Neovim screengrab](neovim.png)
 
 
 ## Arch Linux
@@ -53,7 +53,7 @@ On top of all that, Arch Linux is a rolling release distro, which means that eve
 
 Below is an obligatory neofetch screenshot.
 
-![Obligatory neofetch screengrab](@assets/posts/arch.png)
+![Obligatory neofetch screengrab](arch.png)
 
 
 For some time I probably won't be writing anything new in here. It's really ironic, but now that I do have a lot of time, I don't really have anything interesting to write about. I have a ton of things to do, which I couldn't really do while I was studying full time at a university.

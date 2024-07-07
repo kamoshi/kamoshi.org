@@ -1593,6 +1593,7 @@ dependencies = [
  "npezza93-tree-sitter-nix",
  "once_cell",
  "pulldown-cmark",
+ "rayon",
  "regex",
  "serde",
  "sha256",

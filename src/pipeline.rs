@@ -65,7 +65,7 @@ pub(crate) struct FileItem {
 /// Marks how the asset should be processed by the SSG.
 pub(crate) enum AssetKind {
 	/// Data renderable to HTML. In order to process the data, a closure should be called.
-	Html(Box<dyn Fn(&Sack) -> String>),
+	Html(Box<dyn Fn(&Sack) -> String + Send + Sync>),
 	/// Bibliographical data.
 	Bibtex(Library),
 	/// Image. For now they are simply cloned to the `dist` director.
@@ -87,7 +87,7 @@ impl Debug for AssetKind {
 }
 
 impl AssetKind {
-	pub fn html(f: impl Fn(&Sack) -> String + 'static) -> Self {
+	pub fn html(f: impl Fn(&Sack) -> String + Send + Sync + 'static) -> Self {
 		Self::Html(Box::new(f))
 	}
 }
@@ -103,10 +103,10 @@ pub(crate) struct Asset {
 
 /// Dynamically generated asset not corresponding to any file on disk. This is useful when the
 /// generated page is not a content page, e.g. page list.
-pub(crate) struct Virtual(pub Box<dyn Fn(&Sack) -> String>);
+pub(crate) struct Virtual(pub Box<dyn Fn(&Sack) -> String + Send + Sync>);
 
 impl Virtual {
-	pub fn new(call: impl Fn(&Sack) -> String + 'static) -> Self {
+	pub fn new(call: impl Fn(&Sack) -> String + Send + Sync + 'static) -> Self {
 		Self(Box::new(call))
 	}
 }

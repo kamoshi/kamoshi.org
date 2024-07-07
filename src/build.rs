@@ -7,6 +7,7 @@ use std::path::Path;
 use std::process::Command;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::pipeline::{AssetKind, Output, OutputKind, Sack, Virtual};
 use crate::BuildContext;
@@ -134,7 +135,7 @@ fn store_hash(buffer: &[u8]) -> Utf8PathBuf {
 
 pub(crate) fn store_hash_all(items: &[&Output]) -> Vec<Hashed> {
 	items
-		.iter()
+		.par_iter()
 		.filter_map(|item| match item.kind {
 			OutputKind::Asset(ref asset) => match asset.kind {
 				AssetKind::Image => {

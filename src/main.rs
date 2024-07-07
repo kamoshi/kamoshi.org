@@ -248,7 +248,7 @@ where
 
 fn process_content<T>(item: PipelineItem) -> PipelineItem
 where
-	T: for<'de> Deserialize<'de> + Content + Clone + 'static,
+	T: for<'de> Deserialize<'de> + Content + Clone + Send + Sync + 'static,
 {
 	let meta = match item {
 		PipelineItem::Skip(e) if matches!(e.kind, FileItemKind::Index) => e,
