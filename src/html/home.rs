@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::{pipeline::Sack, text::md::parse, LinkDate, Linkable};
+use crate::pipeline::Sack;
+use crate::text::md::parse;
 
 const INTRO: &str = r#"
 ## かもし
@@ -15,7 +18,7 @@ const INTRO: &str = r#"
 "#;
 
 fn intro() -> impl Renderable {
-	let (_, html, _) = parse(INTRO.into(), None);
+	let (_, html, _) = parse(INTRO.into(), None, "".into(), HashMap::new());
 	maud!(
 		section .p-card.intro-jp lang="ja-JP" {
 			(Raw(html))

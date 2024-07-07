@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Utc};
 use hayagriva::Library;
@@ -26,13 +28,18 @@ pub(crate) struct Slideshow {
 }
 
 impl Content for Slideshow {
-	fn parse(data: String, _: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
+	fn parse(
+		data: String,
+		_: Option<&Library>,
+		dir: Utf8PathBuf,
+		hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
+	) -> (Outline, String, Option<Vec<String>>) {
 		let html = data
 			.split("\n-----\n")
 			.map(|chunk| {
 				chunk
 					.split("\n---\n")
-					.map(|s| crate::text::md::parse(s.to_owned(), None))
+					.map(|s| crate::text::md::parse(s.to_owned(), None, dir.clone(), hash.clone()))
 					.map(|e| e.1)
 					.collect::<Vec<_>>()
 			})

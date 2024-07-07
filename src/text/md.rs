@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use camino::{Utf8Path, Utf8PathBuf};
 use hayagriva::{
 	archive::ArchivedStyle,
 	citationberg::{IndependentStyle, Locale, Style},
@@ -47,7 +48,12 @@ static STYLE: Lazy<IndependentStyle> =
 
 pub struct Outline(pub Vec<(String, String)>);
 
-pub fn parse(text: String, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
+pub fn parse(
+	text: String,
+	lib: Option<&Library>,
+	dir: Utf8PathBuf,
+	hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
+) -> (Outline, String, Option<Vec<String>>) {
 	let (outline, stream) = {
 		let stream = Parser::new_ext(&text, *OPTS);
 		let mut stream: Vec<_> = TextMergeStream::new(stream).collect();
@@ -59,6 +65,7 @@ pub fn parse(text: String, lib: Option<&Library>) -> (Outline, String, Option<Ve
 		.into_iter()
 		.map(make_math)
 		.map(make_emoji)
+		.map(swap_hashed_image(dir, hash))
 		.collect::<Vec<_>>();
 
 	let stream = make_code(stream)
@@ -346,6 +353,33 @@ fn make_emoji(event: Event) -> Event {
 				Some(buf) => Event::Text(buf.into()),
 			}
 		}
+		_ => event,
+	}
+}
+
+fn swap_hashed_image(
+	dir: Utf8PathBuf,
+	hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
+) -> impl Fn(Event) -> Event {
+	move |event| match event {
+		Event::Start(start) => match start {
+			Tag::Image {
+				dest_url,
+				link_type,
+				title,
+				id,
+			} => {
+				let rel = dir.join(dest_url.as_ref());
+				let hashed = hash.get(&rel).map(|path| path.as_str().to_owned().into());
+				Event::Start(Tag::Image {
+					link_type,
+					dest_url: hashed.unwrap_or(dest_url),
+					title,
+					id,
+				})
+			}
+			_ => Event::Start(start),
+		},
 		_ => event,
 	}
 }

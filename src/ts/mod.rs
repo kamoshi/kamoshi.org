@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use tree_sitter_highlight::{HighlightEvent, Highlighter};
 
-pub enum Event {
+pub enum TSEvent {
 	Write(String),
 	Enter(String),
 	Close,
@@ -31,23 +31,23 @@ fn to_html(lang: &str, code: &str) -> String {
 	get_events(lang, code)
 		.into_iter()
 		.map(|event| match event {
-			Event::Write(text) => Cow::from(
+			TSEvent::Write(text) => Cow::from(
 				text.replace('&', "&amp;")
 					.replace('<', "&lt;")
 					.replace('>', "&gt;"),
 			),
-			Event::Enter(class) => {
+			TSEvent::Enter(class) => {
 				Cow::from(format!("<span class=\"{}\">", class.replace('.', "-")))
 			}
-			Event::Close => Cow::from("</span>"),
+			TSEvent::Close => Cow::from("</span>"),
 		})
 		.collect()
 }
 
-fn get_events(lang: &str, src: &str) -> Vec<Event> {
+fn get_events(lang: &str, src: &str) -> Vec<TSEvent> {
 	let config = match configs::get_config(lang) {
 		Some(c) => c,
-		None => return vec![Event::Write(src.into())],
+		None => return vec![TSEvent::Write(src.into())],
 	};
 
 	let mut hl = Highlighter::new();
@@ -66,10 +66,10 @@ fn get_events(lang: &str, src: &str) -> Vec<Event> {
 	out
 }
 
-fn map_event(event: HighlightEvent, src: &str) -> Event {
+fn map_event(event: HighlightEvent, src: &str) -> TSEvent {
 	match event {
-		HighlightEvent::Source { start, end } => Event::Write(src[start..end].into()),
-		HighlightEvent::HighlightStart(s) => Event::Enter(captures::NAMES[s.0].into()),
-		HighlightEvent::HighlightEnd => Event::Close,
+		HighlightEvent::Source { start, end } => TSEvent::Write(src[start..end].into()),
+		HighlightEvent::HighlightStart(s) => TSEvent::Enter(captures::NAMES[s.0].into()),
+		HighlightEvent::HighlightEnd => TSEvent::Close,
 	}
 }

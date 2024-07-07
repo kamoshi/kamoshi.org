@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Utc};
 use hayagriva::Library;
@@ -18,8 +20,13 @@ pub(crate) struct Post {
 }
 
 impl Content for Post {
-	fn parse(data: String, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
-		crate::text::md::parse(data, lib)
+	fn parse(
+		data: String,
+		lib: Option<&Library>,
+		dir: Utf8PathBuf,
+		hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
+	) -> (Outline, String, Option<Vec<String>>) {
+		crate::text::md::parse(data, lib, dir, hash)
 	}
 
 	fn render<'s, 'p, 'html>(

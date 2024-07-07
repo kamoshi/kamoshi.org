@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io;
@@ -5,7 +6,7 @@ use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 
 use crate::pipeline::{AssetKind, Output, OutputKind, Sack, Virtual};
 use crate::BuildContext;
@@ -23,10 +24,21 @@ pub(crate) fn build_styles() {
 	fs::write("dist/styles.css", css).unwrap();
 }
 
-pub(crate) fn build_content(ctx: &BuildContext, pending: &[&Output], hole: &[&Output]) {
+pub(crate) fn build_content(
+	ctx: &BuildContext,
+	pending: &[&Output],
+	hole: &[&Output],
+	hash: Option<HashMap<Utf8PathBuf, Utf8PathBuf>>,
+) -> HashMap<Utf8PathBuf, Utf8PathBuf> {
 	let now = std::time::Instant::now();
-	render_all(ctx, pending, hole);
+	let hashes = render_all(ctx, pending, hole, hash);
 	println!("Elapsed: {:.2?}", now.elapsed());
+	copy_recursively(Path::new(".hash"), Path::new("dist/hash")).unwrap();
+	let mut lmao = HashMap::<Utf8PathBuf, Utf8PathBuf>::new();
+	for hash in hashes {
+		lmao.insert(hash.file, hash.hash);
+	}
+	lmao
 }
 
 pub(crate) fn build_static() {
@@ -72,26 +84,64 @@ fn copy_recursively(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<
 	Ok(())
 }
 
-fn render_all(ctx: &BuildContext, pending: &[&Output], hole: &[&Output]) {
-	for item in pending {
-		let file = match &item.kind {
-			OutputKind::Asset(a) => Some(&a.meta.path),
-			OutputKind::Virtual(_) => None,
-		};
-		render(
-			item,
-			Sack {
-				ctx,
-				hole,
-				path: &item.path,
-				file,
-			},
-		);
-	}
+fn render_all(
+	ctx: &BuildContext,
+	pending: &[&Output],
+	hole: &[&Output],
+	hash: Option<HashMap<Utf8PathBuf, Utf8PathBuf>>,
+) -> Vec<Hashed> {
+	pending
+		.iter()
+		.filter_map(|item| {
+			let file = match &item.kind {
+				OutputKind::Asset(a) => Some(&a.meta.path),
+				OutputKind::Virtual(_) => None,
+			};
+
+			render(
+				item,
+				Sack {
+					ctx,
+					hole,
+					path: &item.path,
+					file,
+					hash: hash.clone(),
+				},
+			)
+		})
+		.collect()
 }
 
-fn render(item: &Output, sack: Sack) {
-	let o = Utf8Path::new("dist").join(&item.path);
+fn store_hash_png(data: &[u8]) -> Utf8PathBuf {
+	let store = Utf8Path::new(".hash").join("png");
+	let hash = sha256::digest(data);
+	let hash_path = store.join(&hash).with_extension("png");
+	if !hash_path.exists() {
+		let opts = oxipng::Options {
+			interlace: Some(oxipng::Interlacing::Adam7),
+			..Default::default()
+		};
+		let data = oxipng::optimize_from_memory(data, &opts).expect("PNG Error");
+		fs::create_dir_all(&store).unwrap();
+		fs::write(hash_path, data).expect("Couldn't output optimized PNG");
+	}
+
+	Utf8Path::new("/")
+		.join("hash")
+		.join("png")
+		.join(hash)
+		.with_extension("png")
+}
+
+#[derive(Debug)]
+pub(crate) struct Hashed {
+	pub file: Utf8PathBuf,
+	pub hash: Utf8PathBuf,
+}
+
+fn render(item: &Output, sack: Sack) -> Option<Hashed> {
+	let dist = Utf8Path::new("dist");
+	let o = dist.join(&item.path);
 	fs::create_dir_all(o.parent().unwrap()).unwrap();
 
 	match item.kind {
@@ -103,19 +153,32 @@ fn render(item: &Output, sack: Sack) {
 					let mut file = File::create(&o).unwrap();
 					file.write_all(closure(&sack).as_bytes()).unwrap();
 					println!("HTML: {} -> {}", i, o);
+					None
 				}
-				AssetKind::Bibtex(_) => {}
+				AssetKind::Bibtex(_) => None,
 				AssetKind::Image => {
+					let hash = match item.path.extension() {
+						Some("png") => Some(store_hash_png(&std::fs::read(i).unwrap())),
+						Some("") => None,
+						_ => None,
+					};
+
 					fs::create_dir_all(o.parent().unwrap()).unwrap();
 					fs::copy(i, &o).unwrap();
 					println!("Image: {} -> {}", i, o);
+
+					hash.map(|hash| Hashed {
+						file: item.path.to_owned(),
+						hash,
+					})
 				}
-			};
+			}
 		}
 		OutputKind::Virtual(Virtual(ref closure)) => {
 			let mut file = File::create(&o).unwrap();
 			file.write_all(closure(&sack).as_bytes()).unwrap();
 			println!("Virtual: -> {}", o);
+			None
 		}
 	}
 }

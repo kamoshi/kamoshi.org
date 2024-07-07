@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use camino::Utf8PathBuf;
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
@@ -14,8 +16,13 @@ pub struct Wiki {
 }
 
 impl Content for Wiki {
-	fn parse(data: String, lib: Option<&Library>) -> (Outline, String, Option<Vec<String>>) {
-		crate::text::md::parse(data, lib)
+	fn parse(
+		data: String,
+		lib: Option<&Library>,
+		path: Utf8PathBuf,
+		hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
+	) -> (Outline, String, Option<Vec<String>>) {
+		crate::text::md::parse(data, lib, path, hash)
 	}
 
 	fn render<'s, 'p, 'html>(

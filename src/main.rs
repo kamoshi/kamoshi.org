@@ -6,7 +6,7 @@ mod ts;
 mod utils;
 mod watch;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::process::Command;
 
@@ -120,7 +120,7 @@ fn main() {
 			kind: Asset {
 				kind: pipeline::AssetKind::html(|sack| {
 					let data = std::fs::read_to_string("content/index.md").unwrap();
-					let (_, html, _) = text::md::parse(data, None);
+					let (_, html, _) = text::md::parse(data, None, "".into(), HashMap::new());
 					crate::html::home(sack, Raw(html))
 						.render()
 						.to_owned()
@@ -210,7 +210,8 @@ fn build(ctx: &BuildContext, sources: &[Source], special: Vec<Output>) -> Vec<Ou
 
 	let assets: Vec<_> = sources.iter().chain(special.iter()).collect();
 
-	crate::build::build_content(ctx, &assets, &assets);
+	let lmao = crate::build::build_content(ctx, &assets, &assets, None);
+	crate::build::build_content(ctx, &assets, &assets, Some(lmao));
 	crate::build::build_static();
 	crate::build::build_styles();
 	crate::build::build_pagefind();
@@ -254,13 +255,18 @@ where
 		Some("md" | "mdx" | "lhs") => {
 			let raw = fs::read_to_string(&meta.path).unwrap();
 			let (matter, parsed) = parse_frontmatter::<T>(&raw);
-			let link = T::as_link(&matter, Utf8Path::new("/").join(dir));
+			let link = T::as_link(&matter, Utf8Path::new("/").join(&dir));
 
 			Output {
 				kind: Asset {
 					kind: pipeline::AssetKind::html(move |sack| {
 						let lib = sack.get_library();
-						let (outline, parsed, bib) = T::parse(parsed.clone(), lib);
+						let (outline, parsed, bib) = T::parse(
+							parsed.clone(),
+							lib,
+							dir.clone(),
+							sack.hash.as_ref().map(ToOwned::to_owned).unwrap_or_default(),
+						);
 						T::render(matter.clone(), sack, Raw(parsed), outline, bib)
 							.render()
 							.into()

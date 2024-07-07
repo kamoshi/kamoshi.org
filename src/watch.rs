@@ -118,7 +118,7 @@ pub fn watch(ctx: &BuildContext, sources: &[Source], state: Vec<Output>) -> Resu
 				let state_next = update_stream(&state, &items);
 				let abc: Vec<&Output> = items.iter().map(AsRef::as_ref).collect();
 				let xyz: Vec<&Output> = state_next.iter().map(AsRef::as_ref).collect();
-				build_content(ctx, &abc, &xyz);
+				build_content(ctx, &abc, &xyz, None);
 				state = state_next;
 				dirty = true;
 			}

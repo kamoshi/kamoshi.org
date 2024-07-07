@@ -20,8 +20,12 @@ use crate::{BuildContext, Link, LinkDate, Linkable};
 pub(crate) trait Content {
 	/// Parse the document. Pass an optional library for bibliography.
 	/// This generates the initial HTML markup from content.
-	fn parse(document: String, library: Option<&Library>)
-		-> (Outline, String, Option<Vec<String>>);
+	fn parse(
+		document: String,
+		library: Option<&Library>,
+		path: Utf8PathBuf,
+		hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
+	) -> (Outline, String, Option<Vec<String>>);
 
 	/// Render the full page from parsed content.
 	fn render<'s, 'p, 'html>(
@@ -75,7 +79,7 @@ impl Debug for AssetKind {
 				// rust mental gymnastics moment
 				let ptr = &**fun as *const dyn Fn(&Sack) -> String as *const () as usize;
 				f.debug_tuple("Html").field(&ptr).finish()
-			},
+			}
 			Self::Bibtex(b) => f.debug_tuple("Bibtex").field(b).finish(),
 			Self::Image => write!(f, "Image"),
 		}
@@ -188,6 +192,8 @@ pub(crate) struct Sack<'a> {
 	pub path: &'a Utf8PathBuf,
 	/// Original file location for this page
 	pub file: Option<&'a Utf8PathBuf>,
+	/// Hashed optimized images
+	pub hash: Option<HashMap<Utf8PathBuf, Utf8PathBuf>>
 }
 
 impl<'a> Sack<'a> {

@@ -15,8 +15,10 @@ hayagriva              = "0.5.3"
 hypertext              = "0.5.1"
 katex                  = "0.4.6"
 once_cell              = "1.19.0"
+oxipng                 = { version = "9.1.1", default-features = false, features = ["filetime", "parallel"] }
 regex                  = "1.10.5"
 serde                  = { version = "1.0.203", features = ["derive"] }
+sha256                 = "1.5.0"
 
 # Watch
 notify                 = "6.1.1"
