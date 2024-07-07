@@ -113,24 +113,25 @@ fn render_all(
 }
 
 fn store_hash_png(data: &[u8]) -> Utf8PathBuf {
-	let store = Utf8Path::new(".hash").join("png");
-	let hash = sha256::digest(data);
-	let hash_path = store.join(&hash).with_extension("png");
-	if !hash_path.exists() {
-		let opts = oxipng::Options {
-			interlace: Some(oxipng::Interlacing::Adam7),
-			..Default::default()
-		};
-		let data = oxipng::optimize_from_memory(data, &opts).expect("PNG Error");
-		fs::create_dir_all(&store).unwrap();
-		fs::write(hash_path, data).expect("Couldn't output optimized PNG");
+	let store = Utf8Path::new(".hash");
+	let ident = sha256::digest(data);
+	let store_hash = store.join(&ident).with_extension("webp");
+
+	if !store_hash.exists() {
+		let img = image::load_from_memory(data).expect("Couldn't load image");
+		let dim = (img.width(), img.height());
+		let mut out = Vec::new();
+		let encoder = image::codecs::webp::WebPEncoder::new_lossless(&mut out);
+		encoder.encode(&img.to_rgba8(), dim.0, dim.1, image::ColorType::Rgba8).expect("Encoding error");
+
+		fs::create_dir_all(store).unwrap();
+		fs::write(store_hash, out).expect("Couldn't output optimized image");
 	}
 
 	Utf8Path::new("/")
 		.join("hash")
-		.join("png")
-		.join(hash)
-		.with_extension("png")
+		.join(ident)
+		.with_extension("webp")
 }
 
 #[derive(Debug)]
