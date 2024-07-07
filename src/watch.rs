@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::env;
 use std::io::Result;
 use std::net::{TcpListener, TcpStream};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::rc::Rc;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};

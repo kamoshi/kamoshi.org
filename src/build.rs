@@ -29,16 +29,11 @@ pub(crate) fn build_content(
 	pending: &[&Output],
 	hole: &[&Output],
 	hash: Option<HashMap<Utf8PathBuf, Utf8PathBuf>>,
-) -> HashMap<Utf8PathBuf, Utf8PathBuf> {
+) {
 	let now = std::time::Instant::now();
-	let hashes = render_all(ctx, pending, hole, hash);
+	render_all(ctx, pending, hole, hash);
 	println!("Elapsed: {:.2?}", now.elapsed());
 	copy_recursively(Path::new(".hash"), Path::new("dist/hash")).unwrap();
-	let mut lmao = HashMap::<Utf8PathBuf, Utf8PathBuf>::new();
-	for hash in hashes {
-		lmao.insert(hash.file, hash.hash);
-	}
-	lmao
 }
 
 pub(crate) fn build_static() {
@@ -89,10 +84,10 @@ fn render_all(
 	pending: &[&Output],
 	hole: &[&Output],
 	hash: Option<HashMap<Utf8PathBuf, Utf8PathBuf>>,
-) -> Vec<Hashed> {
+) {
 	pending
 		.iter()
-		.filter_map(|item| {
+		.map(|item| {
 			let file = match &item.kind {
 				OutputKind::Asset(a) => Some(&a.meta.path),
 				OutputKind::Virtual(_) => None,
@@ -112,17 +107,20 @@ fn render_all(
 		.collect()
 }
 
-fn store_hash_png(data: &[u8]) -> Utf8PathBuf {
+fn store_hash(buffer: &[u8]) -> Utf8PathBuf {
 	let store = Utf8Path::new(".hash");
-	let ident = sha256::digest(data);
-	let store_hash = store.join(&ident).with_extension("webp");
+	let hash = sha256::digest(buffer);
+	let img = image::load_from_memory(buffer).expect("Couldn't load image");
+	let store_hash = store.join(&hash).with_extension("webp");
 
 	if !store_hash.exists() {
-		let img = image::load_from_memory(data).expect("Couldn't load image");
 		let dim = (img.width(), img.height());
 		let mut out = Vec::new();
 		let encoder = image::codecs::webp::WebPEncoder::new_lossless(&mut out);
-		encoder.encode(&img.to_rgba8(), dim.0, dim.1, image::ColorType::Rgba8).expect("Encoding error");
+
+		encoder
+			.encode(&img.to_rgba8(), dim.0, dim.1, image::ColorType::Rgba8)
+			.expect("Encoding error");
 
 		fs::create_dir_all(store).unwrap();
 		fs::write(store_hash, out).expect("Couldn't output optimized image");
@@ -130,8 +128,36 @@ fn store_hash_png(data: &[u8]) -> Utf8PathBuf {
 
 	Utf8Path::new("/")
 		.join("hash")
-		.join(ident)
+		.join(hash)
 		.with_extension("webp")
+}
+
+pub(crate) fn store_hash_all(items: &[&Output]) -> Vec<Hashed> {
+	items
+		.iter()
+		.filter_map(|item| match item.kind {
+			OutputKind::Asset(ref asset) => match asset.kind {
+				AssetKind::Image => {
+					let buffer = std::fs::read(&asset.meta.path).expect("Couldn't read file");
+					let format = image::guess_format(&buffer).expect("Couldn't read format");
+
+					if matches!(format, image::ImageFormat::Gif) {
+						return None;
+					}
+
+					let hash = store_hash(&buffer);
+					println!("Hashing image {} as {}", asset.meta.path, hash);
+
+					Some(Hashed {
+						file: item.path.to_owned(),
+						hash,
+					})
+				}
+				_ => None,
+			},
+			_ => None,
+		})
+		.collect()
 }
 
 #[derive(Debug)]
@@ -140,7 +166,7 @@ pub(crate) struct Hashed {
 	pub hash: Utf8PathBuf,
 }
 
-fn render(item: &Output, sack: Sack) -> Option<Hashed> {
+fn render(item: &Output, sack: Sack) {
 	let dist = Utf8Path::new("dist");
 	let o = dist.join(&item.path);
 	fs::create_dir_all(o.parent().unwrap()).unwrap();
@@ -154,24 +180,12 @@ fn render(item: &Output, sack: Sack) -> Option<Hashed> {
 					let mut file = File::create(&o).unwrap();
 					file.write_all(closure(&sack).as_bytes()).unwrap();
 					println!("HTML: {} -> {}", i, o);
-					None
 				}
-				AssetKind::Bibtex(_) => None,
+				AssetKind::Bibtex(_) => (),
 				AssetKind::Image => {
-					let hash = match item.path.extension() {
-						Some("png") => Some(store_hash_png(&std::fs::read(i).unwrap())),
-						Some("") => None,
-						_ => None,
-					};
-
 					fs::create_dir_all(o.parent().unwrap()).unwrap();
 					fs::copy(i, &o).unwrap();
 					println!("Image: {} -> {}", i, o);
-
-					hash.map(|hash| Hashed {
-						file: item.path.to_owned(),
-						hash,
-					})
 				}
 			}
 		}
@@ -179,7 +193,6 @@ fn render(item: &Output, sack: Sack) -> Option<Hashed> {
 			let mut file = File::create(&o).unwrap();
 			file.write_all(closure(&sack).as_bytes()).unwrap();
 			println!("Virtual: -> {}", o);
-			None
 		}
 	}
 }

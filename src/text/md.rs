@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use hayagriva::{
 	archive::ArchivedStyle,
 	citationberg::{IndependentStyle, Locale, Style},

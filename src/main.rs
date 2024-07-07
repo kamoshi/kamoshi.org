@@ -10,13 +10,14 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::process::Command;
 
+use build::Hashed;
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use gray_matter::engine::YAML;
 use gray_matter::Matter;
 use hypertext::{Raw, Renderable};
-use pipeline::{Asset, AssetKind, Content, FileItemKind, Output, PipelineItem};
+use pipeline::{Asset, AssetKind, Content, FileItemKind, Output, OutputKind, PipelineItem};
 use serde::Deserialize;
 
 use crate::pipeline::Virtual;
@@ -201,23 +202,33 @@ impl Source {
 fn build(ctx: &BuildContext, sources: &[Source], special: Vec<Output>) -> Vec<Output> {
 	crate::build::clean_dist();
 
-	let sources: Vec<_> = sources
+	let content: Vec<Output> = sources
 		.iter()
 		.flat_map(Source::get)
 		.map(to_bundle)
 		.filter_map(Option::from)
 		.collect();
 
-	let assets: Vec<_> = sources.iter().chain(special.iter()).collect();
+	let images: Vec<&Output> = content
+		.iter()
+		.filter(|&e| match e.kind {
+			OutputKind::Asset(ref a) => matches!(a.kind, AssetKind::Image),
+			_ => false,
+		})
+		.collect();
 
-	let lmao = crate::build::build_content(ctx, &assets, &assets, None);
-	crate::build::build_content(ctx, &assets, &assets, Some(lmao));
+	let hashes = crate::build::store_hash_all(&images);
+	let hashes = HashMap::from_iter(hashes.into_iter().map(|Hashed { file, hash } | (file, hash)));
+
+	let assets: Vec<_> = content.iter().chain(special.iter()).collect();
+
+	crate::build::build_content(ctx, &assets, &assets, Some(hashes));
 	crate::build::build_static();
 	crate::build::build_styles();
 	crate::build::build_pagefind();
 	crate::build::build_js();
 
-	sources.into_iter().chain(special).collect()
+	content.into_iter().chain(special).collect()
 }
 
 pub fn parse_frontmatter<D>(raw: &str) -> (D, String)
@@ -265,7 +276,10 @@ where
 							parsed.clone(),
 							lib,
 							dir.clone(),
-							sack.hash.as_ref().map(ToOwned::to_owned).unwrap_or_default(),
+							sack.hash
+								.as_ref()
+								.map(ToOwned::to_owned)
+								.unwrap_or_default(),
 						);
 						T::render(matter.clone(), sack, Raw(parsed), outline, bib)
 							.render()
