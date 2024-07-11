@@ -5,10 +5,12 @@ mod text;
 mod ts;
 mod utils;
 mod watch;
+mod website;
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::process::Command;
+use std::rc::Rc;
 
 use build::Hashed;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -19,6 +21,7 @@ use gray_matter::Matter;
 use hypertext::{Raw, Renderable};
 use pipeline::{Asset, AssetKind, Content, FileItemKind, Output, OutputKind, PipelineItem};
 use serde::Deserialize;
+use website::WebsiteDesigner;
 
 use crate::pipeline::Virtual;
 
@@ -83,41 +86,38 @@ fn main() {
 		.into(),
 	};
 
-	let sources = &[
-		Source {
+	let website = WebsiteDesigner::default()
+		.add_source(Source {
 			path: "content/about.md",
 			exts: ["md"].into(),
 			func: process_content::<crate::html::Post>,
-		},
-		Source {
+		})
+		.add_source(Source {
 			path: "content/posts/**/*",
 			exts: ["md", "mdx"].into(),
 			func: process_content::<crate::html::Post>,
-		},
-		Source {
+		})
+		.add_source(Source {
 			path: "content/slides/**/*",
 			exts: ["md", "lhs"].into(),
 			func: process_content::<crate::html::Slideshow>,
-		},
-		Source {
+		})
+		.add_source(Source {
 			path: "content/wiki/**/*",
 			exts: ["md"].into(),
 			func: process_content::<crate::html::Wiki>,
-		},
-	];
-
-	let special = vec![
-		Output {
+		})
+		.add_output(Output {
 			kind: Virtual::new(|sack| crate::html::map(sack).render().to_owned().into()).into(),
 			path: "map/index.html".into(),
 			link: None,
-		},
-		Output {
+		})
+		.add_output(Output {
 			kind: Virtual::new(|sack| crate::html::search(sack).render().to_owned().into()).into(),
 			path: "search/index.html".into(),
 			link: None,
-		},
-		Output {
+		})
+		.add_output(Output {
 			kind: Asset {
 				kind: pipeline::AssetKind::html(|sack| {
 					let data = std::fs::read_to_string("content/index.md").unwrap();
@@ -135,16 +135,16 @@ fn main() {
 			.into(),
 			path: "index.html".into(),
 			link: None,
-		},
-		Output {
+		})
+		.add_output(Output {
 			kind: Virtual::new(|sack| {
 				crate::html::to_list(sack, sack.get_links("posts/**/*.html"), "Posts".into())
 			})
 			.into(),
 			path: "posts/index.html".into(),
 			link: None,
-		},
-		Output {
+		})
+		.add_output(Output {
 			kind: Virtual::new(|sack| {
 				crate::html::to_list(
 					sack,
@@ -155,17 +155,12 @@ fn main() {
 			.into(),
 			path: "slides/index.html".into(),
 			link: None,
-		},
-	];
+		})
+		.finish();
 
 	match args.mode {
-		Mode::Build => {
-			let _ = build(&ctx, sources, special);
-		}
-		Mode::Watch => {
-			let state = build(&ctx, sources, special);
-			watch::watch(&ctx, sources, state).unwrap()
-		}
+		Mode::Build => website.build(&ctx),
+		Mode::Watch => website.watch(&ctx),
 	}
 }
 
@@ -199,7 +194,7 @@ impl Source {
 	}
 }
 
-fn build(ctx: &BuildContext, sources: &[Source], special: Vec<Output>) -> Vec<Output> {
+fn build(ctx: &BuildContext, sources: &[Source], special: &[Rc<Output>]) -> Vec<Rc<Output>> {
 	crate::build::clean_dist();
 
 	let content: Vec<Output> = sources
@@ -218,9 +213,9 @@ fn build(ctx: &BuildContext, sources: &[Source], special: Vec<Output>) -> Vec<Ou
 		.collect();
 
 	let hashes = crate::build::store_hash_all(&images);
-	let hashes = HashMap::from_iter(hashes.into_iter().map(|Hashed { file, hash } | (file, hash)));
+	let hashes = HashMap::from_iter(hashes.into_iter().map(|Hashed { file, hash }| (file, hash)));
 
-	let assets: Vec<_> = content.iter().chain(special.iter()).collect();
+	let assets: Vec<_> = content.iter().chain(special.iter().map(AsRef::as_ref)).collect();
 
 	crate::build::build_content(ctx, &assets, &assets, Some(hashes));
 	crate::build::build_static();
@@ -228,7 +223,7 @@ fn build(ctx: &BuildContext, sources: &[Source], special: Vec<Output>) -> Vec<Ou
 	crate::build::build_pagefind();
 	crate::build::build_js();
 
-	content.into_iter().chain(special).collect()
+	content.into_iter().map(Rc::new).chain(special.iter().map(ToOwned::to_owned)).collect()
 }
 
 pub fn parse_frontmatter<D>(raw: &str) -> (D, String)

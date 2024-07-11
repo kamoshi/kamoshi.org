@@ -71,7 +71,7 @@ fn new_thread_ws_reload(
 	(tx, thread)
 }
 
-pub fn watch(ctx: &BuildContext, sources: &[Source], state: Vec<Output>) -> Result<()> {
+pub fn watch(ctx: &BuildContext, sources: &[Source], mut state: Vec<Rc<Output>>) -> Result<()> {
 	let root = env::current_dir().unwrap();
 	let server = TcpListener::bind("127.0.0.1:1337")?;
 	let client = Arc::new(Mutex::new(vec![]));
@@ -91,8 +91,6 @@ pub fn watch(ctx: &BuildContext, sources: &[Source], state: Vec<Output>) -> Resu
 
 	let thread_i = new_thread_ws_incoming(server, client.clone());
 	let (tx_reload, thread_o) = new_thread_ws_reload(client.clone());
-
-	let mut state: Vec<Rc<Output>> = state.into_iter().map(Rc::new).collect();
 
 	while let Ok(events) = rx.recv().unwrap() {
 		let paths: Vec<Utf8PathBuf> = events
