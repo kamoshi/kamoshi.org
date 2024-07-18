@@ -108,23 +108,27 @@ fn render_all(
 		.collect()
 }
 
-fn store_hash(buffer: &[u8]) -> Utf8PathBuf {
-	let store = Utf8Path::new(".hash");
-	let hash = sha256::digest(buffer);
+fn add_hash(buffer: &[u8], file: &Utf8Path, path: &Utf8Path) {
+	println!("Hashing image {} -> {}", file, path);
 	let img = image::load_from_memory(buffer).expect("Couldn't load image");
-	let store_hash = store.join(&hash).with_extension("webp");
+	let dim = (img.width(), img.height());
 
-	if !store_hash.exists() {
-		let dim = (img.width(), img.height());
-		let mut out = Vec::new();
-		let encoder = image::codecs::webp::WebPEncoder::new_lossless(&mut out);
+	let mut out = Vec::new();
+	let encoder = image::codecs::webp::WebPEncoder::new_lossless(&mut out);
 
-		encoder
-			.encode(&img.to_rgba8(), dim.0, dim.1, image::ColorType::Rgba8)
-			.expect("Encoding error");
+	encoder
+		.encode(&img.to_rgba8(), dim.0, dim.1, image::ColorType::Rgba8)
+		.expect("Encoding error");
 
-		fs::create_dir_all(store).unwrap();
-		fs::write(store_hash, out).expect("Couldn't output optimized image");
+	fs::write(path, out).expect("Couldn't output optimized image");
+}
+
+fn ensure_hashed(cache: &Utf8Path, buffer: &[u8], file: &Utf8Path) -> Utf8PathBuf {
+	let hash = sha256::digest(buffer);
+	let path = cache.join(&hash).with_extension("webp");
+
+	if !path.exists() {
+		add_hash(buffer, file, &path)
 	}
 
 	Utf8Path::new("/")
@@ -134,6 +138,9 @@ fn store_hash(buffer: &[u8]) -> Utf8PathBuf {
 }
 
 pub(crate) fn store_hash_all(items: &[&Output]) -> Vec<Hashed> {
+	let cache = Utf8Path::new(".hash");
+	fs::create_dir_all(cache).unwrap();
+
 	items
 		.par_iter()
 		.filter_map(|item| match item.kind {
@@ -146,12 +153,9 @@ pub(crate) fn store_hash_all(items: &[&Output]) -> Vec<Hashed> {
 						return None;
 					}
 
-					let hash = store_hash(&buffer);
-					println!("Hashing image {} as {}", asset.meta.path, hash);
-
 					Some(Hashed {
 						file: item.path.to_owned(),
-						hash,
+						hash: ensure_hashed(cache, &buffer, &asset.meta.path),
 					})
 				}
 				_ => None,
