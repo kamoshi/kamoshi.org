@@ -5,6 +5,7 @@ edition     = "2021"
 authors     = ["Maciej Jur <maciej@kamoshi.org>"]
 keywords    = ["ssg"]
 description = "Static site generator library"
+license     = "GPL-3.0"
 
 [dependencies]
 camino                 = "1.1.7"
