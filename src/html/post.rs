@@ -2,13 +2,10 @@ use std::collections::HashMap;
 
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Utc};
+use hauchiwa::{Content, Link, LinkDate, Linkable, Outline, Sack};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 use serde::Deserialize;
-
-use crate::pipeline::{Content, Sack};
-use crate::text::md::Outline;
-use crate::{LinkDate, Linkable};
 
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]
@@ -45,7 +42,7 @@ impl Content for Post {
 
 	fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
 		Some(Linkable::Date(LinkDate {
-			link: crate::Link {
+			link: Link {
 				path,
 				name: self.title.to_owned(),
 				desc: self.desc.to_owned(),

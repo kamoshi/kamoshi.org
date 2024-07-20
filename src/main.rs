@@ -1,29 +1,10 @@
-mod build;
 mod html;
-mod pipeline;
 mod text;
 mod ts;
-mod utils;
-mod watch;
-mod website;
 
-use std::collections::{HashMap, HashSet};
-use std::fs;
-use std::process::Command;
-use std::rc::Rc;
-
-use build::Hashed;
-use camino::{Utf8Path, Utf8PathBuf};
-use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use gray_matter::engine::YAML;
-use gray_matter::Matter;
+use hauchiwa::{process_content, Website};
 use hypertext::{Raw, Renderable};
-use pipeline::{Asset, AssetKind, Content, FileItemKind, Output, OutputKind, PipelineItem};
-use serde::Deserialize;
-use website::WebsiteDesigner;
-
-use crate::pipeline::Virtual;
 
 #[derive(Parser, Debug, Clone)]
 struct Args {
@@ -37,297 +18,75 @@ enum Mode {
 	Watch,
 }
 
-#[derive(Debug)]
-struct BuildContext {
-	pub mode: Mode,
-	pub year: i32,
-	pub date: String,
-	pub link: String,
-	pub hash: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct Link {
-	pub path: Utf8PathBuf,
-	pub name: String,
-	pub desc: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct LinkDate {
-	pub link: Link,
-	pub date: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone)]
-pub enum Linkable {
-	Link(Link),
-	Date(LinkDate),
-}
-
 fn main() {
 	let args = Args::parse();
-	let time = chrono::Utc::now();
 
-	let ctx = BuildContext {
-		mode: args.mode,
-		year: time.year(),
-		date: time.format("%Y/%m/%d %H:%M").to_string(),
-		link: "https://git.kamoshi.org/kamov/website".into(),
-		hash: String::from_utf8(
-			Command::new("git")
-				.args(["rev-parse", "--short", "HEAD"])
-				.output()
-				.expect("Couldn't load git revision")
-				.stdout,
+	let website = Website::new()
+		.add_source(
+			"content/about.md",
+			["md"].into(),
+			process_content::<crate::html::Post>,
 		)
-		.expect("Invalid UTF8")
-		.trim()
-		.into(),
-	};
-
-	let website = WebsiteDesigner::default()
-		.add_source(Source {
-			path: "content/about.md",
-			exts: ["md"].into(),
-			func: process_content::<crate::html::Post>,
-		})
-		.add_source(Source {
-			path: "content/posts/**/*",
-			exts: ["md", "mdx"].into(),
-			func: process_content::<crate::html::Post>,
-		})
-		.add_source(Source {
-			path: "content/slides/**/*",
-			exts: ["md", "lhs"].into(),
-			func: process_content::<crate::html::Slideshow>,
-		})
-		.add_source(Source {
-			path: "content/wiki/**/*",
-			exts: ["md"].into(),
-			func: process_content::<crate::html::Wiki>,
-		})
-		.add_output(Output {
-			kind: Virtual::new(|sack| crate::html::map(sack).render().to_owned().into()).into(),
-			path: "map/index.html".into(),
-			link: None,
-		})
-		.add_output(Output {
-			kind: Virtual::new(|sack| crate::html::search(sack).render().to_owned().into()).into(),
-			path: "search/index.html".into(),
-			link: None,
-		})
-		.add_output(Output {
-			kind: Asset {
-				kind: pipeline::AssetKind::html(|sack| {
-					let data = std::fs::read_to_string("content/index.md").unwrap();
-					let (_, html, _) = text::md::parse(data, None, "".into(), HashMap::new());
-					crate::html::home(sack, Raw(html))
-						.render()
-						.to_owned()
-						.into()
-				}),
-				meta: pipeline::FileItem {
-					kind: pipeline::FileItemKind::Index,
-					path: "content/index.md".into(),
-				},
-			}
-			.into(),
-			path: "index.html".into(),
-			link: None,
-		})
-		.add_output(Output {
-			kind: Virtual::new(|sack| {
-				crate::html::to_list(sack, sack.get_links("posts/**/*.html"), "Posts".into())
-			})
-			.into(),
-			path: "posts/index.html".into(),
-			link: None,
-		})
-		.add_output(Output {
-			kind: Virtual::new(|sack| {
+		.add_source(
+			"content/posts/**/*",
+			["md", "mdx"].into(),
+			process_content::<crate::html::Post>,
+		)
+		.add_source(
+			"content/slides/**/*",
+			["md", "lhs"].into(),
+			process_content::<crate::html::Slideshow>,
+		)
+		.add_source(
+			"content/wiki/**/*",
+			["md"].into(),
+			process_content::<crate::html::Wiki>,
+		)
+		.add_virtual(
+			|sack| crate::html::map(sack).render().to_owned().into(),
+			"map/index.html".into(),
+		)
+		.add_virtual(
+			|sack| crate::html::search(sack).render().to_owned().into(),
+			"search/index.html".into(),
+		)
+		.add_virtual(
+			|sack| crate::html::to_list(sack, sack.get_links("posts/**/*.html"), "Posts".into()),
+			"posts/index.html".into(),
+		)
+		.add_virtual(
+			|sack| {
 				crate::html::to_list(
 					sack,
 					sack.get_links("slides/**/*.html"),
 					"Slideshows".into(),
 				)
-			})
-			.into(),
-			path: "slides/index.html".into(),
-			link: None,
-		})
+			},
+			"slides/index.html".into(),
+		)
+		.add_virtual(
+			|sack| {
+				let data = std::fs::read_to_string("content/index.md").unwrap();
+				let (_, html, _) = text::md::parse(
+					data,
+					None,
+					"".into(),
+					sack.hash
+						.as_ref()
+						.map(ToOwned::to_owned)
+						.unwrap_or_default(),
+				);
+				crate::html::home(sack, Raw(html))
+					.render()
+					.to_owned()
+					.into()
+			},
+			"index.html".into(),
+		)
 		.finish();
 
 	match args.mode {
-		Mode::Build => website.build(&ctx),
-		Mode::Watch => website.watch(&ctx),
-	}
-}
-
-#[derive(Debug)]
-struct Source {
-	pub path: &'static str,
-	pub exts: HashSet<&'static str>,
-	pub func: fn(PipelineItem) -> PipelineItem,
-}
-
-impl Source {
-	fn get(&self) -> Vec<PipelineItem> {
-		pipeline::gather(self.path, &self.exts)
-			.into_iter()
-			.map(self.func)
-			.collect()
-	}
-
-	fn get_maybe(&self, path: &Utf8Path) -> Option<PipelineItem> {
-		let pattern = glob::Pattern::new(self.path).expect("Bad pattern");
-		if !pattern.matches_path(path.as_std_path()) {
-			return None;
-		};
-
-		let item = match path.is_file() {
-			true => Some(crate::pipeline::to_source(path.to_owned(), &self.exts)),
-			false => None,
-		};
-
-		item.map(Into::into).map(self.func)
-	}
-}
-
-fn build(ctx: &BuildContext, sources: &[Source], special: &[Rc<Output>]) -> Vec<Rc<Output>> {
-	crate::build::clean_dist();
-
-	let content: Vec<Output> = sources
-		.iter()
-		.flat_map(Source::get)
-		.map(to_bundle)
-		.filter_map(Option::from)
-		.collect();
-
-	let images: Vec<&Output> = content
-		.iter()
-		.filter(|&e| match e.kind {
-			OutputKind::Asset(ref a) => matches!(a.kind, AssetKind::Image),
-			_ => false,
-		})
-		.collect();
-
-	let hashes = crate::build::store_hash_all(&images);
-	let hashes = HashMap::from_iter(hashes.into_iter().map(|Hashed { file, hash }| (file, hash)));
-
-	let assets: Vec<_> = content.iter().chain(special.iter().map(AsRef::as_ref)).collect();
-
-	crate::build::build_content(ctx, &assets, &assets, Some(hashes));
-	crate::build::build_static();
-	crate::build::build_styles();
-	crate::build::build_pagefind();
-	crate::build::build_js();
-
-	content.into_iter().map(Rc::new).chain(special.iter().map(ToOwned::to_owned)).collect()
-}
-
-pub fn parse_frontmatter<D>(raw: &str) -> (D, String)
-where
-	D: for<'de> Deserialize<'de>,
-{
-	let parser = Matter::<YAML>::new();
-	let result = parser.parse_with_struct::<D>(raw).unwrap();
-
-	(
-		// Just the front matter
-		result.data,
-		// The rest of the content
-		result.content,
-	)
-}
-
-fn process_content<T>(item: PipelineItem) -> PipelineItem
-where
-	T: for<'de> Deserialize<'de> + Content + Clone + Send + Sync + 'static,
-{
-	let meta = match item {
-		PipelineItem::Skip(e) if matches!(e.kind, FileItemKind::Index) => e,
-		_ => return item,
-	};
-
-	let dir = meta.path.parent().unwrap().strip_prefix("content").unwrap();
-	let dir = match meta.path.file_stem().unwrap() {
-		"index" => dir.to_owned(),
-		name => dir.join(name),
-	};
-	let path = dir.join("index.html");
-
-	match meta.path.extension() {
-		Some("md" | "mdx" | "lhs") => {
-			let raw = fs::read_to_string(&meta.path).unwrap();
-			let (matter, parsed) = parse_frontmatter::<T>(&raw);
-			let link = T::as_link(&matter, Utf8Path::new("/").join(&dir));
-
-			Output {
-				kind: Asset {
-					kind: pipeline::AssetKind::html(move |sack| {
-						let lib = sack.get_library();
-						let (outline, parsed, bib) = T::parse(
-							parsed.clone(),
-							lib,
-							dir.clone(),
-							sack.hash
-								.as_ref()
-								.map(ToOwned::to_owned)
-								.unwrap_or_default(),
-						);
-						T::render(matter.clone(), sack, Raw(parsed), outline, bib)
-							.render()
-							.into()
-					}),
-					meta,
-				}
-				.into(),
-				path,
-				link,
-			}
-			.into()
-		}
-		_ => meta.into(),
-	}
-}
-
-fn to_bundle(item: PipelineItem) -> PipelineItem {
-	let meta = match item {
-		PipelineItem::Skip(meta) if matches!(meta.kind, FileItemKind::Bundle) => meta,
-		_ => return item,
-	};
-
-	let path = meta.path.strip_prefix("content").unwrap().to_owned();
-
-	match meta.path.extension() {
-		// any image
-		Some("jpg" | "png" | "gif") => Output {
-			kind: Asset {
-				kind: AssetKind::Image,
-				meta,
-			}
-			.into(),
-			path,
-			link: None,
-		}
-		.into(),
-		// bibliography
-		Some("bib") => {
-			let data = fs::read_to_string(&meta.path).unwrap();
-			let data = hayagriva::io::from_biblatex_str(&data).unwrap();
-
-			Output {
-				kind: Asset {
-					kind: AssetKind::Bibtex(data),
-					meta,
-				}
-				.into(),
-				path,
-				link: None,
-			}
-			.into()
-		}
-		_ => meta.into(),
+		Mode::Build => website.build(),
+		Mode::Watch => website.watch(),
 	}
 }

@@ -10,14 +10,15 @@ use glob::glob;
 use hayagriva::Library;
 use hypertext::Renderable;
 
-use crate::text::md::Outline;
 use crate::{BuildContext, Link, LinkDate, Linkable};
+
+pub struct Outline(pub Vec<(String, String)>);
 
 /// Represents a piece of content that can be rendered as a page. This trait needs to be
 /// implemented for the front matter associated with some web page as that is what ultimately
 /// matters when rendering the page. Each front matter *definition* maps to exactly one kind of
 /// rendered page on the website.
-pub(crate) trait Content {
+pub trait Content {
 	/// Parse the document. Pass an optional library for bibliography.
 	/// This generates the initial HTML markup from content.
 	fn parse(
@@ -154,7 +155,7 @@ pub(crate) struct Output {
 /// Items currently in the pipeline. In order for an item to be rendered, it needs to be marked as
 /// `Take`, which means it needs to have an output location assigned to itself.
 #[derive(Debug)]
-pub(crate) enum PipelineItem {
+pub enum PipelineItem {
 	/// Unclaimed file.
 	Skip(FileItem),
 	/// Data ready to be processed.
@@ -184,7 +185,7 @@ impl From<PipelineItem> for Option<Output> {
 
 /// This struct allows for querying the website hierarchy. It is passed to each rendered website
 /// page, so that it can easily access the website metadata.
-pub(crate) struct Sack<'a> {
+pub struct Sack<'a> {
 	pub ctx: &'a BuildContext,
 	/// Literally all of the content
 	pub hole: &'a [&'a Output],
@@ -193,7 +194,7 @@ pub(crate) struct Sack<'a> {
 	/// Original file location for this page
 	pub file: Option<&'a Utf8PathBuf>,
 	/// Hashed optimized images
-	pub hash: Option<HashMap<Utf8PathBuf, Utf8PathBuf>>
+	pub hash: Option<HashMap<Utf8PathBuf, Utf8PathBuf>>,
 }
 
 impl<'a> Sack<'a> {
@@ -257,7 +258,7 @@ impl<'a> Sack<'a> {
 }
 
 #[derive(Debug)]
-pub(crate) struct TreePage {
+pub struct TreePage {
 	pub link: Option<Link>,
 	pub subs: HashMap<String, TreePage>,
 }

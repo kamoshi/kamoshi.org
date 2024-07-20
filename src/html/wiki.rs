@@ -1,13 +1,10 @@
 use std::collections::HashMap;
 
 use camino::Utf8PathBuf;
+use hauchiwa::{Content, Link, Linkable, Outline, Sack};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 use serde::Deserialize;
-
-use crate::pipeline::{Content, Sack};
-use crate::text::md::Outline;
-use crate::{Link, Linkable};
 
 /// Represents a wiki page
 #[derive(Deserialize, Debug, Clone)]

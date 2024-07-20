@@ -11,14 +11,13 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use chrono::Datelike;
+use hauchiwa::{LinkDate, Mode, Sack};
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
 pub(crate) use home::home;
 pub(crate) use post::Post;
 pub(crate) use slideshow::Slideshow;
 pub(crate) use wiki::Wiki;
-
-use crate::{pipeline::Sack, Mode};
 
 const JS_RELOAD: &str = r#"
 const socket = new WebSocket("ws://localhost:1337");
@@ -198,7 +197,7 @@ where
 	)
 }
 
-pub(crate) fn to_list(sack: &Sack, list: Vec<crate::LinkDate>, title: String) -> String {
+pub(crate) fn to_list(sack: &Sack, list: Vec<LinkDate>, title: String) -> String {
 	let mut groups = HashMap::<i32, Vec<_>>::new();
 
 	for page in list {

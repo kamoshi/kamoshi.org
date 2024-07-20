@@ -1,7 +1,6 @@
+use hauchiwa::{Outline, Sack, TreePage};
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::pipeline::{Sack, TreePage};
-use crate::text::md::Outline;
 
 /// Render the outline for a document
 pub(crate) fn show_outline(outline: Outline) -> impl Renderable {

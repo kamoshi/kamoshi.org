@@ -5,11 +5,12 @@ use std::io;
 use std::io::Write;
 use std::path::Path;
 use std::process::Command;
+use std::rc::Rc;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::pipeline::{AssetKind, Output, OutputKind, Sack, Virtual};
+use crate::site::Source;
+use crate::tree::{Asset, AssetKind, FileItemKind, Output, OutputKind, PipelineItem, Sack, Virtual};
 use crate::BuildContext;
 
 pub(crate) fn clean_dist() {
@@ -18,6 +19,27 @@ pub(crate) fn clean_dist() {
 		fs::remove_dir_all("dist").unwrap();
 	}
 	fs::create_dir("dist").unwrap();
+}
+
+pub(crate) fn build_hash(
+	content: &[Output],
+	cache: &Utf8Path,
+) -> HashMap<Utf8PathBuf, Utf8PathBuf> {
+	println!("Optimizing images. Cache in {}", cache);
+	let now = std::time::Instant::now();
+
+	let images: Vec<&Output> = content
+		.iter()
+		.filter(|&e| match e.kind {
+			OutputKind::Asset(ref a) => matches!(a.kind, AssetKind::Image),
+			_ => false,
+		})
+		.collect();
+
+	let hashes = crate::hash::hash_assets(cache, &images);
+	copy_recursively(cache, Path::new("dist/hash")).unwrap();
+	println!("Finished optimizing. Elapsed: {:.2?}", now.elapsed());
+	hashes
 }
 
 pub(crate) fn build_styles() {
@@ -34,7 +56,6 @@ pub(crate) fn build_content(
 	let now = std::time::Instant::now();
 	render_all(ctx, pending, hole, hash);
 	println!("Elapsed: {:.2?}", now.elapsed());
-	copy_recursively(Path::new(".hash"), Path::new("dist/hash")).unwrap();
 }
 
 pub(crate) fn build_static() {
@@ -108,69 +129,6 @@ fn render_all(
 		.collect()
 }
 
-fn add_hash(buffer: &[u8], file: &Utf8Path, path: &Utf8Path) {
-	println!("Hashing image {} -> {}", file, path);
-	let img = image::load_from_memory(buffer).expect("Couldn't load image");
-	let dim = (img.width(), img.height());
-
-	let mut out = Vec::new();
-	let encoder = image::codecs::webp::WebPEncoder::new_lossless(&mut out);
-
-	encoder
-		.encode(&img.to_rgba8(), dim.0, dim.1, image::ColorType::Rgba8)
-		.expect("Encoding error");
-
-	fs::write(path, out).expect("Couldn't output optimized image");
-}
-
-fn ensure_hashed(cache: &Utf8Path, buffer: &[u8], file: &Utf8Path) -> Utf8PathBuf {
-	let hash = sha256::digest(buffer);
-	let path = cache.join(&hash).with_extension("webp");
-
-	if !path.exists() {
-		add_hash(buffer, file, &path)
-	}
-
-	Utf8Path::new("/")
-		.join("hash")
-		.join(hash)
-		.with_extension("webp")
-}
-
-pub(crate) fn store_hash_all(items: &[&Output]) -> Vec<Hashed> {
-	let cache = Utf8Path::new(".hash");
-	fs::create_dir_all(cache).unwrap();
-
-	items
-		.par_iter()
-		.filter_map(|item| match item.kind {
-			OutputKind::Asset(ref asset) => match asset.kind {
-				AssetKind::Image => {
-					let buffer = std::fs::read(&asset.meta.path).expect("Couldn't read file");
-					let format = image::guess_format(&buffer).expect("Couldn't read format");
-
-					if matches!(format, image::ImageFormat::Gif) {
-						return None;
-					}
-
-					Some(Hashed {
-						file: item.path.to_owned(),
-						hash: ensure_hashed(cache, &buffer, &asset.meta.path),
-					})
-				}
-				_ => None,
-			},
-			_ => None,
-		})
-		.collect()
-}
-
-#[derive(Debug)]
-pub(crate) struct Hashed {
-	pub file: Utf8PathBuf,
-	pub hash: Utf8PathBuf,
-}
-
 fn render(item: &Output, sack: Sack) {
 	let dist = Utf8Path::new("dist");
 	let o = dist.join(&item.path);
@@ -199,5 +157,78 @@ fn render(item: &Output, sack: Sack) {
 			file.write_all(closure(&sack).as_bytes()).unwrap();
 			println!("Virtual: -> {}", o);
 		}
+	}
+}
+
+pub(crate) fn build(
+	ctx: &BuildContext,
+	sources: &[Source],
+	special: &[Rc<Output>],
+) -> Vec<Rc<Output>> {
+	crate::build::clean_dist();
+
+	let content: Vec<Output> = sources
+		.iter()
+		.flat_map(Source::get)
+		.map(to_bundle)
+		.filter_map(Option::from)
+		.collect();
+
+	let assets: Vec<_> = content
+		.iter()
+		.chain(special.iter().map(AsRef::as_ref))
+		.collect();
+
+	let hashes = crate::build::build_hash(&content, ".cache".into());
+	crate::build::build_content(ctx, &assets, &assets, Some(hashes));
+	crate::build::build_static();
+	crate::build::build_styles();
+	crate::build::build_pagefind();
+	crate::build::build_js();
+
+	content
+		.into_iter()
+		.map(Rc::new)
+		.chain(special.iter().map(ToOwned::to_owned))
+		.collect()
+}
+
+fn to_bundle(item: PipelineItem) -> PipelineItem {
+	let meta = match item {
+		PipelineItem::Skip(meta) if matches!(meta.kind, FileItemKind::Bundle) => meta,
+		_ => return item,
+	};
+
+	let path = meta.path.strip_prefix("content").unwrap().to_owned();
+
+	match meta.path.extension() {
+		// any image
+		Some("jpg" | "png" | "gif") => Output {
+			kind: Asset {
+				kind: AssetKind::Image,
+				meta,
+			}
+			.into(),
+			path,
+			link: None,
+		}
+		.into(),
+		// bibliography
+		Some("bib") => {
+			let data = fs::read_to_string(&meta.path).unwrap();
+			let data = hayagriva::io::from_biblatex_str(&data).unwrap();
+
+			Output {
+				kind: Asset {
+					kind: AssetKind::Bibtex(data),
+					meta,
+				}
+				.into(),
+				path,
+				link: None,
+			}
+			.into()
+		}
+		_ => meta.into(),
 	}
 }

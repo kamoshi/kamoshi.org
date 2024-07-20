@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use camino::Utf8PathBuf;
+use hauchiwa::Outline;
 use hayagriva::{
 	archive::ArchivedStyle,
 	citationberg::{IndependentStyle, Locale, Style},
@@ -45,8 +46,6 @@ static STYLE: Lazy<IndependentStyle> =
 		Style::Independent(style) => style,
 		Style::Dependent(_) => unreachable!(),
 	});
-
-pub struct Outline(pub Vec<(String, String)>);
 
 pub fn parse(
 	text: String,

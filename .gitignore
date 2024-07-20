@@ -27,5 +27,5 @@ target/
 # JavaScript
 js/**/node_modules/
 
-# Hashed images
-.hash
+# Hashed file cache
+.cache

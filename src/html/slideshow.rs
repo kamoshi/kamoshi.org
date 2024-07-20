@@ -2,13 +2,10 @@ use std::collections::HashMap;
 
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Utc};
+use hauchiwa::{Content, Link, LinkDate, Linkable, Outline, Sack};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
-
-use crate::pipeline::{Content, Sack};
-use crate::text::md::Outline;
-use crate::{Link, LinkDate, Linkable};
 
 const CSS: &str = r#"
 .slides img {

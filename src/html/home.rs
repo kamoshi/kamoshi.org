@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use hauchiwa::Sack;
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::pipeline::Sack;
 use crate::text::md::parse;
 
 const INTRO: &str = r#"
