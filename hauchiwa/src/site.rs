@@ -64,14 +64,8 @@ impl WebsiteBuilder {
 		self
 	}
 
-	pub fn add_output(mut self, output: Output) -> Self {
-		self.special.push(Rc::new(output));
-		self
-	}
-
 	pub fn finish(self) -> Website {
 		Website {
-			context: BuildContext::default(),
 			sources: self.sources,
 			special: self.special,
 		}
