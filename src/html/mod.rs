@@ -27,15 +27,6 @@ socket.addEventListener("message", (event) => {
 });
 "#;
 
-const JS_IMPORTS: &str = r#"
-{
-	"imports": {
-		"reveal": "/js/vanilla/reveal.js",
-		"photos": "/js/vanilla/photos.js"
-	}
-}
-"#;
-
 fn head<'s, 'html>(sack: &'s Sack, title: String) -> impl Renderable + 'html
 where
 	's: 'html,
@@ -60,7 +51,7 @@ where
 		link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
 		link rel="icon" href="/favicon.ico" sizes="any";
 
-		script type="importmap" {(Raw(JS_IMPORTS))}
+		script type="importmap" {(Raw(sack.get_import_map()))}
 
 		@if matches!(sack.ctx.mode, Mode::Watch) {
 			script { (Raw(JS_RELOAD)) }
@@ -244,7 +235,7 @@ where
 		sack,
 		maud!(
 			main #app {}
-			script type="module" src="/js/search/dist/search.js" {}
+			script type="module" { (Raw("import 'search';")) }
 		),
 		String::from("Search"),
 	)

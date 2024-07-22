@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use camino::Utf8PathBuf;
-use hauchiwa::Outline;
+use camino::{Utf8Path, Utf8PathBuf};
+use hauchiwa::{Bibliography, Outline, Sack};
 use hayagriva::{
 	archive::ArchivedStyle,
 	citationberg::{IndependentStyle, Locale, Style},
@@ -48,13 +48,13 @@ static STYLE: Lazy<IndependentStyle> =
 	});
 
 pub fn parse(
-	text: String,
-	lib: Option<&Library>,
-	dir: Utf8PathBuf,
-	hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
-) -> (Outline, String, Option<Vec<String>>) {
+	content: &str,
+	sack: &Sack,
+	path: &Utf8Path,
+	library: Option<&Library>,
+) -> (String, Outline, Bibliography) {
 	let (outline, stream) = {
-		let stream = Parser::new_ext(&text, *OPTS);
+		let stream = Parser::new_ext(content, *OPTS);
 		let mut stream: Vec<_> = TextMergeStream::new(stream).collect();
 		let outline = set_heading_ids(&mut stream);
 		(outline, stream)
@@ -64,7 +64,7 @@ pub fn parse(
 		.into_iter()
 		.map(make_math)
 		.map(make_emoji)
-		.map(swap_hashed_image(dir, hash))
+		.map(swap_hashed_image(path, &sack.artifacts.images))
 		.collect::<Vec<_>>();
 
 	let stream = make_code(stream)
@@ -73,15 +73,15 @@ pub fn parse(
 		.flat_map(make_cite)
 		.collect::<Vec<_>>();
 
-	let (stream, bib) = match lib {
+	let (stream, bib) = match library {
 		Some(lib) => make_bib(stream, lib),
 		None => (stream, None),
 	};
 
-	let mut html = String::new();
-	pulldown_cmark::html::push_html(&mut html, stream.into_iter());
+	let mut parsed = String::new();
+	pulldown_cmark::html::push_html(&mut parsed, stream.into_iter());
 
-	(outline, html, bib)
+	(parsed, outline, Bibliography(bib))
 }
 
 fn make_bib<'a, 'b>(
@@ -356,10 +356,10 @@ fn make_emoji(event: Event) -> Event {
 	}
 }
 
-fn swap_hashed_image(
-	dir: Utf8PathBuf,
-	hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
-) -> impl Fn(Event) -> Event {
+fn swap_hashed_image<'a>(
+	dir: &'a Utf8Path,
+	hash: &'a HashMap<Utf8PathBuf, Utf8PathBuf>,
+) -> impl Fn(Event) -> Event + 'a {
 	move |event| match event {
 		Event::Start(start) => match start {
 			Tag::Image {

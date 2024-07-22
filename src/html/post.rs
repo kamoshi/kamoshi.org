@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Utc};
-use hauchiwa::{Content, Link, LinkDate, Linkable, Outline, Sack};
+use hauchiwa::{Bibliography, Content, Link, LinkDate, Linkable, Outline, Sack};
 use hayagriva::Library;
-use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
+use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
 
 /// Represents a simple post.
@@ -17,27 +17,23 @@ pub(crate) struct Post {
 }
 
 impl Content for Post {
-	fn parse(
-		data: String,
-		lib: Option<&Library>,
-		dir: Utf8PathBuf,
-		hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
-	) -> (Outline, String, Option<Vec<String>>) {
-		crate::text::md::parse(data, lib, dir, hash)
+	fn parse_content(
+		content: &str,
+		sack: &Sack,
+		path: &Utf8Path,
+		library: Option<&Library>,
+	) -> (String, Outline, Bibliography) {
+		crate::text::md::parse(content, sack, path, library)
 	}
 
-	fn render<'s, 'p, 'html>(
-		self,
-		sack: &'s Sack,
-		parsed: impl Renderable + 'p,
+	fn as_html(
+		&self,
+		parsed: &str,
+		sack: &Sack,
 		outline: Outline,
-		bib: Option<Vec<String>>,
-	) -> impl Renderable + 'html
-	where
-		's: 'html,
-		'p: 'html,
-	{
-		post(self, sack, parsed, outline, bib)
+		bibliography: Bibliography,
+	) -> String {
+		post(self, parsed, sack, outline, bibliography).render().into()
 	}
 
 	fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
@@ -53,17 +49,17 @@ impl Content for Post {
 }
 
 pub fn post<'s, 'p, 'html>(
-	fm: Post,
+	metadata: &'p Post,
+	parsed: &'p str,
 	sack: &'s Sack,
-	content: impl Renderable + 'p,
 	outline: Outline,
-	bib: Option<Vec<String>>,
+	bibliography: Bibliography,
 ) -> impl Renderable + 'html
 where
 	's: 'html,
 	'p: 'html,
 {
-	let heading = fm.title.clone();
+	let heading = metadata.title.clone();
 	let main = maud_move!(
 		main .wiki-main {
 
@@ -83,15 +79,15 @@ where
 					h1 #top { (heading) }
 				}
 				section .wiki-article__markdown.markdown {
-					(content)
+					(Raw(parsed))
 				}
 
-				@if let Some(bib) = bib {
+				@if let Some(bib) = bibliography.0 {
 					(crate::html::misc::show_bibliography(bib))
 				}
 			}
 		}
 	);
 
-	crate::html::page(sack, main, fm.title.clone())
+	crate::html::page(sack, main, metadata.title.clone())
 }

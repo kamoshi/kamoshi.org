@@ -3,8 +3,8 @@ mod text;
 mod ts;
 
 use clap::{Parser, ValueEnum};
-use hauchiwa::{process_content, Website};
-use hypertext::{Raw, Renderable};
+use hauchiwa::Website;
+use hypertext::Renderable;
 
 #[derive(Parser, Debug, Clone)]
 struct Args {
@@ -21,27 +21,14 @@ enum Mode {
 fn main() {
 	let args = Args::parse();
 
-	let website = Website::new()
-		.add_source(
-			"content/about.md",
-			["md"].into(),
-			process_content::<crate::html::Post>,
-		)
-		.add_source(
-			"content/posts/**/*",
-			["md", "mdx"].into(),
-			process_content::<crate::html::Post>,
-		)
-		.add_source(
-			"content/slides/**/*",
-			["md", "lhs"].into(),
-			process_content::<crate::html::Slideshow>,
-		)
-		.add_source(
-			"content/wiki/**/*",
-			["md"].into(),
-			process_content::<crate::html::Wiki>,
-		)
+	let website = Website::design()
+		.content::<crate::html::Post>("content/about.md", ["md"].into())
+		.content::<crate::html::Post>("content/posts/**/*", ["md", "mdx"].into())
+		.content::<crate::html::Slideshow>("content/slides/**/*", ["md", "lhs"].into())
+		.content::<crate::html::Wiki>("content/wiki/**/*", ["md"].into())
+		.js("search", "./js/search/dist/search.js")
+		.js("photos", "./js/vanilla/photos.js")
+		.js("reveal", "./js/vanilla/reveal.js")
 		.add_virtual(
 			|sack| crate::html::map(sack).render().to_owned().into(),
 			"map/index.html".into(),
@@ -67,19 +54,8 @@ fn main() {
 		.add_virtual(
 			|sack| {
 				let data = std::fs::read_to_string("content/index.md").unwrap();
-				let (_, html, _) = text::md::parse(
-					data,
-					None,
-					"".into(),
-					sack.hash
-						.as_ref()
-						.map(ToOwned::to_owned)
-						.unwrap_or_default(),
-				);
-				crate::html::home(sack, Raw(html))
-					.render()
-					.to_owned()
-					.into()
+				let (parsed, _, _) = text::md::parse(&data, sack, "".into(), None);
+				crate::html::home(sack, &parsed)
 			},
 			"index.html".into(),
 		)

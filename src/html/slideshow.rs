@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Utc};
-use hauchiwa::{Content, Link, LinkDate, Linkable, Outline, Sack};
+use hauchiwa::{Bibliography, Content, Link, LinkDate, Linkable, Outline, Sack};
 use hayagriva::Library;
-use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
+use hypertext::{html_elements, maud, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
 
 const CSS: &str = r#"
@@ -25,19 +23,18 @@ pub(crate) struct Slideshow {
 }
 
 impl Content for Slideshow {
-	fn parse(
-		data: String,
-		_: Option<&Library>,
-		dir: Utf8PathBuf,
-		hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
-	) -> (Outline, String, Option<Vec<String>>) {
-		let html = data
+	fn parse_content(
+		content: &str,
+		sack: &Sack,
+		path: &Utf8Path,
+		library: Option<&Library>,
+	) -> (String, Outline, Bibliography) {
+		let parsed = content
 			.split("\n-----\n")
 			.map(|chunk| {
 				chunk
 					.split("\n---\n")
-					.map(|s| crate::text::md::parse(s.to_owned(), None, dir.clone(), hash.clone()))
-					.map(|e| e.1)
+					.map(|slide| crate::text::md::parse(&slide, sack, path, library).0)
 					.collect::<Vec<_>>()
 			})
 			.map(|stack| match stack.len() > 1 {
@@ -51,20 +48,10 @@ impl Content for Slideshow {
 				false => format!("<section>{}</section>", stack[0]),
 			})
 			.collect::<String>();
-		(Outline(vec![]), html, None)
+		(parsed, Outline(vec![]), Bibliography(None))
 	}
 
-	fn render<'s, 'p, 'html>(
-		self,
-		sack: &'s Sack,
-		parsed: impl Renderable + 'p,
-		_: Outline,
-		_: Option<Vec<String>>,
-	) -> impl Renderable + 'html
-	where
-		's: 'html,
-		'p: 'html,
-	{
+	fn as_html(&self, parsed: &str, sack: &Sack, _: Outline, _: Bibliography) -> String {
 		show(self, sack, parsed)
 	}
 
@@ -80,30 +67,24 @@ impl Content for Slideshow {
 	}
 }
 
-pub fn show<'s, 'p, 'html>(
-	fm: Slideshow,
-	sack: &'s Sack,
-	slides: impl Renderable + 'p,
-) -> impl Renderable + 'html
-where
-	's: 'html,
-	'p: 'html,
-{
+pub fn show(fm: &Slideshow, sack: &Sack, slides: &str) -> String {
 	crate::html::bare(
 		sack,
-		maud_move!(
+		maud!(
 			div .reveal {
 				div .slides {
-					(slides)
+					(Raw(slides))
 				}
 			}
 
 			script type="module" {
-				(Raw("import 'reveal';"))
+				(Raw("import 'reveal'; import 'search';"))
 			}
 
 			style { (Raw(CSS)) }
 		),
 		fm.title.clone(),
 	)
+	.render()
+	.into()
 }

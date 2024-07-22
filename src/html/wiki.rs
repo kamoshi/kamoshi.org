@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-
-use camino::Utf8PathBuf;
-use hauchiwa::{Content, Link, Linkable, Outline, Sack};
+use camino::{Utf8Path, Utf8PathBuf};
+use hauchiwa::{Bibliography, Content, Link, Linkable, Outline, Sack};
 use hayagriva::Library;
-use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
+use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
 
 /// Represents a wiki page
@@ -13,27 +11,23 @@ pub struct Wiki {
 }
 
 impl Content for Wiki {
-	fn parse(
-		data: String,
-		lib: Option<&Library>,
-		path: Utf8PathBuf,
-		hash: HashMap<Utf8PathBuf, Utf8PathBuf>,
-	) -> (Outline, String, Option<Vec<String>>) {
-		crate::text::md::parse(data, lib, path, hash)
+	fn parse_content(
+		content: &str,
+		sack: &Sack,
+		path: &Utf8Path,
+		library: Option<&Library>,
+	) -> (String, Outline, Bibliography) {
+		crate::text::md::parse(content, sack, path, library)
 	}
 
-	fn render<'s, 'p, 'html>(
-		self,
-		sack: &'s Sack,
-		parsed: impl Renderable + 'p,
+	fn as_html(
+		&self,
+		parsed: &str,
+		sack: &Sack,
 		outline: Outline,
-		bib: Option<Vec<String>>,
-	) -> impl Renderable + 'html
-	where
-		's: 'html,
-		'p: 'html,
-	{
-		wiki(self, sack, parsed, outline, bib)
+		bibliography: Bibliography,
+	) -> String {
+		wiki(self, parsed, sack, outline, bibliography)
 	}
 
 	fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
@@ -45,17 +39,13 @@ impl Content for Wiki {
 	}
 }
 
-fn wiki<'s, 'p, 'html>(
-	matter: Wiki,
-	sack: &'s Sack,
-	parsed: impl Renderable + 'p,
+fn wiki(
+	matter: &Wiki,
+	parsed: &str,
+	sack: &Sack,
 	_: Outline,
-	bib: Option<Vec<String>>,
-) -> impl Renderable + 'html
-where
-	's: 'html,
-	'p: 'html,
-{
+	bibliography: Bibliography,
+) -> String {
 	let heading = matter.title.clone();
 	let main = maud_move!(
 		main .wiki-main {
@@ -81,10 +71,10 @@ where
 					h1 #top { (heading) }
 				}
 				section .wiki-article__markdown.markdown {
-					(parsed)
+					(Raw(parsed))
 				}
 
-				@if let Some(bib) = bib {
+				@if let Some(bib) = bibliography.0 {
 					(crate::html::misc::show_bibliography(bib))
 				}
 			}
@@ -92,4 +82,6 @@ where
 	);
 
 	crate::html::page(sack, main, matter.title.to_owned())
+		.render()
+		.into()
 }
