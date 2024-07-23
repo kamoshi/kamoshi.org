@@ -43,10 +43,8 @@ where
 		// link rel="sitemap" href="/sitemap.xml";
 
 		link rel="stylesheet" href="/styles.css";
-		link rel="stylesheet" href="/static/css/reveal.css";
-		link rel="stylesheet" href="/static/css/leaflet.css";
-		link rel="stylesheet" href="/static/css/MarkerCluster.css";
-		link rel="stylesheet" href="/static/css/MarkerCluster.Default.css";
+		link rel="stylesheet" href="/reveal.css";
+		link rel="stylesheet" href="/leaflet.css";
 		link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
 		link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
 		link rel="icon" href="/favicon.ico" sizes="any";
@@ -165,6 +163,24 @@ where
 	)
 }
 
+
+fn full<'s, 'p, 'html>(
+	sack: &'s Sack,
+	main: impl Renderable + 'p,
+	title: String,
+) -> impl Renderable + 'html
+where
+	's: 'html,
+	'p: 'html,
+{
+	let main = maud_move!(
+		(navbar())
+		(main)
+	);
+
+	bare(sack, main, title)
+}
+
 fn page<'s, 'p, 'html>(
 	sack: &'s Sack,
 	main: impl Renderable + 'p,
@@ -174,18 +190,13 @@ where
 	's: 'html,
 	'p: 'html,
 {
-	maud_move!(
-		(Raw("<!DOCTYPE html>"))
-		html lang="en" {
-			(head(sack, title))
+	let main = maud_move!(
+		(navbar())
+		(main)
+		(footer(sack))
+	);
 
-			body {
-				(navbar())
-				(main)
-				(footer(sack))
-			}
-		}
-	)
+	bare(sack, main, title)
 }
 
 pub(crate) fn to_list(sack: &Sack, list: Vec<LinkDate>, title: String) -> String {
@@ -212,15 +223,13 @@ pub(crate) fn map<'s, 'html>(sack: &'s Sack) -> impl Renderable + 'html
 where
 	's: 'html,
 {
-	page(
+	full(
 		sack,
 		maud!(
-			main {
-				div #map style="height: 100%; width: 100%" {}
+			div #map style="height: 100%; width: 100%" {}
 
-				script type="module" {
-					(Raw("import 'photos';"))
-				}
+			script type="module" {
+				(Raw("import 'photos';"))
 			}
 		),
 		String::from("Map"),
