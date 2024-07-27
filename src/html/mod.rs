@@ -6,56 +6,19 @@ mod post;
 mod slideshow;
 mod special;
 mod wiki;
+mod head;
 
 use std::collections::HashMap;
 
 use camino::Utf8Path;
 use chrono::Datelike;
-use hauchiwa::{LinkDate, Mode, Sack};
+use hauchiwa::{LinkDate, Sack};
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
 pub(crate) use home::home;
 pub(crate) use post::Post;
 pub(crate) use slideshow::Slideshow;
 pub(crate) use wiki::Wiki;
-
-const JS_RELOAD: &str = r#"
-const socket = new WebSocket("ws://localhost:1337");
-socket.addEventListener("message", (event) => {
-	console.log(event);
-	window.location.reload();
-});
-"#;
-
-fn head<'s, 'html>(sack: &'s Sack, title: String) -> impl Renderable + 'html
-where
-	's: 'html,
-{
-	let title = format!("{} | kamoshi.org", title);
-
-	maud_move!(
-		meta charset="utf-8";
-		meta name="viewport" content="width=device-width, initial-scale=1";
-		title {
-			(title)
-		}
-
-		// link rel="sitemap" href="/sitemap.xml";
-
-		link rel="stylesheet" href="/styles.css";
-		link rel="stylesheet" href="/reveal.css";
-		link rel="stylesheet" href="/leaflet.css";
-		link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
-		link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
-		link rel="icon" href="/favicon.ico" sizes="any";
-
-		script type="importmap" {(Raw(sack.get_import_map()))}
-
-		@if matches!(sack.ctx.mode, Mode::Watch) {
-			script { (Raw(JS_RELOAD)) }
-		}
-	)
-}
 
 fn navbar() -> impl Renderable {
 	static ITEMS: &[(&str, &str)] = &[
@@ -154,7 +117,7 @@ where
 	maud_move!(
 		(Raw("<!DOCTYPE html>"))
 		html lang="en" {
-			(head(sack, title))
+			(head::render_head(sack, title, &[]))
 
 			body {
 				(main)

@@ -64,7 +64,7 @@ pub fn parse(
 		.into_iter()
 		.map(make_math)
 		.map(make_emoji)
-		.map(swap_hashed_image(path, &sack.artifacts.images))
+		.map(swap_hashed_image(path, sack))
 		.collect::<Vec<_>>();
 
 	let stream = make_code(stream)
@@ -358,7 +358,7 @@ fn make_emoji(event: Event) -> Event {
 
 fn swap_hashed_image<'a>(
 	dir: &'a Utf8Path,
-	hash: &'a HashMap<Utf8PathBuf, Utf8PathBuf>,
+	sack: &'a Sack,
 ) -> impl Fn(Event) -> Event + 'a {
 	move |event| match event {
 		Event::Start(start) => match start {
@@ -369,7 +369,8 @@ fn swap_hashed_image<'a>(
 				id,
 			} => {
 				let rel = dir.join(dest_url.as_ref());
-				let hashed = hash.get(&rel).map(|path| path.as_str().to_owned().into());
+				let img = sack.get_image(&rel);
+				let hashed = img.map(|path| path.as_str().to_owned().into());
 				Event::Start(Tag::Image {
 					link_type,
 					dest_url: hashed.unwrap_or(dest_url),

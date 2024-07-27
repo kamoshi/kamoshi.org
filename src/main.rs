@@ -4,6 +4,7 @@ mod ts;
 
 use clap::{Parser, ValueEnum};
 use hauchiwa::Website;
+use html::{Post, Slideshow, Wiki};
 use hypertext::Renderable;
 
 #[derive(Parser, Debug, Clone)]
@@ -22,10 +23,10 @@ fn main() {
 	let args = Args::parse();
 
 	let website = Website::design()
-		.content::<crate::html::Post>("content/about.md", ["md"].into())
-		.content::<crate::html::Post>("content/posts/**/*", ["md", "mdx"].into())
-		.content::<crate::html::Slideshow>("content/slides/**/*", ["md", "lhs"].into())
-		.content::<crate::html::Wiki>("content/wiki/**/*", ["md"].into())
+		.content::<Post>("content/about.md", ["md"].into())
+		.content::<Post>("content/posts/**/*", ["md", "mdx"].into())
+		.content::<Slideshow>("content/slides/**/*", ["md", "lhs"].into())
+		.content::<Wiki>("content/wiki/**/*", ["md"].into())
 		.js("search", "./js/search/dist/search.js")
 		.js("photos", "./js/vanilla/photos.js")
 		.js("reveal", "./js/vanilla/reveal.js")
