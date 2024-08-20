@@ -24,6 +24,7 @@ fn navbar() -> impl Renderable {
 	static ITEMS: &[(&str, &str)] = &[
 		("Posts", "/posts/"),
 		("Slides", "/slides/"),
+		("Projects", "/projects/"),
 		("Wiki", "/wiki/"),
 		("Map", "/map/"),
 		("About", "/about/"),
@@ -208,6 +209,31 @@ where
 		maud!(
 			main #app {}
 			script type="module" { (Raw("import 'search';")) }
+		),
+		String::from("Search"),
+	)
+}
+
+
+pub(crate) fn editor<'s, 'html>(sack: &'s Sack) -> impl Renderable + 'html
+where
+	's: 'html,
+{
+	page(
+		sack,
+		maud!(
+			main .flox {
+                div {
+                    h2 { "Flox" }
+                    div #editor {}
+                    button #run { "Run!" }
+                }
+                div {
+                    h2 { "Output" }
+                    div #output {}
+                }
+            }
+			script type="module" { (Raw("import 'editor';")) }
 		),
 		String::from("Search"),
 	)
