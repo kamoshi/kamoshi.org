@@ -9,6 +9,7 @@ dist/
 .DS_Store
 
 # binary blobs
+public/**/*.wasm
 public/**/*.jpg
 public/**/*.png
 public/**/*.webp

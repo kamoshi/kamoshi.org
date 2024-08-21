@@ -7,9 +7,12 @@ const doc = `
 let n1 = 2;
 let n2 = 5;
 
-let add = fn a b -> a + b;
+let add a b = a + b;
 
-add n1 n2
+2
+  |> add 2
+  |> add 1
+  |> fn n -> n * -1
 `;
 
 const htmlEditor = document.getElementById('editor')!;
