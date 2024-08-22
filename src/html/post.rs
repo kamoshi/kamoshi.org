@@ -91,3 +91,4 @@ where
 
 	crate::html::page(sack, main, metadata.title.clone())
 }
+

@@ -49,6 +49,6 @@ where
 
 fn render_style(style: &HashedStyle) -> impl Renderable + '_ {
 	maud_move!(
-		link rel="stylesheet" href=(style.path.as_str()) integrity=(&style.sri);
+		link rel="stylesheet" href=(style.path.as_str());
 	)
 }

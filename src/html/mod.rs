@@ -222,19 +222,25 @@ where
 	page(
 		sack,
 		maud!(
-			main .flox {
-                div {
-                    h2 { "Flox" }
-                    div #editor {}
-                    button #run { "Run!" }
-                }
-                div {
-                    h2 { "Output" }
-                    div #output {}
+			main {
+                div .flox-playground {
+                    div .cell {
+                        header {
+                            h2 { "Flox" }
+                        }
+                        div .editor {
+                            div #editor {}
+                            button #run .run { "Run!" }
+                        }
+                    }
+                    div .cell {
+                        h2 { "Output" }
+                        pre #output {}
+                    }
                 }
             }
 			script type="module" { (Raw("import 'editor';")) }
 		),
-		String::from("Search"),
+		String::from("Flox"),
 	)
 }
