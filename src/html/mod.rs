@@ -10,13 +10,16 @@ mod head;
 
 use std::collections::HashMap;
 
-use camino::Utf8Path;
-use chrono::Datelike;
-use hauchiwa::{LinkDate, Sack};
+use camino::{Utf8Path, Utf8PathBuf};
+use chrono::{DateTime, Datelike, Utc};
+use hauchiwa::{Bibliography, Content, Link, LinkDate, Linkable, Outline, Sack};
+use hayagriva::Library;
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
 pub(crate) use home::home;
+use post::article;
 pub(crate) use post::Post;
+use serde::Deserialize;
 pub(crate) use slideshow::Slideshow;
 pub(crate) use wiki::Wiki;
 
@@ -215,8 +218,56 @@ where
 }
 
 
-pub(crate) fn editor<'s, 'html>(sack: &'s Sack) -> impl Renderable + 'html
+/// Represents a simple post.
+#[derive(Deserialize, Debug, Clone)]
+pub(crate) struct Flox {
+	pub(crate) title: String,
+	#[serde(with = "isodate")]
+	pub(crate) date: DateTime<Utc>,
+	pub(crate) desc: Option<String>,
+}
+
+impl Content for Flox {
+	fn parse_content(
+		content: &str,
+		sack: &Sack,
+		path: &Utf8Path,
+		library: Option<&Library>,
+	) -> (String, Outline, Bibliography) {
+		crate::text::md::parse(content, sack, path, library)
+	}
+
+	fn as_html(
+		&self,
+		parsed: &str,
+		sack: &Sack,
+		outline: Outline,
+		bibliography: Bibliography,
+	) -> String {
+		flox(&self.title, parsed, sack, outline, bibliography).render().into()
+	}
+
+	fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
+		Some(Linkable::Date(LinkDate {
+			link: Link {
+				path,
+				name: self.title.to_owned(),
+				desc: self.desc.to_owned(),
+			},
+			date: self.date.to_owned(),
+		}))
+	}
+}
+
+pub(crate) fn flox<'p, 's, 'html>(
+	title: &'p str,
+	parsed: &'p str,
+	sack: &'s Sack,
+	outline: Outline,
+	bibliography: Bibliography,
+) -> impl Renderable + 'html
 where
+    'p: 'html,
 	's: 'html,
 {
 	page(
@@ -238,6 +289,7 @@ where
                         pre #output {}
                     }
                 }
+                (article(title, parsed, sack, outline, bibliography))
             }
 			script type="module" { (Raw("import 'editor';")) }
 		),

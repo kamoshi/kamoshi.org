@@ -4,7 +4,7 @@ mod ts;
 
 use clap::{Parser, ValueEnum};
 use hauchiwa::Website;
-use html::{Post, Slideshow, Wiki};
+use html::{Flox, Post, Slideshow, Wiki};
 use hypertext::Renderable;
 
 #[derive(Parser, Debug, Clone)]
@@ -27,7 +27,7 @@ fn main() {
 		.content::<Post>("content/posts/**/*", ["md", "mdx"].into())
 		.content::<Slideshow>("content/slides/**/*", ["md", "lhs"].into())
 		.content::<Wiki>("content/wiki/**/*", ["md"].into())
-        .content::<Post>("content/projects/**/*", ["md"].into())
+        .content::<Flox>("content/projects/flox.md", ["md"].into())
 		.js("search", "./js/search/dist/search.js")
 		.js("photos", "./js/vanilla/photos.js")
 		.js("reveal", "./js/vanilla/reveal.js")
@@ -39,12 +39,6 @@ fn main() {
 		.add_virtual(
 			|sack| crate::html::search(sack).render().to_owned().into(),
 			"search/index.html".into(),
-		)
-		.add_virtual_linked(
-			|sack| crate::html::editor(sack).render().to_owned().into(),
-			"projects/flox/index.html".into(),
-            "Flox".into(),
-            "Small functional language written in Rust and compiled to WebAssembly.".into()
 		)
 		.add_virtual(
 			|sack| crate::html::to_list(sack, sack.get_links("projects/**/*.html"), "Projects".into()),

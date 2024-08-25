@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Utc};
 use hauchiwa::{Bibliography, Content, Link, LinkDate, Linkable, Outline, Sack};
@@ -59,9 +57,28 @@ where
 	's: 'html,
 	'p: 'html,
 {
-	let heading = metadata.title.clone();
-	let main = maud_move!(
-		main .wiki-main {
+    let main = maud_move!(
+        main {
+            (article(&metadata.title, parsed, sack, outline, bibliography))
+        }
+    );
+
+	crate::html::page(sack, main, metadata.title.clone())
+}
+
+pub fn article<'p, 's, 'html>(
+	title: &'p str,
+	parsed: &'p str,
+	_: &'s Sack,
+	outline: Outline,
+	bibliography: Bibliography,
+) -> impl Renderable + 'html
+where
+	's: 'html,
+	'p: 'html,
+{
+	maud_move!(
+		div .wiki-main {
 
 			// Slide in/out for mobile
 			input #wiki-aside-shown type="checkbox" hidden;
@@ -76,7 +93,7 @@ where
 
 			article .wiki-article /*class:list={classlist)*/ {
 				header class="markdown" {
-					h1 #top { (heading) }
+					h1 #top { (title) }
 				}
 				section .wiki-article__markdown.markdown {
 					(Raw(parsed))
@@ -87,8 +104,5 @@ where
 				}
 			}
 		}
-	);
-
-	crate::html::page(sack, main, metadata.title.clone())
+	)
 }
-
