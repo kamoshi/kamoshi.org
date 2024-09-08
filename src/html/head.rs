@@ -13,7 +13,7 @@ pub(crate) fn render_head<'s, 'r>(
 	sack: &'s Sack,
 	title: String,
 	styles: &'s [&str],
-	js: Option<&'s [String]>,
+	scripts: Option<&'s [String]>,
 ) -> impl Renderable + 'r
 where
 	's: 'r,
@@ -46,7 +46,7 @@ where
 			script { (Raw(JS_RELOAD)) }
 		}
 
-		@if let Some(scripts) = js {
+		@if let Some(scripts) = scripts {
 		    @for script in scripts {
 				(emit_tag_script(sack, script))
 			}
