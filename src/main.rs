@@ -32,6 +32,7 @@ fn main() {
 		.js("photos", "./js/vanilla/photos.js")
 		.js("reveal", "./js/vanilla/reveal.js")
 		.js("editor", "./js/flox/main.ts")
+		.js("lambda", "./js/flox/lambda.ts")
 		.add_virtual(
 			|sack| crate::html::map(sack).render().to_owned().into(),
 			"map/index.html".into(),

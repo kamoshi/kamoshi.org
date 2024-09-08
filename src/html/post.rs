@@ -8,54 +8,56 @@ use serde::Deserialize;
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]
 pub(crate) struct Post {
-	pub(crate) title: String,
-	#[serde(with = "super::isodate")]
-	pub(crate) date: DateTime<Utc>,
-	pub(crate) desc: Option<String>,
+    pub(crate) title: String,
+    #[serde(with = "super::isodate")]
+    pub(crate) date: DateTime<Utc>,
+    pub(crate) desc: Option<String>,
 }
 
 impl Content for Post {
-	fn parse_content(
-		content: &str,
-		sack: &Sack,
-		path: &Utf8Path,
-		library: Option<&Library>,
-	) -> (String, Outline, Bibliography) {
-		crate::text::md::parse(content, sack, path, library)
-	}
+    fn parse_content(
+        content: &str,
+        sack: &Sack,
+        path: &Utf8Path,
+        library: Option<&Library>,
+    ) -> (String, Outline, Bibliography) {
+        crate::text::md::parse(content, sack, path, library)
+    }
 
-	fn as_html(
-		&self,
-		parsed: &str,
-		sack: &Sack,
-		outline: Outline,
-		bibliography: Bibliography,
-	) -> String {
-		post(self, parsed, sack, outline, bibliography).render().into()
-	}
+    fn as_html(
+        &self,
+        parsed: &str,
+        sack: &Sack,
+        outline: Outline,
+        bibliography: Bibliography,
+    ) -> String {
+        post(self, parsed, sack, outline, bibliography)
+            .render()
+            .into()
+    }
 
-	fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
-		Some(Linkable::Date(LinkDate {
-			link: Link {
-				path,
-				name: self.title.to_owned(),
-				desc: self.desc.to_owned(),
-			},
-			date: self.date.to_owned(),
-		}))
-	}
+    fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
+        Some(Linkable::Date(LinkDate {
+            link: Link {
+                path,
+                name: self.title.to_owned(),
+                desc: self.desc.to_owned(),
+            },
+            date: self.date.to_owned(),
+        }))
+    }
 }
 
 pub fn post<'s, 'p, 'html>(
-	metadata: &'p Post,
-	parsed: &'p str,
-	sack: &'s Sack,
-	outline: Outline,
-	bibliography: Bibliography,
+    metadata: &'p Post,
+    parsed: &'p str,
+    sack: &'s Sack,
+    outline: Outline,
+    bibliography: Bibliography,
 ) -> impl Renderable + 'html
 where
-	's: 'html,
-	'p: 'html,
+    's: 'html,
+    'p: 'html,
 {
     let main = maud_move!(
         main {
@@ -63,46 +65,48 @@ where
         }
     );
 
-	crate::html::page(sack, main, metadata.title.clone())
+    crate::html::page(sack, main, metadata.title.clone())
 }
 
 pub fn article<'p, 's, 'html>(
-	title: &'p str,
-	parsed: &'p str,
-	_: &'s Sack,
-	outline: Outline,
-	bibliography: Bibliography,
+    title: &'p str,
+    parsed: &'p str,
+    _: &'s Sack,
+    outline: Outline,
+    bibliography: Bibliography,
 ) -> impl Renderable + 'html
 where
-	's: 'html,
-	'p: 'html,
+    's: 'html,
+    'p: 'html,
 {
-	maud_move!(
-		div .wiki-main {
+    maud_move!(
+        div .wiki-main {
 
-			// Slide in/out for mobile
-			input #wiki-aside-shown type="checkbox" hidden;
+            // Slide in/out for mobile
+            input #wiki-aside-shown type="checkbox" hidden;
 
-			aside .wiki-aside {
-				// Slide button
-				label .wiki-aside__slider for="wiki-aside-shown" {
-					img .wiki-icon src="/static/svg/double-arrow.svg" width="24" height="24";
-				}
-				(crate::html::misc::show_outline(outline))
-			}
+            aside .wiki-aside {
+                // Slide button
+                label .wiki-aside__slider for="wiki-aside-shown" {
+                    img .wiki-icon src="/static/svg/double-arrow.svg" width="24" height="24";
+                }
+                (crate::html::misc::show_outline(outline))
+            }
 
-			article .wiki-article /*class:list={classlist)*/ {
-				header class="markdown" {
-					h1 #top { (title) }
-				}
-				section .wiki-article__markdown.markdown {
-					(Raw(parsed))
-				}
+            article .wiki-article /*class:list={classlist)*/ {
+                header class="markdown" {
+                    h1 #top { (title) }
+                }
+                section .wiki-article__markdown.markdown {
+                    (Raw(parsed))
+                }
 
-				@if let Some(bib) = bibliography.0 {
-					(crate::html::misc::show_bibliography(bib))
-				}
-			}
-		}
-	)
+                @if let Some(bib) = bibliography.0 {
+                    (crate::html::misc::show_bibliography(bib))
+                }
+
+                script type="module" {(Raw(r#"import "lambda";"#))}
+            }
+        }
+    )
 }
