@@ -114,21 +114,23 @@ fn bare<'s, 'p, 'html>(
 	main: impl Renderable + 'p,
 	title: String,
 	js: Option<&'s [String]>,
-) -> impl Renderable + 'html
+) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
 	'p: 'html,
 {
-	maud_move!(
+    let head = head::render_head(sack, title, &[], js)?;
+
+	Ok(maud_move!(
 		(Raw("<!DOCTYPE html>"))
 		html lang="en" {
-			(head::render_head(sack, title, &[], js))
+			(head)
 
 			body {
 				(main)
 			}
 		}
-	)
+	))
 }
 
 
@@ -136,7 +138,7 @@ fn full<'s, 'p, 'html>(
 	sack: &'s Sack,
 	main: impl Renderable + 'p,
 	title: String,
-) -> impl Renderable + 'html
+) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
 	'p: 'html,
@@ -154,7 +156,7 @@ fn page<'s, 'p, 'html>(
 	main: impl Renderable + 'p,
 	title: String,
 	js: Option<&'s [String]>,
-) -> impl Renderable + 'html
+) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
 	'p: 'html,
@@ -185,10 +187,10 @@ pub(crate) fn to_list(sack: &Sack, list: Vec<LinkDate>, title: String) -> String
 
 	groups.sort_by(|a, b| b.0.cmp(&a.0));
 
-	list::list(sack, &groups, title).render().into()
+	list::list(sack, &groups, title).unwrap().render().into()
 }
 
-pub(crate) fn map<'s, 'html>(sack: &'s Sack) -> impl Renderable + 'html
+pub(crate) fn map<'s, 'html>(sack: &'s Sack) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
 {
@@ -214,6 +216,7 @@ pub(crate) fn search<'s, 'html>(sack: &'s Sack) -> String {
 		String::from("Search"),
 		Some(&["search".into()])
 	)
+	    .unwrap()
 	    .render()
 	    .into()
 }
@@ -292,6 +295,7 @@ pub(crate) fn flox<'p, 's, 'html>(
 		String::from("Flox"),
 		Some(&["editor".into()])
 	)
+	    .unwrap()
 	    .render()
 		.into()
 }

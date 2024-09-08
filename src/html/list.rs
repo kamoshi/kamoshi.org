@@ -7,7 +7,7 @@ pub fn list<'s, 'g, 'html>(
 	sack: &'s Sack,
 	groups: &'g [(i32, Vec<LinkDate>)],
 	title: String,
-) -> impl Renderable + 'html
+) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
 	'g: 'html,

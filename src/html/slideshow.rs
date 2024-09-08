@@ -82,6 +82,7 @@ pub fn show(fm: &Slideshow, sack: &Sack, slides: &str) -> String {
 		fm.title.clone(),
 		Some(&["reveal".into()])
 	)
+	.unwrap()
 	.render()
 	.into()
 }

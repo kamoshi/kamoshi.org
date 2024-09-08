@@ -82,6 +82,7 @@ fn wiki(
 	);
 
 	crate::html::page(sack, main, matter.title.to_owned(), None)
+        .unwrap()
 		.render()
 		.into()
 }

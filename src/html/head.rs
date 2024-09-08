@@ -14,7 +14,7 @@ pub(crate) fn render_head<'s, 'r>(
 	title: String,
 	styles: &'s [&str],
 	scripts: Option<&'s [String]>,
-) -> impl Renderable + 'r
+) -> Result<impl Renderable + 'r, String>
 where
 	's: 'r,
 {
@@ -23,7 +23,12 @@ where
 	let css_r = sack.get_style("reveal").expect("Missing styles");
 	let css_p = sack.get_style("leaflet").expect("Missing styles");
 
-	maud_move!(
+	let scripts = match scripts {
+	    Some(scripts) => Some(emit_tags_script(sack, scripts)?),
+	    None => None,
+	};
+
+	Ok(maud_move!(
 		meta charset="utf-8";
 		meta name="viewport" content="width=device-width, initial-scale=1";
 		title {
@@ -47,11 +52,9 @@ where
 		}
 
 		@if let Some(scripts) = scripts {
-		    @for script in scripts {
-				(emit_tag_script(sack, script))
-			}
+		    (scripts)
 		}
-	)
+	))
 }
 
 fn render_style(style: &HashedStyle) -> impl Renderable + '_ {
@@ -60,10 +63,23 @@ fn render_style(style: &HashedStyle) -> impl Renderable + '_ {
 	)
 }
 
-fn emit_tag_script<'a>(sack: &'a Sack, script: &'a str) -> impl Renderable + 'a {
-    let src = sack.get_script(script).unwrap().path.as_str();
+fn emit_tags_script<'a>(sack: &'a Sack, scripts: &'a [String]) -> Result<impl Renderable + 'a, String> {
+    let tags = scripts
+        .iter()
+        .map(|script| emit_tag_script(sack, script))
+        .collect::<Result<Vec<_>, _>>()?;
 
-    maud_move!(
-        script type="module" src=(src) defer {}
-    )
+    Ok(maud_move!(
+        @for tag in tags {
+      		(tag)
+       	}
+    ))
+}
+
+fn emit_tag_script<'a>(sack: &'a Sack, script: &'a str) -> Result<impl Renderable + 'a, String> {
+    let src = sack
+        .get_script(script)
+        .ok_or(format!("Missing script {script}"))?;
+
+    Ok(maud_move!(script type="module" src=(src.path.as_str()) defer {}))
 }

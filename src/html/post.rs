@@ -33,6 +33,7 @@ impl Content for Post {
         bibliography: Bibliography,
     ) -> String {
         post(self, parsed, sack, outline, bibliography)
+            .unwrap()
             .render()
             .into()
     }
@@ -55,7 +56,7 @@ pub fn post<'s, 'p, 'html>(
     sack: &'s Sack,
     outline: Outline,
     bibliography: Bibliography,
-) -> impl Renderable + 'html
+) -> Result<impl Renderable + 'html, String>
 where
     's: 'html,
     'p: 'html,
