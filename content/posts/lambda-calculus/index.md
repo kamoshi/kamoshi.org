@@ -48,8 +48,8 @@ Let's start with booleans, they can be defined as follows:
 
 $$
 \begin{align}
-  \text{tru} = \lambda \text{t}.\: \lambda \text{f}.\: \text{t}; \\
-  \text{fls} = \lambda \text{t}.\: \lambda \text{f}.\: \text{f};
+  \text{tru} &= \lambda \text{t}.\: \lambda \text{f}.\: \text{t}; \\
+  \text{fls} &= \lambda \text{t}.\: \lambda \text{f}.\: \text{f};
 \end{align}
 $$
 
@@ -84,4 +84,37 @@ let test l m n = l m n;
 let and_ b c = b c fls;
 
 test (and_ tru tru) "both true!" "nope"
+</pre>
+
+Okay, so we have booleans. Can we create data structures? Let's try to define a simple two element tuple.
+
+$$
+\begin{align}
+  \text{pair} &= \lambda \text{f}.\: \lambda \text{s}.\: \lambda \text{b}.\: \text{b}\, \text{f}\, \text{s}; \\
+  \text{fst}  &= \lambda \text{p}.\: \text{p}\, \text{tru}; \\
+  \text{snd}  &= \lambda \text{p}.\: \text{p}\, \text{fls};
+\end{align}
+$$
+
+Here we have a function `pair` which can be used to create a pair, and two functions fo retrieving the elements of the pair. We can define these functions in the programming language.
+
+```
+let pair f s b = b f s;
+let fst p = p tru;
+let snd p = p fls;
+```
+
+We can also use many sequentially nested tuples to simulate lists, this is in fact a mechanism that served as the backbone for the lisp family of languages. The example below is interactive.
+
+<pre class="flox-eval">
+let tru t f = t;
+let fls t f = f;
+
+let pair f s b = b f s;
+let fst p = p tru;
+let snd p = p fls;
+
+let list = pair 1 (pair 2 (pair 3 (pair 4 (pair 5 fls))));
+
+list |> snd |> snd |> snd |> fst
 </pre>
