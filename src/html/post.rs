@@ -12,6 +12,7 @@ pub(crate) struct Post {
     #[serde(with = "super::isodate")]
     pub(crate) date: DateTime<Utc>,
     pub(crate) desc: Option<String>,
+    pub(crate) scripts: Option<Vec<String>>,
 }
 
 impl Content for Post {
@@ -49,7 +50,7 @@ impl Content for Post {
 }
 
 pub fn post<'s, 'p, 'html>(
-    metadata: &'p Post,
+    meta: &'p Post,
     parsed: &'p str,
     sack: &'s Sack,
     outline: Outline,
@@ -61,11 +62,11 @@ where
 {
     let main = maud_move!(
         main {
-            (article(&metadata.title, parsed, sack, outline, bibliography))
+            (article(&meta.title, parsed, sack, outline, bibliography))
         }
     );
 
-    crate::html::page(sack, main, metadata.title.clone())
+    crate::html::page(sack, main, meta.title.clone(), meta.scripts.as_deref())
 }
 
 pub fn article<'p, 's, 'html>(
@@ -102,10 +103,8 @@ where
                 }
 
                 @if let Some(bib) = bibliography.0 {
-                    (crate::html::misc::show_bibliography(bib))
+                    (crate::html::misc::emit_bibliography(bib))
                 }
-
-                script type="module" {(Raw(r#"import "lambda";"#))}
             }
         }
     )

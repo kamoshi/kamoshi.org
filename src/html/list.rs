@@ -27,7 +27,7 @@ where
 		}
 	);
 
-	page(sack, list, title)
+	page(sack, list, title, None)
 }
 
 fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {

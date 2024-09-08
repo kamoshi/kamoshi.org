@@ -81,5 +81,5 @@ pub(crate) fn home(sack: &Sack, main: &str) -> String {
 		}
 	);
 
-	crate::html::page(sack, main, "Home".into()).render().into()
+	crate::html::page(sack, main, "Home".into(), None).render().into()
 }

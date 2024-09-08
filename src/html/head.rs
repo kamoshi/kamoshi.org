@@ -13,6 +13,7 @@ pub(crate) fn render_head<'s, 'r>(
 	sack: &'s Sack,
 	title: String,
 	styles: &'s [&str],
+	js: Option<&'s [String]>,
 ) -> impl Renderable + 'r
 where
 	's: 'r,
@@ -44,6 +45,12 @@ where
 		@if matches!(sack.ctx.mode, Mode::Watch) {
 			script { (Raw(JS_RELOAD)) }
 		}
+
+		@if let Some(scripts) = js {
+		    @for script in scripts {
+				(emit_tag_script(sack, script))
+			}
+		}
 	)
 }
 
@@ -51,4 +58,12 @@ fn render_style(style: &HashedStyle) -> impl Renderable + '_ {
 	maud_move!(
 		link rel="stylesheet" href=(style.path.as_str());
 	)
+}
+
+fn emit_tag_script<'a>(sack: &'a Sack, script: &'a str) -> impl Renderable + 'a {
+    let src = sack.get_script(script).unwrap().path.as_str();
+
+    maud_move!(
+        script type="module" src=(src) defer {}
+    )
 }

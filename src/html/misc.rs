@@ -24,14 +24,13 @@ pub(crate) fn show_outline(outline: Outline) -> impl Renderable {
 	)
 }
 
-/// Render the bibliography for a document
-pub(crate) fn show_bibliography(bib: Vec<String>) -> impl Renderable {
+pub(crate) fn emit_bibliography(bib: Vec<String>) -> impl Renderable {
 	maud_move!(
-		section .markdown {
+		section .bibliography.markdown {
 			h2 {
 				"Bibliography"
 			}
-			ol .bibliography {
+			ol {
 				@for item in bib {
 					li {
 						(Raw(item))

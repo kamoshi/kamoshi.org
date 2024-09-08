@@ -75,13 +75,13 @@ fn wiki(
 				}
 
 				@if let Some(bib) = bibliography.0 {
-					(crate::html::misc::show_bibliography(bib))
+					(crate::html::misc::emit_bibliography(bib))
 				}
 			}
 		}
 	);
 
-	crate::html::page(sack, main, matter.title.to_owned())
+	crate::html::page(sack, main, matter.title.to_owned(), None)
 		.render()
 		.into()
 }

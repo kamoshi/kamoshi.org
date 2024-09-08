@@ -3,6 +3,8 @@ title: Lambda calculus is the DNA of all computation
 date: 2024-09-07T20:32:00.281Z
 desc: >
   Lambda calculus can be used to express any computation, but what does it entail? As it turns out first class functions are the single most powerful abstraction.
+scripts:
+  - lambda
 ---
 
 In lambda calculus the entire grammar of the language comprises of just three kinds of expressions

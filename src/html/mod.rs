@@ -113,6 +113,7 @@ fn bare<'s, 'p, 'html>(
 	sack: &'s Sack,
 	main: impl Renderable + 'p,
 	title: String,
+	js: Option<&'s [String]>,
 ) -> impl Renderable + 'html
 where
 	's: 'html,
@@ -121,7 +122,7 @@ where
 	maud_move!(
 		(Raw("<!DOCTYPE html>"))
 		html lang="en" {
-			(head::render_head(sack, title, &[]))
+			(head::render_head(sack, title, &[], js))
 
 			body {
 				(main)
@@ -145,13 +146,14 @@ where
 		(main)
 	);
 
-	bare(sack, main, title)
+	bare(sack, main, title, None)
 }
 
 fn page<'s, 'p, 'html>(
 	sack: &'s Sack,
 	main: impl Renderable + 'p,
 	title: String,
+	js: Option<&'s [String]>,
 ) -> impl Renderable + 'html
 where
 	's: 'html,
@@ -163,7 +165,7 @@ where
 		(footer(sack))
 	);
 
-	bare(sack, main, title)
+	bare(sack, main, title, js)
 }
 
 pub(crate) fn to_list(sack: &Sack, list: Vec<LinkDate>, title: String) -> String {
@@ -203,18 +205,17 @@ where
 	)
 }
 
-pub(crate) fn search<'s, 'html>(sack: &'s Sack) -> impl Renderable + 'html
-where
-	's: 'html,
-{
+pub(crate) fn search<'s, 'html>(sack: &'s Sack) -> String {
 	page(
 		sack,
 		maud!(
 			main #app {}
-			script type="module" { (Raw("import 'search';")) }
 		),
 		String::from("Search"),
+		Some(&["search".into()])
 	)
+	    .render()
+	    .into()
 }
 
 
@@ -244,7 +245,7 @@ impl Content for Flox {
 		outline: Outline,
 		bibliography: Bibliography,
 	) -> String {
-		flox(&self.title, parsed, sack, outline, bibliography).render().into()
+		flox(&self.title, parsed, sack, outline, bibliography)
 	}
 
 	fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
@@ -260,19 +261,15 @@ impl Content for Flox {
 }
 
 pub(crate) fn flox<'p, 's, 'html>(
-	title: &'p str,
-	parsed: &'p str,
-	sack: &'s Sack,
+	title: &str,
+	parsed: &str,
+	sack: &Sack,
 	outline: Outline,
 	bibliography: Bibliography,
-) -> impl Renderable + 'html
-where
-    'p: 'html,
-	's: 'html,
-{
+) -> String {
 	page(
 		sack,
-		maud!(
+		maud_move!(
 			main {
                 div .flox-playground {
                     div .cell {
@@ -291,8 +288,10 @@ where
                 }
                 (article(title, parsed, sack, outline, bibliography))
             }
-			script type="module" { (Raw("import 'editor';")) }
 		),
 		String::from("Flox"),
+		Some(&["editor".into()])
 	)
+	    .render()
+		.into()
 }

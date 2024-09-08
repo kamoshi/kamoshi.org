@@ -38,7 +38,7 @@ fn main() {
 			"map/index.html".into(),
 		)
 		.add_virtual(
-			|sack| crate::html::search(sack).render().to_owned().into(),
+			|sack| crate::html::search(sack),
 			"search/index.html".into(),
 		)
 		.add_virtual(

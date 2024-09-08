@@ -77,13 +77,10 @@ pub fn show(fm: &Slideshow, sack: &Sack, slides: &str) -> String {
 				}
 			}
 
-			script type="module" {
-				(Raw("import 'reveal'; import 'search';"))
-			}
-
 			style { (Raw(CSS)) }
 		),
 		fm.title.clone(),
+		Some(&["reveal".into()])
 	)
 	.render()
 	.into()
