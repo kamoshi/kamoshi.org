@@ -1,53 +1,51 @@
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Utc};
-use hauchiwa::{Bibliography, Content, Link, LinkDate, Linkable, Outline, Sack};
+use hauchiwa::{Bibliography, Link, LinkDate, Linkable, Outline, Sack};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
 
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]
-pub(crate) struct Post {
-    pub(crate) title: String,
+pub struct Post {
+    pub title: String,
     #[serde(with = "super::isodate")]
-    pub(crate) date: DateTime<Utc>,
-    pub(crate) desc: Option<String>,
-    pub(crate) scripts: Option<Vec<String>>,
+    pub date: DateTime<Utc>,
+    pub desc: Option<String>,
+    pub scripts: Option<Vec<String>>,
 }
 
-impl Content for Post {
-    fn parse_content(
-        content: &str,
-        sack: &Sack,
-        path: &Utf8Path,
-        library: Option<&Library>,
-    ) -> (String, Outline, Bibliography) {
-        crate::text::md::parse(content, sack, path, library)
-    }
+pub fn parse_content(
+    content: &str,
+    sack: &Sack,
+    path: &Utf8Path,
+    library: Option<&Library>,
+) -> (String, Outline, Bibliography) {
+    crate::text::md::parse(content, sack, path, library)
+}
 
-    fn as_html(
-        &self,
-        parsed: &str,
-        sack: &Sack,
-        outline: Outline,
-        bibliography: Bibliography,
-    ) -> String {
-        post(self, parsed, sack, outline, bibliography)
-            .unwrap()
-            .render()
-            .into()
-    }
+pub fn as_html(
+    meta: &Post,
+    parsed: &str,
+    sack: &Sack,
+    outline: Outline,
+    bibliography: Bibliography,
+) -> String {
+    post(meta, parsed, sack, outline, bibliography)
+        .unwrap()
+        .render()
+        .into()
+}
 
-    fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
-        Some(Linkable::Date(LinkDate {
-            link: Link {
-                path,
-                name: self.title.to_owned(),
-                desc: self.desc.to_owned(),
-            },
-            date: self.date.to_owned(),
-        }))
-    }
+pub fn as_link(meta: &Post, path: Utf8PathBuf) -> Option<Linkable> {
+    Some(Linkable::Date(LinkDate {
+        link: Link {
+            path,
+            name: meta.title.to_owned(),
+            desc: meta.desc.to_owned(),
+        },
+        date: meta.date.to_owned(),
+    }))
 }
 
 pub fn post<'s, 'p, 'html>(

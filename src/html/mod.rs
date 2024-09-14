@@ -1,18 +1,17 @@
+mod head;
 mod home;
 mod isodate;
 mod list;
 mod misc;
-mod post;
-mod slideshow;
-mod special;
-mod wiki;
-mod head;
+pub mod post;
+pub mod slideshow;
+pub mod wiki;
 
 use std::collections::HashMap;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
-use hauchiwa::{Bibliography, Content, Link, LinkDate, Linkable, Outline, Sack};
+use hauchiwa::{Bibliography, Link, LinkDate, Linkable, Outline, Sack};
 use hayagriva::Library;
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
@@ -119,7 +118,7 @@ where
 	's: 'html,
 	'p: 'html,
 {
-    let head = head::render_head(sack, title, &[], js)?;
+	let head = head::render_head(sack, title, &[], js)?;
 
 	Ok(maud_move!(
 		(Raw("<!DOCTYPE html>"))
@@ -133,7 +132,6 @@ where
 	))
 }
 
-
 fn full<'s, 'p, 'html>(
 	sack: &'s Sack,
 	main: impl Renderable + 'p,
@@ -143,10 +141,7 @@ where
 	's: 'html,
 	'p: 'html,
 {
-	let main = maud_move!(
-		(navbar())
-		(main)
-	);
+	let main = maud_move!((navbar())(main));
 
 	bare(sack, main, title, None)
 }
@@ -161,11 +156,7 @@ where
 	's: 'html,
 	'p: 'html,
 {
-	let main = maud_move!(
-		(navbar())
-		(main)
-		(footer(sack))
-	);
+	let main = maud_move!((navbar())(main)(footer(sack)));
 
 	bare(sack, main, title, js)
 }
@@ -214,13 +205,12 @@ pub(crate) fn search<'s, 'html>(sack: &'s Sack) -> String {
 			main #app {}
 		),
 		String::from("Search"),
-		Some(&["search".into()])
+		Some(&["search".into()]),
 	)
-	    .unwrap()
-	    .render()
-	    .into()
+	.unwrap()
+	.render()
+	.into()
 }
-
 
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]
@@ -231,36 +221,34 @@ pub(crate) struct Flox {
 	pub(crate) desc: Option<String>,
 }
 
-impl Content for Flox {
-	fn parse_content(
-		content: &str,
-		sack: &Sack,
-		path: &Utf8Path,
-		library: Option<&Library>,
-	) -> (String, Outline, Bibliography) {
-		crate::text::md::parse(content, sack, path, library)
-	}
+pub fn parse_content(
+	content: &str,
+	sack: &Sack,
+	path: &Utf8Path,
+	library: Option<&Library>,
+) -> (String, Outline, Bibliography) {
+	crate::text::md::parse(content, sack, path, library)
+}
 
-	fn as_html(
-		&self,
-		parsed: &str,
-		sack: &Sack,
-		outline: Outline,
-		bibliography: Bibliography,
-	) -> String {
-		flox(&self.title, parsed, sack, outline, bibliography)
-	}
+pub fn as_html(
+	meta: &Flox,
+	parsed: &str,
+	sack: &Sack,
+	outline: Outline,
+	bibliography: Bibliography,
+) -> String {
+	flox(&meta.title, parsed, sack, outline, bibliography)
+}
 
-	fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
-		Some(Linkable::Date(LinkDate {
-			link: Link {
-				path,
-				name: self.title.to_owned(),
-				desc: self.desc.to_owned(),
-			},
-			date: self.date.to_owned(),
-		}))
-	}
+pub fn as_link(meta: &Flox, path: Utf8PathBuf) -> Option<Linkable> {
+	Some(Linkable::Date(LinkDate {
+		link: Link {
+			path,
+			name: meta.title.to_owned(),
+			desc: meta.desc.to_owned(),
+		},
+		date: meta.date.to_owned(),
+	}))
 }
 
 pub(crate) fn flox<'p, 's, 'html>(
@@ -274,28 +262,28 @@ pub(crate) fn flox<'p, 's, 'html>(
 		sack,
 		maud_move!(
 			main {
-                div .flox-playground {
-                    div .cell {
-                        header {
-                            h2 { "Flox" }
-                        }
-                        div .editor {
-                            div #editor {}
-                            button #run .run { "Run!" }
-                        }
-                    }
-                    div .cell {
-                        h2 { "Output" }
-                        pre #output {}
-                    }
-                }
-                (article(title, parsed, sack, outline, bibliography))
-            }
+				div .flox-playground {
+					div .cell {
+						header {
+							h2 { "Flox" }
+						}
+						div .editor {
+							div #editor {}
+							button #run .run { "Run!" }
+						}
+					}
+					div .cell {
+						h2 { "Output" }
+						pre #output {}
+					}
+				}
+				(article(title, parsed, sack, outline, bibliography))
+			}
 		),
 		String::from("Flox"),
-		Some(&["editor".into()])
+		Some(&["editor".into()]),
 	)
-	    .unwrap()
-	    .render()
-		.into()
+	.unwrap()
+	.render()
+	.into()
 }

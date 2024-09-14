@@ -1,5 +1,5 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use hauchiwa::{Bibliography, Content, Link, Linkable, Outline, Sack};
+use hauchiwa::{Bibliography, Link, Linkable, Outline, Sack};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
@@ -10,33 +10,31 @@ pub struct Wiki {
 	pub title: String,
 }
 
-impl Content for Wiki {
-	fn parse_content(
-		content: &str,
-		sack: &Sack,
-		path: &Utf8Path,
-		library: Option<&Library>,
-	) -> (String, Outline, Bibliography) {
-		crate::text::md::parse(content, sack, path, library)
-	}
+pub fn parse_content(
+	content: &str,
+	sack: &Sack,
+	path: &Utf8Path,
+	library: Option<&Library>,
+) -> (String, Outline, Bibliography) {
+	crate::text::md::parse(content, sack, path, library)
+}
 
-	fn as_html(
-		&self,
-		parsed: &str,
-		sack: &Sack,
-		outline: Outline,
-		bibliography: Bibliography,
-	) -> String {
-		wiki(self, parsed, sack, outline, bibliography)
-	}
+pub fn as_html(
+	meta: &Wiki,
+	parsed: &str,
+	sack: &Sack,
+	outline: Outline,
+	bibliography: Bibliography,
+) -> String {
+	wiki(meta, parsed, sack, outline, bibliography)
+}
 
-	fn as_link(&self, path: Utf8PathBuf) -> Option<Linkable> {
-		Some(Linkable::Link(Link {
-			path,
-			name: self.title.to_owned(),
-			desc: None,
-		}))
-	}
+pub fn as_link(meta: &Wiki, path: Utf8PathBuf) -> Option<Linkable> {
+	Some(Linkable::Link(Link {
+		path,
+		name: meta.title.to_owned(),
+		desc: None,
+	}))
 }
 
 fn wiki(
@@ -82,7 +80,7 @@ fn wiki(
 	);
 
 	crate::html::page(sack, main, matter.title.to_owned(), None)
-        .unwrap()
+		.unwrap()
 		.render()
 		.into()
 }
