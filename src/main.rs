@@ -2,8 +2,9 @@ mod html;
 mod text;
 mod ts;
 
+use camino::Utf8Path;
 use clap::{Parser, ValueEnum};
-use hauchiwa::{Collection, Processor, Website};
+use hauchiwa::{Collection, Link, LinkDate, Processor, Website};
 use html::{Post, Slideshow, Wiki};
 use hypertext::Renderable;
 
@@ -89,21 +90,57 @@ fn main() {
 			|sack| {
 				crate::html::to_list(
 					sack,
-					sack.get_links("projects/**/*.html"),
+					sack.get_meta::<Post>("projects/**/*.html")
+						.into_iter()
+						.map(|(path, meta)| LinkDate {
+							link: Link {
+								path: Utf8Path::new("/").join(path),
+								name: meta.title.clone(),
+								desc: meta.desc.clone(),
+							},
+							date: meta.date,
+						})
+						.collect(),
 					"Projects".into(),
 				)
 			},
 			"projects/index.html".into(),
 		)
 		.add_virtual(
-			|sack| crate::html::to_list(sack, sack.get_links("posts/**/*.html"), "Posts".into()),
+			|sack| {
+				crate::html::to_list(
+					sack,
+					sack.get_meta::<Post>("posts/**/*.html")
+						.into_iter()
+						.map(|(path, meta)| LinkDate {
+							link: Link {
+								path: Utf8Path::new("/").join(path),
+								name: meta.title.clone(),
+								desc: meta.desc.clone(),
+							},
+							date: meta.date,
+						})
+						.collect(),
+					"Posts".into(),
+				)
+			},
 			"posts/index.html".into(),
 		)
 		.add_virtual(
 			|sack| {
 				crate::html::to_list(
 					sack,
-					sack.get_links("slides/**/*.html"),
+					sack.get_meta::<Slideshow>("slides/**/*.html")
+						.into_iter()
+						.map(|(path, meta)| LinkDate {
+							link: Link {
+								path: Utf8Path::new("/").join(path),
+								name: meta.title.clone(),
+								desc: meta.desc.clone(),
+							},
+							date: meta.date,
+						})
+						.collect(),
 					"Slideshows".into(),
 				)
 			},

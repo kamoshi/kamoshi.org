@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
-use hauchiwa::Sack;
+use camino::Utf8Path;
+use hauchiwa::{Link, LinkDate, Sack};
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::text::md::parse;
+use crate::{html::Post, text::md::parse};
 
 const INTRO: &str = r#"
 ## かもし
@@ -43,9 +42,20 @@ fn photo() -> impl Renderable {
 
 fn latest(sack: &Sack) -> impl Renderable {
 	let links = {
-		let mut links = sack.get_links("**");
-		links.sort_by(|a, b| b.date.cmp(&a.date));
-		links
+		let mut list = sack
+			.get_meta::<Post>("**")
+			.into_iter()
+			.map(|(path, meta)| LinkDate {
+				link: Link {
+					path: Utf8Path::new("/").join(path),
+					name: meta.title.clone(),
+					desc: meta.desc.clone(),
+				},
+				date: meta.date,
+			})
+			.collect::<Vec<_>>();
+		list.sort_by(|a, b| b.date.cmp(&a.date));
+		list
 	};
 
 	maud_move!(
@@ -81,5 +91,8 @@ pub(crate) fn home(sack: &Sack, main: &str) -> String {
 		}
 	);
 
-	crate::html::page(sack, main, "Home".into(), None).unwrap().render().into()
+	crate::html::page(sack, main, "Home".into(), None)
+		.unwrap()
+		.render()
+		.into()
 }
