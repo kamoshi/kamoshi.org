@@ -212,43 +212,14 @@ pub(crate) fn search<'s, 'html>(sack: &'s Sack) -> String {
 	.into()
 }
 
-/// Represents a simple post.
-#[derive(Deserialize, Debug, Clone)]
-pub(crate) struct Flox {
-	pub(crate) title: String,
-	#[serde(with = "isodate")]
-	pub(crate) date: DateTime<Utc>,
-	pub(crate) desc: Option<String>,
-}
-
-pub fn parse_content(
-	content: &str,
-	sack: &Sack,
-	path: &Utf8Path,
-	library: Option<&Library>,
-) -> (String, Outline, Bibliography) {
-	crate::text::md::parse(content, sack, path, library)
-}
-
 pub fn as_html(
-	meta: &Flox,
+	meta: &Post,
 	parsed: &str,
 	sack: &Sack,
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> String {
 	flox(&meta.title, parsed, sack, outline, bibliography)
-}
-
-pub fn as_link(meta: &Flox, path: Utf8PathBuf) -> Option<Linkable> {
-	Some(Linkable::Date(LinkDate {
-		link: Link {
-			path,
-			name: meta.title.to_owned(),
-			desc: meta.desc.to_owned(),
-		},
-		date: meta.date.to_owned(),
-	}))
 }
 
 pub(crate) fn flox<'p, 's, 'html>(
