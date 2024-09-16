@@ -1,5 +1,5 @@
-use camino::{Utf8Path, Utf8PathBuf};
-use hauchiwa::{Bibliography, Link, Linkable, Outline, Sack};
+use camino::Utf8Path;
+use hauchiwa::{Bibliography, Outline, Sack};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
@@ -27,14 +27,6 @@ pub fn as_html(
 	bibliography: Bibliography,
 ) -> String {
 	wiki(meta, parsed, sack, outline, bibliography)
-}
-
-pub fn as_link(meta: &Wiki, path: Utf8PathBuf) -> Option<Linkable> {
-	Some(Linkable::Link(Link {
-		path,
-		name: meta.title.to_owned(),
-		desc: None,
-	}))
 }
 
 fn wiki(

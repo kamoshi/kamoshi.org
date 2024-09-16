@@ -1,8 +1,8 @@
 use camino::Utf8Path;
-use hauchiwa::{Link, LinkDate, Sack};
+use hauchiwa::Sack;
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::{html::Post, text::md::parse};
+use crate::{html::Post, text::md::parse, Link, LinkDate};
 
 const INTRO: &str = r#"
 ## かもし

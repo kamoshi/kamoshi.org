@@ -2,9 +2,10 @@ mod html;
 mod text;
 mod ts;
 
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
+use chrono::{DateTime, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{Collection, Link, LinkDate, Processor, Website};
+use hauchiwa::{Collection, Processor, Website};
 use html::{Post, Slideshow, Wiki};
 use hypertext::Renderable;
 
@@ -20,6 +21,25 @@ enum Mode {
 	Watch,
 }
 
+#[derive(Debug, Clone)]
+pub struct Link {
+	pub path: Utf8PathBuf,
+	pub name: String,
+	pub desc: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LinkDate {
+	pub link: Link,
+	pub date: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub enum Linkable {
+	Link(Link),
+	Date(LinkDate),
+}
+
 fn main() {
 	let args = Args::parse();
 
@@ -32,7 +52,6 @@ fn main() {
 				Processor {
 					read_content: crate::html::post::parse_content,
 					to_html: crate::html::post::as_html,
-					to_link: crate::html::post::as_link,
 				},
 			),
 			Collection::glob_with::<Post>(
@@ -42,7 +61,6 @@ fn main() {
 				Processor {
 					read_content: crate::html::post::parse_content,
 					to_html: crate::html::post::as_html,
-					to_link: crate::html::post::as_link,
 				},
 			),
 			Collection::glob_with::<Slideshow>(
@@ -52,7 +70,6 @@ fn main() {
 				Processor {
 					read_content: crate::html::slideshow::parse_content,
 					to_html: crate::html::slideshow::as_html,
-					to_link: crate::html::slideshow::as_link,
 				},
 			),
 			Collection::glob_with::<Wiki>(
@@ -62,7 +79,6 @@ fn main() {
 				Processor {
 					read_content: crate::html::wiki::parse_content,
 					to_html: crate::html::wiki::as_html,
-					to_link: crate::html::wiki::as_link,
 				},
 			),
 			Collection::glob_with::<Post>(
@@ -72,7 +88,6 @@ fn main() {
 				Processor {
 					read_content: crate::html::post::parse_content,
 					to_html: crate::html::as_html,
-					to_link: crate::html::post::as_link,
 				},
 			),
 		])
@@ -85,7 +100,7 @@ fn main() {
 			|sack| crate::html::map(sack).unwrap().render().to_owned().into(),
 			"map/index.html".into(),
 		)
-		.add_virtual(|sack| crate::html::search(sack), "search/index.html".into())
+		.add_virtual(crate::html::search, "search/index.html".into())
 		.add_virtual(
 			|sack| {
 				crate::html::to_list(

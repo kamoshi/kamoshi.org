@@ -9,18 +9,18 @@ pub mod wiki;
 
 use std::collections::HashMap;
 
-use camino::{Utf8Path, Utf8PathBuf};
-use chrono::{DateTime, Datelike, Utc};
-use hauchiwa::{Bibliography, Link, LinkDate, Linkable, Outline, Sack};
-use hayagriva::Library;
+use camino::Utf8Path;
+use chrono::Datelike;
+use hauchiwa::{Bibliography, Outline, Sack};
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
 pub(crate) use home::home;
 use post::article;
 pub(crate) use post::Post;
-use serde::Deserialize;
 pub(crate) use slideshow::Slideshow;
 pub(crate) use wiki::Wiki;
+
+use crate::LinkDate;
 
 fn navbar() -> impl Renderable {
 	static ITEMS: &[(&str, &str)] = &[
@@ -198,7 +198,7 @@ where
 	)
 }
 
-pub(crate) fn search<'s, 'html>(sack: &'s Sack) -> String {
+pub(crate) fn search(sack: &Sack) -> String {
 	page(
 		sack,
 		maud!(
@@ -222,7 +222,7 @@ pub fn as_html(
 	flox(&meta.title, parsed, sack, outline, bibliography)
 }
 
-pub(crate) fn flox<'p, 's, 'html>(
+pub(crate) fn flox(
 	title: &str,
 	parsed: &str,
 	sack: &Sack,

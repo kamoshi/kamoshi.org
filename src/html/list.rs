@@ -1,7 +1,7 @@
-use hauchiwa::{LinkDate, Sack};
+use hauchiwa::Sack;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 
-use crate::html::page;
+use crate::{html::page, LinkDate};
 
 pub fn list<'s, 'g, 'html>(
 	sack: &'s Sack,

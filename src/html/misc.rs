@@ -1,6 +1,10 @@
-use hauchiwa::{Outline, Sack, TreePage};
+use std::collections::HashMap;
+
+use camino::Utf8Path;
+use hauchiwa::{Outline, Sack};
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 
+use crate::{html::Wiki, Link};
 
 /// Render the outline for a document
 pub(crate) fn show_outline(outline: Outline) -> impl Renderable {
@@ -41,9 +45,50 @@ pub(crate) fn emit_bibliography(bib: Vec<String>) -> impl Renderable {
 	)
 }
 
+#[derive(Debug)]
+pub struct TreePage {
+	pub link: Option<Link>,
+	pub subs: HashMap<String, TreePage>,
+}
+
+impl TreePage {
+	fn new() -> Self {
+		TreePage {
+			link: None,
+			subs: HashMap::new(),
+		}
+	}
+
+	fn add_link(&mut self, link: &Link) {
+		let mut ptr = self;
+		for part in link.path.iter().skip(1) {
+			ptr = ptr.subs.entry(part.to_string()).or_insert(TreePage::new());
+		}
+		ptr.link = Some(link.clone());
+	}
+
+	fn from_iter(iter: impl Iterator<Item = Link>) -> Self {
+		let mut tree = Self::new();
+		for link in iter {
+			tree.add_link(&link);
+		}
+
+		tree
+	}
+}
+
 /// Render the page tree
 pub(crate) fn show_page_tree(sack: &Sack, glob: &str) -> impl Renderable {
-	let tree = sack.get_tree(glob);
+	let tree =
+		TreePage::from_iter(
+			sack.get_meta::<Wiki>(glob)
+				.into_iter()
+				.map(|(path, meta)| Link {
+					path: Utf8Path::new("/").join(path),
+					name: meta.title.clone(),
+					desc: None,
+				}),
+		);
 
 	maud_move!(
 		h2 .link-tree__heading {
