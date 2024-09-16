@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use camino::Utf8Path;
 use chrono::{DateTime, Utc};
 use hauchiwa::{Bibliography, Outline, Sack};
@@ -37,13 +39,15 @@ pub fn parse_content(
 				.collect::<Vec<_>>()
 		})
 		.map(|stack| match stack.len() > 1 {
-			true => format!(
-				"<section>{}</section>",
-				stack
-					.into_iter()
-					.map(|slide| format!("<section>{slide}</section>"))
-					.collect::<String>()
-			),
+			true => {
+				let mut buffer = String::from("<section>");
+
+				for slide in stack {
+					write!(buffer, "<section>{}</section>", slide).unwrap();
+				}
+
+				buffer
+			}
 			false => format!("<section>{}</section>", stack[0]),
 		})
 		.collect::<String>();

@@ -12,7 +12,7 @@ socket.addEventListener("message", (event) => {
 pub(crate) fn render_head<'s, 'r>(
 	sack: &'s Sack,
 	title: String,
-	styles: &'s [&str],
+	_styles: &'s [&str],
 	scripts: Option<&'s [String]>,
 ) -> Result<impl Renderable + 'r, String>
 where
@@ -24,8 +24,8 @@ where
 	let css_p = sack.get_style("leaflet").expect("Missing styles");
 
 	let scripts = match scripts {
-	    Some(scripts) => Some(emit_tags_script(sack, scripts)?),
-	    None => None,
+		Some(scripts) => Some(emit_tags_script(sack, scripts)?),
+		None => None,
 	};
 
 	Ok(maud_move!(
@@ -52,7 +52,7 @@ where
 		}
 
 		@if let Some(scripts) = scripts {
-		    (scripts)
+			(scripts)
 		}
 	))
 }
@@ -63,23 +63,26 @@ fn render_style(style: &HashedStyle) -> impl Renderable + '_ {
 	)
 }
 
-fn emit_tags_script<'a>(sack: &'a Sack, scripts: &'a [String]) -> Result<impl Renderable + 'a, String> {
-    let tags = scripts
-        .iter()
-        .map(|script| emit_tag_script(sack, script))
-        .collect::<Result<Vec<_>, _>>()?;
+fn emit_tags_script<'a>(
+	sack: &'a Sack,
+	scripts: &'a [String],
+) -> Result<impl Renderable + 'a, String> {
+	let tags = scripts
+		.iter()
+		.map(|script| emit_tag_script(sack, script))
+		.collect::<Result<Vec<_>, _>>()?;
 
-    Ok(maud_move!(
-        @for tag in tags {
-      		(tag)
-       	}
-    ))
+	Ok(maud_move!(
+		@for tag in tags {
+			  (tag)
+		   }
+	))
 }
 
 fn emit_tag_script<'a>(sack: &'a Sack, script: &'a str) -> Result<impl Renderable + 'a, String> {
-    let src = sack
-        .get_script(script)
-        .ok_or(format!("Missing script {script}"))?;
+	let src = sack
+		.get_script(script)
+		.ok_or(format!("Missing script {script}"))?;
 
-    Ok(maud_move!(script type="module" src=(src.path.as_str()) defer {}))
+	Ok(maud_move!(script type="module" src=(src.path.as_str()) defer {}))
 }
