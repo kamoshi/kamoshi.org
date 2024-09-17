@@ -1,9 +1,11 @@
 use camino::Utf8Path;
 use chrono::{DateTime, Utc};
-use hauchiwa::{Bibliography, Outline, Sack};
+use hauchiwa::{Bibliography, Outline};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
+
+use crate::MySack;
 
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]
@@ -17,7 +19,7 @@ pub struct Post {
 
 pub fn parse_content(
 	content: &str,
-	sack: &Sack,
+	sack: &MySack,
 	path: &Utf8Path,
 	library: Option<&Library>,
 ) -> (String, Outline, Bibliography) {
@@ -27,7 +29,7 @@ pub fn parse_content(
 pub fn as_html(
 	meta: &Post,
 	parsed: &str,
-	sack: &Sack,
+	sack: &MySack,
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> String {
@@ -40,7 +42,7 @@ pub fn as_html(
 pub fn post<'s, 'p, 'html>(
 	meta: &'p Post,
 	parsed: &'p str,
-	sack: &'s Sack,
+	sack: &'s MySack,
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> Result<impl Renderable + 'html, String>
@@ -60,7 +62,7 @@ where
 pub fn article<'p, 's, 'html>(
 	title: &'p str,
 	parsed: &'p str,
-	_: &'s Sack,
+	_: &'s MySack,
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> impl Renderable + 'html

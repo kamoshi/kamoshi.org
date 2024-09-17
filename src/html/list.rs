@@ -1,10 +1,9 @@
-use hauchiwa::Sack;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
 
-use crate::{html::page, LinkDate};
+use crate::{html::page, LinkDate, MySack};
 
 pub fn list<'s, 'g, 'html>(
-	sack: &'s Sack,
+	sack: &'s MySack,
 	groups: &'g [(i32, Vec<LinkDate>)],
 	title: String,
 ) -> Result<impl Renderable + 'html, String>

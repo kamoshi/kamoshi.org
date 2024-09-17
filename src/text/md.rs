@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use camino::Utf8Path;
-use hauchiwa::{Bibliography, Outline, Sack};
+use hauchiwa::{Bibliography, Outline};
 use hayagriva::{
 	archive::ArchivedStyle,
 	citationberg::{IndependentStyle, Locale, Style},
@@ -13,7 +13,7 @@ use once_cell::sync::Lazy;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd, TextMergeStream};
 use regex::Regex;
 
-use crate::ts;
+use crate::{ts, MySack};
 
 static OPTS: Lazy<Options> = Lazy::new(|| {
 	Options::empty()
@@ -51,7 +51,7 @@ static STYLE: Lazy<IndependentStyle> =
 
 pub fn parse(
 	content: &str,
-	sack: &Sack,
+	sack: &MySack,
 	path: &Utf8Path,
 	library: Option<&Library>,
 ) -> (String, Outline, Bibliography) {
@@ -353,7 +353,7 @@ fn make_emoji(event: Event) -> Event {
 	}
 }
 
-fn swap_hashed_image<'a>(dir: &'a Utf8Path, sack: &'a Sack) -> impl Fn(Event) -> Event + 'a {
+fn swap_hashed_image<'a>(dir: &'a Utf8Path, sack: &'a MySack) -> impl Fn(Event) -> Event + 'a {
 	move |event| match event {
 		Event::Start(start) => match start {
 			Tag::Image {

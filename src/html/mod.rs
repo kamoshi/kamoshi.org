@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use chrono::Datelike;
-use hauchiwa::{Bibliography, Outline, Sack};
+use hauchiwa::{Bibliography, Outline};
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
 pub(crate) use home::home;
@@ -20,7 +20,7 @@ pub(crate) use post::Post;
 pub(crate) use slideshow::Slideshow;
 pub(crate) use wiki::Wiki;
 
-use crate::LinkDate;
+use crate::{LinkDate, MySack};
 
 fn navbar() -> impl Renderable {
 	static ITEMS: &[(&str, &str)] = &[
@@ -68,16 +68,16 @@ fn navbar() -> impl Renderable {
 	)
 }
 
-pub fn footer<'s, 'html>(sack: &'s Sack) -> impl Renderable + 'html
+pub fn footer<'s, 'html>(sack: &'s MySack) -> impl Renderable + 'html
 where
 	's: 'html,
 {
-	let copy = format!("Copyright &copy; {} Maciej Jur", &sack.ctx.year);
+	let copy = format!("Copyright &copy; {} Maciej Jur", &sack.ctx.data.year);
 	let mail = "maciej@kamoshi.org";
 	let href = format!("mailto:{}", mail);
-	let link = Utf8Path::new(&sack.ctx.link)
+	let link = Utf8Path::new(&sack.ctx.data.link)
 		.join("src/commit")
-		.join(&sack.ctx.hash);
+		.join(&sack.ctx.data.hash);
 	let link = match sack.get_file() {
 		Some(path) => link.join(path),
 		None => link,
@@ -95,10 +95,10 @@ where
 			}
 			div .repo {
 				a href=(link.as_str()) {
-					(&sack.ctx.hash)
+					(&sack.ctx.data.hash)
 				}
 				div {
-					(&sack.ctx.date)
+					(&sack.ctx.data.date)
 				}
 			}
 			a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {
@@ -109,7 +109,7 @@ where
 }
 
 fn bare<'s, 'p, 'html>(
-	sack: &'s Sack,
+	sack: &'s MySack,
 	main: impl Renderable + 'p,
 	title: String,
 	js: Option<&'s [String]>,
@@ -133,7 +133,7 @@ where
 }
 
 fn full<'s, 'p, 'html>(
-	sack: &'s Sack,
+	sack: &'s MySack,
 	main: impl Renderable + 'p,
 	title: String,
 ) -> Result<impl Renderable + 'html, String>
@@ -147,7 +147,7 @@ where
 }
 
 fn page<'s, 'p, 'html>(
-	sack: &'s Sack,
+	sack: &'s MySack,
 	main: impl Renderable + 'p,
 	title: String,
 	js: Option<&'s [String]>,
@@ -161,7 +161,7 @@ where
 	bare(sack, main, title, js)
 }
 
-pub(crate) fn to_list(sack: &Sack, list: Vec<LinkDate>, title: String) -> String {
+pub(crate) fn to_list(sack: &MySack, list: Vec<LinkDate>, title: String) -> String {
 	let mut groups = HashMap::<i32, Vec<_>>::new();
 
 	for page in list {
@@ -181,7 +181,7 @@ pub(crate) fn to_list(sack: &Sack, list: Vec<LinkDate>, title: String) -> String
 	list::list(sack, &groups, title).unwrap().render().into()
 }
 
-pub(crate) fn map<'s, 'html>(sack: &'s Sack) -> Result<impl Renderable + 'html, String>
+pub(crate) fn map<'s, 'html>(sack: &'s MySack) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
 {
@@ -198,7 +198,7 @@ where
 	)
 }
 
-pub(crate) fn search(sack: &Sack) -> String {
+pub(crate) fn search(sack: &MySack) -> String {
 	page(
 		sack,
 		maud!(
@@ -215,7 +215,7 @@ pub(crate) fn search(sack: &Sack) -> String {
 pub fn as_html(
 	meta: &Post,
 	parsed: &str,
-	sack: &Sack,
+	sack: &MySack,
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> String {
@@ -225,7 +225,7 @@ pub fn as_html(
 pub(crate) fn flox(
 	title: &str,
 	parsed: &str,
-	sack: &Sack,
+	sack: &MySack,
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> String {

@@ -1,8 +1,10 @@
 use camino::Utf8Path;
-use hauchiwa::{Bibliography, Outline, Sack};
+use hauchiwa::{Bibliography, Outline};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
+
+use crate::MySack;
 
 /// Represents a wiki page
 #[derive(Deserialize, Debug, Clone)]
@@ -12,7 +14,7 @@ pub struct Wiki {
 
 pub fn parse_content(
 	content: &str,
-	sack: &Sack,
+	sack: &MySack,
 	path: &Utf8Path,
 	library: Option<&Library>,
 ) -> (String, Outline, Bibliography) {
@@ -22,7 +24,7 @@ pub fn parse_content(
 pub fn as_html(
 	meta: &Wiki,
 	parsed: &str,
-	sack: &Sack,
+	sack: &MySack,
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> String {
@@ -32,7 +34,7 @@ pub fn as_html(
 fn wiki(
 	matter: &Wiki,
 	parsed: &str,
-	sack: &Sack,
+	sack: &MySack,
 	_: Outline,
 	bibliography: Bibliography,
 ) -> String {

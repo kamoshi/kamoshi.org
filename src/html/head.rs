@@ -1,6 +1,8 @@
 use hauchiwa::{HashedStyle, Mode, Sack};
 use hypertext::{html_elements, maud_move, Raw, Renderable};
 
+use crate::MyData;
+
 const JS_RELOAD: &str = r#"
 const socket = new WebSocket("ws://localhost:1337");
 socket.addEventListener("message", (event) => {
@@ -10,7 +12,7 @@ socket.addEventListener("message", (event) => {
 "#;
 
 pub(crate) fn render_head<'s, 'r>(
-	sack: &'s Sack,
+	sack: &'s Sack<MyData>,
 	title: String,
 	_styles: &'s [&str],
 	scripts: Option<&'s [String]>,
@@ -64,7 +66,7 @@ fn render_style(style: &HashedStyle) -> impl Renderable + '_ {
 }
 
 fn emit_tags_script<'a>(
-	sack: &'a Sack,
+	sack: &'a Sack<MyData>,
 	scripts: &'a [String],
 ) -> Result<impl Renderable + 'a, String> {
 	let tags = scripts
@@ -79,7 +81,10 @@ fn emit_tags_script<'a>(
 	))
 }
 
-fn emit_tag_script<'a>(sack: &'a Sack, script: &'a str) -> Result<impl Renderable + 'a, String> {
+fn emit_tag_script<'a>(
+	sack: &'a Sack<MyData>,
+	script: &'a str,
+) -> Result<impl Renderable + 'a, String> {
 	let src = sack
 		.get_script(script)
 		.ok_or(format!("Missing script {script}"))?;

@@ -2,10 +2,12 @@ use std::fmt::Write;
 
 use camino::Utf8Path;
 use chrono::{DateTime, Utc};
-use hauchiwa::{Bibliography, Outline, Sack};
+use hauchiwa::{Bibliography, Outline};
 use hayagriva::Library;
 use hypertext::{html_elements, maud, GlobalAttributes, Raw, Renderable};
 use serde::Deserialize;
+
+use crate::MySack;
 
 const CSS: &str = r#"
 .slides img {
@@ -26,7 +28,7 @@ pub(crate) struct Slideshow {
 
 pub fn parse_content(
 	content: &str,
-	sack: &Sack,
+	sack: &MySack,
 	path: &Utf8Path,
 	library: Option<&Library>,
 ) -> (String, Outline, Bibliography) {
@@ -57,14 +59,14 @@ pub fn parse_content(
 pub fn as_html(
 	slides: &Slideshow,
 	parsed: &str,
-	sack: &Sack,
+	sack: &MySack,
 	_: Outline,
 	_: Bibliography,
 ) -> String {
 	show(slides, sack, parsed)
 }
 
-pub fn show(fm: &Slideshow, sack: &Sack, slides: &str) -> String {
+pub fn show(fm: &Slideshow, sack: &MySack, slides: &str) -> String {
 	crate::html::bare(
 		sack,
 		maud!(

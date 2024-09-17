@@ -2,10 +2,12 @@ mod html;
 mod text;
 mod ts;
 
+use std::process::Command;
+
 use camino::{Utf8Path, Utf8PathBuf};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{Collection, Processor, Website};
+use hauchiwa::{Collection, Processor, Sack, Website};
 use html::{Post, Slideshow, Wiki};
 use hypertext::Renderable;
 
@@ -22,29 +24,54 @@ enum Mode {
 }
 
 #[derive(Debug, Clone)]
-pub struct Link {
+struct MyData {
+	pub year: i32,
+	pub date: String,
+	pub link: String,
+	pub hash: String,
+}
+
+impl MyData {
+	fn new() -> Self {
+		let time = chrono::Utc::now();
+		Self {
+			year: time.year(),
+			date: time.format("%Y/%m/%d %H:%M").to_string(),
+			link: "https://git.kamoshi.org/kamov/website".into(),
+			hash: String::from_utf8(
+				Command::new("git")
+					.args(["rev-parse", "--short", "HEAD"])
+					.output()
+					.expect("Couldn't load git revision")
+					.stdout,
+			)
+			.expect("Invalid UTF8")
+			.trim()
+			.into(),
+		}
+	}
+}
+
+type MySack<'a> = Sack<'a, MyData>;
+
+#[derive(Debug, Clone)]
+struct Link {
 	pub path: Utf8PathBuf,
 	pub name: String,
 	pub desc: Option<String>,
 }
 
 #[derive(Debug, Clone)]
-pub struct LinkDate {
+struct LinkDate {
 	pub link: Link,
 	pub date: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone)]
-pub enum Linkable {
-	Link(Link),
-	Date(LinkDate),
 }
 
 fn main() {
 	let args = Args::parse();
 
 	let website = Website::design()
-		.add_loaders(vec![
+		.add_collections(vec![
 			Collection::glob_with::<Post>(
 				"content",
 				"about.md",
@@ -91,11 +118,13 @@ fn main() {
 				},
 			),
 		])
-		.js("search", "./js/search/dist/search.js")
-		.js("photos", "./js/vanilla/photos.js")
-		.js("reveal", "./js/vanilla/reveal.js")
-		.js("editor", "./js/flox/main.ts")
-		.js("lambda", "./js/flox/lambda.ts")
+		.add_scripts(vec![
+			("search", "./js/search/dist/search.js"),
+			("photos", "./js/vanilla/photos.js"),
+			("reveal", "./js/vanilla/reveal.js"),
+			("editor", "./js/flox/main.ts"),
+			("lambda", "./js/flox/lambda.ts"),
+		])
 		.add_virtual(
 			|sack| crate::html::map(sack).unwrap().render().to_owned().into(),
 			"map/index.html".into(),
@@ -172,7 +201,7 @@ fn main() {
 		.finish();
 
 	match args.mode {
-		Mode::Build => website.build(),
-		Mode::Watch => website.watch(),
+		Mode::Build => website.build(MyData::new()),
+		Mode::Watch => website.watch(MyData::new()),
 	}
 }

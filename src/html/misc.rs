@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use camino::Utf8Path;
-use hauchiwa::{Outline, Sack};
+use hauchiwa::Outline;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::{html::Wiki, Link};
+use crate::{html::Wiki, Link, MySack};
 
 /// Render the outline for a document
 pub(crate) fn show_outline(outline: Outline) -> impl Renderable {
@@ -78,7 +78,7 @@ impl TreePage {
 }
 
 /// Render the page tree
-pub(crate) fn show_page_tree(sack: &Sack, glob: &str) -> impl Renderable {
+pub(crate) fn show_page_tree(sack: &MySack, glob: &str) -> impl Renderable {
 	let tree =
 		TreePage::from_iter(
 			sack.get_meta::<Wiki>(glob)

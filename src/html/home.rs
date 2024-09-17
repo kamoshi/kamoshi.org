@@ -2,7 +2,7 @@ use camino::Utf8Path;
 use hauchiwa::Sack;
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::{html::Post, text::md::parse, Link, LinkDate};
+use crate::{html::Post, text::md::parse, Link, LinkDate, MyData};
 
 const INTRO: &str = r#"
 ## かもし
@@ -16,7 +16,7 @@ const INTRO: &str = r#"
 質問があったらメールを送信してくれてください。
 "#;
 
-fn intro(sack: &Sack) -> impl Renderable {
+fn intro(sack: &Sack<MyData>) -> impl Renderable {
 	let (parsed, _, _) = parse(INTRO, sack, "".into(), None);
 	maud!(
 		section .p-card.intro-jp lang="ja-JP" {
@@ -40,7 +40,7 @@ fn photo() -> impl Renderable {
 	)
 }
 
-fn latest(sack: &Sack) -> impl Renderable {
+fn latest(sack: &Sack<MyData>) -> impl Renderable {
 	let links = {
 		let mut list = sack
 			.get_meta::<Post>("**")
@@ -76,7 +76,7 @@ fn latest(sack: &Sack) -> impl Renderable {
 	)
 }
 
-pub(crate) fn home(sack: &Sack, main: &str) -> String {
+pub(crate) fn home(sack: &Sack<MyData>, main: &str) -> String {
 	let main = maud!(
 		main .l-home {
 			article .l-home__article.markdown {
