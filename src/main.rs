@@ -70,7 +70,7 @@ struct LinkDate {
 fn main() {
 	let args = Args::parse();
 
-	let website = Website::design()
+	let website = Website::setup()
 		.add_collections(vec![
 			Collection::glob_with::<Post>(
 				"content",
@@ -138,7 +138,7 @@ fn main() {
 						.into_iter()
 						.map(|(path, meta)| LinkDate {
 							link: Link {
-								path: Utf8Path::new("/").join(path),
+								path: Utf8Path::new("/").join(path.parent().unwrap()),
 								name: meta.title.clone(),
 								desc: meta.desc.clone(),
 							},
@@ -158,7 +158,7 @@ fn main() {
 						.into_iter()
 						.map(|(path, meta)| LinkDate {
 							link: Link {
-								path: Utf8Path::new("/").join(path),
+								path: Utf8Path::new("/").join(path.parent().unwrap()),
 								name: meta.title.clone(),
 								desc: meta.desc.clone(),
 							},
@@ -178,7 +178,7 @@ fn main() {
 						.into_iter()
 						.map(|(path, meta)| LinkDate {
 							link: Link {
-								path: Utf8Path::new("/").join(path),
+								path: Utf8Path::new("/").join(path.parent().unwrap()),
 								name: meta.title.clone(),
 								desc: meta.desc.clone(),
 							},
