@@ -78,17 +78,23 @@ impl TreePage {
 }
 
 /// Render the page tree
-pub(crate) fn show_page_tree(sack: &MySack, glob: &str) -> impl Renderable {
+pub(crate) fn show_page_tree<'a>(sack: &'a MySack, glob: &'a str) -> impl Renderable + 'a {
 	let tree =
 		TreePage::from_iter(
 			sack.get_meta::<Wiki>(glob)
 				.into_iter()
 				.map(|(path, meta)| Link {
-					path: Utf8Path::new("/").join(path),
+					path: Utf8Path::new("/").join(path.parent().unwrap()),
 					name: meta.title.clone(),
 					desc: None,
 				}),
 		);
+
+	let parts = {
+		let mut parts = sack.path.iter().skip(1).collect::<Vec<_>>();
+		parts.insert(0, "wiki");
+		parts
+	};
 
 	maud_move!(
 		h2 .link-tree__heading {
@@ -100,12 +106,15 @@ pub(crate) fn show_page_tree(sack: &MySack, glob: &str) -> impl Renderable {
 		  // )}
 		}
 		nav .link-tree__nav {
-			(show_page_tree_level(&tree))
+			(show_page_tree_level(&tree, &parts))
 		}
 	)
 }
 
-fn show_page_tree_level(tree: &TreePage) -> impl Renderable + '_ {
+fn show_page_tree_level<'a, 'b, 'c>(tree: &'a TreePage, parts: &'a [&str]) -> impl Renderable + 'b
+where
+	'a: 'b,
+{
 	let subs = {
 		let mut subs: Vec<_> = tree.subs.iter().collect();
 		subs.sort_by(|a, b| a.0.cmp(b.0));
@@ -127,8 +136,8 @@ fn show_page_tree_level(tree: &TreePage) -> impl Renderable + '_ {
 							}
 						}
 					}
-					@if !next.subs.is_empty() {
-						(show_page_tree_level(next))
+					@if key == parts[0] && !next.subs.is_empty()  {
+						(show_page_tree_level(next, &parts[1..]))
 					}
 				}
 			}
