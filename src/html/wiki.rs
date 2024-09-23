@@ -2,15 +2,8 @@ use camino::Utf8Path;
 use hauchiwa::{Bibliography, Outline};
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
-use serde::Deserialize;
 
-use crate::MySack;
-
-/// Represents a wiki page
-#[derive(Deserialize, Debug, Clone)]
-pub struct Wiki {
-	pub title: String,
-}
+use crate::{model::Wiki, MySack};
 
 pub fn parse_content(
 	content: &str,

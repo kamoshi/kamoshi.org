@@ -1,4 +1,5 @@
 mod html;
+mod model;
 mod text;
 mod ts;
 
@@ -8,8 +9,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::{Collection, Processor, Sack, Website};
-use html::{Post, Slideshow, Wiki};
 use hypertext::Renderable;
+use model::{Post, Slideshow, Wiki};
 
 #[derive(Parser, Debug, Clone)]
 struct Args {

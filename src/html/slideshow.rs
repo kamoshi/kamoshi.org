@@ -1,13 +1,11 @@
 use std::fmt::Write;
 
 use camino::Utf8Path;
-use chrono::{DateTime, Utc};
 use hauchiwa::{Bibliography, Outline};
 use hayagriva::Library;
 use hypertext::{html_elements, maud, GlobalAttributes, Raw, Renderable};
-use serde::Deserialize;
 
-use crate::MySack;
+use crate::{model::Slideshow, MySack};
 
 const CSS: &str = r#"
 .slides img {
@@ -16,15 +14,6 @@ const CSS: &str = r#"
 	max-height: 60vh;
 }
 "#;
-
-/// Represents a slideshow
-#[derive(Deserialize, Debug, Clone)]
-pub(crate) struct Slideshow {
-	pub title: String,
-	#[serde(with = "super::isodate")]
-	pub date: DateTime<Utc>,
-	pub desc: Option<String>,
-}
 
 pub fn parse_content(
 	content: &str,

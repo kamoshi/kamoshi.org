@@ -1,21 +1,9 @@
 use camino::Utf8Path;
-use chrono::{DateTime, Utc};
 use hauchiwa::{Bibliography, Outline};
 use hayagriva::Library;
-use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
-use serde::Deserialize;
+use hypertext::{html_elements, maud_move, rsx, rsx_move, GlobalAttributes, Raw, Renderable};
 
-use crate::MySack;
-
-/// Represents a simple post.
-#[derive(Deserialize, Debug, Clone)]
-pub struct Post {
-	pub title: String,
-	#[serde(with = "super::isodate")]
-	pub date: DateTime<Utc>,
-	pub desc: Option<String>,
-	pub scripts: Option<Vec<String>>,
-}
+use crate::{model::Post, MySack};
 
 pub fn parse_content(
 	content: &str,
@@ -52,7 +40,7 @@ where
 {
 	let main = maud_move!(
 		main {
-			(article(&meta.title, parsed, sack, outline, bibliography))
+			(article(meta, parsed, sack, outline, bibliography))
 		}
 	);
 
@@ -60,7 +48,7 @@ where
 }
 
 pub fn article<'p, 's, 'html>(
-	title: &'p str,
+	meta: &'p Post,
 	parsed: &'p str,
 	_: &'s MySack,
 	outline: Outline,
@@ -84,17 +72,37 @@ where
 				(crate::html::misc::show_outline(outline))
 			}
 
-			article .wiki-article /*class:list={classlist)*/ {
-				header class="markdown" {
-					h1 #top { (title) }
-				}
-				section .wiki-article__markdown.markdown {
-					(Raw(parsed))
-				}
+			(paper_page(meta, parsed, bibliography))
+		}
+	)
+}
 
-				@if let Some(bib) = bibliography.0 {
-					(crate::html::misc::emit_bibliography(bib))
+fn paper_page<'a>(meta: &'a Post, parsed: &'a str, bib: Bibliography) -> impl Renderable + 'a {
+	maud_move!(
+		article .wiki-article {
+			header {
+				h1 #top {
+					(&meta.title)
 				}
+				div .line {
+					div .date {
+						(meta.date.format("%Y-%m-%d").to_string())
+					}
+					@if let Some(ref tags) = meta.tags {
+						ul .tags {
+							@for tag in tags {
+								li { (tag) }
+							}
+						}
+					}
+				}
+			}
+			section .wiki-article__markdown.markdown {
+				(Raw(parsed))
+			}
+
+			@if let Some(bib) = bib.0 {
+				(crate::html::misc::emit_bibliography(bib))
 			}
 		}
 	)

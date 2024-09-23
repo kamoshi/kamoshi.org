@@ -1,115 +1,148 @@
 $bp-m: 58rem;
 $bp-l: 80rem;
 
-
 .wiki-main {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+	position: relative;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
 
-  @media (min-width: $bp-m) {
-    grid-template-columns: 16rem minmax(0, 1fr);
-  }
+	@media (min-width: $bp-m) {
+		grid-template-columns: 16rem minmax(0, 1fr);
+	}
 
-  @media (min-width: $bp-l) {
-    grid-template-columns: 16rem minmax(0, 1fr) 16rem;
-  }
+	@media (min-width: $bp-l) {
+		grid-template-columns: 16rem minmax(0, 1fr) 16rem;
+	}
 }
 
 .wiki-aside {
-  position: absolute;
-  width: 16rem;
-  height: 100%;
-  transition: margin-left linear 0.1s;
-  background-color: var(--c-bg-main);
-  z-index: 5;
+	position: absolute;
+	width: 16rem;
+	height: 100%;
+	transition: margin-left linear 0.1s;
+	background-color: var(--c-bg-main);
+	z-index: 5;
 
-  @media (min-width: $bp-m) {
-    position: static;
-    background-color: unset;
-  }
+	@media (min-width: $bp-m) {
+		position: static;
+		background-color: unset;
+	}
 
-  .link-tree {
-    position: sticky;
-    top: 0;
-  }
+	.link-tree {
+		position: sticky;
+		top: 0;
+	}
 
-  &__slider {
-    position: absolute;
-    top: 0.5em;
-    right: -2em;
-    cursor: pointer;
+	&__slider {
+		position: absolute;
+		top: 0.5em;
+		right: -2em;
+		cursor: pointer;
 
-    @media (min-width: $bp-m) {
-      display: none;
-    }
-  }
+		@media (min-width: $bp-m) {
+			display: none;
+		}
+	}
 }
 
 #wiki-aside-shown {
-  &:checked {
-    ~ .wiki-aside {
-      box-shadow: var(--shadow-m);
+	&:checked {
+		~ .wiki-aside {
+			box-shadow: var(--shadow-m);
 
-      @media (min-width: $bp-m) {
-        box-shadow: unset;
-      }
+			@media (min-width: $bp-m) {
+				box-shadow: unset;
+			}
 
-      > .wiki-aside__slider {
-        transform: rotate(180deg);
-      }
-    }
-  }
+			> .wiki-aside__slider {
+				transform: rotate(180deg);
+			}
+		}
+	}
 
-  &:not(:checked) {
-    ~ .wiki-aside {
-      margin-left: -16rem;
+	&:not(:checked) {
+		~ .wiki-aside {
+			margin-left: -16rem;
 
-      @media (min-width: $bp-m) {
-        margin-left: unset;
-      }
-    }
-  }
+			@media (min-width: $bp-m) {
+				margin-left: unset;
+			}
+		}
+	}
 }
 
 .wiki-icon {
-  max-height: 1.5em;
-  max-width: 1.5em;
+	max-height: 1.5em;
+	max-width: 1.5em;
 }
 
 .wiki-article {
-  min-width: 0;
-  margin-inline: auto;
-  padding: 1em;
-  padding-top: 2em;
-  background-color: white;
-  transition: margin ease-in-out 0.2s, padding ease-in-out 0.2s;
+	min-width: 0;
+	margin-inline: auto;
+	padding: 1em;
+	padding-top: 2em;
+	background-color: white;
+	transition:
+		margin ease-in-out 0.2s,
+		padding ease-in-out 0.2s;
 
-  @media (min-width: $bp-m) {
-    max-width: min(100%, 50em);
-    height: fit-content;
-    margin-block: 1em;
-    padding-top: 1em;
-    border-radius: 0.5em;
-    box-shadow: var(--shadow-l);
-  }
+	@media (min-width: $bp-m) {
+		max-width: min(100%, 50em);
+		height: fit-content;
+		margin-block: 1em;
+		padding-top: 1em;
+		border-radius: 0.5em;
+		box-shadow: var(--shadow-l);
+	}
 
-  @media (min-width: $bp-l) {
-    margin-block: 2em;
-    padding: 2em;
-  }
+	@media (min-width: $bp-l) {
+		margin-block: 2em;
+		padding: 2em;
+	}
 
-  &__markdown {
-    max-width: calc(100vw - 2em);
-  }
+	header {
+		margin-bottom: 1em;
 
-  &.has-icon {
-    background-position: top right;
-    background-repeat: no-repeat;
-    background-size: 20% auto;
+		h1 {
+			font-size: 2.5rem;
+			font-family: var(--serif);
+			font-weight: 500;
+			line-height: 1em;
+			margin-bottom: 0.3em;
+		}
 
-    &.icon-haskell {
-      background-image: url("/static/sketch/haskell.png");
-    }
-  }
+		.line {
+			display: flex;
+			flex-direction: row;
+			gap: 0.5em;
+		}
+
+		.tags {
+			display: inline;
+			list-style: none;
+			padding: 0px;
+
+			li {
+				display: inline;
+
+				&:not(:last-child)::after {
+					content: ", ";
+				}
+			}
+		}
+	}
+
+	&__markdown {
+		max-width: calc(100vw - 2em);
+	}
+
+	&.has-icon {
+		background-position: top right;
+		background-repeat: no-repeat;
+		background-size: 20% auto;
+
+		&.icon-haskell {
+			background-image: url("/static/sketch/haskell.png");
+		}
+	}
 }

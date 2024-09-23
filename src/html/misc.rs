@@ -4,7 +4,7 @@ use camino::Utf8Path;
 use hauchiwa::Outline;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::{html::Wiki, Link, MySack};
+use crate::{model::Wiki, Link, MySack};
 
 /// Render the outline for a document
 pub(crate) fn show_outline(outline: Outline) -> impl Renderable {

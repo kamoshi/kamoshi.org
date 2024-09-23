@@ -2,7 +2,7 @@ use camino::Utf8Path;
 use hauchiwa::Sack;
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::{html::Post, text::md::parse, Link, LinkDate, MyData};
+use crate::{model::Post, text::md::parse, Link, LinkDate, MyData};
 
 const INTRO: &str = r#"
 ## かもし

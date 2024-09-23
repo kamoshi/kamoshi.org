@@ -1,191 +1,200 @@
 .markdown {
-  h1 {
-    font-size: 2.5rem;
-  }
+	h1 {
+		font-size: 2.5rem;
+	}
 
-  h2 {
-    font-size: 1.8rem;
-  }
+	h2 {
+		font-size: 1.8rem;
+	}
 
-  h3 {
-    font-size: 1.5rem;
-  }
+	h3 {
+		font-size: 1.5rem;
+	}
 
-  h4, > h5, > h6 {
-    font-size: 1.2rem;
-  }
+	h4,
+	> h5,
+	> h6 {
+		font-size: 1.2rem;
+	}
 
-  p {
-    margin: 0.5em 0;
-    hyphens: auto;
-    text-align: justify;
-    line-height: 1.5em;
-  }
+	p {
+		margin: 0.5em 0;
+		hyphens: auto;
+		text-align: justify;
+		line-height: 1.5em;
+	}
 
-  ul, ol {
-    padding-left: 1em;
+	ul,
+	ol {
+		padding-left: 1em;
 
-    ul, ol {
-      padding-left: 1em;
-    }
-  }
+		ul,
+		ol {
+			padding-left: 1em;
+		}
+	}
 
-  li {
-    line-height: 1.5em;
-  }
+	li {
+		line-height: 1.5em;
+	}
 
-  a {
-    color: var(--c-primary);
-    font-family: var(--serif);
-    font-weight: 500;
-    font-style: italic;
-    text-decoration: unset;
+	a {
+		color: var(--c-primary);
+		font-family: var(--serif);
+		font-weight: 500;
+		font-style: italic;
+		text-decoration: unset;
 
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+		&:hover {
+			text-decoration: underline;
+		}
+	}
 
-  > h1, > h2, > h3, > h4, > h5, > h6 {
-    margin-bottom: 0.5em;
-    font-family: var(--serif);
-    font-weight: 500;
+	> h1,
+	> h2,
+	> h3,
+	> h4,
+	> h5,
+	> h6 {
+		margin-bottom: 0.5em;
+		font-family: var(--serif);
+		font-weight: 500;
 
-    &:not(:first-child) {
-      margin-top: 1em;
-    }
-  }
+		&:not(:first-child) {
+			margin-top: 1em;
+		}
+	}
 
+	img:not([class]) {
+		max-width: 100%;
+		height: auto;
+		margin-block: 1em;
+	}
 
-  img:not([class]) {
-    max-width: 100%;
-    height: auto;
-    margin-block: 1em;
-  }
+	blockquote {
+		position: relative;
+		margin: 1em 2em;
 
-  blockquote {
-    position: relative;
-    margin: 1em 2em;
+		&::before {
+			content: "";
+			display: block;
+			position: absolute;
+			left: -1em;
+			width: 4px;
+			height: 100%;
+			background-color: var(--c-secondary);
+			border-radius: 2px;
+		}
+	}
 
-    &::before {
-      content: "";
-      display: block;
-      position: absolute;
-      left: -1em;
-      width: 4px;
-      height: 100%;
-      background-color: var(--c-secondary);
-      border-radius: 2px;
-    }
-  }
+	> table {
+		margin: 1em auto 1em auto;
+		border-collapse: collapse;
+		overflow-x: auto;
 
-  > table {
-    margin: 1em auto 1em auto;
-    border-collapse: collapse;
-    overflow-x: auto;
+		th,
+		td {
+			padding: 0.2em 0.5em;
+			border: 1px solid #dbdbdb;
+		}
 
-    th, td {
-      padding: 0.2em 0.5em;
-      border: 1px solid #dbdbdb;
-    }
+		th {
+			background-color: #f3f3f3;
+		}
 
-    th {
-      background-color: #f3f3f3;
-    }
+		p {
+			white-space: pre-line;
+		}
+	}
 
-    p {
-      white-space: pre-line;
-    }
-  }
+	code {
+		font-family: var(--monospace);
+	}
 
-  code {
-    font-family: var(--monospace);
-  }
+	:not(pre) > code {
+		padding-inline: 0.25em;
+		background-color: white;
+		border-radius: 0.33em;
+		border: 1px dashed lightgray;
+	}
 
-  :not(pre) > code {
-    padding-inline: 0.25em;
-    background-color: white;
-    border-radius: 0.33em;
-    border: 1px dashed lightgray;
-  }
+	.listing {
+		position: relative;
+		margin: 1em -1em;
+		border-width: 0.25em 0;
+		border-style: solid;
 
-  .listing {
-    position: relative;
-    margin: 1em -1em;
-    border-width: 0.25em 0;
-    border-style: solid;
+		@media (min-width: 600px) {
+			margin: 1em 0.5em;
+			border-width: 0.25rem;
+			border-radius: 0.5rem;
+		}
 
-    @media (min-width: 600px) {
-      margin: 1em 0.5em;
-      border-width: 0.25rem;
-      border-radius: 0.5rem;
-    }
+		&::before {
+			content: attr(data-lang);
+			display: block;
+			top: 0;
+			right: 0;
+			position: absolute;
+			padding: 0.1em 0.2em 0 0.3em;
+			border-radius: 0 0 0 0.5rem;
+		}
 
-    &::before {
-      content: attr(data-lang);
-      display: block;
-      top: 0;
-      right: 0;
-      position: absolute;
-      padding: 0.1em 0.2em 0 0.3em;
-      border-radius: 0 0 0 0.5rem;
-    }
+		pre {
+			padding: 0.5em;
+			max-width: 100%;
+			overflow-x: auto;
+			tab-size: 2;
 
-    pre {
-      padding: 0.5em;
-      max-width: 100%;
-      overflow-x: auto;
-      tab-size: 2;
+			> code {
+				display: block;
+				line-height: 1.5em;
+			}
+		}
+	}
 
-      > code {
-        display: block;
-        line-height: 1.5em;
-      }
-    }
-  }
+	.math-display {
+		margin-block: 1em;
+		font-size: 1.1em;
+		overflow-x: auto;
+		overflow-y: hidden;
+	}
 
-  .math-display {
-    margin-block: 1em;
-    font-size: 1.1em;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
+	.marginnote {
+		display: block;
+		margin: 1em 1.5em;
+		padding-block: 0.5em;
+		border-block: 1px dashed gray;
+		color: gray;
 
-  .marginnote {
-    display: block;
-    margin: 1em 1.5em;
-    padding-block: 0.5em;
-    border-block: 1px dashed gray;
-    color: gray;
+		@media (min-width: 38em) {
+			float: right;
+			clear: right;
+			max-width: 14rem;
+			margin-right: 0;
+			text-align: justify;
+			hyphens: auto;
+		}
 
-    @media (min-width: 38em) {
-      float: right;
-      clear: right;
-      max-width: 14rem;
-      margin-right: 0;
-      text-align: justify;
-      hyphens: auto;
-    }
+		@media (min-width: 80em) {
+			margin: 2em -17rem;
+		}
 
-    @media (min-width: 80em) {
-      margin: 2em -17rem;
-    }
+		a {
+			color: var(--c-primary);
+		}
+	}
 
-    a {
-      color: var(--c-primary);
-    }
-  }
+	// TODO: clean this
+	.md-icon {
+		display: inline-block;
+		height: 1.2em;
+		width: auto;
+		vertical-align: middle;
+		margin: 0.1em 0;
 
-  // TODO: clean this
-  .md-icon {
-    display: inline-block;
-    height: 1.2em;
-    width: auto;
-    vertical-align: middle;
-    margin: 0.1em 0;
-
-    &.big {
-      height: 4em;
-    }
-  }
+		&.big {
+			height: 4em;
+		}
+	}
 }

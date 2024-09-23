@@ -1,6 +1,7 @@
 ---
 title: Remember forums?
 date: 2024-09-21T19:14:29.799Z
+tags: [thought, internet]
 desc: >
   It feels to me like forums are slowly getting forgotten, replaced with more high-paced services like Discord or Twitter.
   In my opinion this isn't a good thing at all.

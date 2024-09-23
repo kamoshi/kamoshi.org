@@ -1,6 +1,5 @@
 mod head;
 mod home;
-mod isodate;
 mod list;
 mod misc;
 pub mod post;
@@ -16,11 +15,8 @@ use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderabl
 
 pub(crate) use home::home;
 use post::article;
-pub(crate) use post::Post;
-pub(crate) use slideshow::Slideshow;
-pub(crate) use wiki::Wiki;
 
-use crate::{LinkDate, MySack};
+use crate::{model::Post, LinkDate, MySack};
 
 fn navbar() -> impl Renderable {
 	static ITEMS: &[(&str, &str)] = &[
@@ -219,11 +215,11 @@ pub fn as_html(
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> String {
-	flox(&meta.title, parsed, sack, outline, bibliography)
+	flox(meta, parsed, sack, outline, bibliography)
 }
 
 pub(crate) fn flox(
-	title: &str,
+	meta: &Post,
 	parsed: &str,
 	sack: &MySack,
 	outline: Outline,
@@ -248,7 +244,7 @@ pub(crate) fn flox(
 						pre #output {}
 					}
 				}
-				(article(title, parsed, sack, outline, bibliography))
+				(article(meta, parsed, sack, outline, bibliography))
 			}
 		),
 		String::from("Flox"),
