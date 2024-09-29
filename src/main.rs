@@ -8,7 +8,7 @@ use std::process::Command;
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{Collection, Processor, Sack, Website};
+use hauchiwa::{Collection, Sack, Website};
 use hypertext::Renderable;
 use model::{Post, Slideshow, Wiki};
 
@@ -73,51 +73,11 @@ fn main() {
 
 	let website = Website::setup()
 		.add_collections(vec![
-			Collection::glob_with::<Post>(
-				"content",
-				"about.md",
-				["md"].into(),
-				Processor {
-					read_content: crate::html::post::parse_content,
-					to_html: crate::html::post::as_html,
-				},
-			),
-			Collection::glob_with::<Post>(
-				"content",
-				"posts/**/*",
-				["md", "mdx"].into(),
-				Processor {
-					read_content: crate::html::post::parse_content,
-					to_html: crate::html::post::as_html,
-				},
-			),
-			Collection::glob_with::<Slideshow>(
-				"content",
-				"slides/**/*",
-				["md", "lhs"].into(),
-				Processor {
-					read_content: crate::html::slideshow::parse_content,
-					to_html: crate::html::slideshow::as_html,
-				},
-			),
-			Collection::glob_with::<Wiki>(
-				"content",
-				"wiki/**/*",
-				["md"].into(),
-				Processor {
-					read_content: crate::html::wiki::parse_content,
-					to_html: crate::html::wiki::as_html,
-				},
-			),
-			Collection::glob_with::<Post>(
-				"content",
-				"projects/flox.md",
-				["md"].into(),
-				Processor {
-					read_content: crate::html::post::parse_content,
-					to_html: crate::html::as_html,
-				},
-			),
+			Collection::glob_with::<Post>("content", "about.md", ["md"].into()),
+			Collection::glob_with::<Post>("content", "posts/**/*", ["md", "mdx"].into()),
+			Collection::glob_with::<Slideshow>("content", "slides/**/*", ["md", "lhs"].into()),
+			Collection::glob_with::<Wiki>("content", "wiki/**/*", ["md"].into()),
+			Collection::glob_with::<Post>("content", "projects/flox.md", ["md"].into()),
 		])
 		.add_scripts(vec![
 			("search", "./js/search/dist/search.js"),
@@ -126,83 +86,133 @@ fn main() {
 			("editor", "./js/flox/main.ts"),
 			("lambda", "./js/flox/lambda.ts"),
 		])
-		.add_virtual(
-			|sack| crate::html::map(sack).unwrap().render().to_owned().into(),
-			"map/index.html".into(),
-		)
-		.add_virtual(crate::html::search, "search/index.html".into())
-		.add_virtual(
-			|sack| {
+		.add_task(|sack| {
+			let query = sack.get_content::<Post>("about").unwrap();
+			let (parsed, outline, bib) =
+				html::post::parse_content(query.content, &sack, query.file, None);
+			let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
+			vec![(query.slug.join("index.html"), out_buff)]
+		})
+		// Task: generate posts
+		.add_task(|sack| {
+			sack.get_content_list::<Post>("posts/**/*")
+				.into_iter()
+				.map(|query| {
+					let (parsed, outline, bib) =
+						html::post::parse_content(query.content, &sack, query.file, None);
+					let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
+					(query.slug.join("index.html"), out_buff)
+				})
+				.collect()
+		})
+		// Task: generate slides
+		.add_task(|sack| {
+			sack.get_content_list::<Slideshow>("slides/**/*")
+				.into_iter()
+				.map(|query| {
+					let (parsed, outline, bib) =
+						html::slideshow::parse_content(query.content, &sack, query.file, None);
+					let out_buff =
+						html::slideshow::as_html(query.meta, &parsed, &sack, outline, bib);
+					(query.slug.join("index.html"), out_buff)
+				})
+				.collect()
+		})
+		// Task: generate wiki
+		.add_task(|sack| {
+			sack.get_content_list::<Wiki>("wiki/**/*")
+				.into_iter()
+				.map(|query| {
+					let (parsed, outline, bib) =
+						html::wiki::parse_content(query.content, &sack, query.file, None);
+					let out_buff =
+						html::wiki::as_html(query.meta, &parsed, &sack, query.file, outline, bib);
+					(query.slug.join("index.html"), out_buff)
+				})
+				.collect()
+		})
+		// Task: generate map
+		.add_task(|sack| {
+			vec![(
+				"map/index.html".into(),
+				crate::html::map(&sack).unwrap().render().to_owned().into(),
+			)]
+		})
+		// Task: generate search
+		.add_task(|sack| vec![("search/index.html".into(), crate::html::search(&sack))])
+		// Task: generate home page
+		.add_task(|sack| {
+			let data = std::fs::read_to_string("content/index.md").unwrap();
+			let (parsed, _, _) = text::md::parse(&data, &sack, "".into(), None);
+			vec![("index.html".into(), crate::html::home(&sack, &parsed))]
+		})
+		// Task: generate project index
+		.add_task(|sack| {
+			vec![(
+				"projects/index.html".into(),
 				crate::html::to_list(
-					sack,
-					sack.get_meta::<Post>("projects/**/*.html")
+					&sack,
+					sack.get_content_list::<Post>("projects/**/*")
 						.into_iter()
-						.map(|(path, meta)| LinkDate {
+						.map(|query| LinkDate {
 							link: Link {
-								path: Utf8Path::new("/").join(path.parent().unwrap()),
-								name: meta.title.clone(),
-								desc: meta.desc.clone(),
+								path: Utf8Path::new("/").join(query.slug),
+								name: query.meta.title.clone(),
+								desc: query.meta.desc.clone(),
 							},
-							date: meta.date,
+							date: query.meta.date,
 						})
 						.collect(),
 					"Projects".into(),
-				)
-			},
-			"projects/index.html".into(),
-		)
-		.add_virtual(
-			|sack| {
+				),
+			)]
+		})
+		// Task: generate post index
+		.add_task(|sack| {
+			vec![(
+				"posts/index.html".into(),
 				crate::html::to_list(
-					sack,
-					sack.get_meta::<Post>("posts/**/*.html")
+					&sack,
+					sack.get_content_list::<Post>("posts/**/*")
 						.into_iter()
-						.map(|(path, meta)| LinkDate {
+						.map(|query| LinkDate {
 							link: Link {
-								path: Utf8Path::new("/").join(path.parent().unwrap()),
-								name: meta.title.clone(),
-								desc: meta.desc.clone(),
+								path: Utf8Path::new("/").join(query.slug),
+								name: query.meta.title.clone(),
+								desc: query.meta.desc.clone(),
 							},
-							date: meta.date,
+							date: query.meta.date,
 						})
 						.collect(),
 					"Posts".into(),
-				)
-			},
-			"posts/index.html".into(),
-		)
-		.add_virtual(
-			|sack| {
+				),
+			)]
+		})
+		// Task: generate slideshow index
+		.add_task(|sack| {
+			vec![(
+				"slides/index.html".into(),
 				crate::html::to_list(
-					sack,
-					sack.get_meta::<Slideshow>("slides/**/*.html")
+					&sack,
+					sack.get_content_list::<Slideshow>("slides/**/*")
 						.into_iter()
-						.map(|(path, meta)| LinkDate {
+						.map(|query| LinkDate {
 							link: Link {
-								path: Utf8Path::new("/").join(path.parent().unwrap()),
-								name: meta.title.clone(),
-								desc: meta.desc.clone(),
+								path: Utf8Path::new("/").join(query.slug),
+								name: query.meta.title.clone(),
+								desc: query.meta.desc.clone(),
 							},
-							date: meta.date,
+							date: query.meta.date,
 						})
 						.collect(),
 					"Slideshows".into(),
-				)
-			},
-			"slides/index.html".into(),
-		)
-		.add_virtual(
-			|sack| {
-				let data = std::fs::read_to_string("content/index.md").unwrap();
-				let (parsed, _, _) = text::md::parse(&data, sack, "".into(), None);
-				crate::html::home(sack, &parsed)
-			},
-			"index.html".into(),
-		)
+				),
+			)]
+		})
 		.finish();
 
 	match args.mode {
 		Mode::Build => website.build(MyData::new()),
-		Mode::Watch => website.watch(MyData::new()),
+		Mode::Watch => (), //website.watch(MyData::new())),
 	}
 }

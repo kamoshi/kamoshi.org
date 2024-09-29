@@ -43,15 +43,15 @@ fn photo() -> impl Renderable {
 fn latest(sack: &Sack<MyData>) -> impl Renderable {
 	let links = {
 		let mut list = sack
-			.get_meta::<Post>("**")
+			.get_content_list::<Post>("**")
 			.into_iter()
-			.map(|(path, meta)| LinkDate {
+			.map(|query| LinkDate {
 				link: Link {
-					path: Utf8Path::new("/").join(path),
-					name: meta.title.clone(),
-					desc: meta.desc.clone(),
+					path: Utf8Path::new("/").join(query.slug),
+					name: query.meta.title.clone(),
+					desc: query.meta.desc.clone(),
 				},
-				date: meta.date,
+				date: query.meta.date,
 			})
 			.collect::<Vec<_>>();
 		list.sort_by(|a, b| b.date.cmp(&a.date));

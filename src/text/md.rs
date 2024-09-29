@@ -363,7 +363,7 @@ fn swap_hashed_image<'a>(dir: &'a Utf8Path, sack: &'a MySack) -> impl Fn(Event) 
 				id,
 			} => {
 				let rel = dir.join(dest_url.as_ref());
-				let img = sack.get_image(&rel);
+				let img = sack.get_picture(&rel);
 				let hashed = img.map(|path| path.as_str().to_owned().into());
 				Event::Start(Tag::Image {
 					link_type,

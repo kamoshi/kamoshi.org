@@ -68,16 +68,20 @@ pub fn footer<'s, 'html>(sack: &'s MySack) -> impl Renderable + 'html
 where
 	's: 'html,
 {
-	let copy = format!("Copyright &copy; {} Maciej Jur", &sack.ctx.data.year);
+	let copy = format!(
+		"Copyright &copy; {} Maciej Jur",
+		&sack.get_context().data.year
+	);
 	let mail = "maciej@kamoshi.org";
 	let href = format!("mailto:{}", mail);
-	let link = Utf8Path::new(&sack.ctx.data.link)
+	let link = Utf8Path::new(&sack.get_context().data.link)
 		.join("src/commit")
-		.join(&sack.ctx.data.hash);
-	let link = match sack.get_file() {
-		Some(path) => link.join(path),
-		None => link,
-	};
+		.join(&sack.get_context().data.hash);
+
+	// let link = match sack.get_file() {
+	// 	Some(path) => link.join(path),
+	// 	None => link,
+	// };
 
 	maud_move!(
 		footer .footer {
@@ -91,10 +95,10 @@ where
 			}
 			div .repo {
 				a href=(link.as_str()) {
-					(&sack.ctx.data.hash)
+					(&sack.get_context().data.hash)
 				}
 				div {
-					(&sack.ctx.data.date)
+					(&sack.get_context().data.date)
 				}
 			}
 			a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {

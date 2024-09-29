@@ -1,4 +1,5 @@
-use hauchiwa::{HashedStyle, Mode, Sack};
+use camino::Utf8Path;
+use hauchiwa::{Mode, Sack};
 use hypertext::{html_elements, maud_move, Raw, Renderable};
 
 use crate::MyData;
@@ -21,9 +22,9 @@ where
 	's: 'r,
 {
 	let title = format!("{} | kamoshi.org", title);
-	let css = sack.get_style("styles").expect("Missing styles");
-	let css_r = sack.get_style("reveal").expect("Missing styles");
-	let css_p = sack.get_style("leaflet").expect("Missing styles");
+	let css = sack.get_styles("styles").expect("Missing styles");
+	let css_r = sack.get_styles("reveal").expect("Missing styles");
+	let css_p = sack.get_styles("leaflet").expect("Missing styles");
 
 	let scripts = match scripts {
 		Some(scripts) => Some(emit_tags_script(sack, scripts)?),
@@ -47,9 +48,9 @@ where
 		link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
 		link rel="icon" href="/favicon.ico" sizes="any";
 
-		script type="importmap" {(Raw(sack.get_import_map()))}
+		// script type="importmap" {(Raw(sack.get_import_map()))}
 
-		@if matches!(sack.ctx.mode, Mode::Watch) {
+		@if matches!(sack.get_context().mode, Mode::Watch) {
 			script { (Raw(JS_RELOAD)) }
 		}
 
@@ -59,9 +60,9 @@ where
 	))
 }
 
-fn render_style(style: &HashedStyle) -> impl Renderable + '_ {
+fn render_style(path: &Utf8Path) -> impl Renderable + '_ {
 	maud_move!(
-		link rel="stylesheet" href=(style.path.as_str());
+		link rel="stylesheet" href=(path.as_str());
 	)
 }
 
@@ -83,11 +84,11 @@ fn emit_tags_script<'a>(
 
 fn emit_tag_script<'a>(
 	sack: &'a Sack<MyData>,
-	script: &'a str,
+	alias: &'a str,
 ) -> Result<impl Renderable + 'a, String> {
-	let src = sack
-		.get_script(script)
-		.ok_or(format!("Missing script {script}"))?;
+	let path = sack
+		.get_script(alias)
+		.ok_or(format!("Missing script {}", alias))?;
 
-	Ok(maud_move!(script type="module" src=(src.path.as_str()) defer {}))
+	Ok(maud_move!(script type="module" src=(path.as_str()) defer {}))
 }

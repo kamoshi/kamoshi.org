@@ -78,20 +78,23 @@ impl TreePage {
 }
 
 /// Render the page tree
-pub(crate) fn show_page_tree<'a>(sack: &'a MySack, glob: &'a str) -> impl Renderable + 'a {
-	let tree =
-		TreePage::from_iter(
-			sack.get_meta::<Wiki>(glob)
-				.into_iter()
-				.map(|(path, meta)| Link {
-					path: Utf8Path::new("/").join(path.parent().unwrap()),
-					name: meta.title.clone(),
-					desc: None,
-				}),
-		);
+pub(crate) fn show_page_tree<'a>(
+	path: &'a Utf8Path,
+	sack: &'a MySack,
+	glob: &'a str,
+) -> impl Renderable + 'a {
+	let tree = sack
+		.get_content_list::<Wiki>(glob)
+		.into_iter()
+		.map(|query| Link {
+			path: Utf8Path::new("/").join(query.slug),
+			name: query.meta.title.clone(),
+			desc: None,
+		});
+	let tree = TreePage::from_iter(tree);
 
 	let parts = {
-		let mut parts = sack.path.iter().skip(1).collect::<Vec<_>>();
+		let mut parts = path.iter().skip(1).collect::<Vec<_>>();
 		parts.insert(0, "wiki");
 		parts
 	};
