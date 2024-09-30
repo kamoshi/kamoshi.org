@@ -90,7 +90,7 @@ fn main() {
 		.add_task(|sack| {
 			let query = sack.get_content::<Post>("about").unwrap();
 			let (parsed, outline, bib) =
-				html::post::parse_content(query.content, &sack, query.file, None);
+				html::post::parse_content(query.content, &sack, query.area, None);
 			let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
 			vec![(query.slug.join("index.html"), out_buff)]
 		})
@@ -100,7 +100,7 @@ fn main() {
 				.into_iter()
 				.map(|query| {
 					let (parsed, outline, bib) =
-						html::post::parse_content(query.content, &sack, query.file, None);
+						html::post::parse_content(query.content, &sack, query.area, None);
 					let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
 					(query.slug.join("index.html"), out_buff)
 				})
@@ -112,7 +112,7 @@ fn main() {
 				.into_iter()
 				.map(|query| {
 					let (parsed, outline, bib) =
-						html::slideshow::parse_content(query.content, &sack, query.file, None);
+						html::slideshow::parse_content(query.content, &sack, query.area, None);
 					let out_buff =
 						html::slideshow::as_html(query.meta, &parsed, &sack, outline, bib);
 					(query.slug.join("index.html"), out_buff)
@@ -125,7 +125,7 @@ fn main() {
 				.into_iter()
 				.map(|query| {
 					let (parsed, outline, bib) =
-						html::wiki::parse_content(query.content, &sack, query.file, None);
+						html::wiki::parse_content(query.content, &sack, query.area, None);
 					let out_buff =
 						html::wiki::as_html(query.meta, &parsed, &sack, query.slug, outline, bib);
 					(query.slug.join("index.html"), out_buff)
