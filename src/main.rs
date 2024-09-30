@@ -136,7 +136,11 @@ fn main() {
 		.add_task(|sack| {
 			vec![(
 				"map/index.html".into(),
-				crate::html::map(&sack).unwrap().render().to_owned().into(),
+				crate::html::map(&sack, Some(&["photos".into()]))
+					.unwrap()
+					.render()
+					.to_owned()
+					.into(),
 			)]
 		})
 		// Task: generate search

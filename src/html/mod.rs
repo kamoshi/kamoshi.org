@@ -136,6 +136,7 @@ fn full<'s, 'p, 'html>(
 	sack: &'s MySack,
 	main: impl Renderable + 'p,
 	title: String,
+	js: Option<&'s [String]>,
 ) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
@@ -143,7 +144,7 @@ where
 {
 	let main = maud_move!((navbar())(main));
 
-	bare(sack, main, title, None)
+	bare(sack, main, title, js)
 }
 
 fn page<'s, 'p, 'html>(
@@ -181,7 +182,10 @@ pub(crate) fn to_list(sack: &MySack, list: Vec<LinkDate>, title: String) -> Stri
 	list::list(sack, &groups, title).unwrap().render().into()
 }
 
-pub(crate) fn map<'s, 'html>(sack: &'s MySack) -> Result<impl Renderable + 'html, String>
+pub(crate) fn map<'s, 'html>(
+	sack: &'s MySack,
+	js: Option<&'s [String]>,
+) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
 {
@@ -195,6 +199,7 @@ where
 			}
 		),
 		String::from("Map"),
+		js,
 	)
 }
 
