@@ -18,18 +18,18 @@ pub fn as_html(
 	meta: &Wiki,
 	parsed: &str,
 	sack: &MySack,
-	path: &Utf8Path,
+	slug: &Utf8Path,
 	outline: Outline,
 	bibliography: Bibliography,
 ) -> String {
-	wiki(meta, parsed, sack, path, outline, bibliography)
+	wiki(meta, parsed, sack, slug, outline, bibliography)
 }
 
 fn wiki(
 	matter: &Wiki,
 	parsed: &str,
 	sack: &MySack,
-	path: &Utf8Path,
+	slug: &Utf8Path,
 	_: Outline,
 	bibliography: Bibliography,
 ) -> String {
@@ -48,7 +48,7 @@ fn wiki(
 				// Navigation tree
 				section .link-tree {
 					div {
-						(crate::html::misc::show_page_tree(path, sack, "wiki/**/*.html"))
+						(crate::html::misc::show_page_tree(slug, sack))
 					}
 				}
 			}

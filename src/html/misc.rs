@@ -78,26 +78,18 @@ impl TreePage {
 }
 
 /// Render the page tree
-pub(crate) fn show_page_tree<'a>(
-	path: &'a Utf8Path,
-	sack: &'a MySack,
-	glob: &'a str,
-) -> impl Renderable + 'a {
+pub(crate) fn show_page_tree<'a>(slug: &'a Utf8Path, sack: &'a MySack) -> impl Renderable + 'a {
 	let tree = sack
-		.get_content_list::<Wiki>(glob)
+		.get_content_list::<Wiki>("**/*")
 		.into_iter()
 		.map(|query| Link {
 			path: Utf8Path::new("/").join(query.slug),
 			name: query.meta.title.clone(),
 			desc: None,
 		});
-	let tree = TreePage::from_iter(tree);
 
-	let parts = {
-		let mut parts = path.iter().skip(1).collect::<Vec<_>>();
-		parts.insert(0, "wiki");
-		parts
-	};
+	let tree = TreePage::from_iter(tree);
+	let parts: Vec<_> = slug.iter().collect();
 
 	maud_move!(
 		h2 .link-tree__heading {
@@ -139,8 +131,10 @@ where
 							}
 						}
 					}
-					@if key == parts[0] && !next.subs.is_empty()  {
-						(show_page_tree_level(next, &parts[1..]))
+					@if let Some(part) = parts.first() {
+						@if key == part && !next.subs.is_empty()  {
+							(show_page_tree_level(next, &parts[1..]))
+						}
 					}
 				}
 			}

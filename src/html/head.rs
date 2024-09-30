@@ -22,9 +22,15 @@ where
 	's: 'r,
 {
 	let title = format!("{} | kamoshi.org", title);
-	let css = sack.get_styles("styles").expect("Missing styles");
-	let css_r = sack.get_styles("reveal").expect("Missing styles");
-	let css_p = sack.get_styles("leaflet").expect("Missing styles");
+	let css = sack
+		.get_styles("styles/styles.scss".into())
+		.expect("Missing styles");
+	let css_r = sack
+		.get_styles("styles/reveal/reveal.scss".into())
+		.expect("Missing styles");
+	let css_p = sack
+		.get_styles("styles/photos/leaflet.scss".into())
+		.expect("Missing styles");
 
 	let scripts = match scripts {
 		Some(scripts) => Some(emit_tags_script(sack, scripts)?),
@@ -40,9 +46,9 @@ where
 
 		// link rel="sitemap" href="/sitemap.xml";
 
-		(render_style(css))
-		(render_style(css_r))
-		(render_style(css_p))
+		(render_style(&css))
+		(render_style(&css_r))
+		(render_style(&css_p))
 
 		link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
 		link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";

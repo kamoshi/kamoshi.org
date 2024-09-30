@@ -79,6 +79,7 @@ fn main() {
 			Collection::glob_with::<Wiki>("content", "wiki/**/*", ["md"].into()),
 			Collection::glob_with::<Post>("content", "projects/flox.md", ["md"].into()),
 		])
+		.add_global_styles(["styles".into()])
 		.add_scripts(vec![
 			("search", "./js/search/dist/search.js"),
 			("photos", "./js/vanilla/photos.js"),
@@ -120,13 +121,13 @@ fn main() {
 		})
 		// Task: generate wiki
 		.add_task(|sack| {
-			sack.get_content_list::<Wiki>("wiki/**/*")
+			sack.get_content_list::<Wiki>("**/*")
 				.into_iter()
 				.map(|query| {
 					let (parsed, outline, bib) =
 						html::wiki::parse_content(query.content, &sack, query.file, None);
 					let out_buff =
-						html::wiki::as_html(query.meta, &parsed, &sack, query.file, outline, bib);
+						html::wiki::as_html(query.meta, &parsed, &sack, query.slug, outline, bib);
 					(query.slug.join("index.html"), out_buff)
 				})
 				.collect()
