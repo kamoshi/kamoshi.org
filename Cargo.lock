@@ -988,6 +988,8 @@ dependencies = [
  "tree-sitter-html",
  "tree-sitter-javascript",
  "tree-sitter-language",
+ "tree-sitter-md",
+ "tree-sitter-ocaml",
  "tree-sitter-python",
  "tree-sitter-regex",
  "tree-sitter-rust",
@@ -1787,6 +1789,26 @@ name = "tree-sitter-language"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2545046bd1473dac6c626659cc2567c6c0ff302fc8b84a56c4243378276f7f57"
+
+[[package]]
+name = "tree-sitter-md"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17f968c22a01010b83fc960455ae729db08dbeb6388617d9113897cb9204b030"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-ocaml"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0534f94f006cf4d4994e964212e91d4626efcaf6769b023d3f17530399a4d6e1"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
 
 [[package]]
 name = "tree-sitter-python"
