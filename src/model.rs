@@ -31,17 +31,6 @@ mod isodate {
 	use chrono::{DateTime, Utc};
 	use serde::{self, Deserialize, Deserializer};
 
-	// pub fn serialize<S>(
-	//     date: &DateTime<Utc>,
-	//     serializer: S,
-	// ) -> Result<S::Ok, S::Error>
-	// where
-	//     S: Serializer,
-	// {
-	//     let s = date.to_rfc3339();
-	//     serializer.serialize_str(&s)
-	// }
-
 	pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
 	where
 		D: Deserializer<'de>,

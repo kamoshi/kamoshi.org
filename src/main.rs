@@ -99,8 +99,9 @@ fn main() {
 			sack.get_content_list::<Post>("posts/**/*")
 				.into_iter()
 				.map(|query| {
+					let bibliography = sack.get_library(query.area);
 					let (parsed, outline, bib) =
-						html::post::parse_content(query.content, &sack, query.area, None);
+						html::post::parse_content(query.content, &sack, query.area, bibliography);
 					let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
 					(query.slug.join("index.html"), out_buff)
 				})
@@ -124,8 +125,9 @@ fn main() {
 			sack.get_content_list::<Wiki>("**/*")
 				.into_iter()
 				.map(|query| {
+					let bibliography = sack.get_library(query.area);
 					let (parsed, outline, bib) =
-						html::wiki::parse_content(query.content, &sack, query.area, None);
+						html::wiki::parse_content(query.content, &sack, query.area, bibliography);
 					let out_buff =
 						html::wiki::as_html(query.meta, &parsed, &sack, query.slug, outline, bib);
 					(query.slug.join("index.html"), out_buff)
@@ -150,6 +152,15 @@ fn main() {
 			let data = std::fs::read_to_string("content/index.md").unwrap();
 			let (parsed, _, _) = text::md::parse(&data, &sack, "".into(), None);
 			vec![("index.html".into(), crate::html::home(&sack, &parsed))]
+		})
+		.add_task(|sack| {
+			let query = sack.get_content("projects/flox").unwrap();
+
+			let (parsed, outline, bib) =
+				html::post::parse_content(query.content, &sack, query.area, None);
+			let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
+
+			vec![(query.slug.join("index.html"), out_buff)]
 		})
 		// Task: generate project index
 		.add_task(|sack| {
