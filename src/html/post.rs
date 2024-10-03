@@ -1,7 +1,7 @@
 use camino::Utf8Path;
 use hauchiwa::{Bibliography, Outline};
 use hayagriva::Library;
-use hypertext::{html_elements, maud_move, rsx, rsx_move, GlobalAttributes, Raw, Renderable};
+use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 
 use crate::{model::Post, MySack};
 

@@ -2,7 +2,7 @@
 title: My thoughts on NixOS
 date: 2024-06-30T20:57:37Z
 desc: >
-    A few weeks ago I decided to try out NixOS. 
+  A few weeks ago I decided to try out NixOS.
 ---
 
 For about a year, I have used Arch Linux. However, a few weeks ago, I decided
@@ -30,6 +30,7 @@ hardware.graphics = {
 	enable32Bit = true;
 };
 ```
+
 NixOS would install every single thing required to enable OpenGL completely
 automatically.
 
@@ -43,9 +44,9 @@ games, you need to write:
 ```nix
 programs.steam.enable = true;
 ```
+
 This single line not only installs Steam on your system but also provides
 configurations that make your system more tailored for running games.
-
 
 ### Configuring services
 
@@ -69,7 +70,6 @@ The way NixOS works makes it extremely easy not only to configure the system
 but also to save the configuration. It's trivial to commit it into a version
 control system (VCS), ensuring reproducibility and ease of deployment across
 multiple systems.
-
 
 ## Home configuration
 
@@ -97,7 +97,6 @@ I found that it's better to just install this program in the main config
 instead. Other than this home-manager works pretty good, and it is very useful,
 so I recommend using it.
 
-
 ## Channels
 
 NixOS has different channels you can use for packages. A channel is essentially
@@ -120,7 +119,6 @@ from `unstable`?
 This is what I went with, and it works for me so far, but I'm not sure how it
 will be in the long run...
 
-
 ## Flakes
 
 There is a completely different and experimental (unstable) approach to
@@ -130,7 +128,6 @@ I haven't used it myself, so I can't give an opinion about it specifically.
 One thing I can say, though, is that I find it pretty confusing how there are
 several competing systems for writing the system configuration, out of which
 one is experimental, but lots of people decided to use it anyways.
-
 
 # Final thoughts
 

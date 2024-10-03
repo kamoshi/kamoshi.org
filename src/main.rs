@@ -229,6 +229,6 @@ fn main() {
 
 	match args.mode {
 		Mode::Build => website.build(MyData::new()),
-		Mode::Watch => (), //website.watch(MyData::new())),
+		Mode::Watch => website.watch(MyData::new()),
 	}
 }
