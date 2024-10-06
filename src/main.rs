@@ -10,7 +10,7 @@ use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::{Collection, Sack, Website};
 use hypertext::Renderable;
-use model::{Post, Slideshow, Wiki};
+use model::{Home, Post, Slideshow, Wiki};
 
 #[derive(Parser, Debug, Clone)]
 struct Args {
@@ -73,6 +73,7 @@ fn main() {
 
 	let website = Website::setup()
 		.add_collections(vec![
+			Collection::glob_with::<Home>("content", "index.md", ["md"].into()),
 			Collection::glob_with::<Post>("content", "about.md", ["md"].into()),
 			Collection::glob_with::<Post>("content", "posts/**/*", ["md", "mdx"].into()),
 			Collection::glob_with::<Slideshow>("content", "slides/**/*", ["md", "lhs"].into()),
@@ -87,6 +88,13 @@ fn main() {
 			("editor", "./js/flox/main.ts"),
 			("lambda", "./js/flox/lambda.ts"),
 		])
+		// Task: generate home page
+		.add_task(|sack| {
+			let query = sack.get_content::<Home>("").unwrap();
+			let (parsed, _, _) = text::md::parse(query.content, &sack, query.area, None);
+			let out_buff = html::home(&sack, &parsed);
+			vec![("index.html".into(), out_buff)]
+		})
 		.add_task(|sack| {
 			let query = sack.get_content::<Post>("about").unwrap();
 			let (parsed, outline, bib) =
@@ -147,12 +155,6 @@ fn main() {
 		})
 		// Task: generate search
 		.add_task(|sack| vec![("search/index.html".into(), crate::html::search(&sack))])
-		// Task: generate home page
-		.add_task(|sack| {
-			let data = std::fs::read_to_string("content/index.md").unwrap();
-			let (parsed, _, _) = text::md::parse(&data, &sack, "".into(), None);
-			vec![("index.html".into(), crate::html::home(&sack, &parsed))]
-		})
 		.add_task(|sack| {
 			let query = sack.get_content("projects/flox").unwrap();
 

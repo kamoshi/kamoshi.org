@@ -1,30 +1,30 @@
 // Config
-@use 'root';
-@use 'reset';
-@use 'fonts';
-@use 'base';
-@use 'markdown';
-@use 'kanagawa';
+@use "root";
+@use "reset";
+@use "fonts";
+@use "base";
+@use "markdown";
+@use "kanagawa";
 
 // Components
-@use 'components/map';
-@use 'components/search';
-@use 'components/link-tree';
-@use 'components/bibliography';
-@use 'components/kanji';
+@use "components/map";
+@use "components/search";
+@use "components/link-tree";
+@use "components/bibliography";
+@use "components/kanji";
 
 // Partials
-@use 'partials/navbar';
-@use 'partials/footer';
+@use "partials/navbar";
+@use "partials/footer";
 
 // Shortcodes
-@use 'shortcodes/timeline';
-@use 'shortcodes/marginnote';
+@use "shortcodes/timeline";
+@use "shortcodes/marginnote";
 
 // Layouts
-@use 'layouts/home';
-@use 'layouts/page';
-@use 'layouts/list';
+@use "layouts/home";
+@use "layouts/page";
+@use "layouts/list";
 
 // Special
-@use 'flox';
+@use "flox";

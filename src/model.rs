@@ -1,6 +1,12 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
+/// Represents a wiki page
+#[derive(Deserialize, Debug, Clone)]
+pub struct Home {
+	pub title: String,
+}
+
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]
 pub struct Post {

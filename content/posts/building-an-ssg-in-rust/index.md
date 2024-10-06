@@ -1,0 +1,179 @@
+---
+title: Building an SSG in Rust
+date: 2024-10-05T12:29:54.111Z
+desc: >
+  Some reflections on using Rust to write a static site generator...
+---
+
+For the past few months in my spare time, I’ve been programming a simple
+library in Rust that can be used to generate a static website from markdown
+files and images. I myself use it to generate this very website, and it is
+available under the GPL license on
+[crates.io](https://crates.io/crates/hauchiwa), though it might be outdated -
+the latest version is always on [GitHub](https://github.com/kamoshi/hauchiwa)
+and the documentation is available on
+[docs.rs](https://docs.rs/hauchiwa/latest/hauchiwa/).
+
+You can add it to your own project in two ways, like so:
+
+```rust
+hauchiwa = "*"
+hauchiwa = { git = "https://github.com/kamoshi/hauchiwa" }
+```
+
+## Background
+
+Throughout the years I've tried many different tools, some of them better than
+others.  For example, I really liked the speed of Hugo and the flexibility of
+Astro, but none of the available tools fulfilled my needs. I wanted both speed
+and lots of flexibility at the same time, I figured that I needed to create my own
+generator from scratch to accomplish what I want to do.
+
+The first thing I had to do was choose the language and the ecosystem for the
+generator, and as you already know, I ended up with Rust. I've considered
+different languages and ecosystems - like Haskell - but Rust currently has a lot
+of industrial momentum, that's the current zeitgeist.
+
+Contrary to what many people say, Rust is not a silver bullet, the fact that in
+Rust you have to deal with memory, even if it's automatic most of the time can
+be a deal breaker. Sometimes you just don't need to care about memory, so having
+To deal with it is a waste of mental energy. Nevertheless, I decided that this
+tradeoff is worth taking in this case, given that Rust has:
+
+- lots of good enough libraries
+- vibrant community
+- ergonomic abstractions
+- automatic memory management with borrow checker
+
+So given these facts, I came to the conclusion that going with Rust will make it
+easy to find any library I need to create a generator, and the memory management
+is an acceptable tradeoff for the fact that Rust programs are generally quite
+fast and compile to a single binary.
+
+When it comes to the actual form factor of the library, I wanted it to be really
+minimal and allow for maximal flexibility. I really enjoyed the way Astro works,
+you use it as a general framework, you have lots of freedom to define each page
+on the generated website. I would like to preserve this spirit in my library,
+while at the same time creating a robust and idiomatic API in Rust.
+
+Some of the requirements I had in mind are:
+
+- The library should be decoupled from any templating engine, the user should
+  be able to choose their own way to generate the HTML, they should even be able
+  to do it by concatenating strings manually if they so desire.
+- The user shouldn't be limited to Markdown, the library should be format
+  agnostic and the user should be allowed to bring any parser they want and use
+  it to convert any kind of file to HTML.
+- The user should be able to generate HTML pages that don't have any original
+  source files related to them, think of dynamically generated lists of pages,
+  tags, etc.
+- There should be a way to render different pages differently, some collections
+  of Markdown files should output different looking pages.
+- The library should make it easy to watch for changes and allow the user to add
+  live reload while editing their website.
+
+In my library I've tried to address all of these requirements, but it's still
+being worked out. I've spent a lot of time thinking through lots of design
+decisions until I landed on some sweet spot in the design space, but even now,
+I'm not sure if there are better ways to accomplish some things...
+
+## Incremental build system
+
+To implement the incremental build process and live reload, I've ended up reading
+an article called _Build systems à la carte_, which goes over different ways to
+implent a build system in Haskell, I would recommend reading it; it was really
+useful. Based on some prior experience as well as this article, I've decided to
+go with a _suspending_ scheduler, as well as both _verifying traces_ and
+_constructive traces_ for the rebuilding strategy.
+
+_Suspending_ means that the moment a certain page requires, for example, a PNG
+image or a CSS stylesheet I pause the page build process in order to prepare the
+required asset. In practice, this just means I call a function that is supposed
+to build that image, so it's not anything difficult.
+
+```rust
+  /// Get compiled CSS style by file path.
+	pub fn get_styles(&self, path: &Utf8Path) -> Option<Utf8PathBuf> {
+		let input = self.items.values().find(|item| item.file == path)?;
+		if !matches!(input.data, Input::Stylesheet(..)) {
+			return None;
+		}
+
+		self.tracked
+			.borrow_mut()
+			.insert(input.file.clone(), input.hash.clone());
+
+		self.schedule(input)
+	}
+```
+
+This function calls another function `schedule`, which builds the asset if it
+needs to be built.
+
+```rust
+  fn schedule(&self, input: &InputItem) -> Option<Utf8PathBuf> {
+		let res = self.builder.read().unwrap().check(input);
+		if res.is_some() {
+			return res;
+		}
+
+		let res = self.builder.write().unwrap().build(input);
+		Some(res)
+	}
+```
+
+Here `self.builder` is behind an `RwLock` which needs to be acquired in order to
+build the asset. This is just an implementation detail; `RwLock` allows the
+builder to be shared in a multithreaded environment and allows many reads at
+the same time. This is optimal for the case when the asset is in fact already
+built.
+
+When it comes to the traces, I've decided to use the following strategy to trace
+input assets:
+
+```rust
+#[derive(Debug)]
+pub(crate) struct InputItem {
+	pub(crate) hash: Vec<u8>,
+	pub(crate) file: Utf8PathBuf,
+	pub(crate) slug: Utf8PathBuf,
+	pub(crate) data: Input,
+}
+```
+
+Each asset has a binary `hash` and with this information alone we can easily
+check if the input asset has changed in a meaningful way between two builds.
+
+In order to trace the individual build tasks that are defined by the user to
+generate the HTML pages, I've decided to use the following struct:
+
+```rust
+#[derive(Debug)]
+struct Trace<G: Send + Sync> {
+	task: Task<G>,
+	init: bool,
+	deps: HashMap<Utf8PathBuf, Vec<u8>>,
+}
+```
+
+Here we have `task` which is in fact a closure pointer - a pointer to a function
+defined by the user of the library. This function consumes a `Sack` which is the access point ftracks
+the dependencies required by the task.
+
+```rust
+/// Task function pointer used to dynamically generate a website page.
+type TaskFnPtr<G> = Arc<dyn Fn(Sack<G>) -> Vec<(Utf8PathBuf, String)> + Send + Sync>;
+
+/// Wraps `TaskFnPtr` and implements `Debug` trait for function pointer.
+pub(crate) struct Task<G: Send + Sync>(TaskFnPtr<G>);
+```
+
+These dependencies are then kept as the `deps` field, so we can check if any of
+the input files required by a certain task have changed. If they have, we can
+rebuild the task and update the dependencies. There's also the `init` field
+which just forces the task to be built for the first time.
+
+This is just the bare minimum to make this build system work, there are still
+some open questions, like "What if the build task is nondeterministic, should it
+be rebuilt every time?". Please take a look at the library code to see how the
+current build system works in detail.

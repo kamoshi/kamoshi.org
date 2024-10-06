@@ -1,3 +1,7 @@
+---
+title: Home
+---
+
 # Welcome to my website! :heart:
 
 You have found this little floating rock in the middle of the Internet! Congrats 🎉
@@ -15,6 +19,7 @@ Throughout the last few years I've been taking photos of random things in random
 [Take me to the map!](/map/)
 
 ## A short guide to the Hanafuda card game
+
 I've been playing Hanafuda for a while now, so I decided to write a short introduction into this interesting card game. I am by no means good at the game, so take everything with a grain of salt, but I feel like it should be enough to get you started.
 
 [Take me to the guide!](/posts/hanafuda/)

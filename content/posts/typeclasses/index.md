@@ -1,11 +1,11 @@
 ---
-title:  Breaking apart the Haskell type class
-date:   2023-11-02T17:28:25.466Z
-icon:   haskell
+title: Breaking apart the Haskell type class
+date: 2023-11-02T17:28:25.466Z
+icon: haskell
 desc: >
-    Type classes are perhaps the most distinctive feature of Haskell.
-    I’ve found them pretty confusing, but in reality they are an incredibly
-    elegant solution to a certain problem found in functional languages.
+  Type classes are perhaps the most distinctive feature of Haskell.
+  I’ve found them pretty confusing, but in reality they are an incredibly
+  elegant solution to a certain problem found in functional languages.
 ---
 
 Type classes are perhaps the most distinctive feature of Haskell.
@@ -103,7 +103,6 @@ add d a b = (+) d a b
 Effectively, `Num a` serves as a table of operations for the `Num` class for type `a`.
 This elegant mechanism allows Haskell to implement polymorphism with type classes while maintaining strict type safety.
 
-
 ## Kinds
 
 A type in Haskell is a classification that defines what kind of data a value can represent.
@@ -116,11 +115,13 @@ The notation for kinds in Haskell uses an asterisk `*` to represent the most bas
 You can check the kind of any type by using the `:kind` command in GHCi.
 
 The kind of `Int` is `*`, indicating that `Int` is a concrete type.
+
 ```haskell
 Int :: *
 ```
 
 Similarly, the kind of `Float` is `*`, signifying that it is also a concrete type.
+
 ```haskell
 Float :: *
 ```
@@ -130,14 +131,17 @@ For instance, type classes introduce a kind called `Constraint`, denoted as `=>`
 The kind Constraint is used to represent constraints on types and is commonly encountered when defining type classes and their instances.
 
 The kind of `Num` is `* -> Constraint`, showing that `Num` is a type class that takes a type (like `Int`) as an argument.
+
 ```haskell
 Num :: * -> Constraint
 ```
 
 When `Num` is applied to `Int`, it becomes a constraint on the `Int` type, indicating that `Int` is an instance of the `Num` type class.
+
 ```haskell
 Num Int :: Constraint
 ```
+
 Another example of a kind in Haskell is the kind of unary type constructors `* -> *`.
 These unary type constructors are similar to generic types in other languages because they accept a type parameter and produce a new type.
 The signature `* -> *` signifies that the type constructor transforms one concrete type into another concrete type.
@@ -178,7 +182,6 @@ Either String Int :: *
 In this definition, `Either` is a binary type constructor because it requires two type parameters, `a` and `b`, to create a new type, `Either a b`.
 The `Either` type is often used for scenarios where a value can have one of two possible types, such as representing success or failure or providing an alternative to error handling.
 Conventionally, the `Left` value indicates error conditions, while the `Right` value signifies valid or correct values.
-
 
 ### Higher Kinded Types
 
@@ -230,7 +233,6 @@ instance Functor (Either a) where
 
 In the instance declaration above, we specify that, for any type `a`, `Either a` is an instance of the `Functor` type class.
 This allows you to use the `fmap` function with `Either a`, providing a way to map over the second type argument of the `Either` type while keeping the first type argument fixed.
-
 
 ## Other languages
 
