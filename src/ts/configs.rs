@@ -115,13 +115,13 @@ static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::new(
 			tree_sitter_md::INJECTION_QUERY_INLINE,
 			"",
 		),
-		// language!(
-		//     "nix",
-		//     tree_sitter_nix::language(),
-		//     tree_sitter_nix::HIGHLIGHTS_QUERY,
-		//     "",
-		//     "",
-		// ),
+		language!(
+			"nix",
+			tree_sitter_nix::language(),
+			tree_sitter_nix::HIGHLIGHTS_QUERY,
+			"",
+			"",
+		),
 		language!(
 			"ocaml",
 			tree_sitter_ocaml::LANGUAGE_OCAML.into(),

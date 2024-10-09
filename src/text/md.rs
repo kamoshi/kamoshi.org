@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use camino::Utf8Path;
-use hauchiwa::{Bibliography, Outline};
+use hauchiwa::Bibliography;
 use hayagriva::{
 	archive::ArchivedStyle,
 	citationberg::{IndependentStyle, Locale, Style},
@@ -13,7 +13,7 @@ use once_cell::sync::Lazy;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd, TextMergeStream};
 use regex::Regex;
 
-use crate::{ts, MySack};
+use crate::{ts, MySack, Outline};
 
 static OPTS: Lazy<Options> = Lazy::new(|| {
 	Options::empty()

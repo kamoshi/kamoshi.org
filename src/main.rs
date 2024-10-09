@@ -32,6 +32,8 @@ struct MyData {
 	pub hash: String,
 }
 
+pub struct Outline(pub Vec<(String, String)>);
+
 impl MyData {
 	fn new() -> Self {
 		let time = chrono::Utc::now();

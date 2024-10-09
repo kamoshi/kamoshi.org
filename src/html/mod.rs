@@ -10,13 +10,13 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use chrono::Datelike;
-use hauchiwa::{Bibliography, Outline};
+use hauchiwa::Bibliography;
 use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
 
 pub(crate) use home::home;
 use post::article;
 
-use crate::{model::Post, LinkDate, MySack};
+use crate::{model::Post, LinkDate, MySack, Outline};
 
 fn navbar() -> impl Renderable {
 	static ITEMS: &[(&str, &str)] = &[

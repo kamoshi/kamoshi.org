@@ -1,11 +1,11 @@
 use std::fmt::Write;
 
 use camino::Utf8Path;
-use hauchiwa::{Bibliography, Outline};
+use hauchiwa::Bibliography;
 use hayagriva::Library;
 use hypertext::{html_elements, maud, GlobalAttributes, Raw, Renderable};
 
-use crate::{model::Slideshow, MySack};
+use crate::{model::Slideshow, MySack, Outline};
 
 const CSS: &str = r#"
 .slides img {

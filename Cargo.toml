@@ -3,7 +3,6 @@ name = "kamoshi"
 version = "0.1.0"
 edition = "2021"
 
-
 [dependencies.hauchiwa]
 path = "../hauchiwa"
 
@@ -25,9 +24,9 @@ serde                  = { version = "1.0.208", features = ["derive"] }
 pulldown-cmark         = "0.12.0"
 
 # Treesitter
-tree-sitter            = "0.23"
-tree-sitter-highlight  = "0.23"
-tree-sitter-language   = "0.1.0"
+tree-sitter            = "0.24"
+tree-sitter-highlight  = "0.24"
+tree-sitter-language   = "0.1"
 
 # Treesitter languages
 tree-sitter-css        = "0.23"
@@ -35,8 +34,8 @@ tree-sitter-haskell    = "0.23"
 tree-sitter-html       = "0.23"
 tree-sitter-javascript = "0.23"
 tree-sitter-md         = "0.3"
-# tree-sitter-nix        = { package = "npezza93-tree-sitter-nix", version = "0.0.2" }
-tree-sitter-ocaml      = "0.23.1"
+tree-sitter-nix        = { git = "https://github.com/nix-community/tree-sitter-nix", rev = "9ef77ce" }
+tree-sitter-ocaml      = "0.23"
 tree-sitter-python     = "0.23"
 tree-sitter-regex      = "0.23"
 tree-sitter-rust       = "0.23"
