@@ -74,6 +74,7 @@ fn main() {
 	let args = Args::parse();
 
 	let website = Website::setup()
+		.set_opts_sitemap("https://kamoshi.org")
 		.add_collections(vec![
 			Collection::glob_with::<Home>("content", "index.md", ["md"].into()),
 			Collection::glob_with::<Post>("content", "about.md", ["md"].into()),
@@ -82,7 +83,7 @@ fn main() {
 			Collection::glob_with::<Wiki>("content", "wiki/**/*", ["md"].into()),
 			Collection::glob_with::<Post>("content", "projects/flox.md", ["md"].into()),
 		])
-		.add_global_styles(["styles".into()])
+		.add_styles(["styles".into()])
 		.add_scripts(vec![
 			("search", "./js/search/dist/search.js"),
 			("photos", "./js/vanilla/photos.js"),

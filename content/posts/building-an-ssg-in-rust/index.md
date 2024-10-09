@@ -7,7 +7,7 @@ desc: >
 
 For the past few months in my spare time, I’ve been programming a simple
 library in Rust that can be used to generate a static website from markdown
-files and images. I myself use it to generate this very website, and it is
+files and other assets. I myself use it to generate this very website, and it is
 available under the GPL license on
 [crates.io](https://crates.io/crates/hauchiwa), though it might be outdated -
 the latest version is always on [GitHub](https://github.com/kamoshi/hauchiwa)
@@ -29,26 +29,28 @@ Astro, but none of the available tools fulfilled my needs. I wanted both speed
 and lots of flexibility at the same time, I figured that I needed to create my own
 generator from scratch to accomplish what I want to do.
 
-The first thing I had to do was choose the language and the ecosystem for the
-generator, and as you already know, I ended up with Rust. I've considered
-different languages and ecosystems - like Haskell - but Rust currently has a lot
-of industrial momentum, that's the current zeitgeist.
+Once I realized that I would be writing my own generator I had to choose the
+language and the ecosystem for the generator, and as you already know, I ended
+up with Rust. I've considered different languages and ecosystems, like Haskell,
+but Rust currently has a lot of industrial momentum, that's the current
+zeitgeist, so I started looking into writing a Rust implementation.
 
-Contrary to what many people say, Rust is not a silver bullet, the fact that in
-Rust you have to deal with memory, even if it's automatic most of the time can
-be a deal breaker. Sometimes you just don't need to care about memory, so having
-To deal with it is a waste of mental energy. Nevertheless, I decided that this
-tradeoff is worth taking in this case, given that Rust has:
+Contrary to what many people say these days, Rust is definitely not a silver
+bullet, the fact that in Rust you have to deal with memory, even if it's
+automatic most of the time, can be a deal breaker. Sometimes you just don't need
+to care about memory, so having To deal with it is a waste of mental energy.
+Nevertheless, I decided that this tradeoff is worth taking in this case, given
+that Rust has:
 
 - lots of good enough libraries
 - vibrant community
 - ergonomic abstractions
 - automatic memory management with borrow checker
 
-So given these facts, I came to the conclusion that going with Rust will make it
-easy to find any library I need to create a generator, and the memory management
-is an acceptable tradeoff for the fact that Rust programs are generally quite
-fast and compile to a single binary.
+Ultimately I came to the conclusion that going with Rust will make it easy to
+find any library I need to create a generator, and the memory management is an
+acceptable tradeoff for the fact that Rust programs are generally quite fast and
+compile to a single binary.
 
 When it comes to the actual form factor of the library, I wanted it to be really
 minimal and allow for maximal flexibility. I really enjoyed the way Astro works,
@@ -77,14 +79,83 @@ being worked out. I've spent a lot of time thinking through lots of design
 decisions until I landed on some sweet spot in the design space, but even now,
 I'm not sure if there are better ways to accomplish some things...
 
+## Thinking about the implementation
+
+In my opinion, the hardest thing to come up with is the code architecture, how
+to properly model the problem domain and not paint yourself into a corner. This
+is especially true in Rust, because in this language there's quite a lot to
+think about thanks to the borrow checker. I feel like using languages like OCaml
+or F# would lend itself to iterating on the problem domain better, there you don't
+have to think about references, pointers or ownership.
+
+Don't get me wrong here; I think that Rust is an excellent programming language,
+and I am happy to have it in my toolbox. However, some tools are better suited
+to different tasks (think _law of the instrument_) and Rust seems like an
+overkill when you shouldn't even have to care about the memory layout of a
+struct.
+
+I went with Rust though, so that made it considerably more difficult to iterate
+on major changes to the structure of the program and how the various types
+should compose. Each time I did an overhaul, I had to chase seemingly endless
+waves of type checker and borrow checker errors. After each such overhaul the
+program nearly always ran on the first try though - yay, strict type systems and
+ADTs!.
+
+The first issue I had to resolve was how to represent the data, all the
+processed content files and assets. I first did it by creating a one-phase build
+system where every single page on the website had to come from exactly just one
+file in the filesystem. The upside of this approach was that it was easy to
+trace the page back to the exact file it was generated from, and it was easy to
+generate the entire website.
+
+The downsides however were much worse:
+
+- you couldn't generate page lists easily
+- you couldn't generate pages not backed by any files easily
+- live-reload rebuilds were messy
+- generally ugly design
+
+This was a major mistake on my part, the design I started with was clearly not
+how websites work. The abstractions I came up with couldn't express the problem
+domain without major hacks.
+
+To fix this I decided to rewrite the library and implement a two-phase build
+system, where the library first loads all content and assets and then runs
+user-defined tasks that can create multiple concrete HTML pages. This rewrite
+was quite of a headache, and took a lot of effort and time.
+
+```rust
+let website = Website::setup()
+    .add_collections(vec![
+       	Collection::glob_with::<Post>("content", "posts/**/*", ["md", "mdx"].into()),
+    ])
+    .add_styles(["styles".into()])
+    .add_scripts(vec![
+        ("search", "./js/search/dist/search.js"),
+    ])
+    // Task: generate posts
+    .add_task(|sack| {
+        sack.get_content_list::<Post>("posts/**/*")
+            .into_iter()
+            .map(generate_page)
+            .collect()
+    })
+    .finish()
+```
+
+The new way to build pages turned out to be more flexible, so I think this
+effort was well worth it in the end. The entire pipeline is much more simplified
+now and allows for more granular incremental rebuilds with hashing and caching.
+
 ## Incremental build system
 
-To implement the incremental build process and live reload, I've ended up reading
-an article called _Build systems à la carte_, which goes over different ways to
-implent a build system in Haskell, I would recommend reading it; it was really
-useful. Based on some prior experience as well as this article, I've decided to
-go with a _suspending_ scheduler, as well as both _verifying traces_ and
-_constructive traces_ for the rebuilding strategy.
+One of the more interesting things I ended up doing while implementing the new
+build system was to create a custom incremental build process with live reload.
+I've ended up reading an article called _Build systems à la carte_, which goes
+over different ways to implent a build system in Haskell, I would recommend
+reading it; it was really useful. Based on some prior experience as well as this
+article, I've decided to go with a _suspending_ scheduler, as well as both
+_verifying traces_ and _constructive traces_ for the rebuilding strategy.
 
 _Suspending_ means that the moment a certain page requires, for example, a PNG
 image or a CSS stylesheet I pause the page build process in order to prepare the
@@ -177,3 +248,31 @@ This is just the bare minimum to make this build system work, there are still
 some open questions, like "What if the build task is nondeterministic, should it
 be rebuilt every time?". Please take a look at the library code to see how the
 current build system works in detail.
+
+### Reflections
+
+In Rust borrow checker makes it difficult to iterate on designs, so I think that
+when first coming up with abstractions it's fine to use `.clone()` as much as
+possible, this way you don't have to deal with memory when you aren't even sure
+if the design will stick. Besides, using references is an optimization and
+premature optimization is rarely a good idea, it's much better to only optimize
+your program after you profile it and locate any bottlenecks.
+
+I ended up learning a lot about the Rust type system, it's pretty powerful, but
+it's also easy to come up with the wrong abstraction sometimes. Type classes, or
+Rust traits, are very powerful, but they seldom make the right abstraction when
+used liberally. I think most programs are better off avoiding new traits.
+
+On the other hand, using traits to mark abstract capabilities is amazing and I
+feel like more languages should have this feature in their type systems, in
+particular the built-in traits like `Copy`, `Send` or `Sync`. I think that the
+so-called lawful typeclass approach à la Haskell is fine, but the Rust
+community really shows how useful type classes can be even without HKTs.
+
+And to sum up, I feel like going with Rust was the pragmatic choice here, I
+could have gone with some other language, and the solition might have been more
+elegant or interesting, but the Rust soluton works prefectly fine and I still
+ended up learning a lot in the process. It's always worth noting that the choice
+of a language is always a lot more than just the language, you also end up
+choosing the ecosystem of libraries, and the build tools used to build projects
+in that language. I feel like Rust's world is a joy to work with.
