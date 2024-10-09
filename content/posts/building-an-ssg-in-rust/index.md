@@ -140,7 +140,7 @@ let website = Website::setup()
             .map(generate_page)
             .collect()
     })
-    .finish()
+    .finish();
 ```
 
 The new way to build pages turned out to be more flexible, so I think this
@@ -270,9 +270,9 @@ so-called lawful typeclass approach à la Haskell is fine, but the Rust
 community really shows how useful type classes can be even without HKTs.
 
 And to sum up, I feel like going with Rust was the pragmatic choice here, I
-could have gone with some other language, and the solition might have been more
-elegant or interesting, but the Rust soluton works prefectly fine and I still
+could have gone with some other language, and the solution might have been more
+elegant or interesting, but the Rust solution works prefectly fine and I still
 ended up learning a lot in the process. It's always worth noting that the choice
-of a language is always a lot more than just the language, you also end up
-choosing the ecosystem of libraries, and the build tools used to build projects
-in that language. I feel like Rust's world is a joy to work with.
+of a language means a lot more than just the language, you also end up choosing
+the ecosystem of libraries, and the build tools used to build projects in that
+language. I feel like Rust's world is a joy to work with.
