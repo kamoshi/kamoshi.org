@@ -249,7 +249,73 @@ some open questions, like "What if the build task is nondeterministic, should it
 be rebuilt every time?". Please take a look at the library code to see how the
 current build system works in detail.
 
-### Reflections
+## Rusty type universe
+
+While working on the library some features of Rust caught my eye, in particular
+the fact that existential types and type erasure is so well integrated into the
+language. I think this deserves its own section in here, because this is a quite
+advanced concept that is rarely seen in most languages, In fact even in Haskell
+you won't see this type of type magic used so prominently throughout the
+ecosystem.
+
+In Rust there are two flavors of existential types, one flaver is `impl` and the
+other flavor is `dyn`. Generally speaking the difference is that when you write
+`impl Trait` you are saying that you don't know what type will be here at
+compile time, but you want the compiler to monomorphize this place, so at run
+time it's just one type. When using `dyn Trait` you are saying that you want the
+compiler to generate a table enabling dynamic dispatch at runtime, which has
+runtime performance ramifications, but it also means that there is no
+monomorphization.
+
+```rust
+fn function_impl_a(x: impl Trait) {
+    // I can only use methods provided by Trait
+}
+```
+
+Function using the `impl Trait` types will be generated multiple times in the assembly,
+because each type will have to have its own copy of the function at runtime.
+
+```rust
+fn function_dyn_a(x: Box<dyn Trait>) {
+    // I can only use methods provided by Trait
+}
+```
+
+Functions using these `Box<dyn Trait>` types will be generated just once in the assembly,
+but the methods will have to be dispatched at run time, which means more indirection.
+
+In Rust there is a very interesting trait called `Any`. It seems useless at
+first, because when you have a value of type `Box<dyn Any>` you seemingly can't do
+anything with it...
+
+There is just one thing you can do with a value like this, downcast it:
+
+```rust
+use std::any::Any;
+
+fn main() {
+    let items: Vec<Box<dyn Any>> = vec![
+        Box::new(1),
+        Box::new("abc"),
+    ];
+
+    for item in items {
+        if let Some(num) = item.downcast_ref::<i32>() {
+            println!("number: {}", num);
+        } else if let Some(s) = item.downcast_ref::<&str>() {
+            println!("string: {}", s);
+        } else {
+            println!("Unknown type");
+        }
+    }
+}
+```
+
+I'll leave the potential usage of this powerful feature as an exercise for the
+reader, if you can't come up with one - grep through my library :wink:
+
+## Reflections
 
 In Rust borrow checker makes it difficult to iterate on designs, so I think that
 when first coming up with abstractions it's fine to use `.clone()` as much as
