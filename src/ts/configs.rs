@@ -1,8 +1,9 @@
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::sync::LazyLock;
+
 use tree_sitter_highlight::HighlightConfiguration;
 
-use super::captures;
+use crate::ts::captures;
 
 macro_rules! query {
 	($path:literal) => {
@@ -39,7 +40,7 @@ macro_rules! language {
 	};
 }
 
-static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+static EXTENSIONS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
 	HashMap::from([
 		("hs", "haskell"),
 		("js", "javascript"),
@@ -54,7 +55,7 @@ static EXTENSIONS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
 	])
 });
 
-static CONFIGS: Lazy<HashMap<&'static str, HighlightConfiguration>> = Lazy::new(|| {
+static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLock::new(|| {
 	HashMap::from([
 		// (
 		//     "astro",

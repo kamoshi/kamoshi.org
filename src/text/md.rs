@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use camino::Utf8Path;
 use hauchiwa::Bibliography;
@@ -9,13 +10,12 @@ use hayagriva::{
 	Library,
 };
 use hypertext::Renderable;
-use once_cell::sync::Lazy;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd, TextMergeStream};
 use regex::Regex;
 
 use crate::{ts, MySack, Outline};
 
-static OPTS: Lazy<Options> = Lazy::new(|| {
+static OPTS: LazyLock<Options> = LazyLock::new(|| {
 	Options::empty()
 		.union(Options::ENABLE_MATH)
 		.union(Options::ENABLE_TABLES)
@@ -24,14 +24,14 @@ static OPTS: Lazy<Options> = Lazy::new(|| {
 		.union(Options::ENABLE_SMART_PUNCTUATION)
 });
 
-static KATEX_I: Lazy<katex::Opts> = Lazy::new(|| {
+static KATEX_I: LazyLock<katex::Opts> = LazyLock::new(|| {
 	katex::opts::Opts::builder()
 		.output_type(katex::OutputType::Mathml)
 		.build()
 		.unwrap()
 });
 
-static KATEX_B: Lazy<katex::Opts> = Lazy::new(|| {
+static KATEX_B: LazyLock<katex::Opts> = LazyLock::new(|| {
 	katex::opts::Opts::builder()
 		.output_type(katex::OutputType::Mathml)
 		.display_mode(true)
@@ -39,10 +39,10 @@ static KATEX_B: Lazy<katex::Opts> = Lazy::new(|| {
 		.unwrap()
 });
 
-static LOCALE: Lazy<Vec<Locale>> = Lazy::new(hayagriva::archive::locales);
+static LOCALE: LazyLock<Vec<Locale>> = LazyLock::new(hayagriva::archive::locales);
 
-static STYLE: Lazy<IndependentStyle> =
-	Lazy::new(
+static STYLE: LazyLock<IndependentStyle> =
+	LazyLock::new(
 		|| match ArchivedStyle::InstituteOfElectricalAndElectronicsEngineers.get() {
 			Style::Independent(style) => style,
 			Style::Dependent(_) => unreachable!(),
@@ -151,7 +151,7 @@ fn make_bib<'a>(stream: Vec<Event<'a>>, lib: &Library) -> (Vec<Event<'a>>, Optio
 	(stream, bib)
 }
 
-static RE_CITE: Lazy<Regex> = Lazy::new(|| Regex::new(r":cite\[([^\]]+)\]").unwrap());
+static RE_CITE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r":cite\[([^\]]+)\]").unwrap());
 
 #[derive(Debug)]
 enum Annotated_<'a> {
@@ -273,7 +273,7 @@ fn make_code(es: Vec<Event>) -> Vec<Event> {
 	buff
 }
 
-static RE_RUBY: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[([^\]]+)\]\{([^}]+)\}").unwrap());
+static RE_RUBY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[([^\]]+)\]\{([^}]+)\}").unwrap());
 
 #[derive(Debug)]
 enum Annotated<'a> {

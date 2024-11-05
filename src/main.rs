@@ -75,16 +75,16 @@ fn main() {
 
 	let website = Website::setup()
 		.set_opts_sitemap("https://kamoshi.org")
-		.add_collections(vec![
-			Collection::glob_with::<Home>("content", "index.md", ["md"].into()),
-			Collection::glob_with::<Post>("content", "about.md", ["md"].into()),
-			Collection::glob_with::<Post>("content", "posts/**/*", ["md", "mdx"].into()),
-			Collection::glob_with::<Slideshow>("content", "slides/**/*", ["md", "lhs"].into()),
-			Collection::glob_with::<Wiki>("content", "wiki/**/*", ["md"].into()),
-			Collection::glob_with::<Post>("content", "projects/flox.md", ["md"].into()),
+		.add_collections([
+			Collection::glob_with::<Home>("content", "index.md", ["md"]),
+			Collection::glob_with::<Post>("content", "about.md", ["md"]),
+			Collection::glob_with::<Post>("content", "posts/**/*", ["md", "mdx"]),
+			Collection::glob_with::<Slideshow>("content", "slides/**/*", ["md", "lhs"]),
+			Collection::glob_with::<Wiki>("content", "wiki/**/*", ["md"]),
+			Collection::glob_with::<Post>("content", "projects/flox.md", ["md"]),
 		])
 		.add_styles(["styles".into()])
-		.add_scripts(vec![
+		.add_scripts([
 			("search", "./js/search/dist/search.js"),
 			("photos", "./js/vanilla/photos.js"),
 			("reveal", "./js/vanilla/reveal.js"),
