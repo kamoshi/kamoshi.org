@@ -8,7 +8,7 @@ use std::process::Command;
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{Collection, Processor, Sack, Website};
+use hauchiwa::{parse_matter, Collection, Processor, Sack, Website};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Slideshow, Wiki};
@@ -71,24 +71,29 @@ struct LinkDate {
 	pub date: DateTime<Utc>,
 }
 
+fn process_library(content: &str) -> Library {
+	hayagriva::io::from_biblatex_str(content).unwrap()
+}
+
+/// Markdown file extensions
+const EXTS_MD: [&str; 3] = ["md", "mdx", "lhs"];
+
 fn main() {
 	let args = Args::parse();
 
 	let website = Website::setup()
 		.set_opts_sitemap("https://kamoshi.org")
 		.add_collections([
-			Collection::glob_with::<Home>("content", "index.md", ["md"]),
-			Collection::glob_with::<Post>("content", "about.md", ["md"]),
-			Collection::glob_with::<Post>("content", "posts/**/*", ["md", "mdx"]),
-			Collection::glob_with::<Slideshow>("content", "slides/**/*", ["md", "lhs"]),
-			Collection::glob_with::<Wiki>("content", "wiki/**/*", ["md"]),
-			Collection::glob_with::<Post>("content", "projects/flox.md", ["md"]),
+			Collection::glob_with("content", "index.md", EXTS_MD, parse_matter::<Home>),
+			Collection::glob_with("content", "about.md", EXTS_MD, parse_matter::<Post>),
+			Collection::glob_with("content", "posts/**/*", EXTS_MD, parse_matter::<Post>),
+			Collection::glob_with("content", "slides/**/*", EXTS_MD, parse_matter::<Slideshow>),
+			Collection::glob_with("content", "wiki/**/*", EXTS_MD, parse_matter::<Wiki>),
+			Collection::glob_with("content", "projects/flox.md", EXTS_MD, parse_matter::<Post>),
 		])
 		.add_processors([
-			Processor::process_assets(["bib"], |content| {
-				Box::new(hayagriva::io::from_biblatex_str(content).unwrap())
-			}),
 			Processor::process_images(["jpg", "png", "gif"]),
+			Processor::process_assets(["bib"], process_library),
 		])
 		.add_styles(["styles".into()])
 		.add_scripts([
