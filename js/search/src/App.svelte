@@ -73,8 +73,8 @@ $effect(() => {
 	<h1>Search</h1>
 	<input class="c-search__input" placeholder="Start typing here!"
 		bind:value={query}
-		on:input={onInput()}
-		on:input={() => limit = 10}/>
+		oninput={() => (onInput(), limit = 10)}
+	/>
 
 	{#if query && result}
 		{#await result}

@@ -732,7 +732,6 @@ dependencies = [
  "glob",
  "grass",
  "gray_matter",
- "hayagriva",
  "image",
  "notify",
  "notify-debouncer-full",

@@ -8,7 +8,8 @@ use std::process::Command;
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{Collection, Sack, Website};
+use hauchiwa::{Collection, Processor, Sack, Website};
+use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Slideshow, Wiki};
 
@@ -83,6 +84,12 @@ fn main() {
 			Collection::glob_with::<Wiki>("content", "wiki/**/*", ["md"]),
 			Collection::glob_with::<Post>("content", "projects/flox.md", ["md"]),
 		])
+		.add_processors([
+			Processor::process_assets(["bib"], |content| {
+				Box::new(hayagriva::io::from_biblatex_str(content).unwrap())
+			}),
+			Processor::process_images(["jpg", "png", "gif"]),
+		])
 		.add_styles(["styles".into()])
 		.add_scripts([
 			("search", "./js/search/dist/search.js"),
@@ -110,9 +117,9 @@ fn main() {
 			sack.get_content_list::<Post>("posts/**/*")
 				.into_iter()
 				.map(|query| {
-					let bibliography = sack.get_library(query.area);
+					let library = sack.get_asset::<Library>(query.area);
 					let (parsed, outline, bib) =
-						html::post::parse_content(query.content, &sack, query.area, bibliography);
+						html::post::parse_content(query.content, &sack, query.area, library);
 					let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
 					(query.slug.join("index.html"), out_buff)
 				})
@@ -136,9 +143,9 @@ fn main() {
 			sack.get_content_list::<Wiki>("**/*")
 				.into_iter()
 				.map(|query| {
-					let bibliography = sack.get_library(query.area);
+					let library = sack.get_asset::<Library>(query.area);
 					let (parsed, outline, bib) =
-						html::wiki::parse_content(query.content, &sack, query.area, bibliography);
+						html::wiki::parse_content(query.content, &sack, query.area, library);
 					let out_buff =
 						html::wiki::as_html(query.meta, &parsed, &sack, query.slug, outline, bib);
 					(query.slug.join("index.html"), out_buff)
