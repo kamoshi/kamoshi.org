@@ -43,7 +43,7 @@ fn photo() -> impl Renderable {
 fn latest(sack: &Sack<MyData>) -> impl Renderable {
 	let links = {
 		let mut list = sack
-			.get_content_list::<Post>("**")
+			.query_content::<Post>("**")
 			.into_iter()
 			.map(|query| LinkDate {
 				link: Link {

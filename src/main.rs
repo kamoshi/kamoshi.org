@@ -8,7 +8,7 @@ use std::process::Command;
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{parse_matter, Collection, Processor, Sack, Website};
+use hauchiwa::{parse_matter_yaml, Collection, Processor, QueryContent, Sack, Website};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Slideshow, Wiki};
@@ -25,6 +25,8 @@ enum Mode {
 	Watch,
 }
 
+pub struct Outline(pub Vec<(String, String)>);
+
 #[derive(Debug, Clone)]
 struct MyData {
 	pub year: i32,
@@ -32,8 +34,6 @@ struct MyData {
 	pub link: String,
 	pub hash: String,
 }
-
-pub struct Outline(pub Vec<(String, String)>);
 
 impl MyData {
 	fn new() -> Self {
@@ -75,6 +75,31 @@ fn process_library(content: &str) -> Library {
 	hayagriva::io::from_biblatex_str(content).unwrap()
 }
 
+type Page = (Utf8PathBuf, String);
+
+fn render_page_post(sack: &Sack<MyData>, query: QueryContent<Post>) -> Page {
+	let library = sack.get_asset::<Library>(query.area);
+	let parsed = html::post::parse_content(query.content, sack, query.area, library);
+	let buffer = html::post::as_html(query.meta, &parsed.0, sack, parsed.1, parsed.2);
+	(query.slug.join("index.html"), buffer)
+}
+
+fn render_page_slideshow(sack: &Sack<MyData>, query: QueryContent<Slideshow>) -> Page {
+	let parsed = html::slideshow::parse_content(query.content, sack, query.area, None);
+	let buffer = html::slideshow::as_html(query.meta, &parsed.0, sack, parsed.1, parsed.2);
+	(query.slug.join("index.html"), buffer)
+}
+
+fn render_page_wiki(sack: &Sack<MyData>, query: QueryContent<Wiki>) -> Page {
+	let library = sack.get_asset::<Library>(query.area);
+	let parsed = html::wiki::parse_content(query.content, sack, query.area, library);
+	let buffer = html::wiki::as_html(query.meta, &parsed.0, sack, query.slug, parsed.1, parsed.2);
+	(query.slug.join("index.html"), buffer)
+}
+
+/// Base path for content files
+const BASE: &str = "content";
+
 /// Markdown file extensions
 const EXTS_MD: [&str; 3] = ["md", "mdx", "lhs"];
 
@@ -84,12 +109,12 @@ fn main() {
 	let website = Website::setup()
 		.set_opts_sitemap("https://kamoshi.org")
 		.add_collections([
-			Collection::glob_with("content", "index.md", EXTS_MD, parse_matter::<Home>),
-			Collection::glob_with("content", "about.md", EXTS_MD, parse_matter::<Post>),
-			Collection::glob_with("content", "posts/**/*", EXTS_MD, parse_matter::<Post>),
-			Collection::glob_with("content", "slides/**/*", EXTS_MD, parse_matter::<Slideshow>),
-			Collection::glob_with("content", "wiki/**/*", EXTS_MD, parse_matter::<Wiki>),
-			Collection::glob_with("content", "projects/flox.md", EXTS_MD, parse_matter::<Post>),
+			Collection::glob_with(BASE, "index.md", EXTS_MD, parse_matter_yaml::<Home>),
+			Collection::glob_with(BASE, "about.md", EXTS_MD, parse_matter_yaml::<Post>),
+			Collection::glob_with(BASE, "posts/**/*", EXTS_MD, parse_matter_yaml::<Post>),
+			Collection::glob_with(BASE, "slides/**/*", EXTS_MD, parse_matter_yaml::<Slideshow>),
+			Collection::glob_with(BASE, "wiki/**/*", EXTS_MD, parse_matter_yaml::<Wiki>),
+			Collection::glob_with(BASE, "projects/flox.md", EXTS_MD, parse_matter_yaml::<Post>),
 		])
 		.add_processors([
 			Processor::process_images(["jpg", "png", "gif"]),
@@ -119,42 +144,23 @@ fn main() {
 		})
 		// Task: generate posts
 		.add_task(|sack| {
-			sack.get_content_list::<Post>("posts/**/*")
+			sack.query_content::<Post>("posts/**/*")
 				.into_iter()
-				.map(|query| {
-					let library = sack.get_asset::<Library>(query.area);
-					let (parsed, outline, bib) =
-						html::post::parse_content(query.content, &sack, query.area, library);
-					let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
-					(query.slug.join("index.html"), out_buff)
-				})
+				.map(|query| render_page_post(&sack, query))
 				.collect()
 		})
 		// Task: generate slides
 		.add_task(|sack| {
-			sack.get_content_list::<Slideshow>("slides/**/*")
+			sack.query_content::<Slideshow>("slides/**/*")
 				.into_iter()
-				.map(|query| {
-					let (parsed, outline, bib) =
-						html::slideshow::parse_content(query.content, &sack, query.area, None);
-					let out_buff =
-						html::slideshow::as_html(query.meta, &parsed, &sack, outline, bib);
-					(query.slug.join("index.html"), out_buff)
-				})
+				.map(|query| render_page_slideshow(&sack, query))
 				.collect()
 		})
 		// Task: generate wiki
 		.add_task(|sack| {
-			sack.get_content_list::<Wiki>("**/*")
+			sack.query_content::<Wiki>("**/*")
 				.into_iter()
-				.map(|query| {
-					let library = sack.get_asset::<Library>(query.area);
-					let (parsed, outline, bib) =
-						html::wiki::parse_content(query.content, &sack, query.area, library);
-					let out_buff =
-						html::wiki::as_html(query.meta, &parsed, &sack, query.slug, outline, bib);
-					(query.slug.join("index.html"), out_buff)
-				})
+				.map(|query| render_page_wiki(&sack, query))
 				.collect()
 		})
 		// Task: generate map
@@ -185,7 +191,7 @@ fn main() {
 				"projects/index.html".into(),
 				crate::html::to_list(
 					&sack,
-					sack.get_content_list::<Post>("projects/**/*")
+					sack.query_content::<Post>("projects/**/*")
 						.into_iter()
 						.map(|query| LinkDate {
 							link: Link {
@@ -206,7 +212,7 @@ fn main() {
 				"posts/index.html".into(),
 				crate::html::to_list(
 					&sack,
-					sack.get_content_list::<Post>("posts/**/*")
+					sack.query_content::<Post>("posts/**/*")
 						.into_iter()
 						.map(|query| LinkDate {
 							link: Link {
@@ -227,7 +233,7 @@ fn main() {
 				"slides/index.html".into(),
 				crate::html::to_list(
 					&sack,
-					sack.get_content_list::<Slideshow>("slides/**/*")
+					sack.query_content::<Slideshow>("slides/**/*")
 						.into_iter()
 						.map(|query| LinkDate {
 							link: Link {

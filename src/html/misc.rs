@@ -79,7 +79,7 @@ impl TreePage {
 /// Render the page tree
 pub(crate) fn show_page_tree<'a>(slug: &'a Utf8Path, sack: &'a MySack) -> impl Renderable + 'a {
 	let tree = sack
-		.get_content_list::<Wiki>("**/*")
+		.query_content::<Wiki>("**/*")
 		.into_iter()
 		.map(|query| Link {
 			path: Utf8Path::new("/").join(query.slug),
