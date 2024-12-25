@@ -1,9 +1,8 @@
 use camino::Utf8Path;
-use hauchiwa::Bibliography;
 use hayagriva::Library;
 use hypertext::{html_elements, maud_move, GlobalAttributes, Raw, Renderable};
 
-use crate::{model::Wiki, MySack, Outline};
+use crate::{model::Wiki, Bibliography, MySack, Outline};
 
 pub fn parse_content(
 	content: &str,

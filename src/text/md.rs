@@ -1,8 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::sync::LazyLock;
 
 use camino::Utf8Path;
-use hauchiwa::Bibliography;
 use hayagriva::{
 	archive::ArchivedStyle,
 	citationberg::{IndependentStyle, Locale, Style},
@@ -10,34 +9,382 @@ use hayagriva::{
 	Library,
 };
 use hypertext::Renderable;
-use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd, TextMergeStream};
+use pulldown_cmark::{
+	CodeBlockKind, CowStr, Event, Options as OptsMarkdown, Parser, Tag, TagEnd, TextMergeStream,
+};
 use regex::Regex;
 
-use crate::{ts, MySack, Outline};
+use crate::{ts, Bibliography, MySack, Outline};
 
-static OPTS: LazyLock<Options> = LazyLock::new(|| {
-	Options::empty()
-		.union(Options::ENABLE_MATH)
-		.union(Options::ENABLE_TABLES)
-		.union(Options::ENABLE_TASKLISTS)
-		.union(Options::ENABLE_STRIKETHROUGH)
-		.union(Options::ENABLE_SMART_PUNCTUATION)
-});
+const OPTS_MARKDOWN: OptsMarkdown = OptsMarkdown::empty()
+	.union(OptsMarkdown::ENABLE_MATH)
+	.union(OptsMarkdown::ENABLE_TABLES)
+	.union(OptsMarkdown::ENABLE_TASKLISTS)
+	.union(OptsMarkdown::ENABLE_STRIKETHROUGH)
+	.union(OptsMarkdown::ENABLE_SMART_PUNCTUATION);
 
-static KATEX_I: LazyLock<katex::Opts> = LazyLock::new(|| {
+fn render_directive_inline(name: &str, content: &str) -> Event<'static> {
+	match name {
+		"cite" => {
+			// iff math has been already rendered we can repurpose the nodes to store citations
+			Event::InlineMath(content.to_owned().into())
+		}
+		unknown => panic!("Unknown directive {}", unknown),
+	}
+}
+
+pub fn parse(
+	content: &str,
+	sack: &MySack,
+	path: &Utf8Path,
+	library: Option<&Library>,
+) -> (String, Outline, Bibliography) {
+	let mut outline = vec![];
+
+	let stream = Parser::new_ext(content, OPTS_MARKDOWN);
+	let stream = TextMergeStream::new(stream);
+
+	let stream = StreamHeading::new(stream, &mut outline);
+	let stream = StreamCodeBlock::new(stream);
+	let stream = stream.map(swap_hashed_image(path, sack));
+	let stream = stream.map(render_katex);
+	let stream = stream.map(render_emoji);
+	let stream = StreamDirectiveInline::new(stream, render_directive_inline);
+	let stream = StreamRuby::new(stream);
+
+	let (events, bibliography) = match library {
+		Some(library) => make_bib(Vec::from_iter(stream), library),
+		None => (Vec::from_iter(stream), None),
+	};
+
+	let mut parsed = String::new();
+	pulldown_cmark::html::push_html(&mut parsed, events.into_iter());
+
+	(parsed, Outline(outline), Bibliography(bibliography))
+}
+
+// StreamHeading
+
+struct StreamHeading<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	iter: I,
+	counts: HashMap<String, i32>,
+	buffer: String,
+	handle: Option<Tag<'a>>,
+	events: VecDeque<Event<'a>>,
+	finish: bool,
+	out: &'a mut Vec<(String, String)>,
+}
+
+impl<'a, I> StreamHeading<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	pub fn new(iter: I, out: &'a mut Vec<(String, String)>) -> Self {
+		Self {
+			iter,
+			counts: HashMap::new(),
+			buffer: String::new(),
+			handle: None,
+			events: VecDeque::new(),
+			finish: false,
+			out,
+		}
+	}
+}
+
+impl<'a, I> Iterator for StreamHeading<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	type Item = Event<'a>;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		match self.finish && !self.events.is_empty() {
+			true => return self.events.pop_front(),
+			false => self.finish = false,
+		}
+
+		for event in self.iter.by_ref() {
+			match event {
+				Event::Start(tag @ Tag::Heading { .. }) => {
+					debug_assert!(self.handle.is_none());
+					self.handle = Some(tag);
+				}
+				Event::Text(text) if self.handle.is_some() => {
+					self.buffer.push_str(&text);
+					self.events.push_back(Event::Text(text));
+				}
+				event @ Event::End(TagEnd::Heading(..)) => {
+					debug_assert!(self.handle.is_some());
+					self.events.push_back(event);
+
+					let txt = std::mem::take(&mut self.buffer);
+					let mut url = txt.to_lowercase().replace(' ', "-");
+
+					match self.counts.get_mut(&url) {
+						Some(count) => {
+							*count += 1;
+							url = format!("{url}-{count}");
+						}
+						None => {
+							self.counts.insert(url.clone(), 0);
+						}
+					}
+
+					let mut handle = self.handle.take().unwrap();
+					match handle {
+						Tag::Heading { ref mut id, .. } => *id = Some(url.clone().into()),
+						_ => unreachable!(),
+					}
+
+					self.out.push((txt, url.clone()));
+					self.finish = true;
+					return Some(Event::Start(handle));
+				}
+				_ => return Some(event),
+			}
+		}
+		None
+	}
+}
+
+// StreamCodeBlock
+
+pub struct StreamCodeBlock<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	iter: I,
+	lang: Option<String>,
+	code: String,
+}
+
+impl<'a, I> StreamCodeBlock<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	pub fn new(iter: I) -> Self {
+		Self {
+			iter,
+			lang: None,
+			code: String::new(),
+		}
+	}
+}
+
+impl<'a, I> Iterator for StreamCodeBlock<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	type Item = Event<'a>;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		for event in self.iter.by_ref() {
+			match &event {
+				Event::Start(Tag::CodeBlock(kind)) => {
+					match kind {
+						CodeBlockKind::Indented => {
+							// return indented code blocks as-is
+							return Some(event);
+						}
+						CodeBlockKind::Fenced(name) => {
+							// capture language to highlight
+							self.lang = Some(name.to_string());
+						}
+					}
+				}
+				Event::End(TagEnd::CodeBlock) => {
+					// end of code block, process the collected code
+					let lang = self.lang.take().unwrap_or_else(|| "".into());
+					let html = ts::highlight(&lang, &self.code)
+						.render()
+						.as_str()
+						.to_owned();
+					self.code.clear(); // Clear buffer for the next block
+					return Some(Event::Html(html.into())); // Emit HTML event
+				}
+				Event::Text(text) => match self.lang.is_some() {
+					true => self.code.push_str(text), // -> collect text into code buffer if inside a code block
+					false => return Some(event),      // -> pass through text outside code blocks
+				},
+				_ => {
+					// Pass through other events unchanged
+					if self.lang.is_none() {
+						return Some(event);
+					}
+				}
+			}
+		}
+		None
+	}
+}
+
+// Swap hashed image
+
+fn swap_hashed_image<'a>(dir: &'a Utf8Path, sack: &'a MySack) -> impl Fn(Event<'a>) -> Event<'a> {
+	move |event| match event {
+		Event::Start(start) => match start {
+			Tag::Image {
+				dest_url,
+				link_type,
+				title,
+				id,
+			} => {
+				let rel = dir.join(dest_url.as_ref());
+				let img = sack.get_picture(&rel);
+				let hashed = img.map(|path| path.as_str().to_owned().into());
+				Event::Start(Tag::Image {
+					link_type,
+					dest_url: hashed.unwrap_or(dest_url),
+					title,
+					id,
+				})
+			}
+			_ => Event::Start(start),
+		},
+		_ => event,
+	}
+}
+
+// KaTeX
+
+static KATEX_INLINE: LazyLock<katex::Opts> = LazyLock::new(|| {
 	katex::opts::Opts::builder()
 		.output_type(katex::OutputType::Mathml)
 		.build()
 		.unwrap()
 });
 
-static KATEX_B: LazyLock<katex::Opts> = LazyLock::new(|| {
+static KATEX_BLOCK: LazyLock<katex::Opts> = LazyLock::new(|| {
 	katex::opts::Opts::builder()
 		.output_type(katex::OutputType::Mathml)
 		.display_mode(true)
 		.build()
 		.unwrap()
 });
+
+fn render_katex(event: Event) -> Event {
+	match event {
+		Event::InlineMath(math) => Event::InlineHtml(
+			katex::render_with_opts(&math, &*KATEX_INLINE)
+				.unwrap()
+				.into(),
+		),
+		Event::DisplayMath(math) => Event::Html(
+			katex::render_with_opts(&math, &*KATEX_BLOCK)
+				.unwrap()
+				.into(),
+		),
+		_ => event,
+	}
+}
+
+// Emojis
+
+fn render_emoji(event: Event) -> Event {
+	match event {
+		Event::Text(ref text) => {
+			let mut buf = None;
+			let mut top = 0;
+			let mut old = 0;
+
+			for (idx, _) in text.match_indices(':') {
+				let key = &text[old..idx];
+
+				if let Some(emoji) = emojis::get_by_shortcode(key) {
+					let buf = buf.get_or_insert_with(|| String::with_capacity(text.len()));
+					buf.push_str(&text[top..old - 1]);
+					buf.push_str(emoji.as_str());
+					top = idx + 1;
+				}
+
+				old = idx + 1;
+			}
+
+			if let Some(ref mut buf) = buf {
+				buf.push_str(&text[top..]);
+			}
+
+			match buf {
+				None => event,
+				Some(buf) => Event::Text(buf.into()),
+			}
+		}
+		_ => event,
+	}
+}
+
+// StreamDirectiveInline
+
+static RE_DIRECTIVE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r":(\w+)\[(.*?)\]").unwrap());
+
+struct StreamDirectiveInline<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	inner: I,
+	state: Option<(usize, CowStr<'a>)>,
+	callback: fn(&str, &str) -> Event<'static>,
+}
+
+impl<'a, I> StreamDirectiveInline<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	fn new(inner: I, callback: fn(&str, &str) -> Event<'static>) -> Self {
+		Self {
+			inner,
+			state: None,
+			callback,
+		}
+	}
+}
+
+impl<'a, I> Iterator for StreamDirectiveInline<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	type Item = Event<'a>;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		if self.state.is_none() {
+			match self.inner.next()? {
+				Event::Text(str) => self.state = Some((0, str)),
+				event => return Some(event),
+			}
+		};
+
+		let (idx, str) = self.state.clone()?;
+		let slice = &str[idx..];
+
+		if let Some(mat) = RE_DIRECTIVE.find(slice) {
+			if mat.start() > 0 {
+				let (idx, str) = self.state.take().unwrap();
+				self.state = Some((idx + mat.start(), str));
+				let returned = &slice[..mat.start()];
+				return Some(Event::Text(returned.to_owned().into()));
+			}
+
+			let captures = RE_DIRECTIVE.captures(slice).unwrap();
+			let name = captures.get(1).unwrap().as_str();
+			let content = captures.get(2).unwrap().as_str();
+
+			let directive = (self.callback)(name, content);
+
+			let (idx, str) = self.state.take().unwrap();
+			self.state = Some((idx + mat.end(), str));
+			return Some(directive);
+		}
+
+		let (idx, str) = self.state.take()?;
+		Some(Event::Text(str[idx..].to_owned().into()))
+	}
+}
+
+// Render citations
 
 static LOCALE: LazyLock<Vec<Locale>> = LazyLock::new(hayagriva::archive::locales);
 
@@ -49,49 +396,15 @@ static STYLE: LazyLock<IndependentStyle> =
 		},
 	);
 
-pub fn parse(
-	content: &str,
-	sack: &MySack,
-	path: &Utf8Path,
-	library: Option<&Library>,
-) -> (String, Outline, Bibliography) {
-	let (outline, stream) = {
-		let stream = Parser::new_ext(content, *OPTS);
-		let mut stream: Vec<_> = TextMergeStream::new(stream).collect();
-		let outline = set_heading_ids(&mut stream);
-		(outline, stream)
-	};
-
-	let stream = stream
-		.into_iter()
-		.map(make_math)
-		.map(make_emoji)
-		.map(swap_hashed_image(path, sack))
-		.collect::<Vec<_>>();
-
-	let stream = make_code(stream)
-		.into_iter()
-		.flat_map(make_ruby)
-		.flat_map(make_cite)
-		.collect::<Vec<_>>();
-
-	let (stream, bib) = match library {
-		Some(lib) => make_bib(stream, lib),
-		None => (stream, None),
-	};
-
-	let mut parsed = String::new();
-	pulldown_cmark::html::push_html(&mut parsed, stream.into_iter());
-
-	(parsed, outline, Bibliography(bib))
-}
-
-fn make_bib<'a>(stream: Vec<Event<'a>>, lib: &Library) -> (Vec<Event<'a>>, Option<Vec<String>>) {
+fn make_bib<'a>(
+	stream: Vec<Event<'a>>,
+	library: &Library,
+) -> (Vec<Event<'a>>, Option<Vec<String>>) {
 	let mut driver = BibliographyDriver::new();
 
 	for event in stream.iter() {
 		if let Event::InlineMath(ref text) = event {
-			if let Some(entry) = lib.get(text) {
+			if let Some(entry) = library.get(text) {
 				driver.citation(CitationRequest::from_items(
 					vec![CitationItem::with_entry(entry)],
 					&STYLE,
@@ -103,7 +416,7 @@ fn make_bib<'a>(stream: Vec<Event<'a>>, lib: &Library) -> (Vec<Event<'a>>, Optio
 
 	// add fake citation to make all entries show up
 	driver.citation(CitationRequest::from_items(
-		lib.iter().map(CitationItem::with_entry).collect(),
+		library.iter().map(CitationItem::with_entry).collect(),
 		&STYLE,
 		&LOCALE,
 	));
@@ -151,229 +464,68 @@ fn make_bib<'a>(stream: Vec<Event<'a>>, lib: &Library) -> (Vec<Event<'a>>, Optio
 	(stream, bib)
 }
 
-static RE_CITE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r":cite\[([^\]]+)\]").unwrap());
-
-#[derive(Debug)]
-enum Annotated_<'a> {
-	Text(&'a str),
-	Cite(&'a str),
-}
-
-fn annotate_(input: &str) -> Vec<Annotated_> {
-	let mut parts: Vec<Annotated_> = Vec::new();
-	let mut last_index = 0;
-
-	for cap in RE_CITE.captures_iter(input) {
-		let cite = cap.get(1).unwrap().as_str();
-		let index = cap.get(0).unwrap().start();
-
-		if index > last_index {
-			parts.push(Annotated_::Text(&input[last_index..index]));
-		}
-
-		parts.push(Annotated_::Cite(cite));
-		last_index = cap.get(0).unwrap().end();
-	}
-
-	if last_index < input.len() {
-		parts.push(Annotated_::Text(&input[last_index..]));
-	}
-
-	parts
-}
-
-fn make_cite(event: Event) -> Vec<Event> {
-	match event {
-		Event::Text(ref text) => annotate_(text)
-			.into_iter()
-			.map(|e| match e {
-				Annotated_::Text(text) => Event::Text(text.to_owned().into()),
-				Annotated_::Cite(cite) => Event::InlineMath(cite.to_owned().into()),
-			})
-			.collect(),
-		_ => vec![event],
-	}
-}
-
-fn set_heading_ids(events: &mut [Event]) -> Outline {
-	let mut cnt = HashMap::<String, i32>::new();
-	let mut out = Vec::new();
-	let mut buf = String::new();
-	let mut ptr = None;
-
-	for event in events {
-		match event {
-			Event::Start(ref mut tag @ Tag::Heading { .. }) => {
-				ptr = Some(tag);
-			}
-			Event::Text(ref text) if ptr.is_some() => buf.push_str(text),
-			Event::End(TagEnd::Heading(..)) => {
-				let txt = std::mem::take(&mut buf);
-				let url = txt.to_lowercase().replace(' ', "-");
-				let url = match cnt.get_mut(&url) {
-					Some(ptr) => {
-						*ptr += 1;
-						format!("{url}-{ptr}")
-					}
-					None => {
-						cnt.insert(url.clone(), 0);
-						url
-					}
-				};
-				match ptr.take().unwrap() {
-					Tag::Heading { ref mut id, .. } => *id = Some(url.clone().into()),
-					_ => unreachable!(),
-				}
-				out.push((txt, url));
-			}
-			_ => (),
-		}
-	}
-
-	Outline(out)
-}
-
-fn make_math(event: Event) -> Event {
-	match event {
-		Event::InlineMath(math) => {
-			Event::InlineHtml(katex::render_with_opts(&math, &*KATEX_I).unwrap().into())
-		}
-		Event::DisplayMath(math) => {
-			Event::Html(katex::render_with_opts(&math, &*KATEX_B).unwrap().into())
-		}
-		_ => event,
-	}
-}
-
-fn make_code(es: Vec<Event>) -> Vec<Event> {
-	let mut buff = Vec::new();
-	let mut lang = None;
-	let mut code = String::new();
-
-	for event in es {
-		match event {
-			Event::Start(Tag::CodeBlock(kind)) => match kind {
-				CodeBlockKind::Indented => (),
-				CodeBlockKind::Fenced(name) => lang = Some(name),
-			},
-			Event::End(TagEnd::CodeBlock) => {
-				let lang = lang.take().unwrap_or("".into());
-				let html = ts::highlight(&lang, &code).render().as_str().to_owned();
-				buff.push(Event::Html(html.into()));
-				code.clear();
-			}
-			Event::Text(text) => match lang {
-				None => buff.push(Event::Text(text)),
-				Some(_) => code.push_str(&text),
-			},
-			_ => buff.push(event),
-		}
-	}
-
-	buff
-}
+// Render Ruby
 
 static RE_RUBY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[([^\]]+)\]\{([^}]+)\}").unwrap());
 
-#[derive(Debug)]
-enum Annotated<'a> {
-	Text(&'a str),
-	Ruby(&'a str, &'a str),
+struct StreamRuby<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	inner: I,
+	state: Option<(usize, CowStr<'a>)>,
 }
 
-fn annotate(input: &str) -> Vec<Annotated> {
-	let mut parts: Vec<Annotated> = Vec::new();
-	let mut last_index = 0;
-
-	for cap in RE_RUBY.captures_iter(input) {
-		let text = cap.get(1).unwrap().as_str();
-		let ruby = cap.get(2).unwrap().as_str();
-		let index = cap.get(0).unwrap().start();
-
-		if index > last_index {
-			parts.push(Annotated::Text(&input[last_index..index]));
-		}
-
-		parts.push(Annotated::Ruby(text, ruby));
-		last_index = cap.get(0).unwrap().end();
-	}
-
-	if last_index < input.len() {
-		parts.push(Annotated::Text(&input[last_index..]));
-	}
-
-	parts
-}
-
-fn make_ruby(event: Event) -> Vec<Event> {
-	match event {
-		Event::Text(ref text) => annotate(text)
-			.into_iter()
-			.map(|el| match el {
-				Annotated::Text(text) => Event::Text(text.to_owned().into()),
-				Annotated::Ruby(t, f) => Event::InlineHtml(
-					format!("<ruby>{t}<rp>(</rp><rt>{f}</rt><rp>)</rp></ruby>").into(),
-				),
-			})
-			.collect(),
-		_ => vec![event],
+impl<'a, I> StreamRuby<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	fn new(inner: I) -> Self {
+		Self { inner, state: None }
 	}
 }
 
-fn make_emoji(event: Event) -> Event {
-	match event {
-		Event::Text(ref text) => {
-			let mut buf = None;
-			let mut top = 0;
-			let mut old = 0;
+impl<'a, I> Iterator for StreamRuby<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	type Item = Event<'a>;
 
-			for (idx, _) in text.match_indices(':') {
-				let key = &text[old..idx];
+	fn next(&mut self) -> Option<Self::Item> {
+		if let Some((idx, str)) = self.state.take() {
+			// if there is any ruby left in text
+			if let Some(capture) = RE_RUBY.captures(&str[idx..]) {
+				let full_match = capture.get(0).unwrap();
 
-				if let Some(emoji) = emojis::get_by_shortcode(key) {
-					let buf = buf.get_or_insert_with(|| String::with_capacity(text.len()));
-					buf.push_str(&text[top..old - 1]);
-					buf.push_str(emoji.as_str());
-					top = idx + 1;
+				// if there is outstanding text before ruby
+				if full_match.start() > 0 {
+					let idx_next = idx + full_match.start();
+					let prefix = String::from(&str[idx..idx_next]);
+					self.state = Some((idx_next, str));
+					return Some(Event::Text(prefix.into()));
 				}
 
-				old = idx + 1;
+				let text = capture.get(1).unwrap().as_str();
+				let ruby = capture.get(2).unwrap().as_str();
+				let ruby_html = format!("<ruby>{text}<rp>(</rp><rt>{ruby}</rt><rp>)</rp></ruby>");
+
+				self.state = Some((idx + full_match.end(), str));
+				return Some(Event::InlineHtml(ruby_html.into()));
 			}
 
-			if let Some(ref mut buf) = buf {
-				buf.push_str(&text[top..]);
-			}
-
-			match buf {
-				None => event,
-				Some(buf) => Event::Text(buf.into()),
+			// return any remaining text
+			if idx < str.len() {
+				let remaining = String::from(&str[idx..]);
+				return Some(Event::Text(remaining.into()));
 			}
 		}
-		_ => event,
-	}
-}
 
-fn swap_hashed_image<'a>(dir: &'a Utf8Path, sack: &'a MySack) -> impl Fn(Event) -> Event + 'a {
-	move |event| match event {
-		Event::Start(start) => match start {
-			Tag::Image {
-				dest_url,
-				link_type,
-				title,
-				id,
-			} => {
-				let rel = dir.join(dest_url.as_ref());
-				let img = sack.get_picture(&rel);
-				let hashed = img.map(|path| path.as_str().to_owned().into());
-				Event::Start(Tag::Image {
-					link_type,
-					dest_url: hashed.unwrap_or(dest_url),
-					title,
-					id,
-				})
+		match self.inner.next()? {
+			Event::Text(str) => {
+				self.state = Some((0, str));
+				self.next()
 			}
-			_ => Event::Start(start),
-		},
-		_ => event,
+			event => Some(event),
+		}
 	}
 }

@@ -1,4 +1,3 @@
-use camino::Utf8Path;
 use hauchiwa::{Mode, Sack};
 use hypertext::{html_elements, maud_move, Raw, Renderable};
 
@@ -6,8 +5,7 @@ use crate::MyData;
 
 const JS_RELOAD: &str = r#"
 const socket = new WebSocket("ws://localhost:1337");
-socket.addEventListener("message", (event) => {
-	console.log(event);
+socket.addEventListener("message", event => {
 	window.location.reload();
 });
 "#;
@@ -21,6 +19,7 @@ pub(crate) fn render_head<'s, 'r>(
 where
 	's: 'r,
 {
+	let context = sack.get_context();
 	let title = format!("{} | kamoshi.org", title);
 	let css = sack
 		.get_styles("styles/styles.scss".into())
@@ -40,23 +39,25 @@ where
 	Ok(maud_move!(
 		meta charset="utf-8";
 		meta name="viewport" content="width=device-width, initial-scale=1";
+
 		title {
 			(title)
 		}
 
+		link rel="preconnect" href="https://rsms.me/";
+		link rel="stylesheet" href="https://rsms.me/inter/inter.css";
+
 		// link rel="sitemap" href="/sitemap.xml";
 
-		(render_style(&css))
-		(render_style(&css_r))
-		(render_style(&css_p))
+		(render_style(css.as_str()))
+		(render_style(css_r.as_str()))
+		(render_style(css_p.as_str()))
 
 		link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
 		link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
 		link rel="icon" href="/favicon.ico" sizes="any";
 
-		// script type="importmap" {(Raw(sack.get_import_map()))}
-
-		@if matches!(sack.get_context().mode, Mode::Watch) {
+		@if matches!(context.mode, Mode::Watch) {
 			script { (Raw(JS_RELOAD)) }
 		}
 
@@ -66,9 +67,9 @@ where
 	))
 }
 
-fn render_style(path: &Utf8Path) -> impl Renderable + '_ {
+fn render_style(path: &str) -> impl Renderable + '_ {
 	maud_move!(
-		link rel="stylesheet" href=(path.as_str());
+		link rel="stylesheet" href=(path);
 	)
 }
 
@@ -83,8 +84,8 @@ fn emit_tags_script<'a>(
 
 	Ok(maud_move!(
 		@for tag in tags {
-			  (tag)
-		   }
+			(tag)
+		}
 	))
 }
 

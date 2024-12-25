@@ -1,38 +1,46 @@
 @font-face {
-  font-family: "Lora";
-  src: local("Lora-Regular"), url("/static/fonts/lora/Lora-Regular.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
+	font-family: "Lora";
+	src:
+		local("Lora-Regular"),
+		url("/static/fonts/lora/Lora-Regular.woff2") format("woff2");
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
-  src: local("Lora-Italic"), url("/static/fonts/lora/Lora-Italic.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
+	font-family: "Lora";
+	src:
+		local("Lora-Italic"),
+		url("/static/fonts/lora/Lora-Italic.woff2") format("woff2");
+	font-style: italic;
+	font-weight: 400;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
-  src: local("Lora-Medium"), url("/static/fonts/lora/Lora-Medium.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
+	font-family: "Lora";
+	src:
+		local("Lora-Medium"),
+		url("/static/fonts/lora/Lora-Medium.woff2") format("woff2");
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
-  src: local("Lora-MediumItalic"), url("/static/fonts/lora/Lora-MediumItalic.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 500;
-  font-display: swap;
+	font-family: "Lora";
+	src:
+		local("Lora-MediumItalic"),
+		url("/static/fonts/lora/Lora-MediumItalic.woff2") format("woff2");
+	font-style: italic;
+	font-weight: 500;
+	font-display: swap;
 }
 
 :root {
-  --san-serif: Helvetica, Arial, sans-serif;
-  --serif: Lora, Charter, 'Bitstream Charter', 'Sitka Text', Cambria, serif;
-  --monospace: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+	--san-serif: Helvetica, Arial, sans-serif;
+	--serif: Lora, Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
+	--monospace: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas,
+		"DejaVu Sans Mono", monospace;
 }
-

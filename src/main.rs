@@ -25,6 +25,7 @@ enum Mode {
 	Watch,
 }
 
+pub struct Bibliography(pub Option<Vec<String>>);
 pub struct Outline(pub Vec<(String, String)>);
 
 #[derive(Debug, Clone)]
@@ -71,7 +72,7 @@ struct LinkDate {
 	pub date: DateTime<Utc>,
 }
 
-fn process_library(content: &str) -> Library {
+fn process_bibliography(content: &str) -> Library {
 	hayagriva::io::from_biblatex_str(content).unwrap()
 }
 
@@ -118,7 +119,7 @@ fn main() {
 		])
 		.add_processors([
 			Processor::process_images(["jpg", "png", "gif"]),
-			Processor::process_assets(["bib"], process_library),
+			Processor::process_assets(["bib"], process_bibliography),
 		])
 		.add_styles(["styles".into()])
 		.add_scripts([
