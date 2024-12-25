@@ -25,11 +25,22 @@ const OPTS_MARKDOWN: OptsMarkdown = OptsMarkdown::empty()
 
 fn render_directive_inline(name: &str, content: &str) -> Event<'static> {
 	match name {
+		"icon" => Event::InlineHtml(format!(r#"<img class="inline-icon" src="{content}">"#).into()),
 		"cite" => {
 			// iff math has been already rendered we can repurpose the nodes to store citations
 			Event::InlineMath(content.to_owned().into())
 		}
-		unknown => panic!("Unknown directive {}", unknown),
+		other => panic!("Unknown inline directive {other}"),
+	}
+}
+
+fn render_directive_block(name: &str, content: &str) -> Event<'static> {
+	match name {
+		"youtube" => {
+			let iframe = format!("<iframe width='560' height='315' src='https://www.youtube.com/embed/{}' frameborder='0' allowfullscreen></iframe>", content);
+			Event::Html(iframe.into())
+		}
+		other => panic!("Unknown block directive {other}"),
 	}
 }
 
@@ -49,6 +60,7 @@ pub fn parse(
 	let stream = stream.map(swap_hashed_image(path, sack));
 	let stream = stream.map(render_katex);
 	let stream = stream.map(render_emoji);
+	let stream = StreamDirectiveBlock::new(stream, render_directive_block);
 	let stream = StreamDirectiveInline::new(stream, render_directive_inline);
 	let stream = StreamRuby::new(stream);
 
@@ -317,9 +329,53 @@ fn render_emoji(event: Event) -> Event {
 	}
 }
 
+// StreamDirectiveBlock
+
+static RE_DIRECTIVE_BLOCK: LazyLock<Regex> =
+	LazyLock::new(|| Regex::new(r"^::(\w+)\[(.*?)\]$").unwrap());
+
+struct StreamDirectiveBlock<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	inner: I,
+	callback: fn(&str, &str) -> Event<'static>,
+}
+
+impl<'a, I> StreamDirectiveBlock<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	fn new(inner: I, callback: fn(&str, &str) -> Event<'static>) -> Self {
+		Self { inner, callback }
+	}
+}
+
+impl<'a, I> Iterator for StreamDirectiveBlock<'a, I>
+where
+	I: Iterator<Item = Event<'a>>,
+{
+	type Item = Event<'a>;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		let event = self.inner.next()?;
+
+		if let Event::Text(line) = &event {
+			if let Some(captures) = RE_DIRECTIVE_BLOCK.captures(line) {
+				let name = captures.get(1).unwrap().as_str();
+				let content = captures.get(2).unwrap().as_str();
+				return Some((self.callback)(name, content));
+			}
+		}
+
+		Some(event)
+	}
+}
+
 // StreamDirectiveInline
 
-static RE_DIRECTIVE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r":(\w+)\[(.*?)\]").unwrap());
+static RE_DIRECTIVE_INLINE: LazyLock<Regex> =
+	LazyLock::new(|| Regex::new(r":(\w+)\[(.*?)\]").unwrap());
 
 struct StreamDirectiveInline<'a, I>
 where
@@ -360,7 +416,7 @@ where
 		let (idx, str) = self.state.clone()?;
 		let slice = &str[idx..];
 
-		if let Some(mat) = RE_DIRECTIVE.find(slice) {
+		if let Some(mat) = RE_DIRECTIVE_INLINE.find(slice) {
 			if mat.start() > 0 {
 				let (idx, str) = self.state.take().unwrap();
 				self.state = Some((idx + mat.start(), str));
@@ -368,7 +424,7 @@ where
 				return Some(Event::Text(returned.to_owned().into()));
 			}
 
-			let captures = RE_DIRECTIVE.captures(slice).unwrap();
+			let captures = RE_DIRECTIVE_INLINE.captures(slice).unwrap();
 			let name = captures.get(1).unwrap().as_str();
 			let content = captures.get(2).unwrap().as_str();
 
