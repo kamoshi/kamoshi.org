@@ -31,8 +31,9 @@ macro_rules! merge {
 macro_rules! language {
 	($name:expr, $lang:expr, $highlights:expr, $injections:expr, $locals:expr $(,)?) => {
 		($name, {
+			let lang: tree_sitter::Language = $lang.into();
 			let mut config =
-				HighlightConfiguration::new($lang, $name, $highlights, $injections, $locals)
+				HighlightConfiguration::new(lang, $name, $highlights, $injections, $locals)
 					.unwrap();
 			config.configure(captures::NAMES);
 			config
@@ -55,33 +56,31 @@ static EXTENSIONS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new
 
 static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLock::new(|| {
 	HashMap::from([
-		// (
-		//     "astro",
-		//     config_for(
-		//         tree_sitter_astro::language(),
-		//         query!("astro/highlights"),
-		//         query!("astro/injections"),
-		//         "",
-		//     )
-		// ),
+		language!(
+			"asm",
+			tree_sitter_asm::LANGUAGE,
+			tree_sitter_asm::HIGHLIGHTS_QUERY,
+			"",
+			"",
+		),
 		language!(
 			"css",
-			tree_sitter_css::LANGUAGE.into(),
+			tree_sitter_css::LANGUAGE,
 			tree_sitter_css::HIGHLIGHTS_QUERY,
 			"",
 			"",
 		),
 		language!(
 			"haskell",
-			tree_sitter_haskell::LANGUAGE.into(),
+			tree_sitter_haskell::LANGUAGE,
 			tree_sitter_haskell::HIGHLIGHTS_QUERY,
 			tree_sitter_haskell::INJECTIONS_QUERY,
 			tree_sitter_haskell::LOCALS_QUERY,
 		),
-		language!("html", tree_sitter_html::LANGUAGE.into(), "", "", "",),
+		language!("html", tree_sitter_html::LANGUAGE, "", "", "",),
 		language!(
 			"javascript",
-			tree_sitter_javascript::LANGUAGE.into(),
+			tree_sitter_javascript::LANGUAGE,
 			merge![
 				query!("ecma/highlights"),
 				tree_sitter_javascript::HIGHLIGHT_QUERY,
@@ -91,7 +90,7 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 		),
 		language!(
 			"jsx",
-			tree_sitter_javascript::LANGUAGE.into(),
+			tree_sitter_javascript::LANGUAGE,
 			merge![
 				query!("ecma/highlights"),
 				tree_sitter_javascript::HIGHLIGHT_QUERY,
@@ -102,42 +101,42 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 		),
 		language!(
 			"markdown",
-			tree_sitter_md::LANGUAGE.into(),
+			tree_sitter_md::LANGUAGE,
 			tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
 			tree_sitter_md::INJECTION_QUERY_BLOCK,
 			"",
 		),
 		language!(
 			"markdown_inline",
-			tree_sitter_md::INLINE_LANGUAGE.into(),
+			tree_sitter_md::INLINE_LANGUAGE,
 			tree_sitter_md::HIGHLIGHT_QUERY_INLINE,
 			tree_sitter_md::INJECTION_QUERY_INLINE,
 			"",
 		),
-		language!(
-			"nix",
-			tree_sitter_nix::language(),
-			tree_sitter_nix::HIGHLIGHTS_QUERY,
-			"",
-			"",
-		),
+		// language!(
+		// 	"nix",
+		// 	tree_sitter_nix::language(),
+		// 	tree_sitter_nix::HIGHLIGHTS_QUERY,
+		// 	"",
+		// 	"",
+		// ),
 		language!(
 			"python",
-			tree_sitter_python::LANGUAGE.into(),
+			tree_sitter_python::LANGUAGE,
 			tree_sitter_python::HIGHLIGHTS_QUERY,
 			"",
 			"",
 		),
 		language!(
 			"regex",
-			tree_sitter_regex::LANGUAGE.into(),
+			tree_sitter_regex::LANGUAGE,
 			tree_sitter_regex::HIGHLIGHTS_QUERY,
 			"",
 			"",
 		),
 		language!(
 			"rust",
-			tree_sitter_rust::LANGUAGE.into(),
+			tree_sitter_rust::LANGUAGE,
 			tree_sitter_rust::HIGHLIGHTS_QUERY,
 			tree_sitter_rust::INJECTIONS_QUERY,
 			"",
@@ -168,7 +167,7 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 		// ),
 		language!(
 			"typescript",
-			tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+			tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
 			merge![
 				query!("ecma/highlights"),
 				tree_sitter_javascript::HIGHLIGHT_QUERY,
@@ -182,7 +181,7 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 		),
 		language!(
 			"tsx",
-			tree_sitter_typescript::LANGUAGE_TSX.into(),
+			tree_sitter_typescript::LANGUAGE_TSX,
 			merge![
 				query!("ecma/highlights"),
 				tree_sitter_javascript::HIGHLIGHT_QUERY,

@@ -3,10 +3,10 @@ use std::sync::LazyLock;
 
 use camino::Utf8Path;
 use hayagriva::{
-	archive::ArchivedStyle,
-	citationberg::{IndependentStyle, Locale, Style},
 	BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
 	Library,
+	archive::ArchivedStyle,
+	citationberg::{IndependentStyle, Locale, Style},
 };
 use hypertext::Renderable;
 use pulldown_cmark::{
@@ -14,7 +14,7 @@ use pulldown_cmark::{
 };
 use regex::Regex;
 
-use crate::{ts, Bibliography, MySack, Outline};
+use crate::{Bibliography, MySack, Outline, ts};
 
 const OPTS_MARKDOWN: OptsMarkdown = OptsMarkdown::empty()
 	.union(OptsMarkdown::ENABLE_MATH)
@@ -37,7 +37,10 @@ fn render_directive_inline(name: &str, content: &str) -> Event<'static> {
 fn render_directive_block(name: &str, content: &str) -> Event<'static> {
 	match name {
 		"youtube" => {
-			let iframe = format!("<iframe width='560' height='315' src='https://www.youtube.com/embed/{}' frameborder='0' allowfullscreen></iframe>", content);
+			let iframe = format!(
+				"<iframe width='560' height='315' src='https://www.youtube.com/embed/{}' frameborder='0' allowfullscreen></iframe>",
+				content
+			);
 			Event::Html(iframe.into())
 		}
 		other => panic!("Unknown block directive {other}"),
@@ -459,7 +462,7 @@ fn make_bib<'a>(
 	let mut driver = BibliographyDriver::new();
 
 	for event in stream.iter() {
-		if let Event::InlineMath(ref text) = event {
+		if let Event::InlineMath(text) = event {
 			if let Some(entry) = library.get(text) {
 				driver.citation(CitationRequest::from_items(
 					vec![CitationItem::with_entry(entry)],
