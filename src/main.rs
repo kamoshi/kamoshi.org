@@ -8,7 +8,7 @@ use std::process::Command;
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{parse_matter_yaml, Collection, Processor, QueryContent, Sack, Website};
+use hauchiwa::{Collection, Processor, QueryContent, Sack, Website, parse_matter_yaml};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Slideshow, Wiki};

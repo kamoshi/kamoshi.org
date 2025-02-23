@@ -1,5 +1,4 @@
-import Reveal from 'reveal.js';
-
+import Reveal from "reveal.js";
 
 Reveal.initialize({
   hash: true,
