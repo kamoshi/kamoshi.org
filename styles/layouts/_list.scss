@@ -1,3 +1,9 @@
+.directory-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .page-list-main {
   padding: 2em;
 }
@@ -6,7 +12,6 @@
   max-width: 40em;
   margin-inline: auto;
 }
-
 
 .page-list-year {
   display: flex;
@@ -21,23 +26,22 @@
 
     h2 {
       &::before {
-        content: '\2766';
+        content: "\2766";
         display: inline-block;
         line-height: 1em;
-        margin-right: .5em;
+        margin-right: 0.5em;
         transform: rotate(90deg);
       }
       &::after {
-        content: '\2766';
+        content: "\2766";
         display: inline-block;
         line-height: 1em;
-        margin-left: .5em;
+        margin-left: 0.5em;
         transform: rotate(270deg);
       }
     }
   }
 }
-
 
 .page-item {
   display: block;
@@ -45,7 +49,7 @@
   background-color: white;
   border-radius: 4px;
   box-shadow: var(--shadow-s);
-  transition: box-shadow ease-in-out .25s;
+  transition: box-shadow ease-in-out 0.25s;
   text-decoration: unset;
 
   &:hover {

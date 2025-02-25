@@ -1,6 +1,8 @@
-use hypertext::{html_elements, maud_move, GlobalAttributes, Renderable};
+use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 
-use crate::{html::page, LinkDate, MySack};
+use crate::{LinkDate, MySack, html::page};
+
+const ICON_RSS: &str = include_str!("rss.svg");
 
 pub fn list<'s, 'g, 'html>(
 	sack: &'s MySack,
@@ -15,8 +17,11 @@ where
 	let list = maud_move!(
 		main .page-list-main {
 			article .page-list {
-				header .markdown {
+				header .directory-header .markdown {
 					h1 { (heading) }
+					a href="/posts/rss.xml" title="RSS feed" {
+					   (hypertext::Raw(ICON_RSS))
+					}
 				}
 
 				@for (year, group) in groups {
