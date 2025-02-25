@@ -17,6 +17,7 @@ hypertext              = "0.5.1"
 katex                  = "0.4.6"
 rayon                  = "1.10.0"
 regex                  = "1.11.1"
+rss                    = "2.0"
 serde                  = { version = "1.0.214", features = ["derive"] }
 
 # Markdown

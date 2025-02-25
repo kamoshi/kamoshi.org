@@ -1,5 +1,6 @@
 mod html;
 mod model;
+mod rss;
 mod text;
 mod ts;
 
@@ -150,6 +151,7 @@ fn main() {
 				.map(|query| render_page_post(&sack, query))
 				.collect()
 		})
+		.add_task(rss::generate_feed)
 		// Task: generate slides
 		.add_task(|sack| {
 			sack.query_content::<Slideshow>("slides/**/*")
