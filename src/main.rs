@@ -14,6 +14,8 @@ use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Slideshow, Wiki};
 
+const BASE_URL: &str = "https://kamoshi.org/";
+
 #[derive(Parser, Debug, Clone)]
 struct Args {
 	#[clap(value_enum, index = 1, default_value = "build")]
@@ -144,72 +146,13 @@ fn main() {
 			let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
 			vec![(query.slug.join("index.html"), out_buff)]
 		})
-		// Task: generate posts
+		// POSTS
 		.add_task(|sack| {
 			sack.query_content::<Post>("posts/**/*")
 				.into_iter()
 				.map(|query| render_page_post(&sack, query))
 				.collect()
 		})
-		.add_task(rss::generate_feed)
-		// Task: generate slides
-		.add_task(|sack| {
-			sack.query_content::<Slideshow>("slides/**/*")
-				.into_iter()
-				.map(|query| render_page_slideshow(&sack, query))
-				.collect()
-		})
-		// Task: generate wiki
-		.add_task(|sack| {
-			sack.query_content::<Wiki>("**/*")
-				.into_iter()
-				.map(|query| render_page_wiki(&sack, query))
-				.collect()
-		})
-		// Task: generate map
-		.add_task(|sack| {
-			vec![(
-				"map/index.html".into(),
-				crate::html::map(&sack, Some(&["photos".into()]))
-					.unwrap()
-					.render()
-					.to_owned()
-					.into(),
-			)]
-		})
-		// Task: generate search
-		.add_task(|sack| vec![("search/index.html".into(), crate::html::search(&sack))])
-		.add_task(|sack| {
-			let query = sack.get_content("projects/flox").unwrap();
-
-			let (parsed, outline, bib) =
-				html::post::parse_content(query.content, &sack, query.area, None);
-			let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
-
-			vec![(query.slug.join("index.html"), out_buff)]
-		})
-		// Task: generate project index
-		.add_task(|sack| {
-			vec![(
-				"projects/index.html".into(),
-				crate::html::to_list(
-					&sack,
-					sack.query_content::<Post>("projects/**/*")
-						.into_iter()
-						.map(|query| LinkDate {
-							link: Link {
-								path: Utf8Path::new("/").join(query.slug),
-								name: query.meta.title.clone(),
-								desc: query.meta.desc.clone(),
-							},
-							date: query.meta.date,
-						})
-						.collect(),
-					"Projects".into(),
-				),
-			)]
-		})
-		// Task: generate post index
 		.add_task(|sack| {
 			vec![(
 				"posts/index.html".into(),
@@ -230,7 +173,14 @@ fn main() {
 				),
 			)]
 		})
-		// Task: generate slideshow index
+		.add_task(|sack| rss::generate_feed::<Post>(sack, "posts", "Kamoshi.org Posts"))
+		// SLIDESHOWS
+		.add_task(|sack| {
+			sack.query_content::<Slideshow>("slides/**/*")
+				.into_iter()
+				.map(|query| render_page_slideshow(&sack, query))
+				.collect()
+		})
 		.add_task(|sack| {
 			vec![(
 				"slides/index.html".into(),
@@ -251,6 +201,58 @@ fn main() {
 				),
 			)]
 		})
+		.add_task(|sack| rss::generate_feed::<Slideshow>(sack, "slides", "Kamoshi.org Slides"))
+		// PROJECTS
+		.add_task(|sack| {
+			let query = sack.get_content("projects/flox").unwrap();
+
+			let (parsed, outline, bib) =
+				html::post::parse_content(query.content, &sack, query.area, None);
+			let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
+
+			vec![(query.slug.join("index.html"), out_buff)]
+		})
+		.add_task(|sack| {
+			vec![(
+				"projects/index.html".into(),
+				crate::html::to_list(
+					&sack,
+					sack.query_content::<Post>("projects/**/*")
+						.into_iter()
+						.map(|query| LinkDate {
+							link: Link {
+								path: Utf8Path::new("/").join(query.slug),
+								name: query.meta.title.clone(),
+								desc: query.meta.desc.clone(),
+							},
+							date: query.meta.date,
+						})
+						.collect(),
+					"Projects".into(),
+				),
+			)]
+		})
+		.add_task(|sack| rss::generate_feed::<Post>(sack, "projects", "Kamoshi.org Projects"))
+		// WIKI
+		.add_task(|sack| {
+			sack.query_content::<Wiki>("**/*")
+				.into_iter()
+				.map(|query| render_page_wiki(&sack, query))
+				.collect()
+		})
+		// MAP
+		.add_task(|sack| {
+			vec![(
+				"map/index.html".into(),
+				crate::html::map(&sack, Some(&["photos".into()]))
+					.unwrap()
+					.render()
+					.to_owned()
+					.into(),
+			)]
+		})
+		// SEARCH
+		.add_task(|sack| vec![("search/index.html".into(), crate::html::search(&sack))])
 		.finish();
 
 	match args.mode {
