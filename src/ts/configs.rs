@@ -64,6 +64,20 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 			"",
 		),
 		language!(
+			"bash",
+			tree_sitter_bash::LANGUAGE,
+			tree_sitter_bash::HIGHLIGHT_QUERY,
+			"",
+			"",
+		),
+		language!(
+			"c",
+			tree_sitter_c::LANGUAGE,
+			tree_sitter_c::HIGHLIGHT_QUERY,
+			"",
+			"",
+		),
+		language!(
 			"css",
 			tree_sitter_css::LANGUAGE,
 			tree_sitter_css::HIGHLIGHTS_QUERY,
@@ -77,7 +91,13 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 			tree_sitter_haskell::INJECTIONS_QUERY,
 			tree_sitter_haskell::LOCALS_QUERY,
 		),
-		language!("html", tree_sitter_html::LANGUAGE, "", "", "",),
+		language!(
+			"html",
+			tree_sitter_html::LANGUAGE,
+			tree_sitter_html::HIGHLIGHTS_QUERY,
+			tree_sitter_html::INJECTIONS_QUERY,
+			"",
+		),
 		language!(
 			"javascript",
 			tree_sitter_javascript::LANGUAGE,
@@ -113,13 +133,6 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 			tree_sitter_md::INJECTION_QUERY_INLINE,
 			"",
 		),
-		// language!(
-		// 	"nix",
-		// 	tree_sitter_nix::language(),
-		// 	tree_sitter_nix::HIGHLIGHTS_QUERY,
-		// 	"",
-		// 	"",
-		// ),
 		language!(
 			"python",
 			tree_sitter_python::LANGUAGE,
@@ -141,30 +154,13 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 			tree_sitter_rust::INJECTIONS_QUERY,
 			"",
 		),
-		// language!(
-		//     "scss",
-		//     tree_sitter_scss::,
-		//     merge![
-		//         tree_sitter_css::HIGHLIGHTS_QUERY,
-		//         tree_sitter_scss::HIGHLIGHTS_QUERY,
-		//     ],
-		//     "",
-		//     "",
-		// ),
-		// language!(
-		//     "query",
-		//     tree_sitter_query::language(),
-		//     tree_sitter_query::HIGHLIGHTS_QUERY,
-		//     tree_sitter_query::INJECTIONS_QUERY,
-		//     "",
-		// ),
-		// language!(
-		//     "toml",
-		//     tree_sitter_toml_ng::language(),
-		//     tree_sitter_toml_ng::HIGHLIGHTS_QUERY,
-		//     "",
-		//     "",
-		// ),
+		language!(
+			"toml",
+			tree_sitter_toml_ng::LANGUAGE,
+			tree_sitter_toml_ng::HIGHLIGHTS_QUERY,
+			"",
+			"",
+		),
 		language!(
 			"typescript",
 			tree_sitter_typescript::LANGUAGE_TYPESCRIPT,

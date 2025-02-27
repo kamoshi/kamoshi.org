@@ -1,4 +1,5 @@
 /// Source: https://github.com/nvim-treesitter/nvim-treesitter/blob/master/CONTRIBUTING.md
+#[rustfmt::skip]
 pub const NAMES: &[&str] = &[
     // Identifiers
     "variable",                     // various variable names
