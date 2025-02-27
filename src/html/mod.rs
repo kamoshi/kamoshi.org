@@ -10,12 +10,12 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use chrono::Datelike;
-use hypertext::{html_elements, maud, maud_move, GlobalAttributes, Raw, Renderable};
+use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud, maud_move};
 
 pub(crate) use home::home;
 use post::article;
 
-use crate::{model::Post, Bibliography, LinkDate, MySack, Outline};
+use crate::{Bibliography, LinkDate, MySack, Outline, model::Post};
 
 fn navbar() -> impl Renderable {
 	static ITEMS: &[(&str, &str)] = &[
@@ -161,7 +161,12 @@ where
 	bare(sack, main, title, js)
 }
 
-pub(crate) fn to_list(sack: &MySack, list: Vec<LinkDate>, title: String) -> String {
+pub(crate) fn to_list(
+	sack: &MySack,
+	list: Vec<LinkDate>,
+	title: String,
+	rss: &'static str,
+) -> String {
 	let mut groups = HashMap::<i32, Vec<_>>::new();
 
 	for page in list {
@@ -178,7 +183,10 @@ pub(crate) fn to_list(sack: &MySack, list: Vec<LinkDate>, title: String) -> Stri
 
 	groups.sort_by(|a, b| b.0.cmp(&a.0));
 
-	list::list(sack, &groups, title).unwrap().render().into()
+	list::list(sack, &groups, title, rss)
+		.unwrap()
+		.render()
+		.into()
 }
 
 pub(crate) fn map<'s, 'html>(

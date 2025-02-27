@@ -170,6 +170,7 @@ fn main() {
 						})
 						.collect(),
 					"Posts".into(),
+					"/posts/rss.xml",
 				),
 			)]
 		})
@@ -198,6 +199,7 @@ fn main() {
 						})
 						.collect(),
 					"Slideshows".into(),
+					"/slides/rss.xml",
 				),
 			)]
 		})
@@ -229,6 +231,7 @@ fn main() {
 						})
 						.collect(),
 					"Projects".into(),
+					"/projects/rss.xml",
 				),
 			)]
 		})

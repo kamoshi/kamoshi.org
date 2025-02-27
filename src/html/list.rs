@@ -8,6 +8,7 @@ pub fn list<'s, 'g, 'html>(
 	sack: &'s MySack,
 	groups: &'g [(i32, Vec<LinkDate>)],
 	title: String,
+	rss: &'static str,
 ) -> Result<impl Renderable + 'html, String>
 where
 	's: 'html,
@@ -19,7 +20,7 @@ where
 			article .page-list {
 				header .directory-header .markdown {
 					h1 { (heading) }
-					a href="/posts/rss.xml" title="RSS feed" {
+					a href=(rss) title="RSS feed" {
 					   (hypertext::Raw(ICON_RSS))
 					}
 				}
