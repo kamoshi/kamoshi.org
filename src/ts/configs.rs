@@ -41,19 +41,6 @@ macro_rules! language {
 	};
 }
 
-static EXTENSIONS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
-	HashMap::from([
-		("hs", "haskell"),
-		("js", "javascript"),
-		("md", "markdown"),
-		("mdx", "markdown"),
-		("py", "python"),
-		("scm", "scheme"),
-		("ts", "typescript"),
-		("typescript", "javascript"),
-	])
-});
-
 static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLock::new(|| {
 	HashMap::from([
 		language!(
@@ -193,9 +180,20 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
 	])
 });
 
+#[rustfmt::skip]
+fn expand_extension(ext: &str) -> &str {
+    match ext {
+        "hs"  => "haskell",
+		"js"  => "javascript",
+		"md"  => "markdown",
+		"mdx" => "markdown",
+		"py"  => "python",
+		"scm" => "scheme",
+		"ts"  => "typescript",
+		other => other,
+    }
+}
+
 pub fn get_config(name: &str) -> Option<&'static HighlightConfiguration> {
-	match EXTENSIONS.get(name) {
-		Some(name) => CONFIGS.get(name),
-		None => CONFIGS.get(name),
-	}
+	CONFIGS.get(expand_extension(name))
 }
