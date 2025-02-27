@@ -61,7 +61,7 @@ pub fn parse(
 	let stream = StreamHeading::new(stream, &mut outline);
 	let stream = StreamCodeBlock::new(stream);
 	let stream = stream.map(swap_hashed_image(path, sack));
-	let stream = stream.map(render_katex);
+	let stream = stream.map(render_latex);
 	let stream = stream.map(render_emoji);
 	let stream = StreamDirectiveBlock::new(stream, render_directive_block);
 	let stream = StreamDirectiveInline::new(stream, render_directive_inline);
@@ -264,36 +264,31 @@ fn swap_hashed_image<'a>(dir: &'a Utf8Path, sack: &'a MySack) -> impl Fn(Event<'
 	}
 }
 
-// KaTeX
+// LaTeX
 
-static KATEX_INLINE: LazyLock<katex::Opts> = LazyLock::new(|| {
-	katex::opts::Opts::builder()
-		.output_type(katex::OutputType::Mathml)
-		.build()
-		.unwrap()
-});
+fn parse_latex(math: &str, block: bool) -> String {
+	use pulldown_latex::*;
 
-static KATEX_BLOCK: LazyLock<katex::Opts> = LazyLock::new(|| {
-	katex::opts::Opts::builder()
-		.output_type(katex::OutputType::Mathml)
-		.display_mode(true)
-		.build()
-		.unwrap()
-});
+	let config = RenderConfig {
+		display_mode: match block {
+			true => config::DisplayMode::Block,
+			false => config::DisplayMode::Inline,
+		},
+		..Default::default()
+	};
 
-fn render_katex(event: Event) -> Event {
+	let storage = Storage::new();
+	let parser = Parser::new(&math, &storage);
+	let mut buffer = String::new();
+	push_mathml(&mut buffer, parser, config).expect("MathML fail");
+	buffer
+}
+
+fn render_latex(event: Event) -> Event {
 	match event {
-		Event::InlineMath(math) => Event::InlineHtml(
-			katex::render_with_opts(&math, &*KATEX_INLINE)
-				.unwrap()
-				.into(),
-		),
-		Event::DisplayMath(math) => Event::Html(
-			katex::render_with_opts(&math, &*KATEX_BLOCK)
-				.unwrap()
-				.into(),
-		),
-		_ => event,
+		Event::InlineMath(math) => Event::InlineHtml(parse_latex(&math, false).into()),
+		Event::DisplayMath(math) => Event::Html(parse_latex(&math, true).into()),
+		event => event,
 	}
 }
 
