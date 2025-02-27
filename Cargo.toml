@@ -7,21 +7,21 @@ edition = "2024"
 path = "../hauchiwa"
 
 [dependencies]
-camino                 = { version = "1.1.9", features = ["serde1"] }
-chrono                 = "0.4.38"
-clap                   = { version = "4.5.20", features = ["derive"] }
-emojis                 = "0.6.4"
-glob                   = "0.3.1"
-hayagriva              = "0.8.0"
+camino                 = { version = "1.1", features = ["serde1"] }
+chrono                 = "0.4"
+clap                   = { version = "4.5", features = ["derive"] }
+emojis                 = "0.6"
+glob                   = "0.3"
+hayagriva              = "0.8"
 hypertext              = "0.6"
 katex                  = "0.4.6"
-rayon                  = "1.10.0"
-regex                  = "1.11.1"
+rayon                  = "1.10"
+regex                  = "1.11"
 rss                    = "2.0"
-serde                  = { version = "1.0.214", features = ["derive"] }
+serde                  = { version = "1.0", features = ["derive"] }
 
 # Markdown
-pulldown-cmark         = "0.12"
+pulldown-cmark         = "0.13"
 
 # Treesitter
 tree-sitter            = "0.25"
