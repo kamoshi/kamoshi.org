@@ -190,6 +190,7 @@ fn expand_extension(ext: &str) -> &str {
 		"py"  => "python",
 		"scm" => "scheme",
 		"ts"  => "typescript",
+		"scss" => "css",
 		other => other,
     }
 }
