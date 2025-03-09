@@ -139,25 +139,27 @@ fn main() -> Result<(), HauchiwaError> {
             let query = sack.get_content::<Home>("").unwrap();
             let (parsed, _, _) = text::md::parse(query.content, &sack, query.area, None);
             let out_buff = html::home(&sack, &parsed);
-            vec![("index.html".into(), out_buff)]
+            let res = vec![("index.html".into(), out_buff)];
+            Ok(res)
         })
         .add_task(|sack| {
             let query = sack.get_content::<Post>("about").unwrap();
             let (parsed, outline, bib) =
                 html::post::parse_content(query.content, &sack, query.area, None);
             let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
-            vec![(query.slug.join("index.html"), out_buff)]
+            Ok(vec![(query.slug.join("index.html"), out_buff)])
         })
         // POSTS
         .add_task(|sack| {
-            sack.query_content::<Post>("posts/**/*")
+            Ok(sack
+                .query_content::<Post>("posts/**/*")
                 .unwrap()
                 .into_iter()
                 .map(|query| render_page_post(&sack, query))
-                .collect()
+                .collect())
         })
         .add_task(|sack| {
-            vec![(
+            Ok(vec![(
                 "posts/index.html".into(),
                 crate::html::to_list(
                     &sack,
@@ -176,19 +178,26 @@ fn main() -> Result<(), HauchiwaError> {
                     "Posts".into(),
                     "/posts/rss.xml",
                 ),
-            )]
+            )])
         })
-        .add_task(|sack| rss::generate_feed::<Post>(sack, "posts", "Kamoshi.org Posts"))
+        .add_task(|sack| {
+            Ok(rss::generate_feed::<Post>(
+                sack,
+                "posts",
+                "Kamoshi.org Posts",
+            ))
+        })
         // SLIDESHOWS
         .add_task(|sack| {
-            sack.query_content::<Slideshow>("slides/**/*")
+            Ok(sack
+                .query_content::<Slideshow>("slides/**/*")
                 .unwrap()
                 .into_iter()
                 .map(|query| render_page_slideshow(&sack, query))
-                .collect()
+                .collect())
         })
         .add_task(|sack| {
-            vec![(
+            Ok(vec![(
                 "slides/index.html".into(),
                 crate::html::to_list(
                     &sack,
@@ -207,21 +216,25 @@ fn main() -> Result<(), HauchiwaError> {
                     "Slideshows".into(),
                     "/slides/rss.xml",
                 ),
-            )]
+            )])
         })
-        .add_task(|sack| rss::generate_feed::<Slideshow>(sack, "slides", "Kamoshi.org Slides"))
+        .add_task(|sack| {
+            Ok(rss::generate_feed::<Slideshow>(
+                sack,
+                "slides",
+                "Kamoshi.org Slides",
+            ))
+        })
         // PROJECTS
         .add_task(|sack| {
             let query = sack.get_content("projects/flox").unwrap();
-
             let (parsed, outline, bib) =
                 html::post::parse_content(query.content, &sack, query.area, None);
             let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
-
-            vec![(query.slug.join("index.html"), out_buff)]
+            Ok(vec![(query.slug.join("index.html"), out_buff)])
         })
         .add_task(|sack| {
-            vec![(
+            Ok(vec![(
                 "projects/index.html".into(),
                 crate::html::to_list(
                     &sack,
@@ -240,30 +253,42 @@ fn main() -> Result<(), HauchiwaError> {
                     "Projects".into(),
                     "/projects/rss.xml",
                 ),
-            )]
+            )])
         })
-        .add_task(|sack| rss::generate_feed::<Post>(sack, "projects", "Kamoshi.org Projects"))
+        .add_task(|sack| {
+            Ok(rss::generate_feed::<Post>(
+                sack,
+                "projects",
+                "Kamoshi.org Projects",
+            ))
+        })
         // WIKI
         .add_task(|sack| {
-            sack.query_content::<Wiki>("**/*")
+            Ok(sack
+                .query_content::<Wiki>("**/*")
                 .unwrap()
                 .into_iter()
                 .map(|query| render_page_wiki(&sack, query))
-                .collect()
+                .collect::<Vec<_>>())
         })
         // MAP
         .add_task(|sack| {
-            vec![(
+            Ok(vec![(
                 "map/index.html".into(),
                 crate::html::map(&sack, Some(&["photos".into()]))
                     .unwrap()
                     .render()
                     .to_owned()
                     .into(),
-            )]
+            )])
         })
         // SEARCH
-        .add_task(|sack| vec![("search/index.html".into(), crate::html::search(&sack))])
+        .add_task(|sack| {
+            Ok(vec![(
+                "search/index.html".into(),
+                crate::html::search(&sack),
+            )])
+        })
         .finish();
 
     match args.mode {
