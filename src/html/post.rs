@@ -47,17 +47,13 @@ where
     crate::html::page(sack, main, meta.title.clone(), meta.scripts.as_deref())
 }
 
-pub fn article<'p, 's, 'html>(
+pub fn article<'p, 's>(
     meta: &'p Post,
     parsed: &'p str,
     _: &'s MySack,
     outline: Outline,
     bibliography: Bibliography,
-) -> impl Renderable + 'html
-where
-    's: 'html,
-    'p: 'html,
-{
+) -> impl Renderable {
     maud_move!(
         div .wiki-main {
 

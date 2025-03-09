@@ -1,5 +1,5 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use hauchiwa::QueryContent;
+use hauchiwa::{QueryContent, TaskResult};
 use rss::{ChannelBuilder, ItemBuilder};
 
 use crate::model::Post;
@@ -39,23 +39,22 @@ pub(crate) fn generate_feed<T: ToFeed + 'static>(
     sack: MySack,
     slug: &str,
     title: &str,
-) -> Vec<(Utf8PathBuf, String)> {
+) -> TaskResult<(Utf8PathBuf, String)> {
     let slug = Utf8Path::new(slug);
     let glob = slug.join("**/*");
 
-    vec![(
+    Ok((
         slug.join("rss.xml"),
         ChannelBuilder::default()
             .title(title)
             .link(Utf8Path::new(BASE_URL).join(slug).to_string())
             .items(
-                sack.query_content::<T>(glob.as_str())
-                    .unwrap()
+                sack.query_content::<T>(glob.as_str())?
                     .into_iter()
                     .map(T::to_feed)
                     .collect::<Vec<_>>(),
             )
             .build()
             .to_string(),
-    )]
+    ))
 }

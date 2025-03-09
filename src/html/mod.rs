@@ -70,13 +70,13 @@ where
 {
     let copy = format!(
         "Copyright &copy; {} Maciej Jur",
-        &sack.get_context().data.year
+        &sack.get_metadata().data.year
     );
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{}", mail);
-    let link = Utf8Path::new(&sack.get_context().data.link)
+    let link = Utf8Path::new(&sack.get_metadata().data.link)
         .join("src/commit")
-        .join(&sack.get_context().data.hash);
+        .join(&sack.get_metadata().data.hash);
 
     // let link = match sack.get_file() {
     // 	Some(path) => link.join(path),
@@ -95,10 +95,10 @@ where
             }
             div .repo {
                 a href=(link.as_str()) {
-                    (&sack.get_context().data.hash)
+                    (&sack.get_metadata().data.hash)
                 }
                 div {
-                    (&sack.get_context().data.date)
+                    (&sack.get_metadata().data.date)
                 }
             }
             a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {

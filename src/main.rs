@@ -35,14 +35,14 @@ pub struct Bibliography(pub Option<Vec<String>>);
 pub struct Outline(pub Vec<(String, String)>);
 
 #[derive(Debug, Clone)]
-struct MyData {
+struct Global {
     pub year: i32,
     pub date: String,
     pub link: String,
     pub hash: String,
 }
 
-impl MyData {
+impl Global {
     fn new() -> Self {
         let time = chrono::Utc::now();
         Self {
@@ -63,7 +63,7 @@ impl MyData {
     }
 }
 
-type MySack<'a> = Sack<'a, MyData>;
+type MySack<'a> = Sack<'a, Global>;
 
 #[derive(Debug, Clone)]
 struct Link {
@@ -84,20 +84,20 @@ fn process_bibliography(content: &str) -> Library {
 
 type Page = (Utf8PathBuf, String);
 
-fn render_page_post(sack: &Sack<MyData>, query: QueryContent<Post>) -> TaskResult<Page> {
+fn render_page_post(sack: &Sack<Global>, query: QueryContent<Post>) -> TaskResult<Page> {
     let library = sack.get_asset_any::<Library>(query.area)?;
     let parsed = html::post::parse_content(query.content, sack, query.area, library);
     let buffer = html::post::as_html(query.meta, &parsed.0, sack, parsed.1, parsed.2);
     Ok((query.slug.join("index.html"), buffer))
 }
 
-fn render_page_slideshow(sack: &Sack<MyData>, query: QueryContent<Slideshow>) -> Page {
+fn render_page_slideshow(sack: &Sack<Global>, query: QueryContent<Slideshow>) -> Page {
     let parsed = html::slideshow::parse_content(query.content, sack, query.area, None);
     let buffer = html::slideshow::as_html(query.meta, &parsed.0, sack, parsed.1, parsed.2);
     (query.slug.join("index.html"), buffer)
 }
 
-fn render_page_wiki(sack: &Sack<MyData>, query: QueryContent<Wiki>) -> TaskResult<Page> {
+fn render_page_wiki(sack: &Sack<Global>, query: QueryContent<Wiki>) -> TaskResult<Page> {
     let library = sack.get_asset_any::<Library>(query.area)?;
     let parsed = html::wiki::parse_content(query.content, sack, query.area, library);
     let buffer = html::wiki::as_html(query.meta, &parsed.0, sack, query.slug, parsed.1, parsed.2);
@@ -135,20 +135,21 @@ fn main() -> Result<(), HauchiwaError> {
             ("editor", "./js/flox/main.ts"),
             ("lambda", "./js/flox/lambda.ts"),
         ])
-        // Task: generate home page
-        .add_task(|sack| {
-            let query = sack.get_content::<Home>("")?;
-            let (parsed, _, _) = md::parse(query.content, &sack, query.area, None);
-            let out_buff = html::home(&sack, &parsed)?;
+        // Generate the home page.
+        .add_task(|ctx| {
+            let item = ctx.get_content::<Home>("")?;
+            let text = md::parse(item.content, &ctx, item.area, None).0;
+            let html = html::home(&ctx, &text)?;
 
-            Ok(vec![("index.html".into(), out_buff)])
+            Ok(vec![("index.html".into(), html)])
         })
-        .add_task(|sack| {
-            let query = sack.get_content::<Post>("about")?;
+        // Generate the about page.
+        .add_task(|ctx| {
+            let item = ctx.get_content::<Post>("about")?;
             let (parsed, outline, bib) =
-                html::post::parse_content(query.content, &sack, query.area, None);
-            let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
-            Ok(vec![(query.slug.join("index.html"), out_buff)])
+                html::post::parse_content(item.content, &ctx, item.area, None);
+            let html = html::post::as_html(item.meta, &parsed, &ctx, outline, bib);
+            Ok(vec![(item.slug.join("index.html"), html)])
         })
         // POSTS
         .add_task(|sack| {
@@ -180,11 +181,8 @@ fn main() -> Result<(), HauchiwaError> {
             )])
         })
         .add_task(|sack| {
-            Ok(rss::generate_feed::<Post>(
-                sack,
-                "posts",
-                "Kamoshi.org Posts",
-            ))
+            let feed = rss::generate_feed::<Post>(sack, "posts", "Kamoshi.org Posts")?;
+            Ok(vec![feed])
         })
         // SLIDESHOWS
         .add_task(|sack| {
@@ -216,11 +214,8 @@ fn main() -> Result<(), HauchiwaError> {
             )])
         })
         .add_task(|sack| {
-            Ok(rss::generate_feed::<Slideshow>(
-                sack,
-                "slides",
-                "Kamoshi.org Slides",
-            ))
+            let feed = rss::generate_feed::<Slideshow>(sack, "slides", "Kamoshi.org Slides")?;
+            Ok(vec![feed])
         })
         // PROJECTS
         .add_task(|sack| {
@@ -252,11 +247,8 @@ fn main() -> Result<(), HauchiwaError> {
             )])
         })
         .add_task(|sack| {
-            Ok(rss::generate_feed::<Post>(
-                sack,
-                "projects",
-                "Kamoshi.org Projects",
-            ))
+            let feed = rss::generate_feed::<Post>(sack, "projects", "Kamoshi.org Projects")?;
+            Ok(vec![feed])
         })
         // WIKI
         .add_task(|sack| {
@@ -286,7 +278,7 @@ fn main() -> Result<(), HauchiwaError> {
         .finish();
 
     match args.mode {
-        Mode::Build => website.build(MyData::new()),
-        Mode::Watch => website.watch(MyData::new()),
+        Mode::Build => website.build(Global::new()),
+        Mode::Watch => website.watch(Global::new()),
     }
 }
