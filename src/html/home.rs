@@ -1,8 +1,8 @@
 use camino::Utf8Path;
-use hauchiwa::Sack;
+use hauchiwa::{Sack, TaskResult};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud, maud_move};
 
-use crate::{Link, LinkDate, MyData, model::Post, text::md::parse};
+use crate::{Link, LinkDate, MyData, md::parse, model::Post};
 
 const INTRO: &str = r#"
 ## かもし
@@ -77,7 +77,7 @@ fn latest(sack: &Sack<MyData>) -> impl Renderable {
     )
 }
 
-pub(crate) fn home(sack: &Sack<MyData>, main: &str) -> String {
+pub(crate) fn home(sack: &Sack<MyData>, main: &str) -> TaskResult<String> {
     let main = maud!(
         main .l-home {
             article .l-home__article.markdown {
@@ -92,8 +92,9 @@ pub(crate) fn home(sack: &Sack<MyData>, main: &str) -> String {
         }
     );
 
-    crate::html::page(sack, main, "Home".into(), None)
-        .unwrap()
+    let rendered = crate::html::page(sack, main, "Home".into(), None)?
         .render()
-        .into()
+        .into();
+
+    Ok(rendered)
 }

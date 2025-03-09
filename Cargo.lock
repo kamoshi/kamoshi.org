@@ -1389,6 +1389,7 @@ dependencies = [
 name = "hauchiwa"
 version = "0.2.0"
 dependencies = [
+ "anyhow",
  "camino",
  "glob",
  "grass",

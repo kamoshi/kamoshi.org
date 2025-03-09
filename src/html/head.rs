@@ -1,4 +1,4 @@
-use hauchiwa::{Mode, Sack};
+use hauchiwa::{Mode, Sack, TaskResult};
 use hypertext::{Raw, Renderable, html_elements, maud_move};
 
 use crate::MyData;
@@ -15,7 +15,7 @@ pub(crate) fn render_head<'s, 'r>(
     title: String,
     _styles: &'s [&str],
     scripts: Option<&'s [String]>,
-) -> Result<impl Renderable + 'r, String>
+) -> TaskResult<impl Renderable + 'r>
 where
     's: 'r,
 {
@@ -76,7 +76,7 @@ fn render_style(path: &str) -> impl Renderable + '_ {
 fn emit_tags_script<'a>(
     sack: &'a Sack<MyData>,
     scripts: &'a [String],
-) -> Result<impl Renderable + 'a, String> {
+) -> TaskResult<impl Renderable + 'a> {
     let tags = scripts
         .iter()
         .map(|script| emit_tag_script(sack, script))
@@ -89,13 +89,8 @@ fn emit_tags_script<'a>(
     ))
 }
 
-fn emit_tag_script<'a>(
-    sack: &'a Sack<MyData>,
-    alias: &'a str,
-) -> Result<impl Renderable + 'a, String> {
-    let path = sack
-        .get_script(alias)
-        .map_err(|e| format!("Missing script: {}", e))?;
+fn emit_tag_script<'a>(sack: &'a Sack<MyData>, alias: &'a str) -> TaskResult<impl Renderable> {
+    let path = sack.get_script(alias)?;
 
     Ok(maud_move!(script type="module" src=(path.as_str()) defer {}))
 }

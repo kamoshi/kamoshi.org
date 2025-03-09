@@ -1,7 +1,7 @@
 mod html;
+mod md;
 mod model;
 mod rss;
-mod text;
 mod ts;
 
 use std::process::Command;
@@ -10,7 +10,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::{
-    Collection, HauchiwaError, Processor, QueryContent, Sack, Website, parse_matter_yaml,
+    Collection, HauchiwaError, Processor, QueryContent, Sack, TaskResult, Website,
+    parse_matter_yaml,
 };
 use hayagriva::Library;
 use hypertext::Renderable;
@@ -83,11 +84,11 @@ fn process_bibliography(content: &str) -> Library {
 
 type Page = (Utf8PathBuf, String);
 
-fn render_page_post(sack: &Sack<MyData>, query: QueryContent<Post>) -> Page {
-    let library = sack.get_asset_any::<Library>(query.area).unwrap();
+fn render_page_post(sack: &Sack<MyData>, query: QueryContent<Post>) -> TaskResult<Page> {
+    let library = sack.get_asset_any::<Library>(query.area)?;
     let parsed = html::post::parse_content(query.content, sack, query.area, library);
     let buffer = html::post::as_html(query.meta, &parsed.0, sack, parsed.1, parsed.2);
-    (query.slug.join("index.html"), buffer)
+    Ok((query.slug.join("index.html"), buffer))
 }
 
 fn render_page_slideshow(sack: &Sack<MyData>, query: QueryContent<Slideshow>) -> Page {
@@ -96,11 +97,11 @@ fn render_page_slideshow(sack: &Sack<MyData>, query: QueryContent<Slideshow>) ->
     (query.slug.join("index.html"), buffer)
 }
 
-fn render_page_wiki(sack: &Sack<MyData>, query: QueryContent<Wiki>) -> Page {
-    let library = sack.get_asset_any::<Library>(query.area).unwrap();
+fn render_page_wiki(sack: &Sack<MyData>, query: QueryContent<Wiki>) -> TaskResult<Page> {
+    let library = sack.get_asset_any::<Library>(query.area)?;
     let parsed = html::wiki::parse_content(query.content, sack, query.area, library);
     let buffer = html::wiki::as_html(query.meta, &parsed.0, sack, query.slug, parsed.1, parsed.2);
-    (query.slug.join("index.html"), buffer)
+    Ok((query.slug.join("index.html"), buffer))
 }
 
 /// Base path for content files
@@ -136,14 +137,14 @@ fn main() -> Result<(), HauchiwaError> {
         ])
         // Task: generate home page
         .add_task(|sack| {
-            let query = sack.get_content::<Home>("").unwrap();
-            let (parsed, _, _) = text::md::parse(query.content, &sack, query.area, None);
-            let out_buff = html::home(&sack, &parsed);
-            let res = vec![("index.html".into(), out_buff)];
-            Ok(res)
+            let query = sack.get_content::<Home>("")?;
+            let (parsed, _, _) = md::parse(query.content, &sack, query.area, None);
+            let out_buff = html::home(&sack, &parsed)?;
+
+            Ok(vec![("index.html".into(), out_buff)])
         })
         .add_task(|sack| {
-            let query = sack.get_content::<Post>("about").unwrap();
+            let query = sack.get_content::<Post>("about")?;
             let (parsed, outline, bib) =
                 html::post::parse_content(query.content, &sack, query.area, None);
             let out_buff = html::post::as_html(query.meta, &parsed, &sack, outline, bib);
@@ -152,19 +153,17 @@ fn main() -> Result<(), HauchiwaError> {
         // POSTS
         .add_task(|sack| {
             Ok(sack
-                .query_content::<Post>("posts/**/*")
-                .unwrap()
+                .query_content::<Post>("posts/**/*")?
                 .into_iter()
                 .map(|query| render_page_post(&sack, query))
-                .collect())
+                .collect::<Result<_, _>>()?)
         })
         .add_task(|sack| {
             Ok(vec![(
                 "posts/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.query_content::<Post>("posts/**/*")
-                        .unwrap()
+                    sack.query_content::<Post>("posts/**/*")?
                         .into_iter()
                         .map(|query| LinkDate {
                             link: Link {
@@ -190,8 +189,7 @@ fn main() -> Result<(), HauchiwaError> {
         // SLIDESHOWS
         .add_task(|sack| {
             Ok(sack
-                .query_content::<Slideshow>("slides/**/*")
-                .unwrap()
+                .query_content::<Slideshow>("slides/**/*")?
                 .into_iter()
                 .map(|query| render_page_slideshow(&sack, query))
                 .collect())
@@ -201,8 +199,7 @@ fn main() -> Result<(), HauchiwaError> {
                 "slides/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.query_content::<Slideshow>("slides/**/*")
-                        .unwrap()
+                    sack.query_content::<Slideshow>("slides/**/*")?
                         .into_iter()
                         .map(|query| LinkDate {
                             link: Link {
@@ -227,7 +224,7 @@ fn main() -> Result<(), HauchiwaError> {
         })
         // PROJECTS
         .add_task(|sack| {
-            let query = sack.get_content("projects/flox").unwrap();
+            let query = sack.get_content("projects/flox")?;
             let (parsed, outline, bib) =
                 html::post::parse_content(query.content, &sack, query.area, None);
             let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
@@ -238,8 +235,7 @@ fn main() -> Result<(), HauchiwaError> {
                 "projects/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.query_content::<Post>("projects/**/*")
-                        .unwrap()
+                    sack.query_content::<Post>("projects/**/*")?
                         .into_iter()
                         .map(|query| LinkDate {
                             link: Link {
@@ -265,18 +261,16 @@ fn main() -> Result<(), HauchiwaError> {
         // WIKI
         .add_task(|sack| {
             Ok(sack
-                .query_content::<Wiki>("**/*")
-                .unwrap()
+                .query_content::<Wiki>("**/*")?
                 .into_iter()
                 .map(|query| render_page_wiki(&sack, query))
-                .collect::<Vec<_>>())
+                .collect::<Result<_, _>>()?)
         })
         // MAP
         .add_task(|sack| {
             Ok(vec![(
                 "map/index.html".into(),
-                crate::html::map(&sack, Some(&["photos".into()]))
-                    .unwrap()
+                crate::html::map(&sack, Some(&["photos".into()]))?
                     .render()
                     .to_owned()
                     .into(),
