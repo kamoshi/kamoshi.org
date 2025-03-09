@@ -13,7 +13,7 @@ socket.addEventListener("message", event => {
 pub(crate) fn render_head<'a>(
     ctx: &'a Sack<Global>,
     title: String,
-    styles: &'a [&str],
+    _styles: &'a [&str],
     script: Option<&'a [String]>,
 ) -> TaskResult<impl Renderable> {
     let metadata = ctx.get_metadata();

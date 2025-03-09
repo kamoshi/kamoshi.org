@@ -1,6 +1,7 @@
 mod html;
 mod md;
 mod model;
+mod pf;
 mod rss;
 mod ts;
 
@@ -10,7 +11,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::{
-    Collection, HauchiwaError, Processor, QueryContent, Sack, TaskResult, Website,
+    Collection, HauchiwaError, Hook, Processor, QueryContent, Sack, TaskResult, Website,
     parse_matter_yaml,
 };
 use hayagriva::Library;
@@ -275,6 +276,7 @@ fn main() -> Result<(), HauchiwaError> {
                 crate::html::search(&sack),
             )])
         })
+        .add_hook(Hook::post_build(crate::pf::build_pagefind))
         .finish();
 
     match args.mode {
