@@ -10,3 +10,6 @@ serve:
 
 deploy: build
 	rsync -Pavzq ./dist/ kamoshi:/var/www/kamoshi.org --delete
+
+perf:
+	cargo flamegraph
