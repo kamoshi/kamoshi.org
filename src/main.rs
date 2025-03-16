@@ -5,14 +5,13 @@ mod pf;
 mod rss;
 mod ts;
 
-use std::process::Command;
+use std::process::{Command, ExitCode};
 
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::{
-    Collection, HauchiwaError, Hook, Processor, QueryContent, Sack, TaskResult, Website,
-    parse_matter_yaml,
+    Collection, Hook, Processor, QueryContent, Sack, TaskResult, Website, parse_matter_yaml,
 };
 use hayagriva::Library;
 use hypertext::Renderable;
@@ -79,8 +78,9 @@ struct LinkDate {
     pub date: DateTime<Utc>,
 }
 
-fn process_bibliography(content: &str) -> Library {
-    hayagriva::io::from_biblatex_str(content).unwrap()
+fn process_bibliography(bytes: &[u8]) -> Library {
+    let text = String::from_utf8_lossy(bytes);
+    hayagriva::io::from_biblatex_str(&text).unwrap()
 }
 
 type Page = (Utf8PathBuf, String);
@@ -111,7 +111,7 @@ const BASE: &str = "content";
 /// Markdown file extensions
 const EXTS_MD: [&str; 3] = ["md", "mdx", "lhs"];
 
-fn main() -> Result<(), HauchiwaError> {
+fn main() -> ExitCode {
     let args = Args::parse();
 
     let website = Website::configure()
@@ -279,8 +279,16 @@ fn main() -> Result<(), HauchiwaError> {
         .add_hook(Hook::post_build(crate::pf::build_pagefind))
         .finish();
 
-    match args.mode {
+    let res = match args.mode {
         Mode::Build => website.build(Global::new()),
         Mode::Watch => website.watch(Global::new()),
+    };
+
+    match res {
+        Ok(_) => ExitCode::from(0),
+        Err(e) => {
+            eprintln!("{}", e.to_string());
+            ExitCode::from(1)
+        }
     }
 }

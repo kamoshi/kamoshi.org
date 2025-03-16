@@ -7,9 +7,7 @@ use crate::{Link, LinkDate};
 
 /// Represents a wiki page
 #[derive(Deserialize, Debug, Clone)]
-pub struct Home {
-    pub title: String,
-}
+pub struct Home {}
 
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]

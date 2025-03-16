@@ -1,7 +1,3 @@
----
-title: Home
----
-
 # Welcome to my website! :heart:
 
 You have found this little floating rock in the middle of the Internet! Congrats 🎉
