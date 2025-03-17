@@ -1,0 +1,76 @@
+.project-list-wrap {
+  max-width: 1200px; /* Limit max width */
+  margin: 0 auto; /* Center the container */
+  padding: 2rem 1rem; /* Add some spacing */
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.project-list-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem; /* Space between tiles */
+  justify-content: center; /* Center align tiles */
+
+  .project-list-tile {
+    flex: 1 1 calc(33.333% - 1rem); /* Responsive: 3 columns by default */
+    max-width: 300px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    text-align: center;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    h2 {
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+
+    .tech-stack {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      list-style: none;
+
+      img {
+        width: 24px;
+        height: 24px;
+        margin: 0.25rem;
+      }
+    }
+
+    p {
+      font-size: 0.95rem;
+      color: #555;
+    }
+  }
+
+  /* Responsive: Adjust columns for smaller screens */
+  @media (max-width: 768px) {
+    .project-card {
+      flex: 1 1 calc(50% - 1rem); /* 2 columns on tablets */
+    }
+  }
+
+  @media (max-width: 480px) {
+    .project-card {
+      flex: 1 1 100%; /* 1 column on mobile */
+    }
+  }
+}

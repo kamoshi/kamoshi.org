@@ -42,6 +42,42 @@ pub(crate) struct Slideshow {
     pub desc: Option<String>,
 }
 
+impl From<QueryContent<'_, Slideshow>> for LinkDate {
+    fn from(query: QueryContent<Slideshow>) -> Self {
+        Self {
+            link: Link {
+                path: Utf8Path::new("/").join(query.slug),
+                name: query.meta.title.clone(),
+                desc: query.meta.desc.clone(),
+            },
+            date: query.meta.date,
+        }
+    }
+}
+
+/// Represents a simple post.
+#[derive(Deserialize, Debug, Clone)]
+pub struct Project {
+    pub title: String,
+    /// List of technologies used
+    pub tech: Vec<String>,
+    pub link: String,
+    pub desc: Option<String>,
+}
+
+// impl From<QueryContent<'_, Project>> for LinkDate {
+//     fn from(query: QueryContent<Project>) -> Self {
+//         Self {
+//             link: Link {
+//                 path: Utf8Path::new("/").join(query.slug),
+//                 name: query.meta.title.clone(),
+//                 desc: query.meta.desc.clone(),
+//             },
+//             date: query.meta.date,
+//         }
+//     }
+// }
+
 /// Represents a wiki page
 #[derive(Deserialize, Debug, Clone)]
 pub struct Wiki {

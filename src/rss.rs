@@ -2,7 +2,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::{QueryContent, TaskResult};
 use rss::{ChannelBuilder, ItemBuilder};
 
-use crate::model::Post;
+use crate::model::{Post, Project};
 use crate::{BASE_URL, MySack, Slideshow};
 
 pub(crate) trait ToFeed: Sized {
@@ -23,6 +23,19 @@ impl ToFeed for Post {
 }
 
 impl ToFeed for Slideshow {
+    fn to_feed(query: QueryContent<Self>) -> rss::Item {
+        ItemBuilder::default()
+            .title(query.meta.title.clone())
+            .link(
+                Utf8Path::new(BASE_URL)
+                    .join(query.slug.to_string())
+                    .to_string(),
+            )
+            .build()
+    }
+}
+
+impl ToFeed for Project {
     fn to_feed(query: QueryContent<Self>) -> rss::Item {
         ItemBuilder::default()
             .title(query.meta.title.clone())

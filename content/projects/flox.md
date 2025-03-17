@@ -1,6 +1,8 @@
 ---
 title: Flox
 date: 2024-08-25T09:59:41Z
+link: https://github.com/kamoshi/loxy
+tech: [rust]
 desc: >
     Small functional language written in Rust and compiled to WebAssembly
 ---
@@ -11,13 +13,13 @@ desc: >
 Program      ::= Sequence "EOF"
 Sequence     ::= Expression? (";" Expression)*
 
-Expression   ::= Data 
-               | Match 
-               | Let 
-               | If 
-               | While 
-               | Return 
-               | Block 
+Expression   ::= Data
+               | Match
+               | Let
+               | If
+               | While
+               | Return
+               | Block
                | Assignment
 
 Data         ::= "data" IDENTIFIER ("|" IDENTIFIER (IDENTIFIER)*)*
@@ -31,14 +33,14 @@ Assignment   ::= Call ("=" Assignment)?
 Call         ::= Index (Index)*
 Index        ::= Primary ("." IDENTIFIER)?
 
-Primary      ::= IDENTIFIER 
-               | NUMBER 
-               | STRING 
-               | "true" 
-               | "false" 
-               | "nil" 
-               | Lambda 
-               | Parenthesized 
+Primary      ::= IDENTIFIER
+               | NUMBER
+               | STRING
+               | "true"
+               | "false"
+               | "nil"
+               | Lambda
+               | Parenthesized
                | Array
 
 Lambda       ::= "fn" IDENTIFIER+ "->" Expression

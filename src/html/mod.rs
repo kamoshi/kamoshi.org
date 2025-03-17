@@ -3,6 +3,7 @@ mod home;
 mod list;
 mod misc;
 pub mod post;
+pub mod project;
 pub mod slideshow;
 pub mod wiki;
 

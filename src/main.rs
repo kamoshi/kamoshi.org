@@ -7,7 +7,7 @@ mod ts;
 
 use std::process::{Command, ExitCode};
 
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::{
@@ -15,7 +15,7 @@ use hauchiwa::{
 };
 use hayagriva::Library;
 use hypertext::Renderable;
-use model::{Home, Post, Slideshow, Wiki};
+use model::{Home, Post, Project, Slideshow, Wiki};
 
 const BASE_URL: &str = "https://kamoshi.org/";
 
@@ -122,7 +122,7 @@ fn main() -> ExitCode {
             Collection::glob_with(BASE, "posts/**/*", EXTS_MD, parse_matter_yaml::<Post>),
             Collection::glob_with(BASE, "slides/**/*", EXTS_MD, parse_matter_yaml::<Slideshow>),
             Collection::glob_with(BASE, "wiki/**/*", EXTS_MD, parse_matter_yaml::<Wiki>),
-            Collection::glob_with(BASE, "projects/flox.md", EXTS_MD, parse_matter_yaml::<Post>),
+            Collection::glob_with(BASE, "projects/**/*", EXTS_MD, parse_matter_yaml::<Project>),
         ])
         .add_processors([
             Processor::process_images(["jpg", "png", "gif"]),
@@ -167,14 +167,7 @@ fn main() -> ExitCode {
                     &sack,
                     sack.query_content::<Post>("posts/**/*")?
                         .into_iter()
-                        .map(|query| LinkDate {
-                            link: Link {
-                                path: Utf8Path::new("/").join(query.slug),
-                                name: query.meta.title.clone(),
-                                desc: query.meta.desc.clone(),
-                            },
-                            date: query.meta.date,
-                        })
+                        .map(LinkDate::from)
                         .collect(),
                     "Posts".into(),
                     "/posts/rss.xml",
@@ -200,14 +193,7 @@ fn main() -> ExitCode {
                     &sack,
                     sack.query_content::<Slideshow>("slides/**/*")?
                         .into_iter()
-                        .map(|query| LinkDate {
-                            link: Link {
-                                path: Utf8Path::new("/").join(query.slug),
-                                name: query.meta.title.clone(),
-                                desc: query.meta.desc.clone(),
-                            },
-                            date: query.meta.date,
-                        })
+                        .map(LinkDate::from)
                         .collect(),
                     "Slideshows".into(),
                     "/slides/rss.xml",
@@ -219,36 +205,35 @@ fn main() -> ExitCode {
             Ok(vec![feed])
         })
         // PROJECTS
-        .add_task(|sack| {
-            let query = sack.get_content("projects/flox")?;
-            let (parsed, outline, bib) =
-                html::post::parse_content(query.content, &sack, query.area, None);
-            let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
-            Ok(vec![(query.slug.join("index.html"), out_buff)])
+        .add_task(|ctx| {
+            let data = ctx.query_content::<Project>("projects/**/*")?;
+            let list = crate::html::project::render_list(&ctx, data)?;
+
+            Ok(vec![("projects/index.html".into(), list)])
         })
+        // .add_task(|sack| {
+        //     let query = sack.get_content("projects/flox")?;
+        //     let (parsed, outline, bib) =
+        //         html::post::parse_content(query.content, &sack, query.area, None);
+        //     let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
+        //     Ok(vec![(query.slug.join("index.html"), out_buff)])
+        // })
+        // .add_task(|sack| {
+        //     Ok(vec![(
+        //         "projects/index.html".into(),
+        //         crate::html::to_list(
+        //             &sack,
+        //             sack.query_content::<Project>("projects/**/*")?
+        //                 .into_iter()
+        //                 .map(LinkDate::from)
+        //                 .collect(),
+        //             "Projects".into(),
+        //             "/projects/rss.xml",
+        //         ),
+        //     )])
+        // })
         .add_task(|sack| {
-            Ok(vec![(
-                "projects/index.html".into(),
-                crate::html::to_list(
-                    &sack,
-                    sack.query_content::<Post>("projects/**/*")?
-                        .into_iter()
-                        .map(|query| LinkDate {
-                            link: Link {
-                                path: Utf8Path::new("/").join(query.slug),
-                                name: query.meta.title.clone(),
-                                desc: query.meta.desc.clone(),
-                            },
-                            date: query.meta.date,
-                        })
-                        .collect(),
-                    "Projects".into(),
-                    "/projects/rss.xml",
-                ),
-            )])
-        })
-        .add_task(|sack| {
-            let feed = rss::generate_feed::<Post>(sack, "projects", "Kamoshi.org Projects")?;
+            let feed = rss::generate_feed::<Project>(sack, "projects", "Kamoshi.org Projects")?;
             Ok(vec![feed])
         })
         // WIKI
