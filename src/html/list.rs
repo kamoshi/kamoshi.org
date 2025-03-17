@@ -3,6 +3,9 @@ use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 
 use crate::{LinkDate, MySack, html::page};
 
+/// Styles relevant to this fragment
+const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/list.scss"];
+
 const ICON_RSS: &str = include_str!("rss.svg");
 
 pub fn list<'s, 'g, 'html>(
@@ -33,7 +36,7 @@ where
         }
     );
 
-    page(sack, list, title, None)
+    page(sack, list, title, STYLES, None)
 }
 
 fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {

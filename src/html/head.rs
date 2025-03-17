@@ -13,15 +13,16 @@ socket.addEventListener("message", event => {
 pub(crate) fn render_head<'a>(
     ctx: &'a Sack<Global>,
     title: String,
-    _styles: &'a [&str],
+    stylesheets: &'a [&str],
     script: Option<&'a [String]>,
 ) -> TaskResult<impl Renderable> {
     let metadata = ctx.get_metadata();
     let title = format!("{} | kamoshi.org", title);
 
-    let css_s = ctx.get_styles("styles/styles.scss".into())?;
-    let css_r = ctx.get_styles("styles/reveal/reveal.scss".into())?;
-    let css_p = ctx.get_styles("styles/photos/leaflet.scss".into())?;
+    let stylesheets: Vec<_> = stylesheets
+        .into_iter()
+        .map(|&style| ctx.get_styles(style.into()))
+        .collect::<Result<_, _>>()?;
 
     let script = match script {
         Some(script) => Some(emit_tags_script(ctx, script)?),
@@ -39,9 +40,9 @@ pub(crate) fn render_head<'a>(
         link rel="preconnect" href="https://rsms.me/";
         link rel="stylesheet" href="https://rsms.me/inter/inter.css";
 
-        (render_tag_style(css_s.as_str()))
-        (render_tag_style(css_r.as_str()))
-        (render_tag_style(css_p.as_str()))
+        @for path in stylesheets {
+            (render_tag_style(path.as_str()))
+        }
 
         link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";

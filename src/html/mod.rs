@@ -113,13 +113,14 @@ fn bare<'s, 'p, 'html>(
     sack: &'s MySack,
     main: impl Renderable + 'p,
     title: String,
+    stylesheets: &'s [&str],
     js: Option<&'s [String]>,
 ) -> TaskResult<impl Renderable>
 where
     's: 'html,
     'p: 'html,
 {
-    let head = head::render_head(sack, title, &[], js)?;
+    let head = head::render_head(sack, title, stylesheets, js)?;
 
     Ok(maud_move!(
         (Raw("<!DOCTYPE html>"))
@@ -145,13 +146,24 @@ where
 {
     let main = maud_move!((navbar())(main));
 
-    bare(sack, main, title, js)
+    bare(
+        sack,
+        main,
+        title,
+        &[
+            "styles/styles.scss",
+            "styles/photos/leaflet.scss",
+            "styles/layouts/map.scss",
+        ],
+        js,
+    )
 }
 
 fn page<'s, 'p, 'html>(
     sack: &'s MySack,
     main: impl Renderable + 'p,
     title: String,
+    stylesheets: &'s [&str],
     js: Option<&'s [String]>,
 ) -> TaskResult<impl Renderable>
 where
@@ -160,7 +172,7 @@ where
 {
     let main = maud_move!((navbar())(main)(footer(sack)));
 
-    bare(sack, main, title, js)
+    bare(sack, main, title, stylesheets, js)
 }
 
 pub(crate) fn to_list(
@@ -219,6 +231,7 @@ pub(crate) fn search(sack: &MySack) -> String {
             main #app {}
         ),
         String::from("Search"),
+        &["styles/styles.scss", "styles/layouts/search.scss"],
         Some(&["search".into()]),
     )
     .unwrap()
@@ -266,6 +279,7 @@ pub(crate) fn flox(
             }
         ),
         String::from("Flox"),
+        &["styles/styles.scss", "styles/layouts/page.scss"],
         Some(&["editor".into()]),
     )
     .unwrap()

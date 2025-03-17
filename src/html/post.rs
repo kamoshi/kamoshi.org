@@ -5,6 +5,9 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Bibliography, MySack, Outline, model::Post};
 
+/// Styles relevant to this fragment
+const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
+
 pub fn parse_content(
     content: &str,
     sack: &MySack,
@@ -44,7 +47,13 @@ where
         }
     );
 
-    crate::html::page(sack, main, meta.title.clone(), meta.scripts.as_deref())
+    crate::html::page(
+        sack,
+        main,
+        meta.title.clone(),
+        STYLES,
+        meta.scripts.as_deref(),
+    )
 }
 
 pub fn article<'p, 's>(

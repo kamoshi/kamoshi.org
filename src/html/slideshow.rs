@@ -6,6 +6,9 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud};
 
 use crate::{Bibliography, MySack, Outline, model::Slideshow};
 
+/// Styles relevant to this fragment
+const STYLES: &[&str] = &["styles/styles.scss", "styles/reveal/reveal.scss"];
+
 const CSS: &str = r#"
 .slides img {
 	margin-left: auto;
@@ -67,6 +70,7 @@ pub fn show(fm: &Slideshow, sack: &MySack, slides: &str) -> String {
             style { (Raw(CSS)) }
         ),
         fm.title.clone(),
+        STYLES,
         Some(&["reveal".into()]),
     )
     .unwrap()

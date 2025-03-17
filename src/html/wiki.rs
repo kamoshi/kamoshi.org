@@ -4,6 +4,9 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Bibliography, MySack, Outline, model::Wiki};
 
+/// Styles relevant to this fragment
+const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
+
 pub fn parse_content(
     content: &str,
     sack: &MySack,
@@ -67,7 +70,7 @@ fn wiki(
         }
     );
 
-    crate::html::page(sack, main, matter.title.to_owned(), None)
+    crate::html::page(sack, main, matter.title.to_owned(), STYLES, None)
         .unwrap()
         .render()
         .into()

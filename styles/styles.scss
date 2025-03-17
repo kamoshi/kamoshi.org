@@ -7,8 +7,6 @@
 @use "kanagawa";
 
 // Components
-@use "components/map";
-@use "components/search";
 @use "components/link-tree";
 @use "components/bibliography";
 @use "components/kanji";
@@ -20,12 +18,6 @@
 // Shortcodes
 @use "shortcodes/timeline";
 @use "shortcodes/marginnote";
-
-// Layouts
-@use "layouts/home";
-@use "layouts/page";
-@use "layouts/list";
-@use "layouts/projects";
 
 // Special
 @use "flox";
