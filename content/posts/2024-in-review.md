@@ -1,5 +1,5 @@
 ---
-title: 2024-in-review
+title: 2024 in review
 date: 2025-01-01T22:09:23.988Z
 ---
 

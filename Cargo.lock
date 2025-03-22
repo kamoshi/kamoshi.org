@@ -1352,6 +1352,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
+name = "gitmap"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1468,6 +1476,7 @@ version = "0.3.1"
 dependencies = [
  "anyhow",
  "camino",
+ "gitmap",
  "glob",
  "grass",
  "gray_matter",

@@ -85,11 +85,15 @@ fn process_bibliography(bytes: &[u8]) -> Library {
 
 type Page = (Utf8PathBuf, String);
 
-fn render_page_post(sack: &Sack<Global>, query: QueryContent<Post>) -> TaskResult<Page> {
-    let library = sack.get_asset_any::<Library>(query.area)?;
-    let parsed = html::post::parse_content(query.content, sack, query.area, library);
-    let buffer = html::post::as_html(query.meta, &parsed.0, sack, parsed.1, parsed.2);
-    Ok((query.slug.join("index.html"), buffer))
+fn render_page_post(sack: &Sack<Global>, item: QueryContent<Post>) -> TaskResult<Page> {
+    let library = sack.get_asset_any::<Library>(item.area)?;
+    let parsed = crate::md::parse(item.content, sack, item.area, library);
+    let buffer =
+        crate::html::post::render(item.meta, &parsed.0, sack, item.info, parsed.1, parsed.2)?
+            .render()
+            .into();
+
+    Ok((item.slug.join("index.html"), buffer))
 }
 
 fn render_page_slideshow(sack: &Sack<Global>, query: QueryContent<Slideshow>) -> Page {
@@ -147,9 +151,11 @@ fn main() -> ExitCode {
         // Generate the about page.
         .add_task(|ctx| {
             let item = ctx.get_content::<Post>("about")?;
-            let (parsed, outline, bib) =
-                html::post::parse_content(item.content, &ctx, item.area, None);
-            let html = html::post::as_html(item.meta, &parsed, &ctx, outline, bib);
+            let (parsed, outline, bib) = crate::md::parse(item.content, &ctx, item.area, None);
+            let html =
+                crate::html::post::render(item.meta, &parsed, &ctx, item.info, outline, bib)?
+                    .render()
+                    .into();
             Ok(vec![(item.slug.join("index.html"), html)])
         })
         // POSTS

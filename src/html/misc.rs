@@ -29,7 +29,7 @@ pub(crate) fn show_outline(outline: Outline) -> impl Renderable {
 
 pub(crate) fn emit_bibliography(bib: Vec<String>) -> impl Renderable {
     maud_move!(
-        section .bibliography.markdown {
+        section .bibliography {
             h2 {
                 "Bibliography"
             }

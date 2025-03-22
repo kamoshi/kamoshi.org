@@ -239,50 +239,50 @@ pub(crate) fn search(sack: &MySack) -> String {
     .into()
 }
 
-pub fn as_html(
-    meta: &Post,
-    parsed: &str,
-    sack: &MySack,
-    outline: Outline,
-    bibliography: Bibliography,
-) -> String {
-    flox(meta, parsed, sack, outline, bibliography)
-}
+// pub fn as_html(
+//     meta: &Post,
+//     parsed: &str,
+//     sack: &MySack,
+//     outline: Outline,
+//     bibliography: Bibliography,
+// ) -> String {
+//     flox(meta, parsed, sack, outline, bibliography)
+// }
 
-pub(crate) fn flox(
-    meta: &Post,
-    parsed: &str,
-    sack: &MySack,
-    outline: Outline,
-    bibliography: Bibliography,
-) -> String {
-    page(
-        sack,
-        maud_move!(
-            main {
-                div .flox-playground {
-                    div .cell {
-                        header {
-                            h2 { "Flox" }
-                        }
-                        div .editor {
-                            div #editor {}
-                            button #run .run { "Run!" }
-                        }
-                    }
-                    div .cell {
-                        h2 { "Output" }
-                        pre #output {}
-                    }
-                }
-                (article(meta, parsed, sack, outline, bibliography))
-            }
-        ),
-        String::from("Flox"),
-        &["styles/styles.scss", "styles/layouts/page.scss"],
-        Some(&["editor".into()]),
-    )
-    .unwrap()
-    .render()
-    .into()
-}
+// pub(crate) fn flox(
+//     meta: &Post,
+//     parsed: &str,
+//     sack: &MySack,
+//     outline: Outline,
+//     bibliography: Bibliography,
+// ) -> String {
+//     page(
+//         sack,
+//         maud_move!(
+//             main {
+//                 div .flox-playground {
+//                     div .cell {
+//                         header {
+//                             h2 { "Flox" }
+//                         }
+//                         div .editor {
+//                             div #editor {}
+//                             button #run .run { "Run!" }
+//                         }
+//                     }
+//                     div .cell {
+//                         h2 { "Output" }
+//                         pre #output {}
+//                     }
+//                 }
+//                 (article(meta, parsed, sack, outline, bibliography))
+//             }
+//         ),
+//         String::from("Flox"),
+//         &["styles/styles.scss", "styles/layouts/page.scss"],
+//         Some(&["editor".into()]),
+//     )
+//     .unwrap()
+//     .render()
+//     .into()
+// }

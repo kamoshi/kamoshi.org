@@ -1,54 +1,32 @@
-use camino::Utf8Path;
 use hauchiwa::TaskResult;
-use hayagriva::Library;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
-use crate::{Bibliography, MySack, Outline, model::Post};
+use crate::model::Post;
+use crate::{Bibliography, MySack, Outline};
 
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
 
-pub fn parse_content(
-    content: &str,
-    sack: &MySack,
-    path: &Utf8Path,
-    library: Option<&Library>,
-) -> (String, Outline, Bibliography) {
-    crate::md::parse(content, sack, path, library)
-}
-
-pub fn as_html(
-    meta: &Post,
-    parsed: &str,
-    sack: &MySack,
-    outline: Outline,
-    bibliography: Bibliography,
-) -> String {
-    post(meta, parsed, sack, outline, bibliography)
-        .unwrap()
-        .render()
-        .into()
-}
-
-pub fn post<'s, 'p, 'html>(
+pub fn render<'s, 'p, 'html>(
     meta: &'p Post,
     parsed: &'p str,
-    sack: &'s MySack,
+    ctx: &'s MySack,
+    info: Option<&'s hauchiwa::GitInfo>,
     outline: Outline,
     bibliography: Bibliography,
-) -> TaskResult<impl Renderable>
+) -> TaskResult<impl Renderable + use<'html>>
 where
     's: 'html,
     'p: 'html,
 {
     let main = maud_move!(
         main {
-            (article(meta, parsed, sack, outline, bibliography))
+            (article(ctx, meta, parsed, info, outline, bibliography))
         }
     );
 
     crate::html::page(
-        sack,
+        ctx,
         main,
         meta.title.clone(),
         STYLES,
@@ -57,57 +35,76 @@ where
 }
 
 pub fn article<'p, 's>(
+    ctx: &'s MySack,
     meta: &'p Post,
     parsed: &'p str,
-    _: &'s MySack,
+    info: Option<&hauchiwa::GitInfo>,
     outline: Outline,
     bibliography: Bibliography,
 ) -> impl Renderable {
     maud_move!(
-        div .wiki-main {
+        // Slide in/out for mobile
+        input #wiki-aside-shown type="checkbox" hidden;
 
-            // Slide in/out for mobile
-            input #wiki-aside-shown type="checkbox" hidden;
-
-            aside .wiki-aside {
-                // Slide button
-                label .wiki-aside__slider for="wiki-aside-shown" {
-                    img .wiki-icon src="/static/svg/double-arrow.svg" width="24" height="24";
-                }
-                (crate::html::misc::show_outline(outline))
-            }
-
-            (paper_page(meta, parsed, bibliography))
+        aside .outline {
+            // Slide button
+            (crate::html::misc::show_outline(outline))
         }
+
+        (paper_page(ctx, meta, info, parsed, bibliography))
     )
 }
 
-fn paper_page<'a>(meta: &'a Post, parsed: &'a str, bib: Bibliography) -> impl Renderable + 'a {
+fn paper_page<'a>(
+    ctx: &'a MySack,
+    meta: &'a Post,
+    info: Option<&'a hauchiwa::GitInfo>,
+    parsed: &'a str,
+    bib: Bibliography,
+) -> impl Renderable + 'a {
     maud_move!(
-        article .wiki-article {
-            header {
-                h1 #top {
-                    (&meta.title)
-                }
-                div .line {
-                    div .date {
-                        (meta.date.format("%Y-%m-%d").to_string())
-                    }
-                    @if let Some(ref tags) = meta.tags {
-                        ul .tags {
-                            @for tag in tags {
-                                li { (tag) }
-                            }
-                        }
+        article .article {
+            section .paper {
+                header {
+                    h1 #top {
+                        (&meta.title)
                     }
                 }
-            }
-            section .wiki-article__markdown.markdown {
-                (Raw(parsed))
+                section .wiki-article__markdown.markdown {
+                    (Raw(parsed))
+                }
             }
 
             @if let Some(bib) = bib.0 {
                 (crate::html::misc::emit_bibliography(bib))
+            }
+        }
+
+        aside .tiles {
+            section .metadata {
+                h2 {
+                    "Metadata"
+                }
+                div {
+                    img src="/static/svg/icon_add.svg" title="Added";
+                    time datetime=(meta.date.format("%Y-%m-%d").to_string()) {
+                        (meta.date.format("%Y, %B %d").to_string())
+                    }
+                }
+                @if let Some(info) = info {
+                    div {
+                        img src="/static/svg/icon_update.svg" title="Updated";
+                        time datetime=(info.commit_date.format("%Y-%m-%d").to_string()) {
+                            (info.commit_date.format("%Y, %B %d").to_string())
+                        }
+                    }
+                    div {
+                        img src="/static/svg/icon_link.svg" title="Link to commit";
+                        a href=(format!("{}/commit/{}", &ctx.get_metadata().data.link, &info.abbreviated_hash)) {
+                            (&info.abbreviated_hash)
+                        }
+                    }
+                }
             }
         }
     )
