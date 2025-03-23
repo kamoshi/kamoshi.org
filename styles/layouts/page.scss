@@ -66,6 +66,10 @@ main {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
+  a {
+    color: var(--c-primary);
+  }
+
   h2 {
     margin-bottom: 1rem;
     font-family: var(--serif);
@@ -83,6 +87,10 @@ main {
     &::marker {
       content: "[" counter(list-item) "]";
     }
+  }
+
+  li + li {
+    margin-top: 0.5rem;
   }
 }
 
