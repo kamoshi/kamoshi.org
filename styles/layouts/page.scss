@@ -150,5 +150,61 @@ main {
 }
 
 figure {
-  clear: right;
+  @media (min-width: $bp-m) {
+    clear: right;
+  }
+
+  @media (min-width: $bp-l) {
+    clear: unset;
+  }
+}
+
+.outline {
+  height: 100%;
+
+  h2 {
+    margin-bottom: 0.5em;
+    border-bottom: 1px solid;
+    border-image: linear-gradient(to right, transparent, lightgray, transparent)
+      1;
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.4rem;
+
+    a {
+      display: block;
+      text-decoration: unset;
+      text-align: center;
+      color: var(--c-primary);
+    }
+  }
+
+  section {
+    position: sticky;
+    top: 0;
+    max-height: min(100vh, 100%);
+    padding: 0.5em;
+    overflow-y: auto;
+
+    @media (min-width: $bp-l) {
+      padding: 1em;
+    }
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0.5em;
+    gap: 0.25rem;
+    list-style: none;
+  }
+
+  a {
+    color: var(--c-primary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }

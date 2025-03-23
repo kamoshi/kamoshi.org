@@ -3,29 +3,7 @@ use std::collections::HashMap;
 use camino::Utf8Path;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
-use crate::{Link, MySack, Outline, model::Wiki};
-
-/// Render the outline for a document
-pub(crate) fn show_outline(outline: Outline) -> impl Renderable {
-    maud_move!(
-        section .link-tree {
-            h2 .link-tree__heading {
-                a .link-tree__heading-text href="#top" { "Content" }
-            }
-            nav #table-of-contents .link-tree__nav {
-                ul .link-tree__nav-list {
-                    @for (title, id) in outline.0 {
-                        li .link-tree__nav-list-item {
-                            a .link-tree__nav-list-text.link href=(format!("#{}", id)) {
-                                (title)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    )
-}
+use crate::{Link, MySack, model::Wiki};
 
 pub(crate) fn emit_bibliography(bib: Vec<String>) -> impl Renderable {
     maud_move!(
