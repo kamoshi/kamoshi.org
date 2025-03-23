@@ -104,8 +104,9 @@ fn render_page_slideshow(sack: &Sack<Global>, query: QueryContent<Slideshow>) ->
 
 fn render_page_wiki(sack: &Sack<Global>, query: QueryContent<Wiki>) -> TaskResult<Page> {
     let library = sack.get_asset_any::<Library>(query.area)?;
-    let parsed = html::wiki::parse_content(query.content, sack, query.area, library);
-    let buffer = html::wiki::as_html(query.meta, &parsed.0, sack, query.slug, parsed.1, parsed.2);
+    let parsed = crate::md::parse(query.content, sack, query.area, library);
+    let buffer =
+        crate::html::wiki::wiki(query.meta, &parsed.0, sack, query.slug, parsed.1, parsed.2);
     Ok((query.slug.join("index.html"), buffer))
 }
 

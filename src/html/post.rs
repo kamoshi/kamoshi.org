@@ -43,9 +43,61 @@ pub fn article<'p, 's>(
     bibliography: Bibliography,
 ) -> impl Renderable {
     maud_move!(
+        // Outline (left)
         (render_outline(outline))
-        (paper_page(meta, parsed, bibliography))
+        // Article (center)
+        (render_article(meta, parsed, bibliography))
+        // Metadata (right)
+        (render_metadata(ctx, meta, info))
+    )
+}
 
+fn render_outline(outline: Outline) -> impl Renderable {
+    maud_move!(
+        aside .outline {
+            section {
+                h2 {
+                    a href="#top" { "Outline" }
+                }
+                nav #table-of-contents {
+                    ul {
+                        @for (title, id) in outline.0 {
+                            li {
+                                a href=(format!("#{}", id)) {
+                                    (title)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+fn render_article(meta: &Post, parsed: &str, bib: Bibliography) -> impl Renderable {
+    maud_move!(
+        article .article {
+            section .paper {
+                header {
+                    h1 #top {
+                        (&meta.title)
+                    }
+                }
+                section .wiki-article__markdown.markdown {
+                    (Raw(parsed))
+                }
+            }
+
+            @if let Some(bib) = bib.0 {
+                (crate::html::misc::emit_bibliography(bib))
+            }
+        }
+    )
+}
+
+fn render_metadata(ctx: &MySack, meta: &Post, info: Option<&hauchiwa::GitInfo>) -> impl Renderable {
+    maud_move!(
         aside .tiles {
             section .metadata {
                 h2 {
@@ -68,50 +120,6 @@ pub fn article<'p, 's>(
                         img src="/static/svg/icon_link.svg" title="Link to commit";
                         a href=(format!("{}/commit/{}", &ctx.get_metadata().data.link, &info.abbreviated_hash)) {
                             (&info.abbreviated_hash)
-                        }
-                    }
-                }
-            }
-        }
-    )
-}
-
-fn paper_page(meta: &Post, parsed: &str, bib: Bibliography) -> impl Renderable {
-    maud_move!(
-        article .article {
-            section .paper {
-                header {
-                    h1 #top {
-                        (&meta.title)
-                    }
-                }
-                section .wiki-article__markdown.markdown {
-                    (Raw(parsed))
-                }
-            }
-
-            @if let Some(bib) = bib.0 {
-                (crate::html::misc::emit_bibliography(bib))
-            }
-        }
-    )
-}
-
-fn render_outline(outline: Outline) -> impl Renderable {
-    maud_move!(
-        aside .outline {
-            section {
-                h2 {
-                    a href="#top" { "Outline" }
-                }
-                nav #table-of-contents {
-                    ul {
-                        @for (title, id) in outline.0 {
-                            li {
-                                a href=(format!("#{}", id)) {
-                                    (title)
-                                }
-                            }
                         }
                     }
                 }

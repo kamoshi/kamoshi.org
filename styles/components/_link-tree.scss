@@ -4,35 +4,6 @@
   padding: 1em;
   overflow-y: auto;
 
-  &__icon {
-    max-height: 1.5em;
-  }
-
-  &__switch {
-    position: absolute;
-    top: 0.5em;
-    left: 0.5em;
-    cursor: pointer;
-    transition: transform ease-in-out 0.2s;
-
-    &:hover {
-      transform: rotate(180deg);
-    }
-  }
-
-  &__heading {
-    margin-bottom: 0.5em;
-    border-bottom: 1px solid;
-    border-image: linear-gradient(to right, transparent, lightgray, transparent) 1;
-
-    &-text {
-      display: block;
-      text-decoration: unset;
-      text-align: center;
-      color: var(--c-primary);
-    }
-  }
-
   &__nav {
     &-list {
       margin: 0;
@@ -42,9 +13,6 @@
       ul {
         border-left: 1px solid lightgray;
       }
-    }
-    &-list-item {
-      margin-block: 0.25em;
     }
     &-list-text {
       padding-inline: 0.25em;
