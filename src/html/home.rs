@@ -34,6 +34,7 @@ pub(crate) fn home(ctx: &Sack<Global>, text: &str) -> TaskResult<String> {
                 (intro)
                 (image)
                 (posts)
+                (render_card_indie())
             }
         }
     );
@@ -99,4 +100,28 @@ fn latest_posts(sack: &Sack<Global>) -> TaskResult<impl Renderable> {
     );
 
     Ok(html)
+}
+
+const INDIE: &[(&str, &str)] = &[
+    ("marginalia.nu", "https://www.marginalia.nu/"),
+    ("gwern.net", "https://gwern.net/"),
+];
+
+fn render_card_indie() -> impl Renderable {
+    maud_move!(
+        section .card .card-indieweb {
+            h2 {
+                "Interesting other places"
+            }
+            ul {
+                @for &(name, link) in INDIE {
+                    li {
+                        a href=(link) {
+                            (name)
+                        }
+                    }
+                }
+            }
+        }
+    )
 }

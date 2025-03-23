@@ -1,4 +1,4 @@
-@use '../consts' as consts;
+@use "../consts" as consts;
 
 .l-home {
   display: flex;
@@ -108,5 +108,27 @@
   p {
     text-indent: 1em;
     line-height: 1.4;
+  }
+}
+
+.card-indieweb {
+  padding: 1em;
+  border-radius: 0.25em;
+  background-color: white;
+  box-shadow: var(--shadow-l);
+
+  h2 {
+    line-height: 1em;
+    margin-bottom: 0.5em;
+    font-family: var(--serif);
+    font-weight: 500;
+  }
+
+  ul {
+    padding-left: 1em;
+    a {
+      text-decoration: none;
+      color: var(--c-primary);
+    }
   }
 }
