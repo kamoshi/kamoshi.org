@@ -15,9 +15,8 @@ use hauchiwa::TaskResult;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud, maud_move};
 
 pub(crate) use home::home;
-use post::article;
 
-use crate::{Bibliography, LinkDate, MySack, Outline, model::Post};
+use crate::{LinkDate, MySack};
 
 fn navbar() -> impl Renderable {
     static ITEMS: &[(&str, &str)] = &[
