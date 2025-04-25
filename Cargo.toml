@@ -43,6 +43,7 @@ tree-sitter-html       = "0.23"
 tree-sitter-javascript = "0.23"
 tree-sitter-json       = "0.24"
 tree-sitter-md         = "0.3"
+tree-sitter-nix        = { git = "https://github.com/nix-community/tree-sitter-nix", rev = "cfc53fd" }
 tree-sitter-python     = "0.23"
 tree-sitter-regex      = "0.24"
 tree-sitter-rust       = "0.23"

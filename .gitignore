@@ -1,32 +1,46 @@
-# build output
-dist/
+*
 
-# environment variables
-.env
-.env.production
+# Whitelist
+!.gitignore
+!LICENSE
+!Makefile
 
-# macOS-specific files
-.DS_Store
+!Cargo.toml
+!Cargo.lock
 
-# binary blobs
-public/**/*.wasm
-public/**/*.jpg
-public/**/*.png
-public/**/*.webp
-content/**/*.jpg
-content/**/*.png
-content/**/*.webp
+!src/
+!src/**/
+!src/**/*.rs
+!src/**/*.svg
 
-# Kanji generator
-tools/kklc/kklc.csv
-tools/kklc/target/
-public/static/kanji/
+!queries/
+!queries/**/
+!queries/**/*.scm
 
-# Rust
-target/
+!styles/
+!styles/**/
+!styles/**/*.scss
+!styles/**/*.css
 
-# JavaScript
+!content/
+!content/**/
+!content/**/*.md
+!content/**/*.bib
+!content/**/*.lhs
+!content/**/*.yaml
+content/.obsidian/
+content/.stfolder/
+
+!js/
+!js/**/
+!js/**/*.ts
+!js/**/*.js
+!js/**/*.svelte
+!js/**/*.json
+!js/**/*.lock
 js/**/node_modules/
 
-# Hashed file cache
-.cache
+!tools/
+!tools/**/
+!tools/**/*.rs
+tools/**/target/

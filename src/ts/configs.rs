@@ -128,6 +128,13 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
             "",
         ),
         language!(
+            "nix",
+            tree_sitter_nix::LANGUAGE,
+            tree_sitter_nix::HIGHLIGHTS_QUERY,
+            "",
+            "",
+        ),
+        language!(
             "python",
             tree_sitter_python::LANGUAGE,
             tree_sitter_python::HIGHLIGHTS_QUERY,
