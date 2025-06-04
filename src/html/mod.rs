@@ -64,10 +64,7 @@ fn navbar() -> impl Renderable {
     )
 }
 
-pub fn footer<'s, 'html>(sack: &'s MySack) -> impl Renderable + 'html
-where
-    's: 'html,
-{
+pub fn footer(sack: &MySack) -> impl Renderable {
     let copy = format!(
         "Copyright &copy; {} Maciej Jur",
         &sack.get_metadata().data.year
