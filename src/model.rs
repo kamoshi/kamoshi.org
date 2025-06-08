@@ -12,6 +12,7 @@ pub struct Home {}
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]
 pub struct Post {
+    /// The title of the post shown as `<h1>` heading.
     pub title: String,
     #[serde(with = "isodate")]
     pub date: DateTime<Utc>,

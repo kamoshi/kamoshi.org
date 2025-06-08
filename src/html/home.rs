@@ -1,5 +1,7 @@
 use hauchiwa::{Sack, TaskResult};
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud, maud_move};
+use hypertext::{
+    GlobalAttributes, Raw, Renderable, Rendered, html_elements, maud, maud_move, maud_static,
+};
 
 use crate::{Global, LinkDate, md::parse, model::Post};
 
@@ -22,7 +24,6 @@ const INTRO: &str = r#"
 
 pub(crate) fn home(ctx: &Sack<Global>, text: &str) -> TaskResult<String> {
     let intro = intro(ctx);
-    let image = monthly_image();
     let posts = latest_posts(ctx)?;
 
     let main = maud!(
@@ -32,9 +33,9 @@ pub(crate) fn home(ctx: &Sack<Global>, text: &str) -> TaskResult<String> {
             }
             aside .l-home__aside {
                 (intro)
-                (image)
+                (Raw(SECTION_IMAGE))
                 (posts)
-                (render_card_indie())
+                (Raw(SECTION_BUTTONS))
             }
         }
     );
@@ -56,8 +57,8 @@ fn intro(ctx: &Sack<Global>) -> impl Renderable {
     )
 }
 
-fn monthly_image() -> impl Renderable {
-    maud!(
+const SECTION_IMAGE: Rendered<&str> = {
+    maud_static!(
         section .p-card.home-card-image {
             h2 .p-card__heading {
                 "Image of the Month"
@@ -69,7 +70,7 @@ fn monthly_image() -> impl Renderable {
             }
         }
     )
-}
+};
 
 fn latest_posts(sack: &Sack<Global>) -> TaskResult<impl Renderable> {
     let list = {
@@ -102,26 +103,17 @@ fn latest_posts(sack: &Sack<Global>) -> TaskResult<impl Renderable> {
     Ok(html)
 }
 
-const INDIE: &[(&str, &str)] = &[
-    ("marginalia.nu", "https://www.marginalia.nu/"),
-    ("gwern.net", "https://gwern.net/"),
-];
-
-fn render_card_indie() -> impl Renderable {
-    maud_move!(
-        section .card .card-indieweb {
-            h2 {
-                "Interesting other places"
+const SECTION_BUTTONS: Rendered<&'static str> = {
+    maud_static!(
+        section .p-card {
+            h2 .p-card__heading {
+                "Badges"
             }
-            ul {
-                @for &(name, link) in INDIE {
-                    li {
-                        a href=(link) {
-                            (name)
-                        }
-                    }
+            div {
+                a href=r#"https://nixos.org"# {
+                    img ._88x31 src="/static/88x31/nixos.gif" width=88 height=31;
                 }
             }
         }
     )
-}
+};
