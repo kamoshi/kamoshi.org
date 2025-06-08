@@ -22,7 +22,7 @@ Rollbacks are a built-in feature integrated directly at the bootloader level.
 At this point, I honestly can't imagine running any server without NixOS.
 
 
-## Declaring a simple service module
+## Declarative service module
 
 Here's a small example: a custom Gatus healthcheck service, with full
 declarative setup including Nginx reverse proxy. It lives inside a module,
@@ -96,7 +96,8 @@ Note: config is implicit - you can omit it when assigning values unless you're
 introducing new options. The Nix evaluator merges all these fragments into a
 concrete system state, which then becomes a bootable operating system.
 
-## Declare secrets
+
+## Declaratice secrets
 
 So now that we have some service defined, and the entire system config is
 declarative, how would we add secrets? For example private keys? We can't keep
@@ -144,7 +145,7 @@ At build time Nix will create the files with secrets, so that they can be
 secuerely consumed by various services at runtime.
 
 
-## Add simple OIDC auth service
+## Auth provider service
 
 Once you add more services, you might want to secure them with some
 authentication provider. One option is Kanidm, which is unique in that it can be
@@ -227,7 +228,7 @@ For me, this is a killer feature: I don't have to manage anything via GUI, and I
 don't even have to touch the CLI. Everything is done automatically.
 
 
-## Add simple OIDC client service
+## Auth client service
 
 Now, how do you add a service compatible with Kanidm? Let's look at a simple
 Miniflux config. Miniflux is an RSS reader written in Go, so it takes minimal
