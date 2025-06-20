@@ -10,9 +10,7 @@ use std::process::{Command, ExitCode};
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{
-    Collection, Hook, Processor, QueryContent, Sack, TaskResult, Website, parse_matter_yaml,
-};
+use hauchiwa::{Assets, Content, Hook, QueryContent, Sack, TaskResult, Website, yaml};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
@@ -78,7 +76,7 @@ struct LinkDate {
     pub date: DateTime<Utc>,
 }
 
-fn process_bibliography(bytes: &[u8]) -> Library {
+fn process_bibtex(bytes: &[u8]) -> Library {
     let text = String::from_utf8_lossy(bytes);
     hayagriva::io::from_biblatex_str(&text).unwrap()
 }
@@ -110,28 +108,43 @@ fn render_page_wiki(sack: &Sack<Global>, query: QueryContent<Wiki>) -> TaskResul
     Ok((query.slug.join("index.html"), buffer))
 }
 
-/// Base path for content files
-const BASE: &str = "content";
+fn process_image(buffer: &[u8]) -> Vec<u8> {
+    let img = image::load_from_memory(buffer).expect("Couldn't load image");
+    let w = img.width();
+    let h = img.height();
 
-/// Markdown file extensions
-const EXTS_MD: [&str; 3] = ["md", "mdx", "lhs"];
+    let mut out = Vec::new();
+    let encoder = image::codecs::webp::WebPEncoder::new_lossless(&mut out);
+
+    encoder
+        .encode(&img.to_rgba8(), w, h, image::ExtendedColorType::Rgba8)
+        .expect("Encoding error");
+
+    out
+}
 
 fn main() -> ExitCode {
+    /// Base path for content files
+    const BASE: &str = "content";
+
     let args = Args::parse();
 
     let website = Website::configure()
         .set_opts_sitemap("https://kamoshi.org")
-        .add_collections([
-            Collection::glob_with(BASE, "index.md", EXTS_MD, parse_matter_yaml::<Home>),
-            Collection::glob_with(BASE, "about.md", EXTS_MD, parse_matter_yaml::<Post>),
-            Collection::glob_with(BASE, "posts/**/*", EXTS_MD, parse_matter_yaml::<Post>),
-            Collection::glob_with(BASE, "slides/**/*", EXTS_MD, parse_matter_yaml::<Slideshow>),
-            Collection::glob_with(BASE, "wiki/**/*", EXTS_MD, parse_matter_yaml::<Wiki>),
-            Collection::glob_with(BASE, "projects/**/*", EXTS_MD, parse_matter_yaml::<Project>),
+        .add_content([
+            Content::glob(BASE, "index.md", yaml::<Home>),
+            Content::glob(BASE, "about.md", yaml::<Post>),
+            Content::glob(BASE, "posts/**/*.md", yaml::<Post>),
+            Content::glob(BASE, "slides/**/*.md", yaml::<Slideshow>),
+            Content::glob(BASE, "slides/**/*.lhs", yaml::<Slideshow>),
+            Content::glob(BASE, "wiki/**/*.md", yaml::<Wiki>),
+            Content::glob(BASE, "projects/**/*.md", yaml::<Project>),
         ])
-        .add_processors([
-            Processor::process_images(["jpg", "png", "gif"]),
-            Processor::process_assets(["bib"], process_bibliography),
+        .add_assets([
+            Assets::glob(BASE, "**/*.bib", process_bibtex),
+            Assets::glob_defer(BASE, "**/*.jpg", process_image),
+            Assets::glob_defer(BASE, "**/*.png", process_image),
+            Assets::glob_defer(BASE, "**/*.gif", process_image),
         ])
         .add_styles(["styles".into()])
         .add_scripts([
