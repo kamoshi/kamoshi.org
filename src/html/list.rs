@@ -1,7 +1,7 @@
 use hauchiwa::TaskResult;
 use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 
-use crate::{LinkDate, MySack, html::page};
+use crate::{LinkDate, Context, html::page};
 
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/list.scss"];
@@ -9,7 +9,7 @@ const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/list.scss"];
 const ICON_RSS: &str = include_str!("rss.svg");
 
 pub fn list<'s, 'g, 'html>(
-    sack: &'s MySack,
+    sack: &'s Context,
     groups: &'g [(i32, Vec<LinkDate>)],
     title: String,
     rss: &'static str,

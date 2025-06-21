@@ -1,7 +1,7 @@
-use hauchiwa::{Mode, Sack, TaskResult};
+use hauchiwa::{Mode, TaskResult};
 use hypertext::{Raw, Renderable, html_elements, maud_move};
 
-use crate::Global;
+use crate::Context;
 
 const JS_RELOAD: &str = r#"
 const socket = new WebSocket("ws://localhost:1337");
@@ -11,12 +11,12 @@ socket.addEventListener("message", event => {
 "#;
 
 pub(crate) fn render_head<'a>(
-    ctx: &'a Sack<Global>,
+    ctx: &'a Context,
     title: String,
     stylesheets: &'a [&str],
     script: Option<&'a [String]>,
 ) -> TaskResult<impl Renderable> {
-    let metadata = ctx.get_metadata();
+    let globals = ctx.get_globals();
     let title = format!("{} | kamoshi.org", title);
 
     let stylesheets: Vec<_> = stylesheets
@@ -48,7 +48,7 @@ pub(crate) fn render_head<'a>(
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
 
-        @if matches!(metadata.mode, Mode::Watch) {
+        @if matches!(globals.mode, Mode::Watch) {
             script { (Raw(JS_RELOAD)) }
         }
 
@@ -64,7 +64,7 @@ fn render_tag_style(path: &str) -> impl Renderable {
     maud_move!(link rel="stylesheet" href=(path);)
 }
 
-fn emit_tags_script(sack: &Sack<Global>, scripts: &[String]) -> TaskResult<impl Renderable> {
+fn emit_tags_script(sack: &Context, scripts: &[String]) -> TaskResult<impl Renderable> {
     let tags: Vec<_> = scripts
         .iter()
         .map(|script| emit_tag_module(sack, script))
@@ -79,7 +79,7 @@ fn emit_tags_script(sack: &Sack<Global>, scripts: &[String]) -> TaskResult<impl 
     Ok(html)
 }
 
-fn emit_tag_module(sack: &Sack<Global>, alias: &str) -> TaskResult<impl Renderable> {
+fn emit_tag_module(sack: &Context, alias: &str) -> TaskResult<impl Renderable> {
     let path = sack.get_script(alias)?;
     let html = maud_move!(script type="module" src=(path.as_str()) defer {});
 

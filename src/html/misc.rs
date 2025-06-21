@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use camino::Utf8Path;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
-use crate::{Link, MySack, model::Wiki};
+use crate::{Context, Link, model::Wiki};
 
 pub(crate) fn emit_bibliography(bib: Vec<String>) -> impl Renderable {
     maud_move!(
@@ -55,9 +55,9 @@ impl TreePage {
 }
 
 /// Render the page tree
-pub(crate) fn show_page_tree<'a>(slug: &'a Utf8Path, sack: &'a MySack) -> impl Renderable + 'a {
+pub(crate) fn show_page_tree<'a>(slug: &'a Utf8Path, sack: &'a Context) -> impl Renderable + 'a {
     let tree = sack
-        .query_content::<Wiki>("**/*")
+        .get_pages::<Wiki>("**/*")
         .unwrap()
         .into_iter()
         .map(|query| Link {

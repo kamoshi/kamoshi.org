@@ -10,7 +10,8 @@ use std::process::{Command, ExitCode};
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::{Assets, Content, Hook, QueryContent, Sack, TaskResult, Website, yaml};
+use hauchiwa::md::yaml;
+use hauchiwa::{Assets, Content, Hook, QueryContent, TaskResult, Website};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
@@ -61,7 +62,8 @@ impl Global {
     }
 }
 
-type MySack<'a> = Sack<'a, Global>;
+// convenient wrapper for `Context`
+type Context<'a> = hauchiwa::Context<'a, Global>;
 
 #[derive(Debug, Clone)]
 struct Link {
@@ -83,7 +85,7 @@ fn process_bibtex(bytes: &[u8]) -> Library {
 
 type Page = (Utf8PathBuf, String);
 
-fn render_page_post(sack: &Sack<Global>, item: QueryContent<Post>) -> TaskResult<Page> {
+fn render_page_post(sack: &Context, item: QueryContent<Post>) -> TaskResult<Page> {
     let library = sack.get_asset_any::<Library>(item.area)?;
     let parsed = crate::md::parse(item.content, sack, item.area, library);
     let buffer =
@@ -94,13 +96,13 @@ fn render_page_post(sack: &Sack<Global>, item: QueryContent<Post>) -> TaskResult
     Ok((item.slug.join("index.html"), buffer))
 }
 
-fn render_page_slideshow(sack: &Sack<Global>, query: QueryContent<Slideshow>) -> Page {
+fn render_page_slideshow(sack: &Context, query: QueryContent<Slideshow>) -> Page {
     let parsed = html::slideshow::parse_content(query.content, sack, query.area, None);
     let buffer = html::slideshow::as_html(query.meta, &parsed.0, sack, parsed.1, parsed.2);
     (query.slug.join("index.html"), buffer)
 }
 
-fn render_page_wiki(sack: &Sack<Global>, query: QueryContent<Wiki>) -> TaskResult<Page> {
+fn render_page_wiki(sack: &Context, query: QueryContent<Wiki>) -> TaskResult<Page> {
     let library = sack.get_asset_any::<Library>(query.area)?;
     let parsed = crate::md::parse(query.content, sack, query.area, library);
     let buffer =
@@ -141,7 +143,10 @@ fn main() -> ExitCode {
             Content::glob(BASE, "projects/**/*.md", yaml::<Project>),
         ])
         .add_assets([
+            // bibtex
             Assets::glob(BASE, "**/*.bib", process_bibtex),
+            // Assets::glob_defer(BASE, "**/*.bib", |u8| u8.to_vec()),
+            // images
             Assets::glob_defer(BASE, "**/*.jpg", process_image),
             Assets::glob_defer(BASE, "**/*.png", process_image),
             Assets::glob_defer(BASE, "**/*.gif", process_image),
@@ -156,7 +161,7 @@ fn main() -> ExitCode {
         ])
         // Generate the home page.
         .add_task(|ctx| {
-            let item = ctx.get_content::<Home>("")?;
+            let item = ctx.get_page::<Home>("")?;
             let text = md::parse(item.content, &ctx, item.area, None).0;
             let html = html::home(&ctx, &text)?;
 
@@ -164,7 +169,7 @@ fn main() -> ExitCode {
         })
         // Generate the about page.
         .add_task(|ctx| {
-            let item = ctx.get_content::<Post>("about")?;
+            let item = ctx.get_page::<Post>("about")?;
             let (parsed, outline, bib) = crate::md::parse(item.content, &ctx, item.area, None);
             let html =
                 crate::html::post::render(item.meta, &parsed, &ctx, item.info, outline, bib)?
@@ -174,18 +179,20 @@ fn main() -> ExitCode {
         })
         // POSTS
         .add_task(|sack| {
-            Ok(sack
-                .query_content::<Post>("posts/**/*")?
+            let pages = sack
+                .get_pages::<Post>("posts/**/*")?
                 .into_iter()
                 .map(|query| render_page_post(&sack, query))
-                .collect::<Result<_, _>>()?)
+                .collect::<Result<_, _>>()?;
+
+            Ok(pages)
         })
         .add_task(|sack| {
             Ok(vec![(
                 "posts/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.query_content::<Post>("posts/**/*")?
+                    sack.get_pages::<Post>("posts/**/*")?
                         .into_iter()
                         .map(LinkDate::from)
                         .collect(),
@@ -200,18 +207,20 @@ fn main() -> ExitCode {
         })
         // SLIDESHOWS
         .add_task(|sack| {
-            Ok(sack
-                .query_content::<Slideshow>("slides/**/*")?
+            let pages = sack
+                .get_pages::<Slideshow>("slides/**/*")?
                 .into_iter()
                 .map(|query| render_page_slideshow(&sack, query))
-                .collect())
+                .collect();
+
+            Ok(pages)
         })
         .add_task(|sack| {
             Ok(vec![(
                 "slides/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.query_content::<Slideshow>("slides/**/*")?
+                    sack.get_pages::<Slideshow>("slides/**/*")?
                         .into_iter()
                         .map(LinkDate::from)
                         .collect(),
@@ -226,7 +235,7 @@ fn main() -> ExitCode {
         })
         // PROJECTS
         .add_task(|ctx| {
-            let data = ctx.query_content::<Project>("projects/**/*")?;
+            let data = ctx.get_pages::<Project>("projects/**/*")?;
             let list = crate::html::project::render_list(&ctx, data)?;
 
             Ok(vec![("projects/index.html".into(), list)])
@@ -258,11 +267,13 @@ fn main() -> ExitCode {
         })
         // WIKI
         .add_task(|sack| {
-            Ok(sack
-                .query_content::<Wiki>("**/*")?
+            let pages = sack
+                .get_pages::<Wiki>("**/*")?
                 .into_iter()
                 .map(|query| render_page_wiki(&sack, query))
-                .collect::<Result<_, _>>()?)
+                .collect::<Result<_, _>>()?;
+
+            Ok(pages)
         })
         // MAP
         .add_task(|sack| {
@@ -282,6 +293,8 @@ fn main() -> ExitCode {
             )])
         })
         .add_hook(Hook::post_build(crate::pf::build_pagefind))
+        // TODO: Sitemap.xml
+        .add_hook(Hook::post_build(|_| Ok(())))
         .finish();
 
     let res = match args.mode {

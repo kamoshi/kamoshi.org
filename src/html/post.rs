@@ -2,7 +2,7 @@ use hauchiwa::TaskResult;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::model::Post;
-use crate::{Bibliography, MySack, Outline};
+use crate::{Bibliography, Context, Outline};
 
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
@@ -10,7 +10,7 @@ const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
 pub fn render<'s, 'p, 'html>(
     meta: &'p Post,
     parsed: &'p str,
-    ctx: &'s MySack,
+    ctx: &'s Context,
     info: Option<&'s hauchiwa::GitInfo>,
     outline: Outline,
     bibliography: Bibliography,
@@ -35,7 +35,7 @@ where
 }
 
 pub fn article<'p, 's>(
-    ctx: &'s MySack,
+    ctx: &'s Context,
     meta: &'p Post,
     parsed: &'p str,
     info: Option<&hauchiwa::GitInfo>,
@@ -96,7 +96,11 @@ fn render_article(meta: &Post, parsed: &str, bib: Bibliography) -> impl Renderab
     )
 }
 
-fn render_metadata(ctx: &MySack, meta: &Post, info: Option<&hauchiwa::GitInfo>) -> impl Renderable {
+fn render_metadata(
+    ctx: &Context,
+    meta: &Post,
+    info: Option<&hauchiwa::GitInfo>,
+) -> impl Renderable {
     maud_move!(
         aside .tiles {
             section .metadata {
@@ -118,7 +122,7 @@ fn render_metadata(ctx: &MySack, meta: &Post, info: Option<&hauchiwa::GitInfo>) 
                     }
                     div {
                         img src="/static/svg/icon_link.svg" title="Link to commit";
-                        a href=(format!("{}/commit/{}", &ctx.get_metadata().data.link, &info.abbreviated_hash)) {
+                        a href=(format!("{}/commit/{}", &ctx.get_globals().data.link, &info.abbreviated_hash)) {
                             (&info.abbreviated_hash)
                         }
                     }

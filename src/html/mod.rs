@@ -16,7 +16,7 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud, maud_mov
 
 pub(crate) use home::home;
 
-use crate::{LinkDate, MySack};
+use crate::{Context, LinkDate};
 
 fn navbar() -> impl Renderable {
     static ITEMS: &[(&str, &str)] = &[
@@ -64,16 +64,15 @@ fn navbar() -> impl Renderable {
     )
 }
 
-pub fn footer(sack: &MySack) -> impl Renderable {
-    let copy = format!(
-        "Copyright &copy; {} Maciej Jur",
-        &sack.get_metadata().data.year
-    );
+pub fn footer(sack: &Context) -> impl Renderable {
+    let globals = sack.get_globals();
+
+    let copy = format!("Copyright &copy; {} Maciej Jur", &globals.data.year);
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{}", mail);
-    let link = Utf8Path::new(&sack.get_metadata().data.link)
+    let link = Utf8Path::new(&globals.data.link)
         .join("src/commit")
-        .join(&sack.get_metadata().data.hash);
+        .join(&globals.data.hash);
 
     // let link = match sack.get_file() {
     // 	Some(path) => link.join(path),
@@ -92,10 +91,10 @@ pub fn footer(sack: &MySack) -> impl Renderable {
             }
             div .repo {
                 a href=(link.as_str()) {
-                    (&sack.get_metadata().data.hash)
+                    (&sack.get_globals().data.hash)
                 }
                 div {
-                    (&sack.get_metadata().data.date)
+                    (&sack.get_globals().data.date)
                 }
             }
             a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {
@@ -106,7 +105,7 @@ pub fn footer(sack: &MySack) -> impl Renderable {
 }
 
 fn bare<'s, 'p, 'html>(
-    sack: &'s MySack,
+    sack: &'s Context,
     main: impl Renderable + 'p,
     title: String,
     stylesheets: &'s [&str],
@@ -131,7 +130,7 @@ where
 }
 
 fn full<'s, 'p, 'html>(
-    sack: &'s MySack,
+    sack: &'s Context,
     main: impl Renderable + 'p,
     title: String,
     js: Option<&'s [String]>,
@@ -156,7 +155,7 @@ where
 }
 
 fn page<'s, 'p, 'html>(
-    sack: &'s MySack,
+    sack: &'s Context,
     main: impl Renderable + 'p,
     title: String,
     stylesheets: &'s [&str],
@@ -172,7 +171,7 @@ where
 }
 
 pub(crate) fn to_list(
-    sack: &MySack,
+    sack: &Context,
     list: Vec<LinkDate>,
     title: String,
     rss: &'static str,
@@ -200,7 +199,7 @@ pub(crate) fn to_list(
 }
 
 pub(crate) fn map<'s, 'html>(
-    sack: &'s MySack,
+    sack: &'s Context,
     js: Option<&'s [String]>,
 ) -> TaskResult<impl Renderable>
 where
@@ -220,7 +219,7 @@ where
     )
 }
 
-pub(crate) fn search(sack: &MySack) -> String {
+pub(crate) fn search(sack: &Context) -> String {
     page(
         sack,
         maud!(

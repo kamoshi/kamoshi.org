@@ -4,7 +4,7 @@ use camino::Utf8Path;
 use hayagriva::Library;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud};
 
-use crate::{Bibliography, MySack, Outline, model::Slideshow};
+use crate::{Bibliography, Context, Outline, model::Slideshow};
 
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles/styles.scss", "styles/reveal/reveal.scss"];
@@ -19,7 +19,7 @@ const CSS: &str = r#"
 
 pub fn parse_content(
     content: &str,
-    sack: &MySack,
+    sack: &Context,
     path: &Utf8Path,
     library: Option<&Library>,
 ) -> (String, Outline, Bibliography) {
@@ -50,14 +50,14 @@ pub fn parse_content(
 pub fn as_html(
     slides: &Slideshow,
     parsed: &str,
-    sack: &MySack,
+    sack: &Context,
     _: Outline,
     _: Bibliography,
 ) -> String {
     show(slides, sack, parsed)
 }
 
-pub fn show(fm: &Slideshow, sack: &MySack, slides: &str) -> String {
+pub fn show(fm: &Slideshow, sack: &Context, slides: &str) -> String {
     crate::html::bare(
         sack,
         maud!(

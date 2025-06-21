@@ -1,7 +1,7 @@
 use camino::Utf8Path;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
-use crate::{Bibliography, MySack, Outline, model::Wiki};
+use crate::{Bibliography, Context, Outline, model::Wiki};
 
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
@@ -9,7 +9,7 @@ const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
 pub fn wiki(
     meta: &Wiki,
     parsed: &str,
-    ctx: &MySack,
+    ctx: &Context,
     slug: &Utf8Path,
     _: Outline,
     bib: Bibliography,
@@ -29,7 +29,7 @@ pub fn wiki(
         .into()
 }
 
-fn render_outline(ctx: &MySack, slug: &Utf8Path) -> impl Renderable {
+fn render_outline(ctx: &Context, slug: &Utf8Path) -> impl Renderable {
     maud_move!(
         aside .outline {
             section {

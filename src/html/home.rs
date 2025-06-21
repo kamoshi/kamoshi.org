@@ -1,9 +1,9 @@
-use hauchiwa::{Sack, TaskResult};
+use hauchiwa::TaskResult;
 use hypertext::{
     GlobalAttributes, Raw, Renderable, Rendered, html_elements, maud, maud_move, maud_static,
 };
 
-use crate::{Global, LinkDate, md::parse, model::Post};
+use crate::{Context, LinkDate, md::parse, model::Post};
 
 use super::page;
 
@@ -22,7 +22,7 @@ const INTRO: &str = r#"
 質問があったらメールを送信してくれてください。
 "#;
 
-pub(crate) fn home(ctx: &Sack<Global>, text: &str) -> TaskResult<String> {
+pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
     let intro = intro(ctx);
     let posts = latest_posts(ctx)?;
 
@@ -47,7 +47,7 @@ pub(crate) fn home(ctx: &Sack<Global>, text: &str) -> TaskResult<String> {
     Ok(rendered)
 }
 
-fn intro(ctx: &Sack<Global>) -> impl Renderable {
+fn intro(ctx: &Context) -> impl Renderable {
     let (parsed, _, _) = parse(INTRO, ctx, "/".into(), None);
 
     maud!(
@@ -72,10 +72,10 @@ const SECTION_IMAGE: Rendered<&str> = {
     )
 };
 
-fn latest_posts(sack: &Sack<Global>) -> TaskResult<impl Renderable> {
+fn latest_posts(sack: &Context) -> TaskResult<impl Renderable> {
     let list = {
         let mut list: Vec<_> = sack
-            .query_content::<Post>("**")?
+            .get_pages::<Post>("**")?
             .into_iter()
             .map(LinkDate::from)
             .collect();
