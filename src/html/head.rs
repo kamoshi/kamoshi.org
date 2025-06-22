@@ -16,11 +16,10 @@ pub(crate) fn render_head<'a>(
     stylesheets: &'a [&str],
     script: Option<&'a [String]>,
 ) -> TaskResult<impl Renderable> {
-    let globals = ctx.get_globals();
     let title = format!("{} | kamoshi.org", title);
 
     let stylesheets: Vec<_> = stylesheets
-        .into_iter()
+        .iter()
         .map(|&style| ctx.get_styles(style.into()))
         .collect::<Result<_, _>>()?;
 

@@ -165,13 +165,14 @@ fn main() -> ExitCode {
         .add_assets([
             // bibtex
             Assets::glob(BASE, "**/*.bib", process_bibtex),
-            Assets::glob_defer(BASE, "**/*.bib", |u8| u8.to_vec()),
+            Assets::glob_defer(BASE, "**/*.bib", |data| data.to_vec()),
             // images
             Assets::glob_defer(BASE, "**/*.jpg", process_image),
             Assets::glob_defer(BASE, "**/*.png", process_image),
             Assets::glob_defer(BASE, "**/*.gif", process_image),
+            // stylesheets
+            Assets::glob_style("", "styles/**/[!_]*.scss"),
         ])
-        .add_styles(["styles".into()])
         .add_scripts([
             ("search", "./js/search/dist/search.js"),
             ("photos", "./js/vanilla/photos.js"),
