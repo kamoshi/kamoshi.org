@@ -1,5 +1,4 @@
-@use 'consts';
-
+@use "consts";
 
 html {
   scroll-behavior: smooth;
@@ -25,4 +24,3 @@ main {
     --fs-xl: 1.728rem;
   }
 }
-
