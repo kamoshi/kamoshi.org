@@ -171,14 +171,13 @@ fn main() -> ExitCode {
             Assets::glob_defer(BASE, "**/*.png", process_image),
             Assets::glob_defer(BASE, "**/*.gif", process_image),
             // stylesheets
-            Assets::glob_style("", "styles/**/[!_]*.scss"),
-        ])
-        .add_scripts([
-            ("search", "./js/search/dist/search.js"),
-            ("photos", "./js/vanilla/photos.js"),
-            ("reveal", "./js/vanilla/reveal.js"),
-            ("editor", "./js/flox/main.ts"),
-            ("lambda", "./js/flox/lambda.ts"),
+            Assets::glob_style("styles", "**/[!_]*.scss"),
+            // scripts
+            Assets::glob_scripts("js", "search/dist/search.js"),
+            Assets::glob_scripts("js", "vanilla/photos.ts"),
+            Assets::glob_scripts("js", "vanilla/reveal.js"),
+            Assets::glob_scripts("js", "flox/main.ts"),
+            Assets::glob_scripts("js", "flox/lambda.ts"),
         ])
         // Generate the home page.
         .add_task(|ctx| {
@@ -205,7 +204,6 @@ fn main() -> ExitCode {
                 .into_iter()
                 .map(|query| render_page_post(&sack, query))
                 .collect::<Result<_, _>>()?;
-
             Ok(pages)
         })
         .add_task(|sack| {
@@ -300,7 +298,7 @@ fn main() -> ExitCode {
         .add_task(|sack| {
             Ok(vec![(
                 "map/index.html".into(),
-                crate::html::map(&sack, Some(&["photos".into()]))?
+                crate::html::map(&sack, Some(&["js/vanilla/photos.ts".into()]))?
                     .render()
                     .to_owned()
                     .into(),

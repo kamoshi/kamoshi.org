@@ -227,7 +227,7 @@ pub(crate) fn search(sack: &Context) -> String {
         ),
         String::from("Search"),
         &["styles/styles.scss", "styles/layouts/search.scss"],
-        Some(&["search".into()]),
+        Some(&["js/search/dist/search.js".into()]),
     )
     .unwrap()
     .render()
@@ -275,7 +275,7 @@ pub(crate) fn search(sack: &Context) -> String {
 //         ),
 //         String::from("Flox"),
 //         &["styles/styles.scss", "styles/layouts/page.scss"],
-//         Some(&["editor".into()]),
+//         Some(&["js/flox/main.ts".into()]),
 //     )
 //     .unwrap()
 //     .render()

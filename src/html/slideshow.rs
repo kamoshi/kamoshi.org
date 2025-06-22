@@ -71,7 +71,7 @@ pub fn show(fm: &Slideshow, sack: &Context, slides: &str) -> String {
         ),
         fm.title.clone(),
         STYLES,
-        Some(&["reveal".into()]),
+        Some(&["js/vanilla/reveal.js".into()]),
     )
     .unwrap()
     .render()

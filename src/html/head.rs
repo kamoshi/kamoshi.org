@@ -1,14 +1,7 @@
-use hauchiwa::{Mode, TaskResult};
+use hauchiwa::TaskResult;
 use hypertext::{Raw, Renderable, html_elements, maud_move};
 
 use crate::Context;
-
-const JS_RELOAD: &str = r#"
-const socket = new WebSocket("ws://localhost:1337");
-socket.addEventListener("message", event => {
-	window.location.reload();
-});
-"#;
 
 pub(crate) fn render_head<'a>(
     ctx: &'a Context,
@@ -20,7 +13,7 @@ pub(crate) fn render_head<'a>(
 
     let stylesheets: Vec<_> = stylesheets
         .iter()
-        .map(|&style| ctx.get_styles(style.into()))
+        .map(|&style| ctx.get_style(style.into()))
         .collect::<Result<_, _>>()?;
 
     let script = match script {
