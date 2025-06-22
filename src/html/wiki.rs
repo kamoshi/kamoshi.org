@@ -1,4 +1,4 @@
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Bibliography, Context, Outline, model::Wiki};
@@ -13,13 +13,14 @@ pub fn wiki(
     slug: &Utf8Path,
     _: Outline,
     bib: Bibliography,
+    library_path: Option<Utf8PathBuf>,
 ) -> String {
     let main = maud_move!(
         main .wiki-main {
             // Outline
             (render_outline(ctx, slug))
             // Article
-            (render_article(meta, parsed, bib))
+            (render_article(meta, parsed, bib, library_path))
         }
     );
 
@@ -41,7 +42,12 @@ fn render_outline(ctx: &Context, slug: &Utf8Path) -> impl Renderable {
     )
 }
 
-fn render_article(meta: &Wiki, parsed: &str, bib: Bibliography) -> impl Renderable {
+fn render_article(
+    meta: &Wiki,
+    parsed: &str,
+    bib: Bibliography,
+    library_path: Option<Utf8PathBuf>,
+) -> impl Renderable {
     maud_move!(
         article .article {
             section .paper {
@@ -56,7 +62,7 @@ fn render_article(meta: &Wiki, parsed: &str, bib: Bibliography) -> impl Renderab
             }
 
             @if let Some(bib) = bib.0 {
-                (crate::html::misc::emit_bibliography(bib))
+                (crate::html::misc::emit_bibliography(bib, library_path))
             }
         }
     )

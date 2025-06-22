@@ -1,3 +1,4 @@
+use camino::Utf8PathBuf;
 use hauchiwa::TaskResult;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
@@ -14,6 +15,7 @@ pub fn render<'s, 'p, 'html>(
     info: Option<&'s hauchiwa::GitInfo>,
     outline: Outline,
     bibliography: Bibliography,
+    library_path: Option<Utf8PathBuf>,
 ) -> TaskResult<impl Renderable + use<'html>>
 where
     's: 'html,
@@ -21,7 +23,7 @@ where
 {
     let main = maud_move!(
         main {
-            (article(ctx, meta, parsed, info, outline, bibliography))
+            (article(ctx, meta, parsed, info, outline, bibliography, library_path))
         }
     );
 
@@ -41,12 +43,13 @@ pub fn article<'p, 's>(
     info: Option<&hauchiwa::GitInfo>,
     outline: Outline,
     bibliography: Bibliography,
+    library_path: Option<Utf8PathBuf>,
 ) -> impl Renderable {
     maud_move!(
         // Outline (left)
         (render_outline(outline))
         // Article (center)
-        (render_article(meta, parsed, bibliography))
+        (render_article(meta, parsed, bibliography, library_path))
         // Metadata (right)
         (render_metadata(ctx, meta, info))
     )
@@ -75,7 +78,12 @@ fn render_outline(outline: Outline) -> impl Renderable {
     )
 }
 
-fn render_article(meta: &Post, parsed: &str, bib: Bibliography) -> impl Renderable {
+fn render_article(
+    meta: &Post,
+    parsed: &str,
+    bib: Bibliography,
+    library_path: Option<Utf8PathBuf>,
+) -> impl Renderable {
     maud_move!(
         article .article {
             section .paper {
@@ -90,7 +98,7 @@ fn render_article(meta: &Post, parsed: &str, bib: Bibliography) -> impl Renderab
             }
 
             @if let Some(bib) = bib.0 {
-                (crate::html::misc::emit_bibliography(bib))
+                (crate::html::misc::emit_bibliography(bib, library_path))
             }
         }
     )

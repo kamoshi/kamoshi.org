@@ -1,15 +1,25 @@
 use std::collections::HashMap;
 
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Context, Link, model::Wiki};
 
-pub(crate) fn emit_bibliography(bib: Vec<String>) -> impl Renderable {
+pub(crate) fn emit_bibliography(
+    bib: Vec<String>,
+    library_path: Option<Utf8PathBuf>,
+) -> impl Renderable {
     maud_move!(
         section .bibliography {
-            h2 {
-                "Bibliography"
+            header {
+                h2 {
+                    "Bibliography"
+                }
+                @if let Some(path) = library_path {
+                    a href=(path.as_str()) download="bibliography.bib" {
+                        "Bibtex"
+                    }
+                }
             }
             ol {
                 @for item in bib {
@@ -57,7 +67,7 @@ impl TreePage {
 /// Render the page tree
 pub(crate) fn show_page_tree<'a>(slug: &'a Utf8Path, sack: &'a Context) -> impl Renderable + 'a {
     let tree = sack
-        .get_pages::<Wiki>("**/*")
+        .glob_pages::<Wiki>("**/*")
         .unwrap()
         .into_iter()
         .map(|query| Link {

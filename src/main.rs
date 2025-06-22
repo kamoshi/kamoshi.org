@@ -11,7 +11,7 @@ use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::md::yaml;
-use hauchiwa::{Assets, Content, Hook, QueryContent, TaskResult, Website};
+use hauchiwa::{Assets, Content, Hook, TaskResult, ViewPage, Website};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
@@ -85,28 +85,48 @@ fn process_bibtex(bytes: &[u8]) -> Library {
 
 type Page = (Utf8PathBuf, String);
 
-fn render_page_post(sack: &Context, item: QueryContent<Post>) -> TaskResult<Page> {
-    let library = sack.get_asset_any::<Library>(item.area)?;
-    let parsed = crate::md::parse(item.content, sack, item.area, library);
-    let buffer =
-        crate::html::post::render(item.meta, &parsed.0, sack, item.info, parsed.1, parsed.2)?
-            .render()
-            .into();
+fn render_page_post(ctx: &Context, item: ViewPage<Post>) -> TaskResult<Page> {
+    let pattern = format!("{}/*.bib", item.area);
+    let library_text = ctx.glob_asset::<Library>(&pattern)?;
+    let library_path = ctx.glob_asset_deferred(&pattern)?;
+
+    let parsed = crate::md::parse(item.content, ctx, item.area, library_text);
+    let buffer = crate::html::post::render(
+        item.meta,
+        &parsed.0,
+        ctx,
+        item.info,
+        parsed.1,
+        parsed.2,
+        library_path,
+    )?
+    .render()
+    .into();
 
     Ok((item.slug.join("index.html"), buffer))
 }
 
-fn render_page_slideshow(sack: &Context, query: QueryContent<Slideshow>) -> Page {
-    let parsed = html::slideshow::parse_content(query.content, sack, query.area, None);
-    let buffer = html::slideshow::as_html(query.meta, &parsed.0, sack, parsed.1, parsed.2);
+fn render_page_slideshow(ctx: &Context, query: ViewPage<Slideshow>) -> Page {
+    let parsed = html::slideshow::parse_content(query.content, ctx, query.area, None);
+    let buffer = html::slideshow::as_html(query.meta, &parsed.0, ctx, parsed.1, parsed.2);
     (query.slug.join("index.html"), buffer)
 }
 
-fn render_page_wiki(sack: &Context, query: QueryContent<Wiki>) -> TaskResult<Page> {
-    let library = sack.get_asset_any::<Library>(query.area)?;
-    let parsed = crate::md::parse(query.content, sack, query.area, library);
-    let buffer =
-        crate::html::wiki::wiki(query.meta, &parsed.0, sack, query.slug, parsed.1, parsed.2);
+fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
+    let pattern = format!("{}/*", query.area);
+    let library_text = ctx.glob_asset::<Library>(&pattern)?;
+    let library_path = ctx.glob_asset_deferred(&pattern)?;
+
+    let parsed = crate::md::parse(query.content, ctx, query.area, library_text);
+    let buffer = crate::html::wiki::wiki(
+        query.meta,
+        &parsed.0,
+        ctx,
+        query.slug,
+        parsed.1,
+        parsed.2,
+        library_path,
+    );
     Ok((query.slug.join("index.html"), buffer))
 }
 
@@ -131,7 +151,7 @@ fn main() -> ExitCode {
 
     let args = Args::parse();
 
-    let website = Website::configure()
+    let mut website = Website::configure()
         .set_opts_sitemap("https://kamoshi.org")
         .add_content([
             Content::glob(BASE, "index.md", yaml::<Home>),
@@ -145,7 +165,7 @@ fn main() -> ExitCode {
         .add_assets([
             // bibtex
             Assets::glob(BASE, "**/*.bib", process_bibtex),
-            // Assets::glob_defer(BASE, "**/*.bib", |u8| u8.to_vec()),
+            Assets::glob_defer(BASE, "**/*.bib", |u8| u8.to_vec()),
             // images
             Assets::glob_defer(BASE, "**/*.jpg", process_image),
             Assets::glob_defer(BASE, "**/*.png", process_image),
@@ -161,7 +181,7 @@ fn main() -> ExitCode {
         ])
         // Generate the home page.
         .add_task(|ctx| {
-            let item = ctx.get_page::<Home>("")?;
+            let item = ctx.glob_page::<Home>("")?;
             let text = md::parse(item.content, &ctx, item.area, None).0;
             let html = html::home(&ctx, &text)?;
 
@@ -169,10 +189,10 @@ fn main() -> ExitCode {
         })
         // Generate the about page.
         .add_task(|ctx| {
-            let item = ctx.get_page::<Post>("about")?;
+            let item = ctx.glob_page::<Post>("about")?;
             let (parsed, outline, bib) = crate::md::parse(item.content, &ctx, item.area, None);
             let html =
-                crate::html::post::render(item.meta, &parsed, &ctx, item.info, outline, bib)?
+                crate::html::post::render(item.meta, &parsed, &ctx, item.info, outline, bib, None)?
                     .render()
                     .into();
             Ok(vec![(item.slug.join("index.html"), html)])
@@ -180,7 +200,7 @@ fn main() -> ExitCode {
         // POSTS
         .add_task(|sack| {
             let pages = sack
-                .get_pages::<Post>("posts/**/*")?
+                .glob_pages::<Post>("posts/**/*")?
                 .into_iter()
                 .map(|query| render_page_post(&sack, query))
                 .collect::<Result<_, _>>()?;
@@ -192,7 +212,7 @@ fn main() -> ExitCode {
                 "posts/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.get_pages::<Post>("posts/**/*")?
+                    sack.glob_pages::<Post>("posts/**/*")?
                         .into_iter()
                         .map(LinkDate::from)
                         .collect(),
@@ -208,7 +228,7 @@ fn main() -> ExitCode {
         // SLIDESHOWS
         .add_task(|sack| {
             let pages = sack
-                .get_pages::<Slideshow>("slides/**/*")?
+                .glob_pages::<Slideshow>("slides/**/*")?
                 .into_iter()
                 .map(|query| render_page_slideshow(&sack, query))
                 .collect();
@@ -220,7 +240,7 @@ fn main() -> ExitCode {
                 "slides/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.get_pages::<Slideshow>("slides/**/*")?
+                    sack.glob_pages::<Slideshow>("slides/**/*")?
                         .into_iter()
                         .map(LinkDate::from)
                         .collect(),
@@ -235,7 +255,7 @@ fn main() -> ExitCode {
         })
         // PROJECTS
         .add_task(|ctx| {
-            let data = ctx.get_pages::<Project>("projects/**/*")?;
+            let data = ctx.glob_pages::<Project>("projects/**/*")?;
             let list = crate::html::project::render_list(&ctx, data)?;
 
             Ok(vec![("projects/index.html".into(), list)])
@@ -268,7 +288,7 @@ fn main() -> ExitCode {
         // WIKI
         .add_task(|sack| {
             let pages = sack
-                .get_pages::<Wiki>("**/*")?
+                .glob_pages::<Wiki>("**/*")?
                 .into_iter()
                 .map(|query| render_page_wiki(&sack, query))
                 .collect::<Result<_, _>>()?;
@@ -305,7 +325,7 @@ fn main() -> ExitCode {
     match res {
         Ok(_) => ExitCode::from(0),
         Err(e) => {
-            eprintln!("{}", e.to_string());
+            eprintln!("{}", e);
             ExitCode::from(1)
         }
     }

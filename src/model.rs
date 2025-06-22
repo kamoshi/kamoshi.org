@@ -1,6 +1,6 @@
 use camino::Utf8Path;
 use chrono::{DateTime, Utc};
-use hauchiwa::QueryContent;
+use hauchiwa::ViewPage;
 use serde::Deserialize;
 
 use crate::{Link, LinkDate};
@@ -21,8 +21,8 @@ pub struct Post {
     pub scripts: Option<Vec<String>>,
 }
 
-impl From<QueryContent<'_, Post>> for LinkDate {
-    fn from(query: QueryContent<Post>) -> Self {
+impl From<ViewPage<'_, Post>> for LinkDate {
+    fn from(query: ViewPage<Post>) -> Self {
         Self {
             link: Link {
                 path: Utf8Path::new("/").join(query.slug),
@@ -43,8 +43,8 @@ pub(crate) struct Slideshow {
     pub desc: Option<String>,
 }
 
-impl From<QueryContent<'_, Slideshow>> for LinkDate {
-    fn from(query: QueryContent<Slideshow>) -> Self {
+impl From<ViewPage<'_, Slideshow>> for LinkDate {
+    fn from(query: ViewPage<Slideshow>) -> Self {
         Self {
             link: Link {
                 path: Utf8Path::new("/").join(query.slug),

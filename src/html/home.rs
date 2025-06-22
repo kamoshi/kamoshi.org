@@ -75,7 +75,7 @@ const SECTION_IMAGE: Rendered<&str> = {
 fn latest_posts(sack: &Context) -> TaskResult<impl Renderable> {
     let list = {
         let mut list: Vec<_> = sack
-            .get_pages::<Post>("**")?
+            .glob_pages::<Post>("**")?
             .into_iter()
             .map(LinkDate::from)
             .collect();

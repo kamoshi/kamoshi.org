@@ -1,4 +1,4 @@
-use hauchiwa::{QueryContent, TaskResult};
+use hauchiwa::{TaskResult, ViewPage};
 use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 
 use crate::{Context, html::page, model::Project};
@@ -6,7 +6,7 @@ use crate::{Context, html::page, model::Project};
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/projects.scss"];
 
-pub fn render_list(ctx: &Context, mut data: Vec<QueryContent<Project>>) -> TaskResult<String> {
+pub fn render_list(ctx: &Context, mut data: Vec<ViewPage<Project>>) -> TaskResult<String> {
     data.sort_unstable_by(|a, b| a.meta.title.cmp(&b.meta.title));
 
     let main = maud_move! {

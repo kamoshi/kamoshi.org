@@ -48,8 +48,8 @@ pub(crate) fn render_head<'a>(
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
 
-        @if matches!(globals.mode, Mode::Watch) {
-            script { (Raw(JS_RELOAD)) }
+        @if let Some(reload_script) = ctx.get_refresh_script() {
+            script { (Raw(reload_script)) }
         }
 
         @if let Some(scripts) = script {
