@@ -130,21 +130,6 @@ fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
     Ok((query.slug.join("index.html"), buffer))
 }
 
-fn process_image(buffer: &[u8]) -> Vec<u8> {
-    let img = image::load_from_memory(buffer).expect("Couldn't load image");
-    let w = img.width();
-    let h = img.height();
-
-    let mut out = Vec::new();
-    let encoder = image::codecs::webp::WebPEncoder::new_lossless(&mut out);
-
-    encoder
-        .encode(&img.to_rgba8(), w, h, image::ExtendedColorType::Rgba8)
-        .expect("Encoding error");
-
-    out
-}
-
 fn main() -> ExitCode {
     /// Base path for content files
     const BASE: &str = "content";
@@ -167,9 +152,9 @@ fn main() -> ExitCode {
             Assets::glob(BASE, "**/*.bib", process_bibtex),
             Assets::glob_defer(BASE, "**/*.bib", |data| data.to_vec()),
             // images
-            Assets::glob_defer(BASE, "**/*.jpg", process_image),
-            Assets::glob_defer(BASE, "**/*.png", process_image),
-            Assets::glob_defer(BASE, "**/*.gif", process_image),
+            Assets::glob_images(BASE, "**/*.jpg"),
+            Assets::glob_images(BASE, "**/*.png"),
+            Assets::glob_images(BASE, "**/*.gif"),
             // stylesheets
             Assets::glob_style("styles", "**/[!_]*.scss"),
             // scripts
