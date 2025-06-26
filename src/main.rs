@@ -16,6 +16,8 @@ use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
 
+use crate::model::{Microblog, MicroblogEntry};
+
 const BASE_URL: &str = "https://kamoshi.org/";
 
 #[derive(Parser, Debug, Clone)]
@@ -130,6 +132,15 @@ fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
     Ok((query.slug.join("index.html"), buffer))
 }
 
+fn parse_microblog(content: &str) -> TaskResult<(Microblog, String)> {
+    let entries = content
+        .lines()
+        .map(str::parse::<MicroblogEntry>)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok((Microblog { entries }, String::new()))
+}
+
 fn main() -> ExitCode {
     /// Base path for content files
     const BASE: &str = "content";
@@ -146,6 +157,8 @@ fn main() -> ExitCode {
             Content::glob(BASE, "slides/**/*.lhs", yaml::<Slideshow>),
             Content::glob(BASE, "wiki/**/*.md", yaml::<Wiki>),
             Content::glob(BASE, "projects/**/*.md", yaml::<Project>),
+            // microblog
+            Content::glob(BASE, "twtxt.txt", parse_microblog),
         ])
         .add_assets([
             // bibtex
@@ -295,6 +308,14 @@ fn main() -> ExitCode {
                 "search/index.html".into(),
                 crate::html::search(&sack),
             )])
+        })
+        // microblog
+        .add_task(|ctx| {
+            let microblog = ctx.glob_page::<Microblog>("twtxt")?;
+            let microblog = html::microblog::render(&ctx, microblog.meta)?
+                .render()
+                .into();
+            Ok(vec![("thoughts/index.html".into(), microblog)])
         })
         .add_hook(Hook::post_build(crate::pf::build_pagefind))
         // TODO: Sitemap.xml

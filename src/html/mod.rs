@@ -1,6 +1,7 @@
 mod head;
 mod home;
 mod list;
+pub mod microblog;
 mod misc;
 pub mod post;
 pub mod project;
@@ -24,6 +25,7 @@ fn navbar() -> impl Renderable {
         ("Slides", "/slides/"),
         ("Projects", "/projects/"),
         ("Wiki", "/wiki/"),
+        ("Thoughts", "/thoughts/"),
         ("Map", "/map/"),
         ("About", "/about/"),
         ("Search", "/search/"),

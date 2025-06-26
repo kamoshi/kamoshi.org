@@ -1,9 +1,40 @@
+use std::str::FromStr;
+
 use camino::Utf8Path;
 use chrono::{DateTime, Utc};
 use hauchiwa::ViewPage;
 use serde::Deserialize;
 
 use crate::{Link, LinkDate};
+
+#[derive(Deserialize, Clone)]
+pub struct MicroblogEntry {
+    #[serde(with = "isodate")]
+    pub date: DateTime<Utc>,
+    pub text: String,
+}
+
+#[derive(Deserialize)]
+pub struct Microblog {
+    pub entries: Vec<MicroblogEntry>,
+}
+
+impl FromStr for MicroblogEntry {
+    type Err = chrono::ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut parts = s.splitn(2, char::is_whitespace);
+        let datetime_str = parts.next().unwrap_or("");
+        let text = parts.next().unwrap_or("").trim_start();
+
+        let date = DateTime::parse_from_rfc3339(datetime_str)?.with_timezone(&Utc);
+
+        Ok(MicroblogEntry {
+            date,
+            text: text.to_string(),
+        })
+    }
+}
 
 /// Represents a wiki page
 #[derive(Deserialize, Debug, Clone)]

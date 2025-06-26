@@ -58,6 +58,13 @@ fn render_directive_container(name: &str, events: Vec<Event>) -> Event<'static> 
     }
 }
 
+pub fn md_parse_simple(content: &str) -> String {
+    let stream = Parser::new(content);
+    let mut parsed = String::new();
+    pulldown_cmark::html::push_html(&mut parsed, stream);
+    parsed
+}
+
 pub fn parse(
     content: &str,
     sack: &Context,

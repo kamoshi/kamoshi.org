@@ -1,0 +1,41 @@
+$timestamp-color: #666;
+$divider-color: #ddd;
+
+main {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+
+  .microblog {
+    width: 100%;
+    max-width: 42rem;
+  }
+}
+
+.microblog {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+
+  article {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid $divider-color;
+
+    time {
+      display: block;
+      font-family: monospace;
+      font-size: 0.875rem;
+      color: $timestamp-color;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  }
+}
