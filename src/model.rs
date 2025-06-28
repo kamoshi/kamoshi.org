@@ -7,6 +7,11 @@ use serde::Deserialize;
 
 use crate::{Link, LinkDate};
 
+#[derive(Deserialize)]
+pub struct Pubkey {
+    pub fingerprint: String,
+}
+
 #[derive(Deserialize, Clone)]
 pub struct MicroblogEntry {
     #[serde(with = "isodate")]

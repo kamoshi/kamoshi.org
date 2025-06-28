@@ -1,3 +1,4 @@
+pub mod about;
 mod head;
 mod home;
 mod list;

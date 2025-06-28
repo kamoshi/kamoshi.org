@@ -15,8 +15,10 @@ use hauchiwa::{Assets, Content, Hook, TaskResult, ViewPage, Website};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
+use sequoia_openpgp::Cert;
+use sequoia_openpgp::parse::Parse;
 
-use crate::model::{Microblog, MicroblogEntry};
+use crate::model::{Microblog, MicroblogEntry, Pubkey};
 
 const BASE_URL: &str = "https://kamoshi.org/";
 
@@ -132,13 +134,23 @@ fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
     Ok((query.slug.join("index.html"), buffer))
 }
 
-fn parse_microblog(content: &str) -> TaskResult<(Microblog, String)> {
+fn parse_twtxt(content: &str) -> TaskResult<(Microblog, String)> {
     let entries = content
         .lines()
         .map(str::parse::<MicroblogEntry>)
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok((Microblog { entries }, String::from(content)))
+}
+
+fn parse_pubkey(armored: &str) -> TaskResult<(Pubkey, String)> {
+    let fingerprint = Cert::from_reader(armored.as_bytes())?
+        .primary_key()
+        .key()
+        .fingerprint()
+        .to_spaced_hex();
+
+    Ok((Pubkey { fingerprint }, String::from(armored)))
 }
 
 fn main() -> ExitCode {
@@ -151,14 +163,16 @@ fn main() -> ExitCode {
         .set_opts_sitemap("https://kamoshi.org")
         .add_content([
             Content::glob(BASE, "index.md", yaml::<Home>),
-            Content::glob(BASE, "about.md", yaml::<Post>),
             Content::glob(BASE, "posts/**/*.md", yaml::<Post>),
             Content::glob(BASE, "slides/**/*.md", yaml::<Slideshow>),
             Content::glob(BASE, "slides/**/*.lhs", yaml::<Slideshow>),
             Content::glob(BASE, "wiki/**/*.md", yaml::<Wiki>),
             Content::glob(BASE, "projects/**/*.md", yaml::<Project>),
             // microblog
-            Content::glob(BASE, "twtxt.txt", parse_microblog),
+            Content::glob(BASE, "twtxt.txt", parse_twtxt),
+            // about
+            Content::glob(BASE, "about/index.md", yaml::<Post>),
+            Content::glob(BASE, "about/*.asc", parse_pubkey),
         ])
         .add_assets([
             // bibtex
@@ -188,12 +202,29 @@ fn main() -> ExitCode {
         // Generate the about page.
         .add_task(|ctx| {
             let item = ctx.glob_page::<Post>("about")?;
-            let (parsed, outline, bib) = crate::md::parse(item.content, &ctx, item.area, None);
-            let html =
-                crate::html::post::render(item.meta, &parsed, &ctx, item.info, outline, bib, None)?
-                    .render()
-                    .into();
-            Ok(vec![(item.slug.join("index.html"), html)])
+            let pubkey_ident = ctx.glob_page::<Pubkey>("about/pubkey-ident")?;
+            let pubkey_email = ctx.glob_page::<Pubkey>("about/pubkey-email")?;
+
+            let (parsed, outline, _) = crate::md::parse(item.content, &ctx, item.area, None);
+
+            let html = crate::html::about::render(
+                &ctx,
+                &item,
+                parsed,
+                outline,
+                &pubkey_ident,
+                &pubkey_email,
+            )?
+            .render()
+            .into();
+
+            let pages = vec![
+                ("about/index.html".into(), html),
+                ("pubkey_ident.asc".into(), pubkey_ident.content.to_owned()),
+                ("pubkey_email.asc".into(), pubkey_email.content.to_owned()),
+            ];
+
+            Ok(pages)
         })
         // POSTS
         .add_task(|sack| {
@@ -334,7 +365,7 @@ fn main() -> ExitCode {
     match res {
         Ok(_) => ExitCode::from(0),
         Err(e) => {
-            eprintln!("{}", e);
+            eprintln!("{e}");
             ExitCode::from(1)
         }
     }

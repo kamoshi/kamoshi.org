@@ -104,7 +104,7 @@ fn render_article(
     )
 }
 
-fn render_metadata(
+pub fn render_metadata(
     ctx: &Context,
     meta: &Post,
     info: Option<&hauchiwa::GitInfo>,
