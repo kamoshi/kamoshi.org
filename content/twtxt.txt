@@ -1,0 +1,2 @@
+2025-06-26T18:23:00.762Z    Hello world! I decided to try to create a microblog of sorts, and use bespoke [twtxt format](https://twtxt.dev/) as the backend... This way I can avoid having to deal with some services I don't really feel like using.
+2025-06-28T11:11:15.072Z    The generator which builds this website was rewritten recently, to make it even more flexible. For now it won't be published on crates.io. I will try to make it even better throughout the summer and add documentation... latest version is always [on GitHub](https://github.com/kamoshi/hauchiwa).

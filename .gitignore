@@ -28,6 +28,7 @@
 !content/**/*.bib
 !content/**/*.lhs
 !content/**/*.yaml
+!content/twtxt.txt
 content/.obsidian/
 content/.stfolder/
 

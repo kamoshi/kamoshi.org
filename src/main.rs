@@ -138,7 +138,7 @@ fn parse_microblog(content: &str) -> TaskResult<(Microblog, String)> {
         .map(str::parse::<MicroblogEntry>)
         .collect::<Result<Vec<_>, _>>()?;
 
-    Ok((Microblog { entries }, String::new()))
+    Ok((Microblog { entries }, String::from(content)))
 }
 
 fn main() -> ExitCode {
@@ -311,11 +311,15 @@ fn main() -> ExitCode {
         })
         // microblog
         .add_task(|ctx| {
-            let microblog = ctx.glob_page::<Microblog>("twtxt")?;
-            let microblog = html::microblog::render(&ctx, microblog.meta)?
-                .render()
-                .into();
-            Ok(vec![("thoughts/index.html".into(), microblog)])
+            let data = ctx.glob_page::<Microblog>("twtxt")?;
+            let html = html::microblog::render(&ctx, data.meta)?.render().into();
+
+            let pages = vec![
+                ("thoughts/index.html".into(), html),
+                ("twtxt.txt".into(), data.content.to_owned()),
+            ];
+
+            Ok(pages)
         })
         .add_hook(Hook::post_build(crate::pf::build_pagefind))
         // TODO: Sitemap.xml

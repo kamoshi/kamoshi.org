@@ -1,5 +1,5 @@
 use hauchiwa::TaskResult;
-use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
+use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Context, md::md_parse_simple, model::Microblog};
 
@@ -20,9 +20,7 @@ pub fn render<'a>(
                         time datetime=(entry.date.to_rfc3339()) {
                             (entry.date.format("%Y-%m-%d %H:%M UTC").to_string())
                         }
-                        p {
-                            (&entry.text)
-                        }
+                        (Raw(md_parse_simple(&entry.text)))
                     }
                 }
             }
