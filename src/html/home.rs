@@ -109,9 +109,12 @@ const SECTION_BUTTONS: Rendered<&'static str> = {
             h2 .p-card__heading {
                 "Badges"
             }
-            div {
-                a href=r#"https://nixos.org"# {
-                    img ._88x31 src="/static/88x31/nixos.gif" width=88 height=31;
+            div .grid_88x31 {
+                a href=r#"https://nixos.org"# title="Powered by NixOS" {
+                    img .icon_88x31 src="/static/88x31/nixos.gif" width=88 height=31;
+                }
+                a href=r#"https://crates.io/crates/hauchiwa"# title="Built with Hauchiwa" {
+                    img .icon_88x31 src="/static/88x31/hauchiwa.png" width=88 height=31;
                 }
             }
         }
