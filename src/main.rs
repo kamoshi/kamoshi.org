@@ -185,6 +185,7 @@ fn main() -> ExitCode {
             // stylesheets
             Assets::glob_style("styles", "**/[!_]*.scss"),
             // scripts
+            Assets::glob_svelte("js", "search/src/App.svelte"),
             Assets::glob_scripts("js", "search/dist/search.js"),
             Assets::glob_scripts("js", "vanilla/photos.ts"),
             Assets::glob_scripts("js", "vanilla/reveal.js"),
@@ -345,10 +346,19 @@ fn main() -> ExitCode {
             let data = ctx.glob_page::<Microblog>("twtxt")?;
             let html = html::microblog::render(&ctx, data.meta)?.render().into();
 
-            let pages = vec![
-                ("thoughts/index.html".into(), html),
+            let mut pages = vec![
                 ("twtxt.txt".into(), data.content.to_owned()),
+                ("thoughts/index.html".into(), html),
             ];
+
+            for entry in &data.meta.entries {
+                let html = html::microblog::render_entry(&ctx, entry)?.render().into();
+
+                pages.push((
+                    format!("thoughts/{}/index.html", entry.date.timestamp()).into(),
+                    html,
+                ));
+            }
 
             Ok(pages)
         })

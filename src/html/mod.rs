@@ -222,15 +222,25 @@ where
     )
 }
 
-pub(crate) fn search(sack: &Context) -> String {
+pub(crate) fn search(ctx: &Context) -> String {
+    let svelte = ctx
+        .glob_asset::<hauchiwa::Svelte>("**/*.svelte")
+        .unwrap()
+        .unwrap();
+
     page(
-        sack,
+        ctx,
         maud!(
-            main #app {}
+            main {
+                (Raw(&svelte.0))
+                script {
+                    (Raw(&svelte.1))
+                }
+            }
         ),
         String::from("Search"),
         &["styles/styles.scss", "styles/layouts/search.scss"],
-        Some(&["js/search/dist/search.js".into()]),
+        Some(&[]),
     )
     .unwrap()
     .render()

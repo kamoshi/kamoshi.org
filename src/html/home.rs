@@ -116,6 +116,12 @@ const SECTION_BUTTONS: Rendered<&'static str> = {
                 a href=r#"https://crates.io/crates/hauchiwa"# title="Built with Hauchiwa" {
                     img .icon_88x31 src="/static/88x31/hauchiwa.png" width=88 height=31;
                 }
+                a href=r#"https://www.mozilla.org/firefox/new"# title="Tested on Firefox" {
+                    img .icon_88x31 src="/static/88x31/firefox.webp" width=88 height=31;
+                }
+                a href=r#"https://creativecommons.org/licenses/by/4.0/"# title="CC BY 4.0" {
+                    img .icon_88x31 src="/static/88x31/cc-by.png" width=88 height=31;
+                }
             }
         }
     )
