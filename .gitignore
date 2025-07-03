@@ -35,8 +35,8 @@ content/.stfolder/
 
 !js/
 !js/**/
-!js/**/*.ts
 !js/**/*.js
+!js/**/*.ts
 !js/**/*.svelte
 !js/**/*.json
 !js/**/*.lock

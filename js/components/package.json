@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "dependencies": {
+    "svelte": "^5.35.2"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.1.0",
+    "@tsconfig/svelte": "^5.0.4"
+  }
+}

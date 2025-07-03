@@ -185,7 +185,7 @@ fn main() -> ExitCode {
             // stylesheets
             Assets::glob_style("styles", "**/[!_]*.scss"),
             // scripts
-            Assets::glob_svelte("js", "search/src/App.svelte"),
+            Assets::glob_svelte("js", "components/src/search/App.svelte"),
             Assets::glob_scripts("js", "search/dist/search.js"),
             Assets::glob_scripts("js", "vanilla/photos.ts"),
             Assets::glob_scripts("js", "vanilla/reveal.js"),

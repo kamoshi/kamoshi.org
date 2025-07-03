@@ -6,7 +6,7 @@
   let limit = $state<number>(10);
   let result = $derived(client?.search(query));
 
-  const require = (path: string) => import(/* @vite-ignore */ path);
+  const require = (path: string) => import(path);
 
   function sync(): void {
     query = new URLSearchParams(window.location.search).get("q") || "";

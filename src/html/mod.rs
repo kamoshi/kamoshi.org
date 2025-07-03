@@ -220,7 +220,9 @@ where
 }
 
 pub(crate) fn search(ctx: &Context) -> String {
-    let (html, init) = ctx.get_svelte("js/search/src/App.svelte").unwrap();
+    let (html, init) = ctx
+        .get_svelte("js/components/src/search/App.svelte")
+        .unwrap();
 
     page(
         ctx,
