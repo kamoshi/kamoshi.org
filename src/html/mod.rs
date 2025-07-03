@@ -112,7 +112,7 @@ fn bare<'s, 'p, 'html>(
     main: impl Renderable + 'p,
     title: String,
     stylesheets: &'s [&str],
-    js: Option<&'s [String]>,
+    js: &'s [String],
 ) -> TaskResult<impl Renderable>
 where
     's: 'html,
@@ -136,7 +136,7 @@ fn full<'s, 'p, 'html>(
     sack: &'s Context,
     main: impl Renderable + 'p,
     title: String,
-    js: Option<&'s [String]>,
+    js: &'s [String],
 ) -> TaskResult<impl Renderable + 'html>
 where
     's: 'html,
@@ -162,7 +162,7 @@ fn page<'s, 'p, 'html>(
     main: impl Renderable + 'p,
     title: String,
     stylesheets: &'s [&str],
-    js: Option<&'s [String]>,
+    js: &'s [String],
 ) -> TaskResult<impl Renderable>
 where
     's: 'html,
@@ -201,10 +201,7 @@ pub(crate) fn to_list(
         .into()
 }
 
-pub(crate) fn map<'s, 'html>(
-    sack: &'s Context,
-    js: Option<&'s [String]>,
-) -> TaskResult<impl Renderable>
+pub(crate) fn map<'s, 'html>(sack: &'s Context, js: &'s [String]) -> TaskResult<impl Renderable>
 where
     's: 'html,
 {
@@ -223,24 +220,18 @@ where
 }
 
 pub(crate) fn search(ctx: &Context) -> String {
-    let svelte = ctx
-        .glob_asset::<hauchiwa::Svelte>("**/*.svelte")
-        .unwrap()
-        .unwrap();
+    let (html, init) = ctx.get_svelte("js/search/src/App.svelte").unwrap();
 
     page(
         ctx,
         maud!(
             main {
-                (Raw(&svelte.0))
-                script {
-                    (Raw(&svelte.1))
-                }
+                (Raw(html))
             }
         ),
         String::from("Search"),
         &["styles/styles.scss", "styles/layouts/search.scss"],
-        Some(&[]),
+        &[init.to_string()],
     )
     .unwrap()
     .render()

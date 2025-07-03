@@ -25,7 +25,7 @@ pub fn render_list(ctx: &Context, mut data: Vec<ViewPage<Project>>) -> TaskResul
         }
     };
 
-    let html = page(ctx, main, "Projects".into(), STYLES, None)?
+    let html = page(ctx, main, "Projects".into(), STYLES, &[])?
         .render()
         .into_inner();
 

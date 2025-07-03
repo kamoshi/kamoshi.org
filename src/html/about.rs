@@ -60,13 +60,7 @@ where
         }
     );
 
-    crate::html::page(
-        ctx,
-        main,
-        item.meta.title.clone(),
-        STYLES,
-        item.meta.scripts.as_deref(),
-    )
+    crate::html::page(ctx, main, item.meta.title.clone(), STYLES, &[])
 }
 
 fn render_outline(outline: Outline) -> impl Renderable {
@@ -80,7 +74,7 @@ fn render_outline(outline: Outline) -> impl Renderable {
                     ul {
                         @for (title, id) in outline.0 {
                             li {
-                                a href=(format!("#{}", id)) {
+                                a href=(format!("#{id}")) {
                                     (title)
                                 }
                             }

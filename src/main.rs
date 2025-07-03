@@ -325,10 +325,12 @@ fn main() -> ExitCode {
             Ok(pages)
         })
         // MAP
-        .add_task(|sack| {
+        .add_task(|ctx| {
+            let script = ctx.get_script("js/vanilla/photos.ts")?;
+
             Ok(vec![(
                 "map/index.html".into(),
-                crate::html::map(&sack, Some(&["js/vanilla/photos.ts".into()]))?
+                crate::html::map(&ctx, &[script.into()])?
                     .render()
                     .to_owned()
                     .into(),

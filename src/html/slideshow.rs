@@ -50,16 +50,18 @@ pub fn parse_content(
 pub fn as_html(
     slides: &Slideshow,
     parsed: &str,
-    sack: &Context,
+    ctx: &Context,
     _: Outline,
     _: Bibliography,
 ) -> String {
-    show(slides, sack, parsed)
+    show(ctx, slides, parsed)
 }
 
-pub fn show(fm: &Slideshow, sack: &Context, slides: &str) -> String {
+pub fn show(ctx: &Context, fm: &Slideshow, slides: &str) -> String {
+    let path = ctx.get_script("js/vanilla/reveal.js").unwrap();
+
     crate::html::bare(
-        sack,
+        ctx,
         maud!(
             div .reveal {
                 div .slides {
@@ -71,7 +73,7 @@ pub fn show(fm: &Slideshow, sack: &Context, slides: &str) -> String {
         ),
         fm.title.clone(),
         STYLES,
-        Some(&["js/vanilla/reveal.js".into()]),
+        &[path.into()],
     )
     .unwrap()
     .render()

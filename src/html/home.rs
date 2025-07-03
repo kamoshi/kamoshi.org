@@ -40,9 +40,7 @@ pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
         }
     );
 
-    let rendered = page(ctx, main, "Home".into(), STYLES, None)?
-        .render()
-        .into();
+    let rendered = page(ctx, main, "Home".into(), STYLES, &[])?.render().into();
 
     Ok(rendered)
 }

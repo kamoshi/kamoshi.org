@@ -24,7 +24,7 @@ pub fn wiki(
         }
     );
 
-    crate::html::page(ctx, main, meta.title.to_owned(), STYLES, None)
+    crate::html::page(ctx, main, meta.title.to_owned(), STYLES, &[])
         .unwrap()
         .render()
         .into()

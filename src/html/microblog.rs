@@ -33,7 +33,7 @@ pub fn render<'a>(
         }
     );
 
-    crate::html::page(ctx, main, "microblog".into(), STYLES, None)
+    crate::html::page(ctx, main, "microblog".into(), STYLES, &[])
 }
 
 pub fn render_entry<'a>(
@@ -53,5 +53,5 @@ pub fn render_entry<'a>(
         }
     );
 
-    crate::html::page(ctx, main, "microblog".into(), STYLES, None)
+    crate::html::page(ctx, main, "microblog".into(), STYLES, &[])
 }

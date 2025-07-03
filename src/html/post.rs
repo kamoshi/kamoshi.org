@@ -32,7 +32,7 @@ where
         main,
         meta.title.clone(),
         STYLES,
-        meta.scripts.as_deref(),
+        meta.scripts.as_deref().unwrap_or(&[]),
     )
 }
 
