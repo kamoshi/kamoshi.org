@@ -58,7 +58,7 @@ pub fn as_html(
 }
 
 pub fn show(ctx: &Context, fm: &Slideshow, slides: &str) -> String {
-    let path = ctx.get_script("js/vanilla/reveal.js").unwrap();
+    let path = ctx.get_script("js/components/src/slides/main.ts").unwrap();
 
     crate::html::bare(
         ctx,

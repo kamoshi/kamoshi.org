@@ -24,6 +24,10 @@
       width: 24em;
       margin-top: 0;
       margin-left: 3em;
+
+      > * {
+        width: 24em;
+      }
     }
   }
 
@@ -94,9 +98,7 @@
 }
 
 .intro-jp {
-  width: 100%;
-  height: min-content;
-  min-height: 18em;
+  height: 18em;
   writing-mode: vertical-rl;
 
   h2 {

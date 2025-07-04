@@ -1,6 +1,5 @@
-import L from 'leaflet';
-import 'leaflet.markercluster'
-
+import L from "leaflet";
+import "leaflet.markercluster";
 
 // PHOTOS
 
@@ -14,8 +13,8 @@ interface Photo extends L.LatLngLiteral {
 L.Photo = L.FeatureGroup.extend({
   options: {
     icon: {
-      iconSize: [40, 40] as L.PointTuple
-    }
+      iconSize: [40, 40] as L.PointTuple,
+    },
   },
 
   initialize: function (photos: Photo[], options: any) {
@@ -25,8 +24,7 @@ L.Photo = L.FeatureGroup.extend({
   },
 
   addLayers: function (photos: Photo[]) {
-    for (const photo of photos)
-      this.addLayer(photo);
+    for (const photo of photos) this.addLayer(photo);
     return this;
   },
 
@@ -36,22 +34,27 @@ L.Photo = L.FeatureGroup.extend({
 
   createMarker: function (photo: Photo) {
     const marker = L.marker(photo, {
-      icon: L.divIcon(L.extend({
-        html: `<div style="background-image: url(${photo.thumbnail});"></div>`,
-        className: 'leaflet-marker-photo'
-      }, photo, this.options.icon)),
-      title: photo.caption || ''
+      icon: L.divIcon(
+        L.extend(
+          {
+            html: `<div style="background-image: url(${photo.thumbnail});"></div>`,
+            className: "leaflet-marker-photo",
+          },
+          photo,
+          this.options.icon,
+        ),
+      ),
+      title: photo.caption || "",
     });
     // @ts-ignore
     marker.photo = photo;
     return marker;
-  }
+  },
 });
 
-L.photo = function (photos, options) {
+L.photo = function (photos: any, options: any) {
   return new L.Photo(photos, options);
 };
-
 
 if (L.MarkerClusterGroup) {
   L.Photo.Cluster = L.MarkerClusterGroup.extend({
@@ -61,12 +64,17 @@ if (L.MarkerClusterGroup) {
       showCoverageOnHover: false,
       icon: { iconSize: [40, 40] as L.PointTuple },
 
-      iconCreateFunction: function(cluster: any) {
+      iconCreateFunction: function (cluster: any) {
         const markers = cluster.getAllChildMarkers();
-        return new L.DivIcon(L.extend({
-          html: `<div style="background-image: url(${markers[0].photo.thumbnail});"></div><b>${markers.length}</b>`,
-          className: 'leaflet-marker-photo',
-        }, this.icon));
+        return new L.DivIcon(
+          L.extend(
+            {
+              html: `<div style="background-image: url(${markers[0].photo.thumbnail});"></div><b>${markers.length}</b>`,
+              className: "leaflet-marker-photo",
+            },
+            this.icon,
+          ),
+        );
       },
     },
 
@@ -85,15 +93,13 @@ if (L.MarkerClusterGroup) {
     clear: function () {
       this._photos.clearLayers();
       this.clearLayers();
-    }
-
+    },
   });
 
   L.photo.cluster = function (options: any) {
     return new L.Photo.Cluster!(options);
   };
 }
-
 
 // MAP
 
@@ -108,22 +114,23 @@ const template = `
   </div>
 `;
 
-const map = L.map('map').setView([51.85, 16.57], 13);
+const map = L.map("map").setView([51.85, 16.57], 13);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
 
-const photoLayer = L.photo.cluster().on('click', function(evt) {
+const photoLayer = L.photo.cluster().on("click", function (evt) {
   evt.layer.bindPopup(L.Util.template(template, evt.layer.photo)).openPopup();
 });
 
 async function loadData() {
-  const data = await fetch('/static/map/data.json');
+  const data = await fetch("/static/map/data.json");
   if (!data.ok) return;
 
-  return await data.json()
+  return await data.json();
 }
 
 // Add photos to the map
-loadData().then(data => photoLayer.add(data).addTo(map));
+loadData().then((data) => photoLayer.add(data).addTo(map));

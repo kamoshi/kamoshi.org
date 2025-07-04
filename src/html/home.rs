@@ -33,7 +33,7 @@ pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
             }
             aside .l-home__aside {
                 (intro)
-                (Raw(SECTION_IMAGE))
+                // (Raw(SECTION_IMAGE))
                 (posts)
                 (Raw(SECTION_BUTTONS))
             }

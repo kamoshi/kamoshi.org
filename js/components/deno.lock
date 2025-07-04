@@ -3,6 +3,12 @@
   "specifiers": {
     "npm:@sveltejs/vite-plugin-svelte@^5.1.0": "5.1.0_svelte@5.35.2__acorn@8.15.0_vite@6.3.5__picomatch@4.0.2",
     "npm:@tsconfig/svelte@^5.0.4": "5.0.4",
+    "npm:@types/leaflet.markercluster@^1.5.5": "1.5.5",
+    "npm:@types/leaflet@^1.9.19": "1.9.19",
+    "npm:@types/reveal.js@^5.2.0": "5.2.0",
+    "npm:leaflet.markercluster@^1.5.3": "1.5.3_leaflet@1.9.4",
+    "npm:leaflet@^1.9.4": "1.9.4",
+    "npm:reveal.js@^5.2.1": "5.2.1",
     "npm:svelte@^5.35.2": "5.35.2_acorn@8.15.0"
   },
   "npm": {
@@ -202,6 +208,24 @@
     "@types/estree@1.0.8": {
       "integrity": "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="
     },
+    "@types/geojson@7946.0.16": {
+      "integrity": "sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg=="
+    },
+    "@types/leaflet.markercluster@1.5.5": {
+      "integrity": "sha512-TkWOhSHDM1ANxmLi+uK0PjsVcjIKBr8CLV2WoF16dIdeFmC0Cj5P5axkI3C1Xsi4+ht6EU8+BfEbbqEF9icPrg==",
+      "dependencies": [
+        "@types/leaflet"
+      ]
+    },
+    "@types/leaflet@1.9.19": {
+      "integrity": "sha512-pB+n2daHcZPF2FDaWa+6B0a0mSDf4dPU35y5iTXsx7x/PzzshiX5atYiS1jlBn43X7XvM8AP+AB26lnSk0J4GA==",
+      "dependencies": [
+        "@types/geojson"
+      ]
+    },
+    "@types/reveal.js@5.2.0": {
+      "integrity": "sha512-IHO3Nc0YjI4CKQHeK/2U+6SinAJCC8/xiKCIDQnlFCiq02GMag+WrveIszll033zyv/mtXoCnWmYZITUngE2pA=="
+    },
     "acorn@8.15.0": {
       "integrity": "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="
     },
@@ -280,6 +304,15 @@
     "kleur@4.1.5": {
       "integrity": "sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ=="
     },
+    "leaflet.markercluster@1.5.3_leaflet@1.9.4": {
+      "integrity": "sha512-vPTw/Bndq7eQHjLBVlWpnGeLa3t+3zGiuM7fJwCkiMFq+nmRuG3RI3f7f4N4TDX7T4NpbAXpR2+NTRSEGfCSeA==",
+      "dependencies": [
+        "leaflet"
+      ]
+    },
+    "leaflet@1.9.4": {
+      "integrity": "sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA=="
+    },
     "locate-character@3.0.0": {
       "integrity": "sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA=="
     },
@@ -308,6 +341,9 @@
         "picocolors",
         "source-map-js"
       ]
+    },
+    "reveal.js@5.2.1": {
+      "integrity": "sha512-r7//6mIM5p34hFiDMvYfXgyjXqGRta+/psd9YtytsgRlrpRzFv4RbH76TXd2qD+7ZPZEbpBDhdRhJaFgfQ7zNQ=="
     },
     "rollup@4.44.1": {
       "integrity": "sha512-x8H8aPvD+xbl0Do8oez5f5o8eMS3trfCghc4HhLAnCkj7Vl0d1JWGs0UF/D886zLW2rOj2QymV/JcSSsw+XDNg==",
@@ -388,12 +424,16 @@
     }
   },
   "workspace": {
-    "packageJson": {
-      "dependencies": [
-        "npm:@sveltejs/vite-plugin-svelte@^5.1.0",
-        "npm:@tsconfig/svelte@^5.0.4",
-        "npm:svelte@^5.35.2"
-      ]
-    }
+    "dependencies": [
+      "npm:@sveltejs/vite-plugin-svelte@^5.1.0",
+      "npm:@tsconfig/svelte@^5.0.4",
+      "npm:@types/leaflet.markercluster@^1.5.5",
+      "npm:@types/leaflet@^1.9.19",
+      "npm:@types/reveal.js@^5.2.0",
+      "npm:leaflet.markercluster@^1.5.3",
+      "npm:leaflet@^1.9.4",
+      "npm:reveal.js@^5.2.1",
+      "npm:svelte@^5.35.2"
+    ]
   }
 }

@@ -185,10 +185,8 @@ fn main() -> ExitCode {
             // stylesheets
             Assets::glob_style("styles", "**/[!_]*.scss"),
             // scripts
-            Assets::glob_svelte("js", "components/src/search/App.svelte"),
-            Assets::glob_scripts("js", "search/dist/search.js"),
-            Assets::glob_scripts("js", "vanilla/photos.ts"),
-            Assets::glob_scripts("js", "vanilla/reveal.js"),
+            Assets::glob_svelte("js", "components/src/*/App.svelte"),
+            Assets::glob_scripts("js", "components/src/*/main.ts"),
             Assets::glob_scripts("js", "flox/main.ts"),
             Assets::glob_scripts("js", "flox/lambda.ts"),
         ])
@@ -326,7 +324,7 @@ fn main() -> ExitCode {
         })
         // MAP
         .add_task(|ctx| {
-            let script = ctx.get_script("js/vanilla/photos.ts")?;
+            let script = ctx.get_script("js/components/src/photos/main.ts")?;
 
             Ok(vec![(
                 "map/index.html".into(),
