@@ -1,4 +1,4 @@
-use std::fmt::Write;
+use std::{borrow::Cow, fmt::Write};
 
 use camino::Utf8Path;
 use hayagriva::Library;
@@ -58,7 +58,7 @@ pub fn as_html(
 }
 
 pub fn show(ctx: &Context, fm: &Slideshow, slides: &str) -> String {
-    let path = ctx.get_script("js/components/src/slides/main.ts").unwrap();
+    let path = ctx.get_script("scripts/src/slides/main.ts").unwrap();
 
     crate::html::bare(
         ctx,
@@ -73,7 +73,7 @@ pub fn show(ctx: &Context, fm: &Slideshow, slides: &str) -> String {
         ),
         fm.title.clone(),
         STYLES,
-        &[path.into()],
+        Cow::Borrowed(&[path.into()]),
     )
     .unwrap()
     .render()

@@ -5,6 +5,7 @@ mod pf;
 mod rss;
 mod ts;
 
+use std::borrow::Cow;
 use std::process::{Command, ExitCode};
 
 use camino::Utf8PathBuf;
@@ -185,10 +186,8 @@ fn main() -> ExitCode {
             // stylesheets
             Assets::glob_style("styles", "**/[!_]*.scss"),
             // scripts
-            Assets::glob_svelte("js", "components/src/*/App.svelte"),
-            Assets::glob_scripts("js", "components/src/*/main.ts"),
-            Assets::glob_scripts("js", "flox/main.ts"),
-            Assets::glob_scripts("js", "flox/lambda.ts"),
+            Assets::glob_svelte("scripts", "src/*/App.svelte"),
+            Assets::glob_scripts("scripts", "src/*/main.ts"),
         ])
         // Generate the home page.
         .add_task(|ctx| {
@@ -324,11 +323,11 @@ fn main() -> ExitCode {
         })
         // MAP
         .add_task(|ctx| {
-            let script = ctx.get_script("js/components/src/photos/main.ts")?;
+            let script = ctx.get_script("scripts/src/photos/main.ts")?;
 
             Ok(vec![(
                 "map/index.html".into(),
-                crate::html::map(&ctx, &[script.into()])?
+                crate::html::map(&ctx, Cow::Borrowed(&[script.into()]))?
                     .render()
                     .to_owned()
                     .into(),

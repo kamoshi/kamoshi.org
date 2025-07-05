@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use hauchiwa::TaskResult;
 use hypertext::{Raw, Renderable, html_elements, maud_move};
 
@@ -7,7 +9,7 @@ pub(crate) fn render_head<'a>(
     ctx: &'a Context,
     title: String,
     stylesheets: &'a [&str],
-    script: &'a [String],
+    script: Cow<'a, [String]>,
 ) -> TaskResult<impl Renderable> {
     let title = format!("{title} | kamoshi.org");
 
@@ -35,7 +37,7 @@ pub(crate) fn render_head<'a>(
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
 
-        @for path in script {
+        @for path in script.as_ref() {
             script type="module" src=(path) defer {}
         }
 

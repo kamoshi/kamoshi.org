@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use hauchiwa::TaskResult;
 use hypertext::{
     GlobalAttributes, Raw, Renderable, Rendered, html_elements, maud, maud_move, maud_static,
@@ -40,7 +42,9 @@ pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
         }
     );
 
-    let rendered = page(ctx, main, "Home".into(), STYLES, &[])?.render().into();
+    let rendered = page(ctx, main, "Home".into(), STYLES, Cow::default())?
+        .render()
+        .into();
 
     Ok(rendered)
 }

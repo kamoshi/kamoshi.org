@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use hauchiwa::TaskResult;
 use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 
@@ -36,7 +38,7 @@ where
         }
     );
 
-    page(sack, list, title, STYLES, &[])
+    page(sack, list, title, STYLES, Cow::default())
 }
 
 fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {

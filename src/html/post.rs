@@ -27,13 +27,14 @@ where
         }
     );
 
-    crate::html::page(
-        ctx,
-        main,
-        meta.title.clone(),
-        STYLES,
-        meta.scripts.as_deref().unwrap_or(&[]),
-    )
+    let scripts: Vec<_> = meta
+        .scripts
+        .iter()
+        .flatten()
+        .map(|path| ctx.get_script(path).map(|x| x.to_string()))
+        .collect::<Result<_, _>>()?;
+
+    crate::html::page(ctx, main, meta.title.clone(), STYLES, scripts.into())
 }
 
 pub fn article<'p, 's>(

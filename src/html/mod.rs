@@ -9,7 +9,7 @@ pub mod project;
 pub mod slideshow;
 pub mod wiki;
 
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 use camino::Utf8Path;
 use chrono::Datelike;
@@ -112,7 +112,7 @@ fn bare<'s, 'p, 'html>(
     main: impl Renderable + 'p,
     title: String,
     stylesheets: &'s [&str],
-    js: &'s [String],
+    js: Cow<'s, [String]>,
 ) -> TaskResult<impl Renderable>
 where
     's: 'html,
@@ -136,7 +136,7 @@ fn full<'s, 'p, 'html>(
     sack: &'s Context,
     main: impl Renderable + 'p,
     title: String,
-    js: &'s [String],
+    js: Cow<'s, [String]>,
 ) -> TaskResult<impl Renderable + 'html>
 where
     's: 'html,
@@ -162,7 +162,7 @@ fn page<'s, 'p, 'html>(
     main: impl Renderable + 'p,
     title: String,
     stylesheets: &'s [&str],
-    js: &'s [String],
+    js: Cow<'s, [String]>,
 ) -> TaskResult<impl Renderable>
 where
     's: 'html,
@@ -201,7 +201,10 @@ pub(crate) fn to_list(
         .into()
 }
 
-pub(crate) fn map<'s, 'html>(sack: &'s Context, js: &'s [String]) -> TaskResult<impl Renderable>
+pub(crate) fn map<'s, 'html>(
+    sack: &'s Context,
+    js: Cow<'s, [String]>,
+) -> TaskResult<impl Renderable>
 where
     's: 'html,
 {
@@ -220,9 +223,7 @@ where
 }
 
 pub(crate) fn search(ctx: &Context) -> String {
-    let (html, init) = ctx
-        .get_svelte("js/components/src/search/App.svelte")
-        .unwrap();
+    let (html, init) = ctx.get_svelte("scripts/src/search/App.svelte").unwrap();
 
     page(
         ctx,
@@ -233,7 +234,7 @@ pub(crate) fn search(ctx: &Context) -> String {
         ),
         String::from("Search"),
         &["styles/styles.scss", "styles/layouts/search.scss"],
-        &[init.to_string()],
+        Cow::Borrowed(&[init.to_string()]),
     )
     .unwrap()
     .render()

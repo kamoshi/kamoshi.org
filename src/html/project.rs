@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use hauchiwa::{TaskResult, ViewPage};
 use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 
@@ -25,7 +27,7 @@ pub fn render_list(ctx: &Context, mut data: Vec<ViewPage<Project>>) -> TaskResul
         }
     };
 
-    let html = page(ctx, main, "Projects".into(), STYLES, &[])?
+    let html = page(ctx, main, "Projects".into(), STYLES, Cow::default())?
         .render()
         .into_inner();
 

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use camino::{Utf8Path, Utf8PathBuf};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
@@ -24,7 +26,7 @@ pub fn wiki(
         }
     );
 
-    crate::html::page(ctx, main, meta.title.to_owned(), STYLES, &[])
+    crate::html::page(ctx, main, meta.title.to_owned(), STYLES, Cow::default())
         .unwrap()
         .render()
         .into()

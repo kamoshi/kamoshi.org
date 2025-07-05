@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use hauchiwa::TaskResult;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
@@ -33,7 +35,7 @@ pub fn render<'a>(
         }
     );
 
-    crate::html::page(ctx, main, "microblog".into(), STYLES, &[])
+    crate::html::page(ctx, main, "microblog".into(), STYLES, Cow::default())
 }
 
 pub fn render_entry<'a>(
@@ -53,5 +55,5 @@ pub fn render_entry<'a>(
         }
     );
 
-    crate::html::page(ctx, main, "microblog".into(), STYLES, &[])
+    crate::html::page(ctx, main, "microblog".into(), STYLES, Cow::default())
 }

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use hauchiwa::{TaskResult, ViewPage};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
@@ -60,7 +62,7 @@ where
         }
     );
 
-    crate::html::page(ctx, main, item.meta.title.clone(), STYLES, &[])
+    crate::html::page(ctx, main, item.meta.title.clone(), STYLES, Cow::default())
 }
 
 fn render_outline(outline: Outline) -> impl Renderable {
