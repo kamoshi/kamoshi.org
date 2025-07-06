@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8Path;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Context, Link, model::Wiki};
 
 pub(crate) fn emit_bibliography(
     bib: Vec<String>,
-    library_path: Option<Utf8PathBuf>,
+    library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
     maud_move!(
         section .bibliography {

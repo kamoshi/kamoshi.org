@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8Path;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Bibliography, Context, Outline, model::Wiki};
@@ -15,7 +15,7 @@ pub fn wiki(
     slug: &Utf8Path,
     _: Outline,
     bib: Bibliography,
-    library_path: Option<Utf8PathBuf>,
+    library_path: Option<&Utf8Path>,
 ) -> String {
     let main = maud_move!(
         main .wiki-main {
@@ -48,7 +48,7 @@ fn render_article(
     meta: &Wiki,
     parsed: &str,
     bib: Bibliography,
-    library_path: Option<Utf8PathBuf>,
+    library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
     maud_move!(
         article .article {

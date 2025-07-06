@@ -1,5 +1,5 @@
-use camino::Utf8PathBuf;
-use hauchiwa::TaskResult;
+use camino::Utf8Path;
+use hauchiwa::{Script, TaskResult};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::model::Post;
@@ -15,7 +15,7 @@ pub fn render<'s, 'p, 'html>(
     info: Option<&'s hauchiwa::GitInfo>,
     outline: Outline,
     bibliography: Bibliography,
-    library_path: Option<Utf8PathBuf>,
+    library_path: Option<&'s Utf8Path>,
 ) -> TaskResult<impl Renderable + use<'html>>
 where
     's: 'html,
@@ -31,7 +31,7 @@ where
         .scripts
         .iter()
         .flatten()
-        .map(|path| ctx.get_script(path).map(|x| x.to_string()))
+        .map(|path| ctx.get::<Script>(path).map(|x| x.path.to_string()))
         .collect::<Result<_, _>>()?;
 
     crate::html::page(ctx, main, meta.title.clone(), STYLES, scripts.into())
@@ -44,7 +44,7 @@ pub fn article<'p, 's>(
     info: Option<&hauchiwa::GitInfo>,
     outline: Outline,
     bibliography: Bibliography,
-    library_path: Option<Utf8PathBuf>,
+    library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
     maud_move!(
         // Outline (left)
@@ -83,7 +83,7 @@ fn render_article(
     meta: &Post,
     parsed: &str,
     bib: Bibliography,
-    library_path: Option<Utf8PathBuf>,
+    library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
     maud_move!(
         article .article {

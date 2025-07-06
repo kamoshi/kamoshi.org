@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use hauchiwa::TaskResult;
+use hauchiwa::{Stylesheet, TaskResult};
 use hypertext::{Raw, Renderable, html_elements, maud_move};
 
 use crate::Context;
@@ -15,7 +15,7 @@ pub(crate) fn render_head<'a>(
 
     let stylesheets: Vec<_> = stylesheets
         .iter()
-        .map(|&style| ctx.get_style(style.into()))
+        .map(|&style| ctx.get::<Stylesheet>(style))
         .collect::<Result<_, _>>()?;
 
     Ok(maud_move!(
@@ -29,8 +29,8 @@ pub(crate) fn render_head<'a>(
         link rel="preconnect" href="https://rsms.me/";
         link rel="stylesheet" href="https://rsms.me/inter/inter.css";
 
-        @for path in stylesheets {
-            link rel="stylesheet" href=(path.as_str());
+        @for stylesheet in stylesheets {
+            link rel="stylesheet" href=(stylesheet.path.as_str());
         }
 
         link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";

@@ -12,7 +12,7 @@ use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::md::yaml;
-use hauchiwa::{Assets, Content, Hook, TaskResult, ViewPage, Website};
+use hauchiwa::{Assets, Content, Hook, Script, TaskResult, ViewPage, Website};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
@@ -92,8 +92,8 @@ type Page = (Utf8PathBuf, String);
 
 fn render_page_post(ctx: &Context, item: ViewPage<Post>) -> TaskResult<Page> {
     let pattern = format!("{}/*.bib", item.area);
-    let library_text = ctx.glob_asset::<Library>(&pattern)?;
-    let library_path = ctx.glob_asset_deferred(&pattern)?;
+    let library_text = ctx.glob::<Library>(&pattern)?;
+    let library_path = ctx.glob::<Utf8PathBuf>(&pattern)?;
 
     let parsed = crate::md::parse(item.content, ctx, item.area, library_text);
     let buffer = crate::html::post::render(
@@ -103,7 +103,7 @@ fn render_page_post(ctx: &Context, item: ViewPage<Post>) -> TaskResult<Page> {
         item.info,
         parsed.1,
         parsed.2,
-        library_path,
+        library_path.map(AsRef::as_ref),
     )?
     .render()
     .into();
@@ -119,8 +119,8 @@ fn render_page_slideshow(ctx: &Context, query: ViewPage<Slideshow>) -> Page {
 
 fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
     let pattern = format!("{}/*", query.area);
-    let library_text = ctx.glob_asset::<Library>(&pattern)?;
-    let library_path = ctx.glob_asset_deferred(&pattern)?;
+    let library_text = ctx.glob::<Library>(&pattern)?;
+    let library_path = ctx.glob::<Utf8PathBuf>(&pattern)?;
 
     let parsed = crate::md::parse(query.content, ctx, query.area, library_text);
     let buffer = crate::html::wiki::wiki(
@@ -130,7 +130,7 @@ fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
         query.slug,
         parsed.1,
         parsed.2,
-        library_path,
+        library_path.map(AsRef::as_ref),
     );
     Ok((query.slug.join("index.html"), buffer))
 }
@@ -323,11 +323,11 @@ fn main() -> ExitCode {
         })
         // MAP
         .add_task(|ctx| {
-            let script = ctx.get_script("scripts/src/photos/main.ts")?;
+            let script = ctx.get::<Script>("scripts/src/photos/main.ts")?;
 
             Ok(vec![(
                 "map/index.html".into(),
-                crate::html::map(&ctx, Cow::Borrowed(&[script.into()]))?
+                crate::html::map(&ctx, Cow::Borrowed(&[script.path.to_string()]))?
                     .render()
                     .to_owned()
                     .into(),

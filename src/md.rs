@@ -2,6 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::LazyLock;
 
 use camino::Utf8Path;
+use hauchiwa::Image;
 use hayagriva::{
     BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
     Library,
@@ -258,7 +259,7 @@ where
 
 // Swap hashed image
 
-fn swap_hashed_image<'a>(dir: &'a Utf8Path, sack: &'a Context) -> impl Fn(Event<'a>) -> Event<'a> {
+fn swap_hashed_image<'a>(dir: &'a Utf8Path, ctx: &'a Context) -> impl Fn(Event<'a>) -> Event<'a> {
     move |event| match event {
         Event::Start(start) => match start {
             Tag::Image {
@@ -268,8 +269,8 @@ fn swap_hashed_image<'a>(dir: &'a Utf8Path, sack: &'a Context) -> impl Fn(Event<
                 id,
             } => {
                 let rel = dir.join(dest_url.as_ref());
-                let img = sack.get_image(rel.as_str());
-                let hashed = img.map(|path| path.as_str().to_owned().into());
+                let img = ctx.get::<Image>(rel.as_str());
+                let hashed = img.map(|img| img.path.to_string().into());
                 Event::Start(Tag::Image {
                     link_type,
                     dest_url: hashed.unwrap_or(dest_url),

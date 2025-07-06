@@ -1,6 +1,7 @@
 use std::{borrow::Cow, fmt::Write};
 
 use camino::Utf8Path;
+use hauchiwa::Script;
 use hayagriva::Library;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud};
 
@@ -58,7 +59,7 @@ pub fn as_html(
 }
 
 pub fn show(ctx: &Context, fm: &Slideshow, slides: &str) -> String {
-    let path = ctx.get_script("scripts/src/slides/main.ts").unwrap();
+    let script = ctx.get::<Script>("scripts/src/slides/main.ts").unwrap();
 
     crate::html::bare(
         ctx,
@@ -73,7 +74,7 @@ pub fn show(ctx: &Context, fm: &Slideshow, slides: &str) -> String {
         ),
         fm.title.clone(),
         STYLES,
-        Cow::Borrowed(&[path.into()]),
+        Cow::Borrowed(&[script.path.to_string()]),
     )
     .unwrap()
     .render()

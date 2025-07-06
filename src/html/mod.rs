@@ -13,7 +13,7 @@ use std::{borrow::Cow, collections::HashMap};
 
 use camino::Utf8Path;
 use chrono::Datelike;
-use hauchiwa::TaskResult;
+use hauchiwa::{Svelte, TaskResult};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud, maud_move};
 
 pub(crate) use home::home;
@@ -223,7 +223,7 @@ where
 }
 
 pub(crate) fn search(ctx: &Context) -> String {
-    let (html, init) = ctx.get_svelte("scripts/src/search/App.svelte").unwrap();
+    let Svelte { html, init } = ctx.get::<Svelte>("scripts/src/search/App.svelte").unwrap();
 
     page(
         ctx,
