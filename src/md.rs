@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::LazyLock;
 
 use camino::Utf8Path;
-use hauchiwa::Image;
+use hauchiwa::plugin::image::Image;
 use hayagriva::{
     BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
     Library,

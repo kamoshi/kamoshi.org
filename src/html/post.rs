@@ -1,5 +1,6 @@
 use camino::Utf8Path;
-use hauchiwa::{Script, TaskResult};
+use hauchiwa::TaskResult;
+use hauchiwa::plugin::ts::Script;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::model::Post;

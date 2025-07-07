@@ -1,7 +1,7 @@
 use std::{borrow::Cow, fmt::Write};
 
 use camino::Utf8Path;
-use hauchiwa::Script;
+use hauchiwa::plugin::ts::Script;
 use hayagriva::Library;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud};
 

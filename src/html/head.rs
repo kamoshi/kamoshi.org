@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use hauchiwa::{Stylesheet, TaskResult};
+use hauchiwa::{TaskResult, plugin::scss::Stylesheet};
 use hypertext::{Raw, Renderable, html_elements, maud_move};
 
 use crate::Context;

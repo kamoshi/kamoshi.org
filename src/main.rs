@@ -12,7 +12,8 @@ use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::md::yaml;
-use hauchiwa::{Assets, Content, Hook, Script, TaskResult, ViewPage, Website};
+use hauchiwa::plugin::ts::Script;
+use hauchiwa::{Hook, Loader, TaskResult, ViewPage, Website};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
@@ -83,19 +84,13 @@ struct LinkDate {
     pub date: DateTime<Utc>,
 }
 
-fn process_bibtex(bytes: &[u8]) -> Library {
-    let text = String::from_utf8_lossy(bytes);
-    hayagriva::io::from_biblatex_str(&text).unwrap()
-}
-
 type Page = (Utf8PathBuf, String);
 
 fn render_page_post(ctx: &Context, item: ViewPage<Post>) -> TaskResult<Page> {
     let pattern = format!("{}/*.bib", item.area);
-    let library_text = ctx.glob::<Library>(&pattern)?;
-    let library_path = ctx.glob::<Utf8PathBuf>(&pattern)?;
+    let bibtex = ctx.glob::<Bibtex>(&pattern)?;
 
-    let parsed = crate::md::parse(item.content, ctx, item.area, library_text);
+    let parsed = crate::md::parse(item.content, ctx, item.area, bibtex.map(|x| &x.data));
     let buffer = crate::html::post::render(
         item.meta,
         &parsed.0,
@@ -103,7 +98,7 @@ fn render_page_post(ctx: &Context, item: ViewPage<Post>) -> TaskResult<Page> {
         item.info,
         parsed.1,
         parsed.2,
-        library_path.map(AsRef::as_ref),
+        bibtex.map(|x| x.path.as_ref()),
     )?
     .render()
     .into();
@@ -119,10 +114,9 @@ fn render_page_slideshow(ctx: &Context, query: ViewPage<Slideshow>) -> Page {
 
 fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
     let pattern = format!("{}/*", query.area);
-    let library_text = ctx.glob::<Library>(&pattern)?;
-    let library_path = ctx.glob::<Utf8PathBuf>(&pattern)?;
+    let bibtex = ctx.glob::<Bibtex>(&pattern)?;
 
-    let parsed = crate::md::parse(query.content, ctx, query.area, library_text);
+    let parsed = crate::md::parse(query.content, ctx, query.area, bibtex.map(|x| &x.data));
     let buffer = crate::html::wiki::wiki(
         query.meta,
         &parsed.0,
@@ -130,28 +124,14 @@ fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
         query.slug,
         parsed.1,
         parsed.2,
-        library_path.map(AsRef::as_ref),
+        bibtex.map(|x| x.path.as_ref()),
     );
     Ok((query.slug.join("index.html"), buffer))
 }
 
-fn parse_twtxt(content: &str) -> TaskResult<(Microblog, String)> {
-    let entries = content
-        .lines()
-        .map(str::parse::<MicroblogEntry>)
-        .collect::<Result<Vec<_>, _>>()?;
-
-    Ok((Microblog { entries }, String::from(content)))
-}
-
-fn parse_pubkey(armored: &str) -> TaskResult<(Pubkey, String)> {
-    let fingerprint = Cert::from_reader(armored.as_bytes())?
-        .primary_key()
-        .key()
-        .fingerprint()
-        .to_spaced_hex();
-
-    Ok((Pubkey { fingerprint }, String::from(armored)))
+struct Bibtex {
+    path: Utf8PathBuf,
+    data: Library,
 }
 
 fn main() -> ExitCode {
@@ -162,32 +142,50 @@ fn main() -> ExitCode {
 
     let mut website = Website::configure()
         .set_opts_sitemap("https://kamoshi.org")
-        .add_content([
-            Content::glob(BASE, "index.md", yaml::<Home>),
-            Content::glob(BASE, "posts/**/*.md", yaml::<Post>),
-            Content::glob(BASE, "slides/**/*.md", yaml::<Slideshow>),
-            Content::glob(BASE, "slides/**/*.lhs", yaml::<Slideshow>),
-            Content::glob(BASE, "wiki/**/*.md", yaml::<Wiki>),
-            Content::glob(BASE, "projects/**/*.md", yaml::<Project>),
-            // microblog
-            Content::glob(BASE, "twtxt.txt", parse_twtxt),
-            // about
-            Content::glob(BASE, "about/index.md", yaml::<Post>),
-            Content::glob(BASE, "about/*.asc", parse_pubkey),
-        ])
-        .add_assets([
-            // bibtex
-            Assets::glob(BASE, "**/*.bib", process_bibtex),
-            Assets::glob_defer(BASE, "**/*.bib", |data| data.to_vec()),
+        .add_loaders([
+            Loader::glob_content(BASE, "index.md", yaml::<Home>),
+            Loader::glob_content(BASE, "posts/**/*.md", yaml::<Post>),
+            Loader::glob_content(BASE, "slides/**/*.md", yaml::<Slideshow>),
+            Loader::glob_content(BASE, "slides/**/*.lhs", yaml::<Slideshow>),
+            Loader::glob_content(BASE, "wiki/**/*.md", yaml::<Wiki>),
+            Loader::glob_content(BASE, "projects/**/*.md", yaml::<Project>),
+            Loader::glob_content(BASE, "about/index.md", yaml::<Post>),
+            // .asc -> Pubkey
+            Loader::glob_content(BASE, "about/*.asc", |text| {
+                let fingerprint = Cert::from_reader(text.as_bytes())?
+                    .primary_key()
+                    .key()
+                    .fingerprint()
+                    .to_spaced_hex();
+
+                Ok((Pubkey { fingerprint }, String::from(text)))
+            }),
+            // twtxt.txt
+            Loader::glob_content(BASE, "twtxt.txt", |text| {
+                let entries = text
+                    .lines()
+                    .map(str::parse::<MicroblogEntry>)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok((Microblog { entries }, String::from(text)))
+            }),
+            // .bib -> Bibtex
+            Loader::glob_asset(BASE, "**/*.bib", |rt, data| {
+                let path = rt.store(&data, "bib").unwrap();
+                let text = String::from_utf8_lossy(&data);
+                let data = hayagriva::io::from_biblatex_str(&text).unwrap();
+
+                Bibtex { path, data }
+            }),
             // images
-            Assets::glob_images(BASE, "**/*.jpg"),
-            Assets::glob_images(BASE, "**/*.png"),
-            Assets::glob_images(BASE, "**/*.gif"),
+            Loader::glob_images(BASE, "**/*.jpg"),
+            Loader::glob_images(BASE, "**/*.png"),
+            Loader::glob_images(BASE, "**/*.gif"),
             // stylesheets
-            Assets::glob_style("styles", "**/[!_]*.scss"),
+            Loader::glob_style("styles", "**/[!_]*.scss"),
             // scripts
-            Assets::glob_svelte("scripts", "src/*/App.svelte"),
-            Assets::glob_scripts("scripts", "src/*/main.ts"),
+            Loader::glob_svelte("scripts", "src/*/App.svelte"),
+            Loader::glob_scripts("scripts", "src/*/main.ts"),
         ])
         // Generate the home page.
         .add_task(|ctx| {
