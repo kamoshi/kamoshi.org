@@ -12,8 +12,9 @@ use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::md::yaml;
+use hauchiwa::plugin::content::Content;
 use hauchiwa::plugin::ts::Script;
-use hauchiwa::{Hook, Loader, TaskResult, ViewPage, Website};
+use hauchiwa::{Hook, Loader, TaskResult, Website, WithFile};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
@@ -86,13 +87,13 @@ struct LinkDate {
 
 type Page = (Utf8PathBuf, String);
 
-fn render_page_post(ctx: &Context, item: ViewPage<Post>) -> TaskResult<Page> {
+fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<Page> {
     let pattern = format!("{}/*.bib", item.area);
     let bibtex = ctx.glob::<Bibtex>(&pattern)?;
 
-    let parsed = crate::md::parse(item.content, ctx, item.area, bibtex.map(|x| &x.data));
+    let parsed = crate::md::parse(&item.data.text, ctx, item.area, bibtex.map(|x| &x.data));
     let buffer = crate::html::post::render(
-        item.meta,
+        &item.data.meta,
         &parsed.0,
         ctx,
         item.info,
@@ -106,27 +107,27 @@ fn render_page_post(ctx: &Context, item: ViewPage<Post>) -> TaskResult<Page> {
     Ok((item.slug.join("index.html"), buffer))
 }
 
-fn render_page_slideshow(ctx: &Context, query: ViewPage<Slideshow>) -> Page {
-    let parsed = html::slideshow::parse_content(query.content, ctx, query.area, None);
-    let buffer = html::slideshow::as_html(query.meta, &parsed.0, ctx, parsed.1, parsed.2);
-    (query.slug.join("index.html"), buffer)
+fn render_page_slideshow(ctx: &Context, item: WithFile<Content<Slideshow>>) -> Page {
+    let parsed = html::slideshow::parse_content(&item.data.text, ctx, item.area, None);
+    let buffer = html::slideshow::as_html(&item.data.meta, &parsed.0, ctx, parsed.1, parsed.2);
+    (item.slug.join("index.html"), buffer)
 }
 
-fn render_page_wiki(ctx: &Context, query: ViewPage<Wiki>) -> TaskResult<Page> {
-    let pattern = format!("{}/*", query.area);
+fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<Page> {
+    let pattern = format!("{}/*", item.area);
     let bibtex = ctx.glob::<Bibtex>(&pattern)?;
 
-    let parsed = crate::md::parse(query.content, ctx, query.area, bibtex.map(|x| &x.data));
+    let parsed = crate::md::parse(&item.data.text, ctx, item.area, bibtex.map(|x| &x.data));
     let buffer = crate::html::wiki::wiki(
-        query.meta,
+        &item.data.meta,
         &parsed.0,
         ctx,
-        query.slug,
+        item.slug,
         parsed.1,
         parsed.2,
         bibtex.map(|x| x.path.as_ref()),
     );
-    Ok((query.slug.join("index.html"), buffer))
+    Ok((item.slug.join("index.html"), buffer))
 }
 
 struct Bibtex {
@@ -151,23 +152,32 @@ fn main() -> ExitCode {
             Loader::glob_content(BASE, "projects/**/*.md", yaml::<Project>),
             Loader::glob_content(BASE, "about/index.md", yaml::<Post>),
             // .asc -> Pubkey
-            Loader::glob_content(BASE, "about/*.asc", |text| {
-                let fingerprint = Cert::from_reader(text.as_bytes())?
+            Loader::glob_asset(BASE, "about/*.asc", |_, data| {
+                let fingerprint = Cert::from_reader(data.as_slice())
+                    .unwrap()
                     .primary_key()
                     .key()
                     .fingerprint()
                     .to_spaced_hex();
 
-                Ok((Pubkey { fingerprint }, String::from(text)))
+                Pubkey {
+                    fingerprint,
+                    data: String::from_utf8_lossy(&data).to_string(),
+                }
             }),
             // twtxt.txt
-            Loader::glob_content(BASE, "twtxt.txt", |text| {
-                let entries = text
+            Loader::glob_asset(BASE, "twtxt.txt", |_, data| {
+                let data = String::from_utf8_lossy(&data);
+                let entries = data
                     .lines()
                     .map(str::parse::<MicroblogEntry>)
-                    .collect::<Result<Vec<_>, _>>()?;
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap();
 
-                Ok((Microblog { entries }, String::from(text)))
+                Microblog {
+                    entries,
+                    data: data.to_string(),
+                }
             }),
             // .bib -> Bibtex
             Loader::glob_asset(BASE, "**/*.bib", |rt, data| {
@@ -189,54 +199,54 @@ fn main() -> ExitCode {
         ])
         // Generate the home page.
         .add_task(|ctx| {
-            let item = ctx.glob_page::<Home>("")?;
-            let text = md::parse(item.content, &ctx, item.area, None).0;
+            let item = ctx.glob_with_file::<Content<Home>>("")?;
+            let text = md::parse(&item.data.text, &ctx, item.area, None).0;
             let html = html::home(&ctx, &text)?;
 
             Ok(vec![("index.html".into(), html)])
         })
         // Generate the about page.
         .add_task(|ctx| {
-            let item = ctx.glob_page::<Post>("about")?;
-            let pubkey_ident = ctx.glob_page::<Pubkey>("about/pubkey-ident")?;
-            let pubkey_email = ctx.glob_page::<Pubkey>("about/pubkey-email")?;
+            let item = ctx.glob_with_file::<Content<Post>>("about")?;
+            let pubkey_ident = ctx.get::<Pubkey>("content/about/pubkey-ident.asc")?;
+            let pubkey_email = ctx.get::<Pubkey>("content/about/pubkey-email.asc")?;
 
-            let (parsed, outline, _) = crate::md::parse(item.content, &ctx, item.area, None);
+            let (parsed, outline, _) = crate::md::parse(&item.data.text, &ctx, item.area, None);
 
             let html = crate::html::about::render(
                 &ctx,
                 &item,
                 parsed,
                 outline,
-                &pubkey_ident,
-                &pubkey_email,
+                pubkey_ident,
+                pubkey_email,
             )?
             .render()
             .into();
 
             let pages = vec![
                 ("about/index.html".into(), html),
-                ("pubkey_ident.asc".into(), pubkey_ident.content.to_owned()),
-                ("pubkey_email.asc".into(), pubkey_email.content.to_owned()),
+                ("pubkey_ident.asc".into(), pubkey_ident.data.to_owned()),
+                ("pubkey_email.asc".into(), pubkey_email.data.to_owned()),
             ];
 
             Ok(pages)
         })
         // POSTS
-        .add_task(|sack| {
-            let pages = sack
-                .glob_pages::<Post>("posts/**/*")?
+        .add_task(|ctx| {
+            let pages = ctx
+                .glob_with_files::<Content<Post>>("posts/**/*")?
                 .into_iter()
-                .map(|query| render_page_post(&sack, query))
+                .map(|query| render_page_post(&ctx, query))
                 .collect::<Result<_, _>>()?;
             Ok(pages)
         })
-        .add_task(|sack| {
+        .add_task(|ctx| {
             Ok(vec![(
                 "posts/index.html".into(),
                 crate::html::to_list(
-                    &sack,
-                    sack.glob_pages::<Post>("posts/**/*")?
+                    &ctx,
+                    ctx.glob_with_files::<Content<Post>>("posts/**/*")?
                         .into_iter()
                         .map(LinkDate::from)
                         .collect(),
@@ -246,13 +256,13 @@ fn main() -> ExitCode {
             )])
         })
         .add_task(|sack| {
-            let feed = rss::generate_feed::<Post>(sack, "posts", "Kamoshi.org Posts")?;
+            let feed = rss::generate_feed::<Content<Post>>(sack, "posts", "Kamoshi.org Posts")?;
             Ok(vec![feed])
         })
         // SLIDESHOWS
         .add_task(|sack| {
             let pages = sack
-                .glob_pages::<Slideshow>("slides/**/*")?
+                .glob_with_files::<Content<Slideshow>>("slides/**/*")?
                 .into_iter()
                 .map(|query| render_page_slideshow(&sack, query))
                 .collect();
@@ -264,7 +274,7 @@ fn main() -> ExitCode {
                 "slides/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.glob_pages::<Slideshow>("slides/**/*")?
+                    sack.glob_with_files::<Content<Slideshow>>("slides/**/*")?
                         .into_iter()
                         .map(LinkDate::from)
                         .collect(),
@@ -274,12 +284,13 @@ fn main() -> ExitCode {
             )])
         })
         .add_task(|sack| {
-            let feed = rss::generate_feed::<Slideshow>(sack, "slides", "Kamoshi.org Slides")?;
+            let feed =
+                rss::generate_feed::<Content<Slideshow>>(sack, "slides", "Kamoshi.org Slides")?;
             Ok(vec![feed])
         })
         // PROJECTS
         .add_task(|ctx| {
-            let data = ctx.glob_pages::<Project>("projects/**/*")?;
+            let data = ctx.glob_with_files::<Content<Project>>("projects/**/*")?;
             let list = crate::html::project::render_list(&ctx, data)?;
 
             Ok(vec![("projects/index.html".into(), list)])
@@ -306,13 +317,14 @@ fn main() -> ExitCode {
         //     )])
         // })
         .add_task(|sack| {
-            let feed = rss::generate_feed::<Project>(sack, "projects", "Kamoshi.org Projects")?;
+            let feed =
+                rss::generate_feed::<Content<Project>>(sack, "projects", "Kamoshi.org Projects")?;
             Ok(vec![feed])
         })
         // WIKI
         .add_task(|sack| {
             let pages = sack
-                .glob_pages::<Wiki>("**/*")?
+                .glob_with_files::<Content<Wiki>>("**/*")?
                 .into_iter()
                 .map(|query| render_page_wiki(&sack, query))
                 .collect::<Result<_, _>>()?;
@@ -340,15 +352,15 @@ fn main() -> ExitCode {
         })
         // microblog
         .add_task(|ctx| {
-            let data = ctx.glob_page::<Microblog>("twtxt")?;
-            let html = html::microblog::render(&ctx, data.meta)?.render().into();
+            let data = ctx.glob::<Microblog>("content/twtxt.txt")?.unwrap();
+            let html = html::microblog::render(&ctx, data)?.render().into();
 
             let mut pages = vec![
-                ("twtxt.txt".into(), data.content.to_owned()),
+                ("twtxt.txt".into(), data.data.clone()),
                 ("thoughts/index.html".into(), html),
             ];
 
-            for entry in &data.meta.entries {
+            for entry in &data.entries {
                 let html = html::microblog::render_entry(&ctx, entry)?.render().into();
 
                 pages.push((

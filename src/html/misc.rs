@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use camino::Utf8Path;
+use hauchiwa::plugin::content::Content;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Context, Link, model::Wiki};
@@ -65,19 +66,19 @@ impl TreePage {
 }
 
 /// Render the page tree
-pub(crate) fn show_page_tree<'a>(slug: &'a Utf8Path, sack: &'a Context) -> impl Renderable + 'a {
+pub(crate) fn show_page_tree<'a>(ctx: &'a Utf8Path, sack: &'a Context) -> impl Renderable + 'a {
     let tree = sack
-        .glob_pages::<Wiki>("**/*")
+        .glob_with_files::<Content<Wiki>>("**/*")
         .unwrap()
         .into_iter()
         .map(|query| Link {
             path: Utf8Path::new("/").join(query.slug),
-            name: query.meta.title.clone(),
+            name: query.data.meta.title.clone(),
             desc: None,
         });
 
     let tree = TreePage::from_iter(tree);
-    let parts: Vec<_> = slug.iter().collect();
+    let parts: Vec<_> = ctx.iter().collect();
 
     maud_move!(
         h2 .link-tree__heading {

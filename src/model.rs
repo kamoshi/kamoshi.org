@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use camino::Utf8Path;
 use chrono::{DateTime, Utc};
-use hauchiwa::ViewPage;
+use hauchiwa::{WithFile, plugin::content::Content};
 use serde::Deserialize;
 
 use crate::{Link, LinkDate};
@@ -10,6 +10,7 @@ use crate::{Link, LinkDate};
 #[derive(Deserialize)]
 pub struct Pubkey {
     pub fingerprint: String,
+    pub data: String,
 }
 
 #[derive(Deserialize, Clone)]
@@ -22,6 +23,7 @@ pub struct MicroblogEntry {
 #[derive(Deserialize)]
 pub struct Microblog {
     pub entries: Vec<MicroblogEntry>,
+    pub data: String,
 }
 
 impl FromStr for MicroblogEntry {
@@ -57,15 +59,15 @@ pub struct Post {
     pub scripts: Option<Vec<String>>,
 }
 
-impl From<ViewPage<'_, Post>> for LinkDate {
-    fn from(query: ViewPage<Post>) -> Self {
+impl From<WithFile<'_, Content<Post>>> for LinkDate {
+    fn from(item: WithFile<Content<Post>>) -> Self {
         Self {
             link: Link {
-                path: Utf8Path::new("/").join(query.slug),
-                name: query.meta.title.clone(),
-                desc: query.meta.desc.clone(),
+                path: Utf8Path::new("/").join(item.slug),
+                name: item.data.meta.title.clone(),
+                desc: item.data.meta.desc.clone(),
             },
-            date: query.meta.date,
+            date: item.data.meta.date,
         }
     }
 }
@@ -79,15 +81,15 @@ pub(crate) struct Slideshow {
     pub desc: Option<String>,
 }
 
-impl From<ViewPage<'_, Slideshow>> for LinkDate {
-    fn from(query: ViewPage<Slideshow>) -> Self {
+impl From<WithFile<'_, Content<Slideshow>>> for LinkDate {
+    fn from(item: WithFile<Content<Slideshow>>) -> Self {
         Self {
             link: Link {
-                path: Utf8Path::new("/").join(query.slug),
-                name: query.meta.title.clone(),
-                desc: query.meta.desc.clone(),
+                path: Utf8Path::new("/").join(item.slug),
+                name: item.data.meta.title.clone(),
+                desc: item.data.meta.desc.clone(),
             },
-            date: query.meta.date,
+            date: item.data.meta.date,
         }
     }
 }

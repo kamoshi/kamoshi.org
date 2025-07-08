@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use hauchiwa::TaskResult;
+use hauchiwa::{TaskResult, plugin::content::Content};
 use hypertext::{
     GlobalAttributes, Raw, Renderable, Rendered, html_elements, maud, maud_move, maud_static,
 };
@@ -59,25 +59,25 @@ fn intro(ctx: &Context) -> impl Renderable {
     )
 }
 
-const SECTION_IMAGE: Rendered<&str> = {
-    maud_static!(
-        section .p-card.home-card-image {
-            h2 .p-card__heading {
-                "Image of the Month"
-            }
-            a .home-card-image__link href="/static/IMG_20231029_111650.jpg" {
-                img .home-card-image__image
-                    src="/static/IMG_20231029_111650.jpg"
-                    alt="Autumn park with colorful trees and fallen leaves";
-            }
-        }
-    )
-};
+// const SECTION_IMAGE: Rendered<&str> = {
+//     maud_static!(
+//         section .p-card.home-card-image {
+//             h2 .p-card__heading {
+//                 "Image of the Month"
+//             }
+//             a .home-card-image__link href="/static/IMG_20231029_111650.jpg" {
+//                 img .home-card-image__image
+//                     src="/static/IMG_20231029_111650.jpg"
+//                     alt="Autumn park with colorful trees and fallen leaves";
+//             }
+//         }
+//     )
+// };
 
 fn latest_posts(sack: &Context) -> TaskResult<impl Renderable> {
     let list = {
         let mut list: Vec<_> = sack
-            .glob_pages::<Post>("**")?
+            .glob_with_files::<Content<Post>>("**")?
             .into_iter()
             .map(LinkDate::from)
             .collect();

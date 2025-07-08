@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use hauchiwa::{TaskResult, ViewPage};
+use hauchiwa::{TaskResult, WithFile, plugin::content::Content};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{
@@ -14,11 +14,11 @@ const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
 
 pub fn render<'s, 'p, 'html>(
     ctx: &'s Context,
-    item: &'p ViewPage<Post>,
+    item: &'p WithFile<Content<Post>>,
     parsed: String,
     outline: Outline,
-    pubkey_ident: &'p ViewPage<Pubkey>,
-    pubkey_email: &'p ViewPage<Pubkey>,
+    pubkey_ident: &'p Pubkey,
+    pubkey_email: &'p Pubkey,
 ) -> TaskResult<impl Renderable + use<'html>>
 where
     's: 'html,
@@ -33,7 +33,7 @@ where
                 section .paper {
                     header {
                         h1 #top {
-                            (&item.meta.title)
+                            (&item.data.meta.title)
                         }
                     }
                     section .wiki-article__markdown.markdown {
@@ -46,23 +46,29 @@ where
                             "GPG public key"
                         }
                         a href="/pubkey_ident.asc" {
-                            (&pubkey_ident.meta.fingerprint)
+                            (&pubkey_ident.fingerprint)
                         }
                         p {
                             "GPG public key (email)"
                         }
                         a href="/pubkey_email.asc" {
-                            (&pubkey_email.meta.fingerprint)
+                            (&pubkey_email.fingerprint)
                         }
                     }
                 }
             }
             // Metadata (right)
-            (render_metadata(ctx, item.meta, item.info))
+            (render_metadata(ctx, &item.data.meta, item.info))
         }
     );
 
-    crate::html::page(ctx, main, item.meta.title.clone(), STYLES, Cow::default())
+    crate::html::page(
+        ctx,
+        main,
+        item.data.meta.title.clone(),
+        STYLES,
+        Cow::default(),
+    )
 }
 
 fn render_outline(outline: Outline) -> impl Renderable {
