@@ -232,11 +232,13 @@ fn main() -> ExitCode {
 
             Ok(pages)
         })
-        // POSTS
+        // Posts
+        // -----
         .add_task(|ctx| {
             let pages = ctx
                 .glob_with_files::<Content<Post>>("posts/**/*")?
                 .into_iter()
+                .filter(|item| !item.data.meta.draft)
                 .map(|query| render_page_post(&ctx, query))
                 .collect::<Result<_, _>>()?;
             Ok(pages)
@@ -248,6 +250,7 @@ fn main() -> ExitCode {
                     &ctx,
                     ctx.glob_with_files::<Content<Post>>("posts/**/*")?
                         .into_iter()
+                        .filter(|item| !item.data.meta.draft)
                         .map(LinkDate::from)
                         .collect(),
                     "Posts".into(),

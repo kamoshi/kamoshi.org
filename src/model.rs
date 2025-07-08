@@ -52,6 +52,8 @@ pub struct Home {}
 pub struct Post {
     /// The title of the post shown as `<h1>` heading.
     pub title: String,
+    #[serde(default)]
+    pub draft: bool,
     #[serde(with = "isodate")]
     pub date: DateTime<Utc>,
     pub desc: Option<String>,
