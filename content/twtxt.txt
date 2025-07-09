@@ -1,4 +1,9 @@
+# nick        = kamov
+# url         = https://kamoshi.org/twtxt.txt
+# description = kamov's thoughts
+
 2025-06-26T18:23:00.762Z    Hello world! I decided to try to create a microblog of sorts, and use bespoke [twtxt format](https://twtxt.dev/) as the backend... This way I can avoid having to deal with some services I don't really feel like using.
 2025-06-28T11:11:15.072Z    The generator which builds this website was rewritten recently, to make it even more flexible. For now it won't be published on crates.io. I will try to make it even better throughout the summer and add documentation... latest version is always [on GitHub](https://github.com/kamoshi/hauchiwa).
 2025-07-04T21:42:15.739Z    Recently I bought Apple EarPods, with [audio jack 3.5 mm connector](https://en.wikipedia.org/wiki/Phone_connector_(audio)), and as it turns out they work perfectly well with not only Linux, but also an Android phone. This is why standardized connectors and components are good.
 2025-07-08T21:36:19.824Z    [Social media](https://en.wikipedia.org/wiki/Big_Tech) is truly incredible when you think about it. You can open it just to scroll for 15 minutes (or so you would think), but you won't even notice once an hour goes by. How does it [leech time](https://en.wikipedia.org/wiki/Enshittification) so well? By the way, I came across [storygraph](https://app.thestorygraph.com/) - check it out!
+2025-07-09T20:10:00.011Z    The sooner you start learning the better you get at it. Just the fact that you know *something* will mean that new pieces of information will have *anything* to stick to, so they will start to collect passively in your brain. If you want to learn something, do it today, start now. You will have easier time remembering more tomorrow...

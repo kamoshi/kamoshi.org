@@ -175,6 +175,10 @@ fn main() -> ExitCode {
                 let data = String::from_utf8_lossy(&data);
                 let entries = data
                     .lines()
+                    .filter(|line| {
+                        let line = line.trim_start();
+                        !line.is_empty() && !line.starts_with('#')
+                    })
                     .map(str::parse::<MicroblogEntry>)
                     .collect::<Result<Vec<_>, _>>()
                     .unwrap();
