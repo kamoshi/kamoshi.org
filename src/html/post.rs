@@ -17,6 +17,7 @@ pub fn render<'s, 'p, 'html>(
     outline: Outline,
     bibliography: Bibliography,
     library_path: Option<&'s Utf8Path>,
+    tags: &'s [String],
 ) -> TaskResult<impl Renderable + use<'html>>
 where
     's: 'html,
@@ -24,7 +25,7 @@ where
 {
     let main = maud_move!(
         main {
-            (article(ctx, meta, parsed, info, outline, bibliography, library_path))
+            (article(ctx, meta, parsed, info, outline, bibliography, library_path, tags))
         }
     );
 
@@ -46,6 +47,7 @@ pub fn article<'p>(
     outline: Outline,
     bibliography: Bibliography,
     library_path: Option<&Utf8Path>,
+    tags: &[String],
 ) -> impl Renderable {
     maud_move!(
         // Outline (left)
@@ -53,7 +55,7 @@ pub fn article<'p>(
         // Article (center)
         (render_article(meta, parsed, bibliography, library_path))
         // Metadata (right)
-        (render_metadata(ctx, meta, info))
+        (render_metadata(ctx, meta, info, tags))
     )
 }
 
@@ -110,6 +112,7 @@ pub fn render_metadata(
     ctx: &Context,
     meta: &Post,
     info: Option<&hauchiwa::GitInfo>,
+    tags: &[String],
 ) -> impl Renderable {
     maud_move!(
         aside .tiles {
@@ -118,22 +121,36 @@ pub fn render_metadata(
                     "Metadata"
                 }
                 div {
-                    img src="/static/svg/icon_add.svg" title="Added";
+                    img src="/static/svg/lucide/file-plus-2.svg" title="Added";
                     time datetime=(meta.date.format("%Y-%m-%d").to_string()) {
                         (meta.date.format("%Y, %B %d").to_string())
                     }
                 }
                 @if let Some(info) = info {
                     div {
-                        img src="/static/svg/icon_update.svg" title="Updated";
+                        img src="/static/svg/lucide/file-clock.svg" title="Updated";
                         time datetime=(info.commit_date.format("%Y-%m-%d").to_string()) {
                             (info.commit_date.format("%Y, %B %d").to_string())
                         }
                     }
                     div {
-                        img src="/static/svg/icon_link.svg" title="Link to commit";
+                        img src="/static/svg/lucide/git-graph.svg" title="Link to commit";
                         a href=(format!("{}/commit/{}", &ctx.get_globals().data.link, &info.abbreviated_hash)) {
                             (&info.abbreviated_hash)
+                        }
+                    }
+                }
+                @if !tags.is_empty() {
+                    div .tags {
+                        img src="/static/svg/lucide/tag.svg" title="Tags";
+                        ul {
+                            @for tag in tags {
+                                li {
+                                    a href=(format!("/tags/{tag}")) {
+                                        (tag)
+                                    }
+                                }
+                            }
                         }
                     }
                 }

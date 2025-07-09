@@ -1,7 +1,7 @@
 ---
 title: A declarative server
 date: 2025-06-08T14:05:02.692Z
-tags: [ nix, nixos ]
+tags: [nix, nixos]
 desc: >
   You can use Nix to write a fully declarative specification of a server.
 ---

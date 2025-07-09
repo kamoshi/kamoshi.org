@@ -110,6 +110,7 @@ main {
   flex-direction: column;
   height: fit-content;
   clear: right;
+  gap: 0.25rem;
 
   h2 {
     font-family: var(--serif);
@@ -215,4 +216,21 @@ figure {
       text-decoration: underline;
     }
   }
+}
+
+.tags ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.tags li a {
+  display: inline-block;
+  background-color: var(--tag-bg, #eef);
+  color: var(--tag-color, #225);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.3rem;
+  text-decoration: none;
+  font-size: 0.9rem;
 }

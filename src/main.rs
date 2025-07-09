@@ -103,6 +103,7 @@ fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<
         parsed.1,
         parsed.2,
         bibtex.map(|x| x.path.as_ref()),
+        &item.data.meta.tags,
     )?
     .render()
     .into();
@@ -253,7 +254,7 @@ fn main() -> ExitCode {
                 crate::html::to_list(
                     &ctx,
                     ctx.glob_with_files::<Content<Post>>("posts/**/*")?
-                        .into_iter()
+                        .iter()
                         .filter(|item| !item.data.meta.draft)
                         .map(LinkDate::from)
                         .collect(),
@@ -375,6 +376,45 @@ fn main() -> ExitCode {
                     html,
                 ));
             }
+
+            Ok(pages)
+        })
+        // Tags
+        .add_task(|ctx| {
+            use std::collections::BTreeMap;
+
+            let posts = ctx
+                .glob_with_files::<Content<Post>>("posts/**/*")?
+                .into_iter()
+                .filter(|item| !item.data.meta.draft)
+                .collect::<Vec<_>>();
+
+            let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
+
+            for post in &posts {
+                for tag in &post.data.meta.tags {
+                    tag_map
+                        .entry(tag.clone())
+                        .or_default()
+                        .push(LinkDate::from(post));
+                }
+            }
+
+            let mut pages = Vec::new();
+
+            // Render individual tag pages
+            for (tag, links) in &tag_map {
+                let path = format!("tags/{tag}/index.html");
+
+                let data = crate::html::tags::group(links);
+                let html = crate::html::tags::render_tag(&ctx, &data, tag.to_owned())?;
+
+                pages.push(Page::text(path.into(), html.render().into()));
+            }
+
+            // Render global tag index
+            let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
+            pages.push(Page::text("tags/index.html".into(), index.render().into()));
 
             Ok(pages)
         })

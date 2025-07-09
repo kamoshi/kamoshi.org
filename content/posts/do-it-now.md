@@ -1,6 +1,7 @@
 ---
 title: Do it now!
 date: 2024-02-26T20:56:27Z
+tags: [misc]
 desc: >
     It's time to stop reading this website, now!
 ---

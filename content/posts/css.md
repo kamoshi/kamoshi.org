@@ -1,7 +1,7 @@
 ---
 title: "CSS - How do you even write that?"
 date: 2022-10-01T21:06:44+02:00
-tags: ["webdev"]
+tags: [css]
 ---
 ## Writing CSS is hard
 

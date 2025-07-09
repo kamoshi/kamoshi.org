@@ -1,6 +1,7 @@
 ---
 title: Bringing treesitter to the Internet
 date: 2024-02-14T18:32:41.645Z
+tags: [js, rust, node, treesitter]
 desc: >
     Are we stuck using regex based syntax highlighters forever?
     What if there is an alternative we could use on the web?
@@ -67,7 +68,7 @@ napi = { version = "2.12.2", default-features = false, features = ["napi4"] }
 napi-derive = "2.12.2"
 ```
 
-In this section we define the dependencies required for the project. We need to 
+In this section we define the dependencies required for the project. We need to
 use the `napi` crate. The feature flag indicates compatibility with Node.js N-API version 4.
 The comment provides a link to the Node.js documentation explaining the N-API version matrix.
 
@@ -402,5 +403,5 @@ const { isRed } = Astro.props;
 </style>
 ```
 
-All the code, which I do use in production and might change in the future, is 
+All the code, which I do use in production and might change in the future, is
 [available on Github](https://github.com/kamoshi/kamoshi.org/tree/main/tools/treesitter).

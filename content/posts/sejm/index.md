@@ -1,6 +1,7 @@
 ---
-title:  A visit to Sejm
-date:   2023-11-14T20:37:28.283Z
+title: A visit to Sejm
+date: 2023-11-14T20:37:28.283Z
+tags: [misc]
 ---
 
 
@@ -53,4 +54,3 @@ date:   2023-11-14T20:37:28.283Z
 ![a](IMG_20231111_122706.jpg)
 
 ![a](IMG_20231111_124915.jpg)
-

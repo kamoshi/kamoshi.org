@@ -1,6 +1,7 @@
 ---
 title: "Each Person Has a Goal"
 date: 2022-02-07T15:47:23+01:00
+tags: [misc]
 ---
 
 When we begin our lives we don't really have any goals, plans or anything really. It's like we just exist for the sake of being, and we go on like this through the first stages of our lives. We gradually find things we like doing or which bring us some form of enjoyment, and that's what ultimately steers our lives in some direction.

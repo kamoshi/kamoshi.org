@@ -1,6 +1,7 @@
 ---
 title: "2022 in Review"
 date: 2022-12-31T21:14:47+01:00
+tags: [misc]
 ---
 
 First of all, happy new year! :smile:

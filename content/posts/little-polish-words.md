@@ -1,6 +1,7 @@
 ---
 title: Little Polish words
 date: 2023-08-21T16:29:17.553Z
+tags: [misc]
 ---
 
 A thing that most people might find amazing about the Polish language is that it's very rich in [diminutive](https://en.wikipedia.org/wiki/Diminutive) forms of the words.
@@ -22,4 +23,3 @@ These forms sound very cute and pretty, and usually they are very emotionally ch
 The hard part for people learning Polish is that there are really no set rules for how to create these words. There are usually multiple ways to create diminutive forms, and you can usually convert any Polish noun at will (yes, even the "bad" ones!). You just have to "feel the language" to get it right.
 
 It might really be one of the most beautiful things about the Polish language.
-

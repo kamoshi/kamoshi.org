@@ -1,6 +1,7 @@
 ---
 title: My thoughts on NixOS
 date: 2024-06-30T20:57:37Z
+tags: [nix, nixos]
 desc: >
   A few weeks ago I decided to try out NixOS.
 ---

@@ -2,6 +2,7 @@
 title: Breaking apart the Haskell type class
 date: 2023-11-02T17:28:25.466Z
 icon: haskell
+tags: [haskell, fp]
 desc: >
   Type classes are perhaps the most distinctive feature of Haskell.
   I’ve found them pretty confusing, but in reality they are an incredibly

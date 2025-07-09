@@ -1,6 +1,7 @@
 ---
 title: Building an SSG in Rust
 date: 2024-10-05T12:29:54.111Z
+tags: [rust, ssg]
 desc: >
   Some reflections on using Rust to write a static site generator...
 ---

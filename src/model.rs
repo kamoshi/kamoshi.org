@@ -57,12 +57,13 @@ pub struct Post {
     #[serde(with = "isodate")]
     pub date: DateTime<Utc>,
     pub desc: Option<String>,
-    pub tags: Option<Vec<String>>,
+    #[serde(default)]
+    pub tags: Vec<String>,
     pub scripts: Option<Vec<String>>,
 }
 
-impl From<WithFile<'_, Content<Post>>> for LinkDate {
-    fn from(item: WithFile<Content<Post>>) -> Self {
+impl From<&WithFile<'_, Content<Post>>> for LinkDate {
+    fn from(item: &WithFile<Content<Post>>) -> Self {
         Self {
             link: Link {
                 path: Utf8Path::new("/").join(&item.file.slug),

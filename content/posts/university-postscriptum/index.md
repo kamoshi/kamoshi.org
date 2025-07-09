@@ -1,6 +1,7 @@
 ---
 title: University Postscriptum
 date: 2023-07-25T13:29:44.842Z
+tags: [misc]
 ---
 
 Now that I am free to do literally anything with my free time, I have decided to go all in and learn all these cool things that are supposedly hard to use.
@@ -59,4 +60,3 @@ Below is an obligatory neofetch screenshot.
 For some time I probably won't be writing anything new in here. It's really ironic, but now that I do have a lot of time, I don't really have anything interesting to write about. I have a ton of things to do, which I couldn't really do while I was studying full time at a university.
 
 So thanks and until next time! :wave:
-

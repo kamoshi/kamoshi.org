@@ -1,6 +1,7 @@
 ---
 title: From NameCheap to PorkBun
 date: 2025-04-23T22:28:37.720Z
+tags: [dns]
 desc: >
   Transferring a domain name sounds difficult, but is it? Not at all...
 ---

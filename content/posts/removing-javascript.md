@@ -1,6 +1,7 @@
 ---
 title: The quest to remove JavaScript by writing JavaScript
 date: 2023-04-14T20:34:04.765Z
+tags: [js]
 ---
 
 Moving this website to a JavaScript based SSG turned out to be a wonderful idea, because now it is actually possible to use the same code both on frontend and on the backend. It means that, where possible, I can execute code that would normally be run in the browser. For example, while using [KaTeX](https://katex.org/) I can prerender the math equations very easily, so that they are already rendered in the browser with no additional JS needed. The idea that we should be able to run the same stuff both client-side and server-side is already well established. It's known as [isomorphic JavaScript](https://en.wikipedia.org/wiki/Isomorphic_JavaScript).
@@ -50,7 +51,7 @@ Now we can write a transformer function that converts `CodeNode`s into HTML that
 const REGEX_HL_LINES = /\[([\s\d,|-]*)\]/;
 function transformCode(node: CodeNode, index: number, parent: Parent) {
   if (!node.meta || !REGEX_HL_LINES.test(node.meta)) return;
-  
+
   const langtag = node.lang ? ` class="${node.lang}" ` : ''
   const numbers = node.meta.match(REGEX_HL_LINES)![1];
   const escaped = node.value.replace(/[&<>"']/g, match => ESCAPED_CHARS[match] || '');

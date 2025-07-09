@@ -1,6 +1,7 @@
 ---
 title: 2024 in review
 date: 2025-01-01T22:09:23.988Z
+tags: [misc]
 ---
 
 Hey, let me start by saying thanks for reading! It's a pretty surprising thing

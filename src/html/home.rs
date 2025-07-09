@@ -78,7 +78,7 @@ fn latest_posts(sack: &Context) -> TaskResult<impl Renderable> {
     let list = {
         let mut list: Vec<_> = sack
             .glob_with_files::<Content<Post>>("**")?
-            .into_iter()
+            .iter()
             .map(LinkDate::from)
             .collect();
         list.sort_by(|a, b| b.date.cmp(&a.date));

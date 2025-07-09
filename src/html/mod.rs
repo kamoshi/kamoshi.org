@@ -7,6 +7,7 @@ mod misc;
 pub mod post;
 pub mod project;
 pub mod slideshow;
+pub mod tags;
 pub mod wiki;
 
 use std::{borrow::Cow, collections::HashMap};

@@ -1,6 +1,7 @@
 ---
 title: Writing code considered harmful
 date: 2023-06-14T22:09:06.127Z
+tags: [misc]
 ---
 
 When I initially delved into programming, I held the belief that it revolved solely around composing sets of instructions for the computer to execute. At a glance, it indeed appeared as such - merely commanding the computer to carry out tasks in a predetermined sequence, with the anticipation of obtaining a desirable outcome. This perception was further reinforced when observing how computers interpret code in assembly language, where each step is executed in a specific order within the CPU.
