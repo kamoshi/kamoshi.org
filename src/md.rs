@@ -39,8 +39,7 @@ fn render_directive_block(name: &str, content: &str) -> Event<'static> {
     match name {
         "youtube" => {
             let iframe = format!(
-                "<iframe width='560' height='315' src='https://www.youtube.com/embed/{}' frameborder='0' allowfullscreen></iframe>",
-                content
+                "<iframe width='560' height='315' src='https://www.youtube.com/embed/{content}' frameborder='0' allowfullscreen></iframe>",
             );
             Event::Html(iframe.into())
         }
@@ -298,7 +297,7 @@ fn parse_latex(math: &str, block: bool) -> String {
     };
 
     let storage = Storage::new();
-    let parser = Parser::new(&math, &storage);
+    let parser = Parser::new(math, &storage);
     let mut buffer = String::new();
     push_mathml(&mut buffer, parser, config).expect("MathML fail");
     buffer
@@ -395,24 +394,19 @@ where
             return Some(event);
         }
 
-        while let Some(event) = self.inner.next() {
+        for event in self.inner.by_ref() {
             match event {
                 Event::Text(line) => match &mut self.state {
-                    // Normal mode: look for a directive start marker.
                     None => {
+                        // look for the start marker
                         if let Some(m) = RE_DIRECTIVE_CONTAINER_START.find(&line) {
                             let start_idx = m.start();
                             let end_idx = m.end();
 
-                            // Split the current line into three parts:
-                            // 1. Text before the marker.
-                            // 2. The marker text.
-                            // 3. Text after the marker.
                             let before = &line[..start_idx];
                             let marker = &line[start_idx..end_idx];
                             let after = &line[end_idx..];
 
-                            // Process the marker to extract an identifier, if provided.
                             if let Some(captures) = RE_DIRECTIVE_CONTAINER_START.captures(marker) {
                                 let ident = captures
                                     .get(1)
@@ -422,7 +416,7 @@ where
 
                                 let mut stack = Vec::new();
 
-                                // If there’s text after the marker, push it inside.
+                                // if there’s text after the marker, push it inside.
                                 if !after.is_empty() {
                                     stack.push(Event::Text(after.to_string().into()));
                                 }
@@ -430,17 +424,17 @@ where
                                 self.state = Some((ident, stack));
                             }
 
-                            // If there’s text before the marker, we can return it instantly!
+                            // if there’s text before the marker, we can return it instantly!
                             match before.is_empty() {
                                 false => return Some(Event::Text(before.to_string().into())),
                                 true => continue,
                             }
                         } else {
-                            // No marker found, return the event as-is.
+                            // no marker found, return the event as-is.
                             return Some(Event::Text(line));
                         }
                     }
-                    // Inside a directive block: accumulate events until the end marker is found.
+                    // inside a directive block: accumulate events until the end marker is found.
                     Some((ident, events)) => {
                         if let Some(m) = RE_DIRECTIVE_CONTAINER_END.find(&line) {
                             let start_idx = m.start();
@@ -457,8 +451,7 @@ where
 
                             // The marker indicates the end of the directive container.
                             // Invoke the callback with the collected events.
-                            let directive_event =
-                                (self.callback)(ident, events.drain(..).collect());
+                            let directive_event = (self.callback)(ident, std::mem::take(events));
 
                             // Reset our state back to normal.
                             self.state = None;
@@ -468,11 +461,7 @@ where
                                 self.queue.push_back(Event::Text(after.to_string().into()));
                             }
 
-                            // Return the event produced by the callback.
-                            // (In this example the callback returns an Event<'static>.
-                            // To match the iterator’s lifetime, we use unsafe transmute;
-                            // in real code you may want to design the types to avoid this.)
-                            return Some(unsafe { std::mem::transmute(directive_event) });
+                            return Some(directive_event);
                         } else {
                             // No end marker found on this line – accumulate it.
                             events.push(Event::Text(line));

@@ -37,7 +37,7 @@ pub fn parse_content(
                 let mut buffer = String::from("<section>");
 
                 for slide in stack {
-                    write!(buffer, "<section>{}</section>", slide).unwrap();
+                    write!(buffer, "<section>{slide}</section>").unwrap();
                 }
 
                 buffer

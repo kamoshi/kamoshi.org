@@ -72,7 +72,7 @@ pub fn footer(sack: &Context) -> impl Renderable {
 
     let copy = format!("Copyright &copy; {} Maciej Jur", &globals.data.year);
     let mail = "maciej@kamoshi.org";
-    let href = format!("mailto:{}", mail);
+    let href = format!("mailto:{mail}");
     let link = Utf8Path::new(&globals.data.link)
         .join("src/commit")
         .join(&globals.data.hash);

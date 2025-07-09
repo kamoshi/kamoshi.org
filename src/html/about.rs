@@ -58,7 +58,7 @@ where
                 }
             }
             // Metadata (right)
-            (render_metadata(ctx, &item.data.meta, item.info))
+            (render_metadata(ctx, &item.data.meta, item.file.info.as_ref()))
         }
     );
 

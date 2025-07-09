@@ -1,7 +1,7 @@
+mod hook;
 mod html;
 mod md;
 mod model;
-mod pf;
 mod rss;
 mod ts;
 
@@ -14,7 +14,7 @@ use clap::{Parser, ValueEnum};
 use hauchiwa::md::yaml;
 use hauchiwa::plugin::content::Content;
 use hauchiwa::plugin::ts::Script;
-use hauchiwa::{Hook, Loader, TaskResult, Website, WithFile};
+use hauchiwa::{Hook, Loader, Page, TaskResult, Website, WithFile};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
@@ -85,18 +85,21 @@ struct LinkDate {
     pub date: DateTime<Utc>,
 }
 
-type Page = (Utf8PathBuf, String);
-
 fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<Page> {
-    let pattern = format!("{}/*.bib", item.area);
+    let pattern = format!("{}/*.bib", item.file.area);
     let bibtex = ctx.glob::<Bibtex>(&pattern)?;
 
-    let parsed = crate::md::parse(&item.data.text, ctx, item.area, bibtex.map(|x| &x.data));
+    let parsed = crate::md::parse(
+        &item.data.text,
+        ctx,
+        &item.file.area,
+        bibtex.map(|x| &x.data),
+    );
     let buffer = crate::html::post::render(
         &item.data.meta,
         &parsed.0,
         ctx,
-        item.info,
+        item.file.info.as_ref(),
         parsed.1,
         parsed.2,
         bibtex.map(|x| x.path.as_ref()),
@@ -104,30 +107,35 @@ fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<
     .render()
     .into();
 
-    Ok((item.slug.join("index.html"), buffer))
+    Ok(Page::text(item.file.slug.join("index.html"), buffer))
 }
 
 fn render_page_slideshow(ctx: &Context, item: WithFile<Content<Slideshow>>) -> Page {
-    let parsed = html::slideshow::parse_content(&item.data.text, ctx, item.area, None);
+    let parsed = html::slideshow::parse_content(&item.data.text, ctx, &item.file.area, None);
     let buffer = html::slideshow::as_html(&item.data.meta, &parsed.0, ctx, parsed.1, parsed.2);
-    (item.slug.join("index.html"), buffer)
+    Page::text(item.file.slug.join("index.html"), buffer)
 }
 
 fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<Page> {
-    let pattern = format!("{}/*", item.area);
+    let pattern = format!("{}/*", item.file.area);
     let bibtex = ctx.glob::<Bibtex>(&pattern)?;
 
-    let parsed = crate::md::parse(&item.data.text, ctx, item.area, bibtex.map(|x| &x.data));
+    let parsed = crate::md::parse(
+        &item.data.text,
+        ctx,
+        &item.file.area,
+        bibtex.map(|x| &x.data),
+    );
     let buffer = crate::html::wiki::wiki(
         &item.data.meta,
         &parsed.0,
         ctx,
-        item.slug,
+        &item.file.slug,
         parsed.1,
         parsed.2,
         bibtex.map(|x| x.path.as_ref()),
     );
-    Ok((item.slug.join("index.html"), buffer))
+    Ok(Page::text(item.file.slug.join("index.html"), buffer))
 }
 
 struct Bibtex {
@@ -152,18 +160,14 @@ fn main() -> ExitCode {
             Loader::glob_content(BASE, "projects/**/*.md", yaml::<Project>),
             Loader::glob_content(BASE, "about/index.md", yaml::<Post>),
             // .asc -> Pubkey
-            Loader::glob_asset(BASE, "about/*.asc", |_, data| {
-                let fingerprint = Cert::from_reader(data.as_slice())
+            Loader::glob_asset(BASE, "about/*.asc", |_, data| Pubkey {
+                fingerprint: Cert::from_reader(data.as_slice())
                     .unwrap()
                     .primary_key()
                     .key()
                     .fingerprint()
-                    .to_spaced_hex();
-
-                Pubkey {
-                    fingerprint,
-                    data: String::from_utf8_lossy(&data).to_string(),
-                }
+                    .to_spaced_hex(),
+                data: String::from_utf8_lossy(&data).to_string(),
             }),
             // twtxt.txt
             Loader::glob_asset(BASE, "twtxt.txt", |_, data| {
@@ -200,10 +204,9 @@ fn main() -> ExitCode {
         // Generate the home page.
         .add_task(|ctx| {
             let item = ctx.glob_with_file::<Content<Home>>("")?;
-            let text = md::parse(&item.data.text, &ctx, item.area, None).0;
+            let text = md::parse(&item.data.text, &ctx, &item.file.area, None).0;
             let html = html::home(&ctx, &text)?;
-
-            Ok(vec![("index.html".into(), html)])
+            Ok(vec![Page::text("index.html".into(), html)])
         })
         // Generate the about page.
         .add_task(|ctx| {
@@ -211,7 +214,8 @@ fn main() -> ExitCode {
             let pubkey_ident = ctx.get::<Pubkey>("content/about/pubkey-ident.asc")?;
             let pubkey_email = ctx.get::<Pubkey>("content/about/pubkey-email.asc")?;
 
-            let (parsed, outline, _) = crate::md::parse(&item.data.text, &ctx, item.area, None);
+            let (parsed, outline, _) =
+                crate::md::parse(&item.data.text, &ctx, &item.file.area, None);
 
             let html = crate::html::about::render(
                 &ctx,
@@ -225,9 +229,9 @@ fn main() -> ExitCode {
             .into();
 
             let pages = vec![
-                ("about/index.html".into(), html),
-                ("pubkey_ident.asc".into(), pubkey_ident.data.to_owned()),
-                ("pubkey_email.asc".into(), pubkey_email.data.to_owned()),
+                Page::text("about/index.html".into(), html),
+                Page::text("pubkey_ident.asc".into(), pubkey_ident.data.to_owned()),
+                Page::text("pubkey_email.asc".into(), pubkey_email.data.to_owned()),
             ];
 
             Ok(pages)
@@ -244,7 +248,7 @@ fn main() -> ExitCode {
             Ok(pages)
         })
         .add_task(|ctx| {
-            Ok(vec![(
+            Ok(vec![Page::text(
                 "posts/index.html".into(),
                 crate::html::to_list(
                     &ctx,
@@ -273,7 +277,7 @@ fn main() -> ExitCode {
             Ok(pages)
         })
         .add_task(|sack| {
-            Ok(vec![(
+            Ok(vec![Page::text(
                 "slides/index.html".into(),
                 crate::html::to_list(
                     &sack,
@@ -296,7 +300,7 @@ fn main() -> ExitCode {
             let data = ctx.glob_with_files::<Content<Project>>("projects/**/*")?;
             let list = crate::html::project::render_list(&ctx, data)?;
 
-            Ok(vec![("projects/index.html".into(), list)])
+            Ok(vec![Page::text("projects/index.html".into(), list)])
         })
         // .add_task(|sack| {
         //     let query = sack.get_content("projects/flox")?;
@@ -338,7 +342,7 @@ fn main() -> ExitCode {
         .add_task(|ctx| {
             let script = ctx.get::<Script>("scripts/src/photos/main.ts")?;
 
-            Ok(vec![(
+            Ok(vec![Page::text(
                 "map/index.html".into(),
                 crate::html::map(&ctx, Cow::Borrowed(&[script.path.to_string()]))?
                     .render()
@@ -348,7 +352,7 @@ fn main() -> ExitCode {
         })
         // SEARCH
         .add_task(|sack| {
-            Ok(vec![(
+            Ok(vec![Page::text(
                 "search/index.html".into(),
                 crate::html::search(&sack),
             )])
@@ -359,14 +363,14 @@ fn main() -> ExitCode {
             let html = html::microblog::render(&ctx, data)?.render().into();
 
             let mut pages = vec![
-                ("twtxt.txt".into(), data.data.clone()),
-                ("thoughts/index.html".into(), html),
+                Page::text("twtxt.txt".into(), data.data.clone()),
+                Page::text("thoughts/index.html".into(), html),
             ];
 
             for entry in &data.entries {
                 let html = html::microblog::render_entry(&ctx, entry)?.render().into();
 
-                pages.push((
+                pages.push(Page::text(
                     format!("thoughts/{}/index.html", entry.date.timestamp()).into(),
                     html,
                 ));
@@ -374,9 +378,8 @@ fn main() -> ExitCode {
 
             Ok(pages)
         })
-        .add_hook(Hook::post_build(crate::pf::build_pagefind))
-        // TODO: Sitemap.xml
-        .add_hook(Hook::post_build(|_| Ok(())))
+        .add_hook(Hook::post_build(crate::hook::build_pagefind))
+        .add_hook(Hook::post_build(crate::hook::build_sitemap))
         .finish();
 
     let res = match args.mode {

@@ -71,9 +71,9 @@ pub(crate) fn show_page_tree<'a>(ctx: &'a Utf8Path, sack: &'a Context) -> impl R
         .glob_with_files::<Content<Wiki>>("**/*")
         .unwrap()
         .into_iter()
-        .map(|query| Link {
-            path: Utf8Path::new("/").join(query.slug),
-            name: query.data.meta.title.clone(),
+        .map(|item| Link {
+            path: Utf8Path::new("/").join(&item.file.slug),
+            name: item.data.meta.title.clone(),
             desc: None,
         });
 

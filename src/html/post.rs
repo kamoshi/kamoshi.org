@@ -38,8 +38,8 @@ where
     crate::html::page(ctx, main, meta.title.clone(), STYLES, scripts.into())
 }
 
-pub fn article<'p, 's>(
-    ctx: &'s Context,
+pub fn article<'p>(
+    ctx: &Context,
     meta: &'p Post,
     parsed: &'p str,
     info: Option<&hauchiwa::GitInfo>,
@@ -68,7 +68,7 @@ fn render_outline(outline: Outline) -> impl Renderable {
                     ul {
                         @for (title, id) in outline.0 {
                             li {
-                                a href=(format!("#{}", id)) {
+                                a href=(format!("#{id}")) {
                                     (title)
                                 }
                             }
