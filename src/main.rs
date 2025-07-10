@@ -11,10 +11,9 @@ use std::process::{Command, ExitCode};
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
+use hauchiwa::loader::{Content, Script};
 use hauchiwa::md::yaml;
-use hauchiwa::plugin::content::Content;
-use hauchiwa::plugin::ts::Script;
-use hauchiwa::{Hook, Loader, Page, TaskResult, Website, WithFile};
+use hauchiwa::{Hook, Page, TaskResult, Website, WithFile, loader};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
@@ -151,17 +150,16 @@ fn main() -> ExitCode {
     let args = Args::parse();
 
     let mut website = Website::configure()
-        .set_opts_sitemap("https://kamoshi.org")
         .add_loaders([
-            Loader::glob_content(BASE, "index.md", yaml::<Home>),
-            Loader::glob_content(BASE, "posts/**/*.md", yaml::<Post>),
-            Loader::glob_content(BASE, "slides/**/*.md", yaml::<Slideshow>),
-            Loader::glob_content(BASE, "slides/**/*.lhs", yaml::<Slideshow>),
-            Loader::glob_content(BASE, "wiki/**/*.md", yaml::<Wiki>),
-            Loader::glob_content(BASE, "projects/**/*.md", yaml::<Project>),
-            Loader::glob_content(BASE, "about/index.md", yaml::<Post>),
+            loader::glob_content(BASE, "index.md", yaml::<Home>),
+            loader::glob_content(BASE, "posts/**/*.md", yaml::<Post>),
+            loader::glob_content(BASE, "slides/**/*.md", yaml::<Slideshow>),
+            loader::glob_content(BASE, "slides/**/*.lhs", yaml::<Slideshow>),
+            loader::glob_content(BASE, "wiki/**/*.md", yaml::<Wiki>),
+            loader::glob_content(BASE, "projects/**/*.md", yaml::<Project>),
+            loader::glob_content(BASE, "about/index.md", yaml::<Post>),
             // .asc -> Pubkey
-            Loader::glob_asset(BASE, "about/*.asc", |_, data| Pubkey {
+            loader::glob_assets(BASE, "about/*.asc", |_, data| Pubkey {
                 fingerprint: Cert::from_reader(data.as_slice())
                     .unwrap()
                     .primary_key()
@@ -171,7 +169,7 @@ fn main() -> ExitCode {
                 data: String::from_utf8_lossy(&data).to_string(),
             }),
             // twtxt.txt
-            Loader::glob_asset(BASE, "twtxt.txt", |_, data| {
+            loader::glob_assets(BASE, "twtxt.txt", |_, data| {
                 let data = String::from_utf8_lossy(&data);
                 let entries = data
                     .lines()
@@ -189,7 +187,7 @@ fn main() -> ExitCode {
                 }
             }),
             // .bib -> Bibtex
-            Loader::glob_asset(BASE, "**/*.bib", |rt, data| {
+            loader::glob_assets(BASE, "**/*.bib", |rt, data| {
                 let path = rt.store(&data, "bib").unwrap();
                 let text = String::from_utf8_lossy(&data);
                 let data = hayagriva::io::from_biblatex_str(&text).unwrap();
@@ -197,14 +195,14 @@ fn main() -> ExitCode {
                 Bibtex { path, data }
             }),
             // images
-            Loader::glob_images(BASE, "**/*.jpg"),
-            Loader::glob_images(BASE, "**/*.png"),
-            Loader::glob_images(BASE, "**/*.gif"),
+            loader::glob_images(BASE, "**/*.jpg"),
+            loader::glob_images(BASE, "**/*.png"),
+            loader::glob_images(BASE, "**/*.gif"),
             // stylesheets
-            Loader::glob_style("styles", "**/[!_]*.scss"),
+            loader::glob_styles("styles", "**/[!_]*.scss"),
             // scripts
-            Loader::glob_svelte("scripts", "src/*/App.svelte"),
-            Loader::glob_scripts("scripts", "src/*/main.ts"),
+            loader::glob_svelte("scripts", "src/*/App.svelte"),
+            loader::glob_scripts("scripts", "src/*/main.ts"),
         ])
         // Generate the home page.
         .add_task(|ctx| {

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use camino::Utf8Path;
 use chrono::{DateTime, Utc};
-use hauchiwa::{WithFile, plugin::content::Content};
+use hauchiwa::{WithFile, loader::Content};
 use serde::Deserialize;
 
 use crate::{Link, LinkDate};

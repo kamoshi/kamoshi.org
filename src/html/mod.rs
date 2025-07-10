@@ -14,7 +14,7 @@ use std::{borrow::Cow, collections::HashMap};
 
 use camino::Utf8Path;
 use chrono::Datelike;
-use hauchiwa::{TaskResult, plugin::svelte::Svelte};
+use hauchiwa::{TaskResult, loader::Svelte};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud, maud_move};
 
 pub(crate) use home::home;

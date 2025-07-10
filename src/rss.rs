@@ -1,5 +1,5 @@
 use camino::Utf8Path;
-use hauchiwa::plugin::content::Content;
+use hauchiwa::loader::Content;
 use hauchiwa::{Page, TaskResult, WithFile};
 use rss::{ChannelBuilder, ItemBuilder};
 

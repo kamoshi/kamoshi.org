@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use hauchiwa::{TaskResult, WithFile, plugin::content::Content};
+use hauchiwa::{TaskResult, WithFile, loader::Content};
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{

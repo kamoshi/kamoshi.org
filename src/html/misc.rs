@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use camino::Utf8Path;
-use hauchiwa::plugin::content::Content;
+use hauchiwa::loader::Content;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::{Context, Link, model::Wiki};

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use hauchiwa::{TaskResult, plugin::content::Content};
+use hauchiwa::{TaskResult, loader::Content};
 use hypertext::{
     GlobalAttributes, Raw, Renderable, Rendered, html_elements, maud, maud_move, maud_static,
 };

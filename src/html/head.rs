@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use hauchiwa::{TaskResult, plugin::scss::Stylesheet};
+use hauchiwa::{TaskResult, loader::Style};
 use hypertext::{Raw, Renderable, html_elements, maud_move};
 
 use crate::Context;
@@ -15,7 +15,7 @@ pub(crate) fn render_head<'a>(
 
     let stylesheets: Vec<_> = stylesheets
         .iter()
-        .map(|&style| ctx.get::<Stylesheet>(style))
+        .map(|&style| ctx.get::<Style>(style))
         .collect::<Result<_, _>>()?;
 
     Ok(maud_move!(
