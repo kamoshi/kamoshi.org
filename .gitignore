@@ -33,14 +33,14 @@
 content/.obsidian/
 content/.stfolder/
 
-!js/
-!js/**/
-!js/**/*.js
-!js/**/*.ts
-!js/**/*.svelte
-!js/**/*.json
-!js/**/*.lock
-js/**/node_modules/
+!scripts/
+!scripts/**/
+!scripts/**/*.js
+!scripts/**/*.ts
+!scripts/**/*.svelte
+!scripts/**/*.json
+!scripts/**/*.lock
+scripts/**/node_modules/
 
 !tools/
 !tools/**/
