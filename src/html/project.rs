@@ -1,12 +1,16 @@
 use std::borrow::Cow;
 
 use hauchiwa::{TaskResult, WithFile, loader::Content};
-use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
+use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
-use crate::{Context, html::page, model::Project};
+use crate::{
+    Context, Outline,
+    html::{page, post::render_outline},
+    model::Project,
+};
 
-/// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/projects.scss"];
+const STYLES_LIST: &[&str] = &["styles/styles.scss", "styles/layouts/projects.scss"];
+const STYLES_PAGE: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
 
 pub fn render_list(ctx: &Context, mut data: Vec<WithFile<Content<Project>>>) -> TaskResult<String> {
     data.sort_unstable_by(|a, b| a.data.meta.title.cmp(&b.data.meta.title));
@@ -27,7 +31,7 @@ pub fn render_list(ctx: &Context, mut data: Vec<WithFile<Content<Project>>>) -> 
         }
     };
 
-    let html = page(ctx, main, "Projects".into(), STYLES, Cow::default())?
+    let html = page(ctx, main, "Projects".into(), STYLES_LIST, Cow::default())?
         .render()
         .into_inner();
 
@@ -50,4 +54,32 @@ fn render_tile(project: &Project) -> impl Renderable {
             }
         }
     }
+}
+
+pub fn render_page(ctx: &Context, text: &str, outline: Outline) -> TaskResult<String> {
+    let main = maud_move!(
+        main {
+            // Outline (left)
+            (render_outline(outline))
+            // Article (center)
+            article .article {
+                section .paper {
+                    section .wiki-article__markdown.markdown {
+                        (Raw(text))
+                    }
+                }
+            }
+            // Metadata (right)
+            aside .tiles {
+                section .metadata {
+                }
+            }
+        }
+    );
+
+    let page = crate::html::page(ctx, main, "".into(), STYLES_PAGE, Cow::default())?
+        .render()
+        .into_inner();
+
+    Ok(page)
 }

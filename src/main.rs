@@ -11,8 +11,7 @@ use std::process::{Command, ExitCode};
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::loader::{Content, Script};
-use hauchiwa::md::yaml;
+use hauchiwa::loader::{Content, Script, yaml};
 use hauchiwa::{Hook, Page, TaskResult, Website, WithFile, loader};
 use hayagriva::Library;
 use hypertext::Renderable;
@@ -144,12 +143,23 @@ struct Bibtex {
 }
 
 fn main() -> ExitCode {
+    match run() {
+        Ok(()) => ExitCode::from(0),
+        Err(e) => {
+            eprintln!("{e}");
+            ExitCode::from(1)
+        }
+    }
+}
+
+fn run() -> TaskResult<()> {
     /// Base path for content files
     const BASE: &str = "content";
 
     let args = Args::parse();
 
-    let mut website = Website::configure()
+    let mut website = Website::config()
+        .load_git(".")?
         .add_loaders([
             loader::glob_content(BASE, "index.md", yaml::<Home>),
             loader::glob_content(BASE, "posts/**/*.md", yaml::<Post>),
@@ -203,6 +213,13 @@ fn main() -> ExitCode {
             // scripts
             loader::glob_svelte("scripts", "src/*/App.svelte"),
             loader::glob_scripts("scripts", "src/*/main.ts"),
+            // github
+            loader::async_asset(async |_| {
+                const URL: &str =
+                    "https://raw.githubusercontent.com/kamoshi/hauchiwa/refs/heads/main/README.md";
+
+                Ok(reqwest::get(URL).await?.text().await?)
+            }),
         ])
         // Generate the home page.
         .add_task(|ctx| {
@@ -300,10 +317,18 @@ fn main() -> ExitCode {
         })
         // PROJECTS
         .add_task(|ctx| {
+            let mut pages = vec![];
+
             let data = ctx.glob_with_files::<Content<Project>>("projects/**/*")?;
             let list = crate::html::project::render_list(&ctx, data)?;
+            pages.push(Page::text("projects/index.html".into(), list));
 
-            Ok(vec![Page::text("projects/index.html".into(), list)])
+            let text = ctx.get::<String>("")?;
+            let (text, outline, _) = crate::md::parse(text, &ctx, "".into(), None);
+            let html = html::project::render_page(&ctx, &text, outline)?;
+            pages.push(Page::text("projects/hauchiwa/index.html".into(), html));
+
+            Ok(pages)
         })
         // .add_task(|sack| {
         //     let query = sack.get_content("projects/flox")?;
@@ -415,8 +440,8 @@ fn main() -> ExitCode {
             }
 
             // Render global tag index
-            let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
-            pages.push(Page::text("tags/index.html".into(), index.render().into()));
+            // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
+            // pages.push(Page::text("tags/index.html".into(), index.render().into()));
 
             Ok(pages)
         })
@@ -424,16 +449,10 @@ fn main() -> ExitCode {
         .add_hook(Hook::post_build(crate::hook::build_sitemap))
         .finish();
 
-    let res = match args.mode {
-        Mode::Build => website.build(Global::new()),
-        Mode::Watch => website.watch(Global::new()),
+    match args.mode {
+        Mode::Build => website.build(Global::new())?,
+        Mode::Watch => website.watch(Global::new())?,
     };
 
-    match res {
-        Ok(_) => ExitCode::from(0),
-        Err(e) => {
-            eprintln!("{e}");
-            ExitCode::from(1)
-        }
-    }
+    Ok(())
 }

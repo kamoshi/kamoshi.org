@@ -59,7 +59,7 @@ pub fn article<'p>(
     )
 }
 
-fn render_outline(outline: Outline) -> impl Renderable {
+pub fn render_outline(outline: Outline) -> impl Renderable {
     maud_move!(
         aside .outline {
             section {
