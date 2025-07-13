@@ -126,6 +126,17 @@ pub struct Wiki {
     pub title: String,
 }
 
+pub mod svelte {
+    use serde::Serialize;
+    use ts_rs::TS;
+
+    #[derive(Serialize, TS)]
+    #[ts(export, export_to = "../scripts/src/search/props.ts")]
+    pub struct Search {
+        pub test: &'static str,
+    }
+}
+
 mod isodate {
     use chrono::{DateTime, Utc};
     use serde::{self, Deserialize, Deserializer};

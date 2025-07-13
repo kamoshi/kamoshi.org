@@ -1,6 +1,7 @@
-use std::borrow::Cow;
-
-use hauchiwa::{TaskResult, loader::Content};
+use hauchiwa::{
+    TaskResult,
+    loader::{Content, Svelte},
+};
 use hypertext::{
     GlobalAttributes, Raw, Renderable, Rendered, html_elements, maud, maud_move, maud_static,
 };
@@ -10,7 +11,11 @@ use crate::{Context, LinkDate, md::parse, model::Post};
 use super::page;
 
 /// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/home.scss"];
+const STYLES: &[&str] = &[
+    "styles/styles.scss",
+    "styles/layouts/home.scss",
+    "styles/components/kanji.scss",
+];
 
 const INTRO: &str = r#"
 ## かもし
@@ -27,6 +32,7 @@ const INTRO: &str = r#"
 pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
     let intro = intro(ctx);
     let posts = latest_posts(ctx)?;
+    let kanji = ctx.get::<Svelte<()>>("scripts/src/kanji/App.svelte")?;
 
     let main = maud!(
         main .l-home {
@@ -36,13 +42,17 @@ pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
             aside .l-home__aside {
                 (intro)
                 // (Raw(SECTION_IMAGE))
+                section .p-card {
+                    (Raw((kanji.html)(&())))
+                }
                 (posts)
                 (Raw(SECTION_BUTTONS))
             }
         }
     );
 
-    let rendered = page(ctx, main, "Home".into(), STYLES, Cow::default())?
+    let scripts = vec![kanji.init.to_string()];
+    let rendered = page(ctx, main, "Home".into(), STYLES, scripts.into())?
         .render()
         .into();
 

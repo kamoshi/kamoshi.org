@@ -230,7 +230,7 @@ pub(crate) fn search(ctx: &Context) -> String {
         ctx,
         maud!(
             main {
-                (Raw(html))
+                (Raw(html(&())))
             }
         ),
         String::from("Search"),

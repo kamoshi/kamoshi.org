@@ -211,7 +211,7 @@ fn run() -> TaskResult<()> {
             // stylesheets
             loader::glob_styles("styles", "**/[!_]*.scss"),
             // scripts
-            loader::glob_svelte("scripts", "src/*/App.svelte"),
+            loader::glob_svelte::<()>("scripts", "src/*/App.svelte"),
             loader::glob_scripts("scripts", "src/*/main.ts"),
             // github
             loader::async_asset(async |_| {

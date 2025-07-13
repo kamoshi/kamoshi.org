@@ -29,16 +29,16 @@ pub(crate) fn render_head<'a>(
         link rel="preconnect" href="https://rsms.me/";
         link rel="stylesheet" href="https://rsms.me/inter/inter.css";
 
-        @for stylesheet in stylesheets {
-            link rel="stylesheet" href=(stylesheet.path.as_str());
-        }
-
         link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
 
+        @for stylesheet in stylesheets {
+            link rel="stylesheet" href=(stylesheet.path.as_str());
+        }
+
         @for path in script.as_ref() {
-            script type="module" src=(path) defer {}
+            script type="module" src=(path) {}
         }
 
         @if let Some(reload_script) = ctx.get_refresh_script() {

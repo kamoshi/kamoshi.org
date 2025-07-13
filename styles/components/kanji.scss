@@ -1,8 +1,6 @@
-@use 'sass:math';
-
+@use "sass:math";
 
 .daily-kanji {
-
   .info {
     display: flex;
     justify-content: flex-start;
@@ -37,15 +35,27 @@
       height: 0;
       border-top: 1px dashed #000;
     }
-    &::before, &::after {
-      content: '';
+    &::before,
+    &::after {
+      content: "";
       position: absolute;
       display: block;
     }
   }
 
-  .examples-ja {
-    padding-right: 0.5em;
+  .table {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .cell-ja {
+    max-width: 6rem;
+  }
+
+  .cell-en {
   }
 
   $side: 5em;
@@ -65,10 +75,10 @@
 
     div {
       animation: loading 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-      transform-origin: $radius  $radius;
+      transform-origin: $radius $radius;
 
       &::after {
-        content: '';
+        content: "";
         display: block;
         position: absolute;
         width: 7px;
