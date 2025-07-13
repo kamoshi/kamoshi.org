@@ -10,42 +10,24 @@ use crate::{Bibliography, Context, Outline, model::Slideshow};
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles/styles.scss", "styles/reveal/reveal.scss"];
 
-const CSS: &str = r#"
-.slides img {
-	margin-left: auto;
-	margin-right: auto;
-	max-height: 60vh;
-}
-"#;
-
 pub fn parse_content(
     content: &str,
     sack: &Context,
     path: &Utf8Path,
     library: Option<&Library>,
 ) -> (String, Outline, Bibliography) {
-    let parsed = content
-        .split("\n-----\n")
-        .map(|chunk| {
-            chunk
-                .split("\n---\n")
-                .map(|slide| crate::md::parse(slide, sack, path, library).0)
-                .collect::<Vec<_>>()
-        })
-        .map(|stack| match stack.len() > 1 {
-            true => {
-                let mut buffer = String::from("<section>");
+    let mut buff = String::new();
 
-                for slide in stack {
-                    write!(buffer, "<section>{slide}</section>").unwrap();
-                }
+    for stack in content.split("\n-----\n") {
+        buff.push_str("<section>");
+        for slide in stack.split("\n---\n") {
+            let slide = crate::md::parse(slide, sack, path, library).0;
+            write!(buff, "<section>{slide}</section>").unwrap();
+        }
+        buff.push_str("</section>");
+    }
 
-                buffer
-            }
-            false => format!("<section>{}</section>", stack[0]),
-        })
-        .collect::<String>();
-    (parsed, Outline(vec![]), Bibliography(None))
+    (buff, Outline(vec![]), Bibliography(None))
 }
 
 pub fn as_html(
@@ -69,8 +51,6 @@ pub fn show(ctx: &Context, fm: &Slideshow, slides: &str) -> String {
                     (Raw(slides))
                 }
             }
-
-            style { (Raw(CSS)) }
         ),
         fm.title.clone(),
         STYLES,

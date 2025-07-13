@@ -1,1 +1,7 @@
-@use 'reveal.css';
+@use "reveal.css";
+
+.slides img {
+  margin-left: auto;
+  margin-right: auto;
+  max-height: 60vh;
+}
