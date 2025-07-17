@@ -4,6 +4,7 @@ use camino::Utf8Path;
 use hauchiwa::loader::Script;
 use hayagriva::Library;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud};
+use sequoia_openpgp::anyhow;
 
 use crate::{Bibliography, Context, Outline, model::Slideshow};
 
@@ -11,23 +12,23 @@ use crate::{Bibliography, Context, Outline, model::Slideshow};
 const STYLES: &[&str] = &["styles/styles.scss", "styles/reveal/reveal.scss"];
 
 pub fn parse_content(
-    content: &str,
-    sack: &Context,
+    ctx: &Context,
+    text: &str,
     path: &Utf8Path,
     library: Option<&Library>,
-) -> (String, Outline, Bibliography) {
+) -> anyhow::Result<(String, Outline, Bibliography)> {
     let mut buff = String::new();
 
-    for stack in content.split("\n-----\n") {
+    for stack in text.split("\n-----\n") {
         buff.push_str("<section>");
         for slide in stack.split("\n---\n") {
-            let slide = crate::md::parse(slide, sack, path, library).0;
+            let slide = crate::md::parse(ctx, slide, path, library)?.0;
             write!(buff, "<section>{slide}</section>").unwrap();
         }
         buff.push_str("</section>");
     }
 
-    (buff, Outline(vec![]), Bibliography(None))
+    Ok((buff, Outline(vec![]), Bibliography(None)))
 }
 
 pub fn as_html(

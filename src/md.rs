@@ -14,8 +14,9 @@ use pulldown_cmark::{
     CodeBlockKind, CowStr, Event, Options as OptsMarkdown, Parser, Tag, TagEnd, TextMergeStream,
 };
 use regex::Regex;
+use sequoia_openpgp::anyhow;
 
-use crate::{Bibliography, Context, Outline, ts};
+use crate::{Bibliography, Context, Outline, ts, typst};
 
 const OPTS_MARKDOWN: OptsMarkdown = OptsMarkdown::empty()
     .union(OptsMarkdown::ENABLE_MATH)
@@ -66,19 +67,21 @@ pub fn md_parse_simple(content: &str) -> String {
 }
 
 pub fn parse(
-    content: &str,
-    sack: &Context,
+    ctx: &Context,
+    text: &str,
     path: &Utf8Path,
     library: Option<&Library>,
-) -> (String, Outline, Bibliography) {
+) -> anyhow::Result<(String, Outline, Bibliography)> {
     let mut outline = vec![];
 
-    let stream = Parser::new_ext(content, OPTS_MARKDOWN);
+    let stream = Parser::new_ext(text, OPTS_MARKDOWN);
     let stream = TextMergeStream::new(stream);
 
     let stream = StreamHeading::new(stream, &mut outline);
-    let stream = StreamCodeBlock::new(stream);
-    let stream = stream.map(swap_hashed_image(path, sack));
+    let stream = StreamCodeBlock::new(stream)
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter();
+    let stream = stream.map(swap_hashed_image(path, ctx));
     let stream = stream.map(render_latex);
     let stream = stream.map(render_emoji);
     let stream = StreamRuby::new(stream);
@@ -94,7 +97,7 @@ pub fn parse(
     let mut parsed = String::new();
     pulldown_cmark::html::push_html(&mut parsed, events.into_iter());
 
-    (parsed, Outline(outline), Bibliography(bibliography))
+    Ok((parsed, Outline(outline), Bibliography(bibliography)))
 }
 
 // StreamHeading
@@ -213,7 +216,7 @@ impl<'a, I> Iterator for StreamCodeBlock<'a, I>
 where
     I: Iterator<Item = Event<'a>>,
 {
-    type Item = Event<'a>;
+    type Item = anyhow::Result<Event<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         for event in self.iter.by_ref() {
@@ -222,7 +225,7 @@ where
                     match kind {
                         CodeBlockKind::Indented => {
                             // return indented code blocks as-is
-                            return Some(event);
+                            return Some(Ok(event));
                         }
                         CodeBlockKind::Fenced(name) => {
                             // capture language to highlight
@@ -233,21 +236,26 @@ where
                 Event::End(TagEnd::CodeBlock) => {
                     // end of code block, process the collected code
                     let lang = self.lang.take().unwrap_or_else(|| "".into());
-                    let html = ts::highlight(&lang, &self.code)
-                        .render()
-                        .as_str()
-                        .to_owned();
+
+                    let html = match lang.as_str() {
+                        "typst svg" => typst::render_typst(&self.code),
+                        _ => Ok(ts::highlight(&lang, &self.code)
+                            .render()
+                            .as_str()
+                            .to_owned()),
+                    };
+
                     self.code.clear(); // Clear buffer for the next block
-                    return Some(Event::Html(html.into())); // Emit HTML event
+                    return Some(html.map(|html| Event::Html(html.into())));
                 }
                 Event::Text(text) => match self.lang.is_some() {
                     true => self.code.push_str(text), // -> collect text into code buffer if inside a code block
-                    false => return Some(event),      // -> pass through text outside code blocks
+                    false => return Some(Ok(event)),  // -> pass through text outside code blocks
                 },
                 _ => {
                     // Pass through other events unchanged
                     if self.lang.is_none() {
-                        return Some(event);
+                        return Some(Ok(event));
                     }
                 }
             }

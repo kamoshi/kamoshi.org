@@ -223,23 +223,22 @@ where
     )
 }
 
-pub(crate) fn search(ctx: &Context) -> String {
+pub(crate) fn search(ctx: &Context) -> TaskResult<String> {
     let Svelte { html, init } = ctx.get("scripts/src/search/App.svelte").unwrap();
+    let component = html(&())?;
 
-    page(
+    let html = maud!(main { (Raw(component)) });
+    let html = page(
         ctx,
-        maud!(
-            main {
-                (Raw(html(&())))
-            }
-        ),
+        html,
         String::from("Search"),
         &["styles/styles.scss", "styles/layouts/search.scss"],
         Cow::Borrowed(&[init.to_string()]),
-    )
-    .unwrap()
+    )?
     .render()
-    .into()
+    .into_inner();
+
+    Ok(html)
 }
 
 // pub fn as_html(

@@ -5,6 +5,7 @@ use hauchiwa::{
 use hypertext::{
     GlobalAttributes, Raw, Renderable, Rendered, html_elements, maud, maud_move, maud_static,
 };
+use sequoia_openpgp::anyhow;
 
 use crate::{Context, LinkDate, md::parse, model::Post};
 
@@ -30,9 +31,10 @@ const INTRO: &str = r#"
 "#;
 
 pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
-    let intro = intro(ctx);
+    let intro = intro(ctx)?;
     let posts = latest_posts(ctx)?;
     let kanji = ctx.get::<Svelte<()>>("scripts/src/kanji/App.svelte")?;
+    let kanji_html = (kanji.html)(&())?;
 
     let main = maud!(
         main .l-home {
@@ -43,7 +45,7 @@ pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
                 (intro)
                 // (Raw(SECTION_IMAGE))
                 section .p-card {
-                    (Raw((kanji.html)(&())))
+                    (Raw(kanji_html))
                 }
                 (posts)
                 (Raw(SECTION_BUTTONS))
@@ -59,14 +61,16 @@ pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
     Ok(rendered)
 }
 
-fn intro(ctx: &Context) -> impl Renderable {
-    let (parsed, _, _) = parse(INTRO, ctx, "/".into(), None);
+fn intro(ctx: &Context) -> anyhow::Result<impl Renderable> {
+    let (parsed, _, _) = parse(ctx, INTRO, "/".into(), None)?;
 
-    maud!(
+    let html = maud!(
         section .p-card.intro-jp lang="ja-JP" {
             (Raw(parsed))
         }
-    )
+    );
+
+    Ok(html)
 }
 
 // const SECTION_IMAGE: Rendered<&str> = {

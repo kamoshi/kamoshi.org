@@ -4,6 +4,7 @@ mod md;
 mod model;
 mod rss;
 mod ts;
+mod typst;
 
 use std::borrow::Cow;
 use std::process::{Command, ExitCode};
@@ -16,8 +17,8 @@ use hauchiwa::{Hook, Page, TaskResult, Website, WithFile, loader};
 use hayagriva::Library;
 use hypertext::Renderable;
 use model::{Home, Post, Project, Slideshow, Wiki};
-use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
+use sequoia_openpgp::{Cert, anyhow};
 
 use crate::model::{Microblog, MicroblogEntry, Pubkey};
 
@@ -88,11 +89,12 @@ fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<
     let bibtex = ctx.glob::<Bibtex>(&pattern)?;
 
     let parsed = crate::md::parse(
-        &item.data.text,
         ctx,
+        &item.data.text,
         &item.file.area,
         bibtex.map(|x| &x.data),
-    );
+    )?;
+
     let buffer = crate::html::post::render(
         &item.data.meta,
         &parsed.0,
@@ -109,10 +111,13 @@ fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<
     Ok(Page::text(item.file.slug.join("index.html"), buffer))
 }
 
-fn render_page_slideshow(ctx: &Context, item: WithFile<Content<Slideshow>>) -> Page {
-    let parsed = html::slideshow::parse_content(&item.data.text, ctx, &item.file.area, None);
+fn render_page_slideshow(
+    ctx: &Context,
+    item: WithFile<Content<Slideshow>>,
+) -> anyhow::Result<Page> {
+    let parsed = html::slideshow::parse_content(ctx, &item.data.text, &item.file.area, None)?;
     let buffer = html::slideshow::as_html(&item.data.meta, &parsed.0, ctx, parsed.1, parsed.2);
-    Page::text(item.file.slug.join("index.html"), buffer)
+    Ok(Page::text(item.file.slug.join("index.html"), buffer))
 }
 
 fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<Page> {
@@ -120,11 +125,12 @@ fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<
     let bibtex = ctx.glob::<Bibtex>(&pattern)?;
 
     let parsed = crate::md::parse(
-        &item.data.text,
         ctx,
+        &item.data.text,
         &item.file.area,
         bibtex.map(|x| &x.data),
-    );
+    )?;
+
     let buffer = crate::html::wiki::wiki(
         &item.data.meta,
         &parsed.0,
@@ -169,14 +175,15 @@ fn run() -> TaskResult<()> {
             loader::glob_content(BASE, "projects/**/*.md", yaml::<Project>),
             loader::glob_content(BASE, "about/index.md", yaml::<Post>),
             // .asc -> Pubkey
-            loader::glob_assets(BASE, "about/*.asc", |_, data| Pubkey {
-                fingerprint: Cert::from_reader(data.as_slice())
-                    .unwrap()
-                    .primary_key()
-                    .key()
-                    .fingerprint()
-                    .to_spaced_hex(),
-                data: String::from_utf8_lossy(&data).to_string(),
+            loader::glob_assets(BASE, "about/*.asc", |_, data| {
+                Ok(Pubkey {
+                    fingerprint: Cert::from_reader(data.as_slice())?
+                        .primary_key()
+                        .key()
+                        .fingerprint()
+                        .to_spaced_hex(),
+                    data: String::from_utf8(data)?.to_string(),
+                })
             }),
             // twtxt.txt
             loader::glob_assets(BASE, "twtxt.txt", |_, data| {
@@ -191,18 +198,18 @@ fn run() -> TaskResult<()> {
                     .collect::<Result<Vec<_>, _>>()
                     .unwrap();
 
-                Microblog {
+                Ok(Microblog {
                     entries,
                     data: data.to_string(),
-                }
+                })
             }),
             // .bib -> Bibtex
             loader::glob_assets(BASE, "**/*.bib", |rt, data| {
-                let path = rt.store(&data, "bib").unwrap();
+                let path = rt.store(&data, "bib")?;
                 let text = String::from_utf8_lossy(&data);
                 let data = hayagriva::io::from_biblatex_str(&text).unwrap();
 
-                Bibtex { path, data }
+                Ok(Bibtex { path, data })
             }),
             // images
             loader::glob_images(BASE, "**/*.jpg"),
@@ -214,7 +221,7 @@ fn run() -> TaskResult<()> {
             loader::glob_svelte::<()>("scripts", "src/*/App.svelte"),
             loader::glob_scripts("scripts", "src/*/main.ts"),
             // github
-            loader::async_asset(async |_| {
+            loader::async_asset("hauchiwa", async |_| {
                 const URL: &str =
                     "https://raw.githubusercontent.com/kamoshi/hauchiwa/refs/heads/main/README.md";
 
@@ -224,7 +231,7 @@ fn run() -> TaskResult<()> {
         // Generate the home page.
         .add_task(|ctx| {
             let item = ctx.glob_with_file::<Content<Home>>("")?;
-            let text = md::parse(&item.data.text, &ctx, &item.file.area, None).0;
+            let text = md::parse(&ctx, &item.data.text, &item.file.area, None)?.0;
             let html = html::home(&ctx, &text)?;
             Ok(vec![Page::text("index.html".into(), html)])
         })
@@ -235,8 +242,7 @@ fn run() -> TaskResult<()> {
             let pubkey_email = ctx.get::<Pubkey>("content/about/pubkey-email.asc")?;
 
             let (parsed, outline, _) =
-                crate::md::parse(&item.data.text, &ctx, &item.file.area, None);
-
+                crate::md::parse(&ctx, &item.data.text, &item.file.area, None)?;
             let html = crate::html::about::render(
                 &ctx,
                 &item,
@@ -292,8 +298,7 @@ fn run() -> TaskResult<()> {
                 .glob_with_files::<Content<Slideshow>>("slides/**/*")?
                 .into_iter()
                 .map(|query| render_page_slideshow(&sack, query))
-                .collect();
-
+                .collect::<Result<_, _>>()?;
             Ok(pages)
         })
         .add_task(|sack| {
@@ -323,8 +328,8 @@ fn run() -> TaskResult<()> {
             let list = crate::html::project::render_list(&ctx, data)?;
             pages.push(Page::text("projects/index.html".into(), list));
 
-            let text = ctx.get::<String>("")?;
-            let (text, outline, _) = crate::md::parse(text, &ctx, "".into(), None);
+            let text = ctx.get::<String>("hauchiwa")?;
+            let (text, outline, _) = crate::md::parse(&ctx, text, "".into(), None)?;
             let html = html::project::render_page(&ctx, &text, outline)?;
             pages.push(Page::text("projects/hauchiwa/index.html".into(), html));
 
@@ -382,7 +387,7 @@ fn run() -> TaskResult<()> {
         .add_task(|sack| {
             Ok(vec![Page::text(
                 "search/index.html".into(),
-                crate::html::search(&sack),
+                crate::html::search(&sack)?,
             )])
         })
         // microblog
