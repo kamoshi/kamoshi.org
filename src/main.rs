@@ -229,14 +229,14 @@ fn run() -> TaskResult<()> {
             }),
         ])
         // Generate the home page.
-        .add_task(|ctx| {
+        .add_task("home", |ctx| {
             let item = ctx.glob_with_file::<Content<Home>>("")?;
             let text = md::parse(&ctx, &item.data.text, &item.file.area, None)?.0;
             let html = html::home(&ctx, &text)?;
             Ok(vec![Page::text("index.html".into(), html)])
         })
         // Generate the about page.
-        .add_task(|ctx| {
+        .add_task("about", |ctx| {
             let item = ctx.glob_with_file::<Content<Post>>("about")?;
             let pubkey_ident = ctx.get::<Pubkey>("content/about/pubkey-ident.asc")?;
             let pubkey_email = ctx.get::<Pubkey>("content/about/pubkey-email.asc")?;
@@ -264,7 +264,7 @@ fn run() -> TaskResult<()> {
         })
         // Posts
         // -----
-        .add_task(|ctx| {
+        .add_task("posts", |ctx| {
             let pages = ctx
                 .glob_with_files::<Content<Post>>("posts/**/*")?
                 .into_iter()
@@ -273,7 +273,7 @@ fn run() -> TaskResult<()> {
                 .collect::<Result<_, _>>()?;
             Ok(pages)
         })
-        .add_task(|ctx| {
+        .add_task("posts_list", |ctx| {
             Ok(vec![Page::text(
                 "posts/index.html".into(),
                 crate::html::to_list(
@@ -288,12 +288,12 @@ fn run() -> TaskResult<()> {
                 ),
             )])
         })
-        .add_task(|sack| {
+        .add_task("posts_feed", |sack| {
             let feed = rss::generate_feed::<Content<Post>>(sack, "posts", "Kamoshi.org Posts")?;
             Ok(vec![feed])
         })
         // SLIDESHOWS
-        .add_task(|sack| {
+        .add_task("slides", |sack| {
             let pages = sack
                 .glob_with_files::<Content<Slideshow>>("slides/**/*")?
                 .into_iter()
@@ -301,7 +301,7 @@ fn run() -> TaskResult<()> {
                 .collect::<Result<_, _>>()?;
             Ok(pages)
         })
-        .add_task(|sack| {
+        .add_task("slides_list", |sack| {
             Ok(vec![Page::text(
                 "slides/index.html".into(),
                 crate::html::to_list(
@@ -315,13 +315,13 @@ fn run() -> TaskResult<()> {
                 ),
             )])
         })
-        .add_task(|sack| {
+        .add_task("slides_feed", |sack| {
             let feed =
                 rss::generate_feed::<Content<Slideshow>>(sack, "slides", "Kamoshi.org Slides")?;
             Ok(vec![feed])
         })
         // PROJECTS
-        .add_task(|ctx| {
+        .add_task("projects", |ctx| {
             let mut pages = vec![];
 
             let data = ctx.glob_with_files::<Content<Project>>("projects/**/*")?;
@@ -356,13 +356,13 @@ fn run() -> TaskResult<()> {
         //         ),
         //     )])
         // })
-        .add_task(|sack| {
+        .add_task("projects_feed", |sack| {
             let feed =
                 rss::generate_feed::<Content<Project>>(sack, "projects", "Kamoshi.org Projects")?;
             Ok(vec![feed])
         })
         // WIKI
-        .add_task(|sack| {
+        .add_task("wiki", |sack| {
             let pages = sack
                 .glob_with_files::<Content<Wiki>>("**/*")?
                 .into_iter()
@@ -372,7 +372,7 @@ fn run() -> TaskResult<()> {
             Ok(pages)
         })
         // MAP
-        .add_task(|ctx| {
+        .add_task("map", |ctx| {
             let script = ctx.get::<Script>("scripts/src/photos/main.ts")?;
 
             Ok(vec![Page::text(
@@ -384,14 +384,14 @@ fn run() -> TaskResult<()> {
             )])
         })
         // SEARCH
-        .add_task(|sack| {
+        .add_task("search", |sack| {
             Ok(vec![Page::text(
                 "search/index.html".into(),
                 crate::html::search(&sack)?,
             )])
         })
         // microblog
-        .add_task(|ctx| {
+        .add_task("microblog", |ctx| {
             let data = ctx.glob::<Microblog>("content/twtxt.txt")?.unwrap();
             let html = html::microblog::render(&ctx, data)?.render().into();
 
@@ -412,7 +412,7 @@ fn run() -> TaskResult<()> {
             Ok(pages)
         })
         // Tags
-        .add_task(|ctx| {
+        .add_task("tags", |ctx| {
             use std::collections::BTreeMap;
 
             let posts = ctx
