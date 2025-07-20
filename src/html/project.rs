@@ -23,7 +23,7 @@ pub fn render_list(ctx: &Context, mut data: Vec<WithFile<Content<Project>>>) -> 
                 }
 
                 div .project-list-flex {
-                    @for item in data {
+                    @for item in &data {
                         (render_tile(&item.data.meta))
                     }
                 }
@@ -60,7 +60,7 @@ pub fn render_page(ctx: &Context, text: &str, outline: Outline) -> TaskResult<St
     let main = maud_move!(
         main {
             // Outline (left)
-            (render_outline(outline))
+            (render_outline(&outline))
             // Article (center)
             article .article {
                 section .paper {

@@ -137,7 +137,7 @@ fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<
         ctx,
         &item.file.slug,
         parsed.1,
-        parsed.2,
+        &parsed.2,
         bibtex.map(|x| x.path.as_ref()),
     );
     Ok(Page::text(item.file.slug.join("index.html"), buffer))
@@ -246,8 +246,8 @@ fn run() -> TaskResult<()> {
             let html = crate::html::about::render(
                 &ctx,
                 &item,
-                parsed,
-                outline,
+                &parsed,
+                &outline,
                 pubkey_ident,
                 pubkey_email,
             )?

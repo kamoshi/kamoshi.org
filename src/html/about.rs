@@ -15,8 +15,8 @@ const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
 pub fn render<'s, 'p, 'html>(
     ctx: &'s Context,
     item: &'p WithFile<Content<Post>>,
-    parsed: String,
-    outline: Outline,
+    parsed: &'s String,
+    outline: &'s Outline,
     pubkey_ident: &'p Pubkey,
     pubkey_email: &'p Pubkey,
 ) -> TaskResult<impl Renderable + use<'html>>
@@ -71,7 +71,7 @@ where
     )
 }
 
-fn render_outline(outline: Outline) -> impl Renderable {
+fn render_outline(outline: &Outline) -> impl Renderable {
     maud_move!(
         aside .outline {
             section {
@@ -80,7 +80,7 @@ fn render_outline(outline: Outline) -> impl Renderable {
                 }
                 nav #table-of-contents {
                     ul {
-                        @for (title, id) in outline.0 {
+                        @for (title, id) in &outline.0 {
                             li {
                                 a href=(format!("#{id}")) {
                                     (title)

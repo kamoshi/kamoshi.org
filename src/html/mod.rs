@@ -87,7 +87,7 @@ pub fn footer(sack: &Context) -> impl Renderable {
         footer .footer {
             div .left {
                 div {
-                    (Raw(copy))
+                    (Raw(&copy))
                 }
                 a href=(href)  {
                     (mail)
@@ -227,7 +227,7 @@ pub(crate) fn search(ctx: &Context) -> TaskResult<String> {
     let Svelte { html, init } = ctx.get("scripts/src/search/App.svelte").unwrap();
     let component = html(&())?;
 
-    let html = maud!(main { (Raw(component)) });
+    let html = maud!(main { (Raw(&component)) });
     let html = page(
         ctx,
         html,

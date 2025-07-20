@@ -25,7 +25,7 @@ where
 {
     let main = maud_move!(
         main {
-            (article(ctx, meta, parsed, info, outline, bibliography, library_path, tags))
+            (article(ctx, meta, parsed, info, &outline, &bibliography, library_path, tags))
         }
     );
 
@@ -44,8 +44,8 @@ pub fn article<'p>(
     meta: &'p Post,
     parsed: &'p str,
     info: Option<&hauchiwa::GitInfo>,
-    outline: Outline,
-    bibliography: Bibliography,
+    outline: &'p Outline,
+    bibliography: &'p Bibliography,
     library_path: Option<&Utf8Path>,
     tags: &[String],
 ) -> impl Renderable {
@@ -59,7 +59,7 @@ pub fn article<'p>(
     )
 }
 
-pub fn render_outline(outline: Outline) -> impl Renderable {
+pub fn render_outline(outline: &Outline) -> impl Renderable {
     maud_move!(
         aside .outline {
             section {
@@ -68,7 +68,7 @@ pub fn render_outline(outline: Outline) -> impl Renderable {
                 }
                 nav #table-of-contents {
                     ul {
-                        @for (title, id) in outline.0 {
+                        @for (title, id) in &outline.0 {
                             li {
                                 a href=(format!("#{id}")) {
                                     (title)
@@ -85,7 +85,7 @@ pub fn render_outline(outline: Outline) -> impl Renderable {
 fn render_article(
     meta: &Post,
     parsed: &str,
-    bib: Bibliography,
+    bib: &Bibliography,
     library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
     maud_move!(
@@ -101,8 +101,8 @@ fn render_article(
                 }
             }
 
-            @if let Some(bib) = bib.0 {
-                (crate::html::misc::emit_bibliography(bib, library_path))
+            @if let Some(bib) = &bib.0 {
+                (crate::html::misc::emit_bibliography(&bib, library_path))
             }
         }
     )

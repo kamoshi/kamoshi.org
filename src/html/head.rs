@@ -34,7 +34,7 @@ pub(crate) fn render_head<'a>(
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
 
-        @for stylesheet in stylesheets {
+        @for stylesheet in &stylesheets {
             link rel="stylesheet" href=(stylesheet.path.as_str());
         }
 

@@ -110,7 +110,7 @@ pub fn tag_cloud<'ctx>(
                     h1 { (title) }
                 }
                 ul {
-                    @for (tag, entries) in sorted {
+                    @for (tag, entries) in &sorted {
                         @let count = entries.len();
 
                         li {

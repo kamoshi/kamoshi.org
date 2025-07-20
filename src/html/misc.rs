@@ -7,7 +7,7 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 use crate::{Context, Link, model::Wiki};
 
 pub(crate) fn emit_bibliography(
-    bib: Vec<String>,
+    bib: &[String],
     library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
     maud_move!(
@@ -107,7 +107,7 @@ where
 
     maud_move!(
         ul .link-tree__nav-list {
-            @for (key, next) in subs {
+            @for (key, next) in &subs {
                 li .link-tree__nav-list-item {
                     span .link-tree__nav-list-text {
                         @if let Some(ref link) = next.link {

@@ -14,7 +14,7 @@ pub fn wiki(
     ctx: &Context,
     slug: &Utf8Path,
     _: Outline,
-    bib: Bibliography,
+    bib: &Bibliography,
     library_path: Option<&Utf8Path>,
 ) -> String {
     let main = maud_move!(
@@ -47,7 +47,7 @@ fn render_outline(ctx: &Context, slug: &Utf8Path) -> impl Renderable {
 fn render_article(
     meta: &Wiki,
     parsed: &str,
-    bib: Bibliography,
+    bib: &Bibliography,
     library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
     maud_move!(
@@ -63,7 +63,7 @@ fn render_article(
                 }
             }
 
-            @if let Some(bib) = bib.0 {
+            @if let Some(bib) = &bib.0 {
                 (crate::html::misc::emit_bibliography(bib, library_path))
             }
         }
