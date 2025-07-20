@@ -8,22 +8,22 @@ path = "../hauchiwa"
 features = ["images", "server"]
 
 [dependencies]
-camino                 = { version = "1.1", features = ["serde1"] }
-chrono                 = "0.4"
-clap                   = { version = "4.5", features = ["derive"] }
-emojis                 = "0.6"
-glob                   = "0.3"
-hayagriva              = "0.8"
-hypertext              = "0.6"
-pulldown-latex         = "0.7"
-rayon                  = "1.10"
-regex                  = "1.11"
-rss                    = "2.0"
-serde                  = { version = "1.0", features = ["derive"] }
+camino                  = { version = "1.1", features = ["serde1"] }
+chrono                  = "0.4"
+clap                    = { version = "4.5", features = ["derive"] }
+emojis                  = "0.7"
+glob                    = "0.3"
+hayagriva               = "0.8"
+hypertext               = "0.6"
+pulldown-latex          = "0.7"
+rayon                   = "1.10"
+regex                   = "1.11"
+rss                     = "2.0"
+serde                   = { version = "1.0", features = ["derive"] }
 sequoia-openpgp         = { version = "2.0.0", default-features = false, features = ["crypto-openssl"] }
 sitemap-rs              = "0.3"
 reqwest                 = { version = "0.12", features = [] }
-ts-rs                   = "10.1"
+ts-rs                   = "11"
 
 # Markdown
 pulldown-cmark         = "0.13"
