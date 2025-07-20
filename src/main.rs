@@ -230,14 +230,14 @@ fn run() -> TaskResult<()> {
         ])
         // Generate the home page.
         .add_task("home", |ctx| {
-            let item = ctx.glob_file::<Content<Home>>("")?;
+            let item = ctx.glob_one_with_file::<Content<Home>>("")?;
             let text = md::parse(&ctx, &item.data.text, &item.file.area, None)?.0;
             let html = html::home(&ctx, &text)?;
             Ok(vec![Page::text("index.html".into(), html)])
         })
         // Generate the about page.
         .add_task("about", |ctx| {
-            let item = ctx.glob_file::<Content<Post>>("about")?;
+            let item = ctx.glob_one_with_file::<Content<Post>>("about")?;
             let pubkey_ident = ctx.get::<Pubkey>("content/about/pubkey-ident.asc")?;
             let pubkey_email = ctx.get::<Pubkey>("content/about/pubkey-email.asc")?;
 
@@ -266,7 +266,7 @@ fn run() -> TaskResult<()> {
         // -----
         .add_task("posts", |ctx| {
             let pages = ctx
-                .glob_files::<Content<Post>>("posts/**/*")?
+                .glob_with_file::<Content<Post>>("posts/**/*")?
                 .into_iter()
                 .filter(|item| !item.data.meta.draft)
                 .map(|query| render_page_post(&ctx, query))
@@ -278,7 +278,7 @@ fn run() -> TaskResult<()> {
                 "posts/index.html".into(),
                 crate::html::to_list(
                     &ctx,
-                    ctx.glob_files::<Content<Post>>("posts/**/*")?
+                    ctx.glob_with_file::<Content<Post>>("posts/**/*")?
                         .iter()
                         .filter(|item| !item.data.meta.draft)
                         .map(LinkDate::from)
@@ -295,7 +295,7 @@ fn run() -> TaskResult<()> {
         // SLIDESHOWS
         .add_task("slides", |sack| {
             let pages = sack
-                .glob_files::<Content<Slideshow>>("slides/**/*")?
+                .glob_with_file::<Content<Slideshow>>("slides/**/*")?
                 .into_iter()
                 .map(|query| render_page_slideshow(&sack, query))
                 .collect::<Result<_, _>>()?;
@@ -306,7 +306,7 @@ fn run() -> TaskResult<()> {
                 "slides/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.glob_files::<Content<Slideshow>>("slides/**/*")?
+                    sack.glob_with_file::<Content<Slideshow>>("slides/**/*")?
                         .into_iter()
                         .map(LinkDate::from)
                         .collect(),
@@ -324,7 +324,7 @@ fn run() -> TaskResult<()> {
         .add_task("projects", |ctx| {
             let mut pages = vec![];
 
-            let data = ctx.glob_files::<Content<Project>>("projects/**/*")?;
+            let data = ctx.glob_with_file::<Content<Project>>("projects/**/*")?;
             let list = crate::html::project::render_list(&ctx, data)?;
             pages.push(Page::text("projects/index.html".into(), list));
 
@@ -364,7 +364,7 @@ fn run() -> TaskResult<()> {
         // WIKI
         .add_task("wiki", |sack| {
             let pages = sack
-                .glob_files::<Content<Wiki>>("**/*")?
+                .glob_with_file::<Content<Wiki>>("**/*")?
                 .into_iter()
                 .map(|query| render_page_wiki(&sack, query))
                 .collect::<Result<_, _>>()?;
@@ -420,7 +420,7 @@ fn run() -> TaskResult<()> {
             use std::collections::BTreeMap;
 
             let posts = ctx
-                .glob_files::<Content<Post>>("posts/**/*")?
+                .glob_with_file::<Content<Post>>("posts/**/*")?
                 .into_iter()
                 .filter(|item| !item.data.meta.draft)
                 .collect::<Vec<_>>();

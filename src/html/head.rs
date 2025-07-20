@@ -21,6 +21,7 @@ pub(crate) fn render_head<'a>(
     Ok(maud_move!(
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1";
+        meta name="generator" content=(ctx.generator);
 
         title { (title) }
 

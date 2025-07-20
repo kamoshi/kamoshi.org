@@ -91,7 +91,7 @@ fn intro(ctx: &Context) -> anyhow::Result<impl Renderable> {
 fn latest_posts(sack: &Context) -> TaskResult<impl Renderable> {
     let list = {
         let mut list: Vec<_> = sack
-            .glob_files::<Content<Post>>("**")?
+            .glob_with_file::<Content<Post>>("**")?
             .iter()
             .map(LinkDate::from)
             .collect();

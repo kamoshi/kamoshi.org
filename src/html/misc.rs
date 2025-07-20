@@ -68,7 +68,7 @@ impl TreePage {
 /// Render the page tree
 pub(crate) fn show_page_tree<'a>(ctx: &'a Utf8Path, sack: &'a Context) -> impl Renderable + 'a {
     let tree = sack
-        .glob_files::<Content<Wiki>>("**/*")
+        .glob_with_file::<Content<Wiki>>("**/*")
         .unwrap()
         .into_iter()
         .map(|item| Link {
