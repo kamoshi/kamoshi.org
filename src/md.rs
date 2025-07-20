@@ -424,7 +424,7 @@ where
 
                                 let mut stack = Vec::new();
 
-                                // if there’s text after the marker, push it inside.
+                                // if there's text after the marker, push it inside.
                                 if !after.is_empty() {
                                     stack.push(Event::Text(after.to_string().into()));
                                 }
@@ -432,7 +432,7 @@ where
                                 self.state = Some((ident, stack));
                             }
 
-                            // if there’s text before the marker, we can return it instantly!
+                            // if there's text before the marker, we can return it instantly!
                             match before.is_empty() {
                                 false => return Some(Event::Text(before.to_string().into())),
                                 true => continue,

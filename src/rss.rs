@@ -50,7 +50,7 @@ where
     let glob = slug.join("**/*");
 
     let items = ctx
-        .glob_with_files::<T>(glob.as_str())?
+        .glob_files::<T>(glob.as_str())?
         .iter()
         .map(ToFeed::to_feed)
         .collect::<Vec<_>>();

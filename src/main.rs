@@ -86,7 +86,7 @@ struct LinkDate {
 
 fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<Page> {
     let pattern = format!("{}/*.bib", item.file.area);
-    let bibtex = ctx.glob::<Bibtex>(&pattern)?;
+    let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
 
     let parsed = crate::md::parse(
         ctx,
@@ -122,7 +122,7 @@ fn render_page_slideshow(
 
 fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<Page> {
     let pattern = format!("{}/*", item.file.area);
-    let bibtex = ctx.glob::<Bibtex>(&pattern)?;
+    let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
 
     let parsed = crate::md::parse(
         ctx,
@@ -230,14 +230,14 @@ fn run() -> TaskResult<()> {
         ])
         // Generate the home page.
         .add_task("home", |ctx| {
-            let item = ctx.glob_with_file::<Content<Home>>("")?;
+            let item = ctx.glob_file::<Content<Home>>("")?;
             let text = md::parse(&ctx, &item.data.text, &item.file.area, None)?.0;
             let html = html::home(&ctx, &text)?;
             Ok(vec![Page::text("index.html".into(), html)])
         })
         // Generate the about page.
         .add_task("about", |ctx| {
-            let item = ctx.glob_with_file::<Content<Post>>("about")?;
+            let item = ctx.glob_file::<Content<Post>>("about")?;
             let pubkey_ident = ctx.get::<Pubkey>("content/about/pubkey-ident.asc")?;
             let pubkey_email = ctx.get::<Pubkey>("content/about/pubkey-email.asc")?;
 
@@ -266,7 +266,7 @@ fn run() -> TaskResult<()> {
         // -----
         .add_task("posts", |ctx| {
             let pages = ctx
-                .glob_with_files::<Content<Post>>("posts/**/*")?
+                .glob_files::<Content<Post>>("posts/**/*")?
                 .into_iter()
                 .filter(|item| !item.data.meta.draft)
                 .map(|query| render_page_post(&ctx, query))
@@ -278,7 +278,7 @@ fn run() -> TaskResult<()> {
                 "posts/index.html".into(),
                 crate::html::to_list(
                     &ctx,
-                    ctx.glob_with_files::<Content<Post>>("posts/**/*")?
+                    ctx.glob_files::<Content<Post>>("posts/**/*")?
                         .iter()
                         .filter(|item| !item.data.meta.draft)
                         .map(LinkDate::from)
@@ -295,7 +295,7 @@ fn run() -> TaskResult<()> {
         // SLIDESHOWS
         .add_task("slides", |sack| {
             let pages = sack
-                .glob_with_files::<Content<Slideshow>>("slides/**/*")?
+                .glob_files::<Content<Slideshow>>("slides/**/*")?
                 .into_iter()
                 .map(|query| render_page_slideshow(&sack, query))
                 .collect::<Result<_, _>>()?;
@@ -306,7 +306,7 @@ fn run() -> TaskResult<()> {
                 "slides/index.html".into(),
                 crate::html::to_list(
                     &sack,
-                    sack.glob_with_files::<Content<Slideshow>>("slides/**/*")?
+                    sack.glob_files::<Content<Slideshow>>("slides/**/*")?
                         .into_iter()
                         .map(LinkDate::from)
                         .collect(),
@@ -324,7 +324,7 @@ fn run() -> TaskResult<()> {
         .add_task("projects", |ctx| {
             let mut pages = vec![];
 
-            let data = ctx.glob_with_files::<Content<Project>>("projects/**/*")?;
+            let data = ctx.glob_files::<Content<Project>>("projects/**/*")?;
             let list = crate::html::project::render_list(&ctx, data)?;
             pages.push(Page::text("projects/index.html".into(), list));
 
@@ -364,7 +364,7 @@ fn run() -> TaskResult<()> {
         // WIKI
         .add_task("wiki", |sack| {
             let pages = sack
-                .glob_with_files::<Content<Wiki>>("**/*")?
+                .glob_files::<Content<Wiki>>("**/*")?
                 .into_iter()
                 .map(|query| render_page_wiki(&sack, query))
                 .collect::<Result<_, _>>()?;
@@ -392,7 +392,11 @@ fn run() -> TaskResult<()> {
         })
         // microblog
         .add_task("microblog", |ctx| {
-            let data = ctx.glob::<Microblog>("content/twtxt.txt")?.unwrap();
+            let data = ctx
+                .glob::<Microblog>("content/twtxt.txt")?
+                .into_iter()
+                .next()
+                .unwrap();
             let html = html::microblog::render(&ctx, data)?.render().into();
 
             let mut pages = vec![
@@ -416,7 +420,7 @@ fn run() -> TaskResult<()> {
             use std::collections::BTreeMap;
 
             let posts = ctx
-                .glob_with_files::<Content<Post>>("posts/**/*")?
+                .glob_files::<Content<Post>>("posts/**/*")?
                 .into_iter()
                 .filter(|item| !item.data.meta.draft)
                 .collect::<Vec<_>>();
