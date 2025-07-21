@@ -9,7 +9,7 @@ use sequoia_openpgp::anyhow;
 use crate::{Bibliography, Context, Outline, model::Slideshow};
 
 /// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles/styles.scss", "styles/reveal/reveal.scss"];
+const STYLES: &[&str] = &["styles.scss", "reveal/reveal.scss"];
 
 pub fn parse_content(
     ctx: &Context,
@@ -42,7 +42,7 @@ pub fn as_html(
 }
 
 pub fn show(ctx: &Context, fm: &Slideshow, slides: &str) -> String {
-    let script = ctx.get::<Script>("scripts/src/slides/main.ts").unwrap();
+    let script = ctx.get::<Script>("src/slides/main.ts").unwrap();
 
     crate::html::bare(
         ctx,

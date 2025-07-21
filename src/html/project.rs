@@ -9,8 +9,8 @@ use crate::{
     model::Project,
 };
 
-const STYLES_LIST: &[&str] = &["styles/styles.scss", "styles/layouts/projects.scss"];
-const STYLES_PAGE: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
+const STYLES_LIST: &[&str] = &["styles.scss", "layouts/projects.scss"];
+const STYLES_PAGE: &[&str] = &["styles.scss", "layouts/page.scss"];
 
 pub fn render_list(ctx: &Context, mut data: Vec<WithFile<Content<Project>>>) -> TaskResult<String> {
     data.sort_unstable_by(|a, b| a.data.meta.title.cmp(&b.data.meta.title));

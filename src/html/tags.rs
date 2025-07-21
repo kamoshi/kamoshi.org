@@ -10,11 +10,7 @@ use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 use crate::{Context, LinkDate, html::page};
 
 /// Styles relevant to this fragment
-const STYLES: &[&str] = &[
-    "styles/styles.scss",
-    "styles/layouts/list.scss",
-    "styles/layouts/tags.scss",
-];
+const STYLES: &[&str] = &["styles.scss", "layouts/list.scss", "layouts/tags.scss"];
 
 pub fn group(links: &[LinkDate]) -> Vec<(i32, Vec<&LinkDate>)> {
     let mut groups = HashMap::<_, Vec<_>>::new();

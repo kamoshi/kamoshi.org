@@ -5,7 +5,7 @@ tags: [fp, plt]
 desc: >
   Lambda calculus can be used to express any computation, but what does it entail? As it turns out first class functions are the single most powerful abstraction.
 scripts:
-  - scripts/src/flox/main.ts
+  - src/flox/main.ts
 ---
 
 In lambda calculus the entire grammar of the language comprises of just three kinds of expressions

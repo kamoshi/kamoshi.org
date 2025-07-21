@@ -6,7 +6,7 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 use crate::{Bibliography, Context, Outline, model::Wiki};
 
 /// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
+const STYLES: &[&str] = &["styles.scss", "layouts/page.scss"];
 
 pub fn wiki(
     meta: &Wiki,

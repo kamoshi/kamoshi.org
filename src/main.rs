@@ -237,9 +237,9 @@ fn run() -> TaskResult<()> {
         })
         // Generate the about page.
         .add_task("about", |ctx| {
-            let item = ctx.glob_one_with_file::<Content<Post>>("about")?;
-            let pubkey_ident = ctx.get::<Pubkey>("content/about/pubkey-ident.asc")?;
-            let pubkey_email = ctx.get::<Pubkey>("content/about/pubkey-email.asc")?;
+            let item = ctx.glob_one_with_file::<Content<Post>>("about.md")?;
+            let pubkey_ident = ctx.get::<Pubkey>("about/pubkey-ident.asc")?;
+            let pubkey_email = ctx.get::<Pubkey>("about/pubkey-email.asc")?;
 
             let (parsed, outline, _) =
                 crate::md::parse(&ctx, &item.data.text, &item.file.area, None)?;
@@ -373,7 +373,7 @@ fn run() -> TaskResult<()> {
         })
         // MAP
         .add_task("map", |ctx| {
-            let script = ctx.get::<Script>("scripts/src/photos/main.ts")?;
+            let script = ctx.get::<Script>("src/photos/main.ts")?;
 
             Ok(vec![Page::text(
                 "map/index.html".into(),
@@ -393,7 +393,7 @@ fn run() -> TaskResult<()> {
         // microblog
         .add_task("microblog", |ctx| {
             let data = ctx
-                .glob::<Microblog>("content/twtxt.txt")?
+                .glob::<Microblog>("twtxt.txt")?
                 .into_iter()
                 .next()
                 .unwrap();

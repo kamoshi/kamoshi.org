@@ -7,7 +7,7 @@ use crate::model::Post;
 use crate::{Bibliography, Context, Outline};
 
 /// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
+const STYLES: &[&str] = &["styles.scss", "layouts/page.scss"];
 
 pub fn render<'s, 'p, 'html>(
     meta: &'p Post,
@@ -102,7 +102,7 @@ fn render_article(
             }
 
             @if let Some(bib) = &bib.0 {
-                (crate::html::misc::emit_bibliography(&bib, library_path))
+                (crate::html::misc::emit_bibliography(bib, library_path))
             }
         }
     )

@@ -9,7 +9,7 @@ use crate::{
     model::{Microblog, MicroblogEntry},
 };
 
-const STYLES: &[&str] = &["styles/styles.scss", "styles/microblog.scss"];
+const STYLES: &[&str] = &["styles.scss", "microblog.scss"];
 
 pub fn render<'a>(
     ctx: &'a Context,

@@ -149,11 +149,7 @@ where
         sack,
         main,
         title,
-        &[
-            "styles/styles.scss",
-            "styles/photos/leaflet.scss",
-            "styles/layouts/map.scss",
-        ],
+        &["styles.scss", "photos/leaflet.scss", "layouts/map.scss"],
         js,
     )
 }
@@ -224,7 +220,7 @@ where
 }
 
 pub(crate) fn search(ctx: &Context) -> TaskResult<String> {
-    let Svelte { html, init } = ctx.get("scripts/src/search/App.svelte").unwrap();
+    let Svelte { html, init } = ctx.get("src/search/App.svelte").unwrap();
     let component = html(&())?;
 
     let html = maud!(main { (Raw(&component)) });
@@ -232,7 +228,7 @@ pub(crate) fn search(ctx: &Context) -> TaskResult<String> {
         ctx,
         html,
         String::from("Search"),
-        &["styles/styles.scss", "styles/layouts/search.scss"],
+        &["styles.scss", "layouts/search.scss"],
         Cow::Borrowed(&[init.to_string()]),
     )?
     .render()

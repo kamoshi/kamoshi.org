@@ -10,7 +10,7 @@ use crate::{
 };
 
 /// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/page.scss"];
+const STYLES: &[&str] = &["styles.scss", "layouts/page.scss"];
 
 pub fn render<'s, 'p, 'html>(
     ctx: &'s Context,

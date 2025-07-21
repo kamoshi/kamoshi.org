@@ -10,11 +10,7 @@ use crate::{Context, LinkDate, md::parse, model::Post};
 use super::page;
 
 /// Styles relevant to this fragment
-const STYLES: &[&str] = &[
-    "styles/styles.scss",
-    "styles/layouts/home.scss",
-    "styles/components/kanji.scss",
-];
+const STYLES: &[&str] = &["styles.scss", "layouts/home.scss", "components/kanji.scss"];
 
 const INTRO: &str = r#"
 ## かもし
@@ -31,7 +27,7 @@ const INTRO: &str = r#"
 pub(crate) fn home(ctx: &Context, text: &str) -> TaskResult<String> {
     let intro = intro(ctx)?;
     let posts = latest_posts(ctx)?;
-    let kanji = ctx.get::<Svelte<()>>("scripts/src/kanji/App.svelte")?;
+    let kanji = ctx.get::<Svelte<()>>("src/kanji/App.svelte")?;
     let kanji_html = (kanji.html)(&())?;
 
     let main = maud_move!(

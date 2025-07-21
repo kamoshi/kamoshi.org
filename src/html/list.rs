@@ -6,7 +6,7 @@ use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 use crate::{Context, LinkDate, html::page};
 
 /// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles/styles.scss", "styles/layouts/list.scss"];
+const STYLES: &[&str] = &["styles.scss", "layouts/list.scss"];
 
 const ICON_RSS: &str = include_str!("rss.svg");
 
