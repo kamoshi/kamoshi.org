@@ -9,3 +9,4 @@
 2025-07-09T20:10:00.011Z    The sooner you start learning the better you get at it. Just the fact that you know *something* will mean that new pieces of information will have *anything* to stick to, so they will start to collect passively in your brain. If you want to learn something, do it today, start now. You will have easier time remembering more tomorrow...
 2025-07-10T20:13:05.536Z    Life is not a sum of all your choices, it is actually an integral over all your thoughts up until now.
 2025-07-17T21:25:52.824Z    日本語は、読むより書くほうが難しくて、アウトプットが大変ってことね
+2025-07-21T21:53:29.274Z    I've uploaded a new version 0.6.1 of the hauchiwa static site generator to [crates.io](https://crates.io/crates/hauchiwa). It features completely reworked API, but it also way more future-proof.
