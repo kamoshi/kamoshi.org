@@ -66,7 +66,7 @@ impl From<&WithFile<'_, Content<Post>>> for LinkDate {
     fn from(item: &WithFile<Content<Post>>) -> Self {
         Self {
             link: Link {
-                path: Utf8Path::new("/").join(&item.file.slug),
+                path: Utf8Path::new("/").join(&item.file.area),
                 name: item.data.meta.title.clone(),
                 desc: item.data.meta.desc.clone(),
             },
@@ -88,7 +88,7 @@ impl From<WithFile<'_, Content<Slideshow>>> for LinkDate {
     fn from(item: WithFile<Content<Slideshow>>) -> Self {
         Self {
             link: Link {
-                path: Utf8Path::new("/").join(&item.file.slug),
+                path: Utf8Path::new("/").join(&item.file.area),
                 name: item.data.meta.title.clone(),
                 desc: item.data.meta.desc.clone(),
             },

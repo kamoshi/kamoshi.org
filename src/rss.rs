@@ -14,7 +14,7 @@ impl ToFeed for WithFile<'_, Content<Post>> {
     fn to_feed(&self) -> rss::Item {
         ItemBuilder::default()
             .title(self.data.meta.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&self.file.slug).to_string())
+            .link(Utf8Path::new(BASE_URL).join(&self.file.area).to_string())
             .build()
     }
 }
@@ -23,7 +23,7 @@ impl ToFeed for WithFile<'_, Content<Slideshow>> {
     fn to_feed(&self) -> rss::Item {
         ItemBuilder::default()
             .title(self.data.meta.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&self.file.slug).to_string())
+            .link(Utf8Path::new(BASE_URL).join(&self.file.area).to_string())
             .build()
     }
 }
@@ -32,7 +32,7 @@ impl ToFeed for WithFile<'_, Content<Project>> {
     fn to_feed(&self) -> rss::Item {
         ItemBuilder::default()
             .title(self.data.meta.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&self.file.slug).to_string())
+            .link(Utf8Path::new(BASE_URL).join(&self.file.area).to_string())
             .build()
     }
 }

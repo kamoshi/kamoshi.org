@@ -72,7 +72,7 @@ pub(crate) fn show_page_tree<'a>(ctx: &'a Utf8Path, sack: &'a Context) -> impl R
         .unwrap()
         .into_iter()
         .map(|item| Link {
-            path: Utf8Path::new("/").join(&item.file.slug),
+            path: Utf8Path::new("/").join(&item.file.area),
             name: item.data.meta.title.clone(),
             desc: None,
         });

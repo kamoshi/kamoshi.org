@@ -108,7 +108,7 @@ fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<
     .render()
     .into();
 
-    Ok(Page::text(item.file.slug.join("index.html"), buffer))
+    Ok(Page::text(item.file.area.join("index.html"), buffer))
 }
 
 fn render_page_slideshow(
@@ -117,7 +117,7 @@ fn render_page_slideshow(
 ) -> anyhow::Result<Page> {
     let parsed = html::slideshow::parse_content(ctx, &item.data.text, &item.file.area, None)?;
     let buffer = html::slideshow::as_html(&item.data.meta, &parsed.0, ctx, parsed.1, parsed.2);
-    Ok(Page::text(item.file.slug.join("index.html"), buffer))
+    Ok(Page::text(item.file.area.join("index.html"), buffer))
 }
 
 fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<Page> {
@@ -135,12 +135,13 @@ fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<
         &item.data.meta,
         &parsed.0,
         ctx,
-        &item.file.slug,
+        &item.file.area,
         parsed.1,
         &parsed.2,
         bibtex.map(|x| x.path.as_ref()),
     );
-    Ok(Page::text(item.file.slug.join("index.html"), buffer))
+
+    Ok(Page::text(item.file.area.join("index.html"), buffer))
 }
 
 struct Bibtex {
@@ -362,12 +363,15 @@ fn run() -> TaskResult<()> {
             Ok(vec![feed])
         })
         // WIKI
-        .add_task("wiki", |sack| {
-            let pages = sack
-                .glob_with_file::<Content<Wiki>>("**/*")?
-                .into_iter()
-                .map(|query| render_page_wiki(&sack, query))
-                .collect::<Result<_, _>>()?;
+        .add_task("wiki", |ctx| {
+            let mut pages = vec![];
+
+            // let item = ctx.glob_one_with_file("wiki.md")?;
+            // pages.push(render_page_wiki(&ctx, item)?);
+
+            for item in ctx.glob_with_file::<Content<Wiki>>("**/*")? {
+                pages.push(render_page_wiki(&ctx, item)?);
+            }
 
             Ok(pages)
         })
