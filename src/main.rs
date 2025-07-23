@@ -1,10 +1,16 @@
+mod about;
+mod home;
 mod hook;
 mod html;
 mod md;
 mod model;
+mod posts;
+mod projects;
 mod rss;
+mod slides;
 mod ts;
 mod typst;
+mod wiki;
 
 use std::borrow::Cow;
 use std::process::{Command, ExitCode};
@@ -12,16 +18,17 @@ use std::process::{Command, ExitCode};
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::loader::{Content, Script, yaml};
+use hauchiwa::loader::{Content, Script};
 use hauchiwa::{Hook, Page, TaskResult, Website, WithFile, loader};
 use hayagriva::Library;
 use hypertext::Renderable;
-use model::{Home, Post, Project, Slideshow, Wiki};
-use sequoia_openpgp::parse::Parse;
-use sequoia_openpgp::{Cert, anyhow};
+use model::{Post, Slideshow, Wiki};
+use sequoia_openpgp::anyhow;
 
-use crate::model::{Microblog, MicroblogEntry, Pubkey};
+use crate::model::{Microblog, MicroblogEntry};
 
+/// Base path for content files
+const CONTENT: &str = "content";
 const BASE_URL: &str = "https://kamoshi.org/";
 
 #[derive(Parser, Debug, Clone)]
@@ -160,34 +167,21 @@ fn main() -> ExitCode {
 }
 
 fn run() -> TaskResult<()> {
-    /// Base path for content files
-    const BASE: &str = "content";
-
     let args = Args::parse();
 
     let mut website = Website::config()
         .load_git(".")?
+        .add_plugins([
+            home::PLUGIN,
+            about::PLUGIN,
+            posts::PLUGIN,
+            slides::PLUGIN,
+            projects::PLUGIN,
+            wiki::PLUGIN,
+        ])
         .add_loaders([
-            loader::glob_content(BASE, "index.md", yaml::<Home>),
-            loader::glob_content(BASE, "posts/**/*.md", yaml::<Post>),
-            loader::glob_content(BASE, "slides/**/*.md", yaml::<Slideshow>),
-            loader::glob_content(BASE, "slides/**/*.lhs", yaml::<Slideshow>),
-            loader::glob_content(BASE, "wiki/**/*.md", yaml::<Wiki>),
-            loader::glob_content(BASE, "projects/**/*.md", yaml::<Project>),
-            loader::glob_content(BASE, "about/index.md", yaml::<Post>),
-            // .asc -> Pubkey
-            loader::glob_assets(BASE, "about/*.asc", |_, data| {
-                Ok(Pubkey {
-                    fingerprint: Cert::from_reader(data.as_slice())?
-                        .primary_key()
-                        .key()
-                        .fingerprint()
-                        .to_spaced_hex(),
-                    data: String::from_utf8(data)?.to_string(),
-                })
-            }),
             // twtxt.txt
-            loader::glob_assets(BASE, "twtxt.txt", |_, data| {
+            loader::glob_assets(CONTENT, "twtxt.txt", |_, data| {
                 let data = String::from_utf8_lossy(&data);
                 let entries = data
                     .lines()
@@ -205,7 +199,7 @@ fn run() -> TaskResult<()> {
                 })
             }),
             // .bib -> Bibtex
-            loader::glob_assets(BASE, "**/*.bib", |rt, data| {
+            loader::glob_assets(CONTENT, "**/*.bib", |rt, data| {
                 let path = rt.store(&data, "bib")?;
                 let text = String::from_utf8_lossy(&data);
                 let data = hayagriva::io::from_biblatex_str(&text).unwrap();
@@ -213,9 +207,9 @@ fn run() -> TaskResult<()> {
                 Ok(Bibtex { path, data })
             }),
             // images
-            loader::glob_images(BASE, "**/*.jpg"),
-            loader::glob_images(BASE, "**/*.png"),
-            loader::glob_images(BASE, "**/*.gif"),
+            loader::glob_images(CONTENT, "**/*.jpg"),
+            loader::glob_images(CONTENT, "**/*.png"),
+            loader::glob_images(CONTENT, "**/*.gif"),
             // stylesheets
             loader::glob_styles("styles", "**/[!_]*.scss"),
             // scripts
@@ -229,152 +223,6 @@ fn run() -> TaskResult<()> {
                 Ok(reqwest::get(URL).await?.text().await?)
             }),
         ])
-        // Generate the home page.
-        .add_task("home", |ctx| {
-            let item = ctx.glob_one_with_file::<Content<Home>>("")?;
-            let text = md::parse(&ctx, &item.data.text, &item.file.area, None)?.0;
-            let html = html::home(&ctx, &text)?;
-            Ok(vec![Page::text("index.html".into(), html)])
-        })
-        // Generate the about page.
-        .add_task("about", |ctx| {
-            let item = ctx.glob_one_with_file::<Content<Post>>("about.md")?;
-            let pubkey_ident = ctx.get::<Pubkey>("about/pubkey-ident.asc")?;
-            let pubkey_email = ctx.get::<Pubkey>("about/pubkey-email.asc")?;
-
-            let (parsed, outline, _) =
-                crate::md::parse(&ctx, &item.data.text, &item.file.area, None)?;
-            let html = crate::html::about::render(
-                &ctx,
-                &item,
-                &parsed,
-                &outline,
-                pubkey_ident,
-                pubkey_email,
-            )?
-            .render()
-            .into();
-
-            let pages = vec![
-                Page::text("about/index.html".into(), html),
-                Page::text("pubkey_ident.asc".into(), pubkey_ident.data.to_owned()),
-                Page::text("pubkey_email.asc".into(), pubkey_email.data.to_owned()),
-            ];
-
-            Ok(pages)
-        })
-        // Posts
-        // -----
-        .add_task("posts", |ctx| {
-            let pages = ctx
-                .glob_with_file::<Content<Post>>("posts/**/*")?
-                .into_iter()
-                .filter(|item| !item.data.meta.draft)
-                .map(|query| render_page_post(&ctx, query))
-                .collect::<Result<_, _>>()?;
-            Ok(pages)
-        })
-        .add_task("posts_list", |ctx| {
-            Ok(vec![Page::text(
-                "posts/index.html".into(),
-                crate::html::to_list(
-                    &ctx,
-                    ctx.glob_with_file::<Content<Post>>("posts/**/*")?
-                        .iter()
-                        .filter(|item| !item.data.meta.draft)
-                        .map(LinkDate::from)
-                        .collect(),
-                    "Posts".into(),
-                    "/posts/rss.xml",
-                ),
-            )])
-        })
-        .add_task("posts_feed", |sack| {
-            let feed = rss::generate_feed::<Content<Post>>(sack, "posts", "Kamoshi.org Posts")?;
-            Ok(vec![feed])
-        })
-        // SLIDESHOWS
-        .add_task("slides", |sack| {
-            let pages = sack
-                .glob_with_file::<Content<Slideshow>>("slides/**/*")?
-                .into_iter()
-                .map(|query| render_page_slideshow(&sack, query))
-                .collect::<Result<_, _>>()?;
-            Ok(pages)
-        })
-        .add_task("slides_list", |sack| {
-            Ok(vec![Page::text(
-                "slides/index.html".into(),
-                crate::html::to_list(
-                    &sack,
-                    sack.glob_with_file::<Content<Slideshow>>("slides/**/*")?
-                        .into_iter()
-                        .map(LinkDate::from)
-                        .collect(),
-                    "Slideshows".into(),
-                    "/slides/rss.xml",
-                ),
-            )])
-        })
-        .add_task("slides_feed", |sack| {
-            let feed =
-                rss::generate_feed::<Content<Slideshow>>(sack, "slides", "Kamoshi.org Slides")?;
-            Ok(vec![feed])
-        })
-        // PROJECTS
-        .add_task("projects", |ctx| {
-            let mut pages = vec![];
-
-            let data = ctx.glob_with_file::<Content<Project>>("projects/**/*")?;
-            let list = crate::html::project::render_list(&ctx, data)?;
-            pages.push(Page::text("projects/index.html".into(), list));
-
-            let text = ctx.get::<String>("hauchiwa")?;
-            let (text, outline, _) = crate::md::parse(&ctx, text, "".into(), None)?;
-            let html = html::project::render_page(&ctx, &text, outline)?;
-            pages.push(Page::text("projects/hauchiwa/index.html".into(), html));
-
-            Ok(pages)
-        })
-        // .add_task(|sack| {
-        //     let query = sack.get_content("projects/flox")?;
-        //     let (parsed, outline, bib) =
-        //         html::post::parse_content(query.content, &sack, query.area, None);
-        //     let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
-        //     Ok(vec![(query.slug.join("index.html"), out_buff)])
-        // })
-        // .add_task(|sack| {
-        //     Ok(vec![(
-        //         "projects/index.html".into(),
-        //         crate::html::to_list(
-        //             &sack,
-        //             sack.query_content::<Project>("projects/**/*")?
-        //                 .into_iter()
-        //                 .map(LinkDate::from)
-        //                 .collect(),
-        //             "Projects".into(),
-        //             "/projects/rss.xml",
-        //         ),
-        //     )])
-        // })
-        .add_task("projects_feed", |sack| {
-            let feed =
-                rss::generate_feed::<Content<Project>>(sack, "projects", "Kamoshi.org Projects")?;
-            Ok(vec![feed])
-        })
-        // WIKI
-        .add_task("wiki", |ctx| {
-            let mut pages = vec![];
-
-            // let item = ctx.glob_one_with_file("wiki.md")?;
-            // pages.push(render_page_wiki(&ctx, item)?);
-
-            for item in ctx.glob_with_file::<Content<Wiki>>("**/*")? {
-                pages.push(render_page_wiki(&ctx, item)?);
-            }
-
-            Ok(pages)
-        })
         // MAP
         .add_task("map", |ctx| {
             let script = ctx.get::<Script>("src/photos/main.ts")?;
