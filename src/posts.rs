@@ -1,8 +1,12 @@
-use hauchiwa::loader::{self, Content, yaml};
-use hauchiwa::{Page, Plugin};
+use camino::Utf8Path;
+use hauchiwa::loader::{self, Content, Script, yaml};
+use hauchiwa::{Page, Plugin, RuntimeError};
+use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
+use crate::markdown::Article;
 use crate::model::Post;
-use crate::{CONTENT, Global, LinkDate, render_page_post};
+use crate::shared::{make_page, render_bibliography};
+use crate::{Bibtex, CONTENT, Context, Global, LinkDate, Outline};
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config
@@ -11,18 +15,41 @@ pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
             loader::glob_content(CONTENT, "posts/**/*.md", yaml::<Post>),
         ])
         .add_task("posts", |ctx| {
-            let pages = ctx
+            let mut pages = vec![];
+
+            for item in ctx
                 .glob_with_file::<Content<Post>>("posts/**/*")?
                 .into_iter()
                 .filter(|item| !item.data.meta.draft)
-                .map(|query| render_page_post(&ctx, query))
-                .collect::<Result<_, _>>()?;
+            {
+                let pattern = format!("{}/*.bib", item.file.area);
+                let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
+
+                let article = crate::markdown::parse(
+                    &ctx,
+                    &item.data.text,
+                    &item.file.area,
+                    bibtex.map(|x| &x.data),
+                )?;
+
+                let buffer = render(
+                    &ctx,
+                    &item.data.meta,
+                    article,
+                    item.file.info.as_ref(),
+                    bibtex.map(|x| x.path.as_ref()),
+                    &item.data.meta.tags,
+                )?
+                .render();
+
+                pages.push(Page::text(item.file.area.join("index.html"), buffer))
+            }
             Ok(pages)
         })
         .add_task("posts_list", |ctx| {
             Ok(vec![Page::text(
-                "posts/index.html".into(),
-                crate::html::to_list(
+                "posts/index.html",
+                crate::shared::to_list(
                     &ctx,
                     ctx.glob_with_file::<Content<Post>>("posts/**/*")?
                         .iter()
@@ -31,7 +58,8 @@ pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
                         .collect(),
                     "Posts".into(),
                     "/posts/rss.xml",
-                ),
+                )?
+                .render(),
             )])
         })
         .add_task("posts_feed", |sack| {
@@ -40,3 +68,134 @@ pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
             Ok(vec![feed])
         });
 });
+
+/// Styles relevant to this fragment
+const STYLES: &[&str] = &["styles.scss", "layouts/page.scss"];
+
+pub fn render<'ctx>(
+    ctx: &'ctx Context,
+    meta: &'ctx Post,
+    article: Article,
+    info: Option<&'ctx hauchiwa::GitInfo>,
+    library_path: Option<&'ctx Utf8Path>,
+    tags: &'ctx [String],
+) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
+    let main = maud_move!(
+        main {
+            // Outline (left)
+            (render_outline(&article.outline))
+            // Article (center)
+            (render_article(meta, &article, library_path))
+            // Metadata (right)
+            (render_metadata(ctx, meta, info, tags))
+        }
+    );
+
+    let scripts: Vec<_> = meta
+        .scripts
+        .iter()
+        .flatten()
+        .map(|path| ctx.get::<Script>(path).map(|x| x.path.to_string()))
+        .collect::<Result<_, _>>()?;
+
+    make_page(ctx, main, meta.title.clone(), STYLES, scripts.into())
+}
+
+pub fn render_outline(outline: &Outline) -> impl Renderable {
+    maud_move!(
+        aside .outline {
+            section {
+                h2 {
+                    a href="#top" { "Outline" }
+                }
+                nav #table-of-contents {
+                    ul {
+                        @for (title, id) in &outline.0 {
+                            li {
+                                a href=(format!("#{id}")) {
+                                    (title)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+fn render_article(
+    meta: &Post,
+    article: &Article,
+    library_path: Option<&Utf8Path>,
+) -> impl Renderable {
+    maud_move!(
+        article .article {
+            section .paper {
+                header {
+                    h1 #top {
+                        (&meta.title)
+                    }
+                }
+                section .wiki-article__markdown.markdown {
+                    (Raw(&article.text))
+                }
+            }
+
+            @if let Some(bib) = &article.bibliography.0 {
+                (render_bibliography(bib, library_path))
+            }
+        }
+    )
+}
+
+pub fn render_metadata(
+    ctx: &Context,
+    meta: &Post,
+    info: Option<&hauchiwa::GitInfo>,
+    tags: &[String],
+) -> impl Renderable {
+    maud_move!(
+        aside .tiles {
+            section .metadata {
+                h2 {
+                    "Metadata"
+                }
+                div {
+                    img src="/static/svg/lucide/file-plus-2.svg" title="Added";
+                    time datetime=(meta.date.format("%Y-%m-%d").to_string()) {
+                        (meta.date.format("%Y, %B %d").to_string())
+                    }
+                }
+                @if let Some(info) = info {
+                    div {
+                        img src="/static/svg/lucide/file-clock.svg" title="Updated";
+                        time datetime=(info.commit_date.format("%Y-%m-%d").to_string()) {
+                            (info.commit_date.format("%Y, %B %d").to_string())
+                        }
+                    }
+                    div {
+                        img src="/static/svg/lucide/git-graph.svg" title="Link to commit";
+                        a href=(format!("{}/commit/{}", &ctx.get_globals().data.link, &info.abbreviated_hash)) {
+                            (&info.abbreviated_hash)
+                        }
+                    }
+                }
+                @if !tags.is_empty() {
+                    div .tags {
+                        img src="/static/svg/lucide/tag.svg" title="Tags";
+                        ul {
+                            @for tag in tags {
+                                li {
+                                    a href=(format!("/tags/{tag}")) {
+                                        (tag)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}

@@ -3,9 +3,10 @@ use std::{
     process::{Command, Stdio},
 };
 
+use hauchiwa::RuntimeError;
 use sequoia_openpgp::anyhow;
 
-pub fn render_typst(code: &str) -> anyhow::Result<String> {
+pub fn render_typst(code: &str) -> Result<String, RuntimeError> {
     let mut child = Command::new("typst")
         .arg("c")
         .arg("--format=svg")

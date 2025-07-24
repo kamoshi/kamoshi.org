@@ -1,11 +1,14 @@
 use hauchiwa::loader::{self, Content, yaml};
-use hauchiwa::{Page, Plugin};
-use hypertext::Renderable as _;
+use hauchiwa::{Page, Plugin, RuntimeError, WithFile};
+use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
 
+use crate::markdown::Article;
 use crate::model::{Post, Pubkey};
-use crate::{CONTENT, Global};
+use crate::posts::render_metadata;
+use crate::shared::make_page;
+use crate::{CONTENT, Context, Global, Outline};
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config
@@ -28,25 +31,95 @@ pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
             let pubkey_ident = ctx.get::<Pubkey>("about/pubkey-ident.asc")?;
             let pubkey_email = ctx.get::<Pubkey>("about/pubkey-email.asc")?;
 
-            let (parsed, outline, _) =
-                crate::md::parse(&ctx, &item.data.text, &item.file.area, None)?;
-            let html = crate::html::about::render(
-                &ctx,
-                &item,
-                &parsed,
-                &outline,
-                pubkey_ident,
-                pubkey_email,
-            )?
-            .render()
-            .into();
+            let article = crate::markdown::parse(&ctx, &item.data.text, &item.file.area, None)?;
+            let html = render(&ctx, &item, article, pubkey_ident, pubkey_email)?.render();
 
             let pages = vec![
-                Page::text("about/index.html".into(), html),
-                Page::text("pubkey_ident.asc".into(), pubkey_ident.data.to_owned()),
-                Page::text("pubkey_email.asc".into(), pubkey_email.data.to_owned()),
+                Page::html_with_file(&item.file.area, html, item.file.clone()),
+                Page::text("pubkey_ident.asc", pubkey_ident.data.clone()),
+                Page::text("pubkey_email.asc", pubkey_email.data.clone()),
             ];
 
             Ok(pages)
         });
 });
+
+/// Styles relevant to this fragment
+const STYLES: &[&str] = &["styles.scss", "layouts/page.scss"];
+
+pub fn render<'ctx>(
+    ctx: &'ctx Context,
+    item: &'ctx WithFile<Content<Post>>,
+    article: Article,
+    pubkey_ident: &'ctx Pubkey,
+    pubkey_email: &'ctx Pubkey,
+) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
+    let main = maud_move!(
+        main {
+            // Outline (left)
+            (render_outline(&article.outline))
+            // Article (center)
+            article .article {
+                section .paper {
+                    header {
+                        h1 #top {
+                            (&item.data.meta.title)
+                        }
+                    }
+                    section .wiki-article__markdown.markdown {
+                        (Raw(&article.text))
+
+                        h2 {
+                           "Keys"
+                        }
+                        p {
+                            "GPG public key"
+                        }
+                        a href="/pubkey_ident.asc" {
+                            (&pubkey_ident.fingerprint)
+                        }
+                        p {
+                            "GPG public key (email)"
+                        }
+                        a href="/pubkey_email.asc" {
+                            (&pubkey_email.fingerprint)
+                        }
+                    }
+                }
+            }
+            // Metadata (right)
+            (render_metadata(ctx, &item.data.meta, item.file.info.as_ref(), &[]))
+        }
+    );
+
+    make_page(
+        ctx,
+        main,
+        item.data.meta.title.clone(),
+        STYLES,
+        Default::default(),
+    )
+}
+
+fn render_outline(outline: &Outline) -> impl Renderable {
+    maud_move!(
+        aside .outline {
+            section {
+                h2 {
+                    a href="#top" { "Outline" }
+                }
+                nav #table-of-contents {
+                    ul {
+                        @for (title, id) in &outline.0 {
+                            li {
+                                a href=(format!("#{id}")) {
+                                    (title)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}

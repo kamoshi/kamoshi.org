@@ -2,6 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::LazyLock;
 
 use camino::Utf8Path;
+use hauchiwa::RuntimeError;
 use hauchiwa::loader::Image;
 use hayagriva::{
     BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
@@ -14,7 +15,6 @@ use pulldown_cmark::{
     CodeBlockKind, CowStr, Event, Options as OptsMarkdown, Parser, Tag, TagEnd, TextMergeStream,
 };
 use regex::Regex;
-use sequoia_openpgp::anyhow;
 
 use crate::{Bibliography, Context, Outline, ts, typst};
 
@@ -66,12 +66,18 @@ pub fn md_parse_simple(content: &str) -> String {
     parsed
 }
 
+pub struct Article {
+    pub text: String,
+    pub outline: Outline,
+    pub bibliography: Bibliography,
+}
+
 pub fn parse(
     ctx: &Context,
     text: &str,
     path: &Utf8Path,
     library: Option<&Library>,
-) -> anyhow::Result<(String, Outline, Bibliography)> {
+) -> Result<Article, RuntimeError> {
     let mut outline = vec![];
 
     let stream = Parser::new_ext(text, OPTS_MARKDOWN);
@@ -94,10 +100,14 @@ pub fn parse(
         None => (Vec::from_iter(stream), None),
     };
 
-    let mut parsed = String::new();
-    pulldown_cmark::html::push_html(&mut parsed, events.into_iter());
+    let mut text = String::new();
+    pulldown_cmark::html::push_html(&mut text, events.into_iter());
 
-    Ok((parsed, Outline(outline), Bibliography(bibliography)))
+    Ok(Article {
+        text,
+        outline: Outline(outline),
+        bibliography: Bibliography(bibliography),
+    })
 }
 
 // StreamHeading
@@ -216,7 +226,7 @@ impl<'a, I> Iterator for StreamCodeBlock<'a, I>
 where
     I: Iterator<Item = Event<'a>>,
 {
-    type Item = anyhow::Result<Event<'a>>;
+    type Item = Result<Event<'a>, RuntimeError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         for event in self.iter.by_ref() {

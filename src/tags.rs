@@ -4,10 +4,52 @@ use std::{
 };
 
 use chrono::Datelike;
-use hauchiwa::TaskResult;
+use hauchiwa::loader::Content;
+use hauchiwa::{Page, Plugin, RuntimeError};
 use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 
-use crate::{Context, LinkDate, html::page};
+use crate::{Context, Global, LinkDate, model::Post, shared::make_page};
+
+pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
+    config.add_task("tags", |ctx| {
+        use std::collections::BTreeMap;
+
+        let posts = ctx
+            .glob_with_file::<Content<Post>>("posts/**/*")?
+            .into_iter()
+            .filter(|item| !item.data.meta.draft)
+            .collect::<Vec<_>>();
+
+        let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
+
+        for post in &posts {
+            for tag in &post.data.meta.tags {
+                tag_map
+                    .entry(tag.clone())
+                    .or_default()
+                    .push(LinkDate::from(post));
+            }
+        }
+
+        let mut pages = Vec::new();
+
+        // Render individual tag pages
+        for (tag, links) in &tag_map {
+            let path = format!("tags/{tag}/index.html");
+
+            let data = group(links);
+            let html = render_tag(&ctx, &data, tag.to_owned())?;
+
+            pages.push(Page::text(path, html.render()));
+        }
+
+        // Render global tag index
+        // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
+        // pages.push(Page::text("tags/index.html".into(), index.render().into()));
+
+        Ok(pages)
+    });
+});
 
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles.scss", "layouts/list.scss", "layouts/tags.scss"];
@@ -35,7 +77,7 @@ pub fn render_tag<'ctx>(
     ctx: &'ctx Context,
     links: &[(i32, Vec<&'ctx LinkDate>)],
     title: String,
-) -> TaskResult<impl Renderable> {
+) -> Result<impl Renderable, RuntimeError> {
     let heading = title.clone();
     let list = maud_move!(
         main .page-list-main {
@@ -51,7 +93,7 @@ pub fn render_tag<'ctx>(
         }
     );
 
-    page(ctx, list, title, STYLES, Cow::default())
+    make_page(ctx, list, title, STYLES, Cow::default())
 }
 
 fn section(year: i32, group: &[&LinkDate]) -> impl Renderable {
@@ -92,7 +134,7 @@ pub fn tag_cloud<'ctx>(
     ctx: &'ctx Context,
     tag_map: &'ctx BTreeMap<String, Vec<LinkDate>>,
     title: &'ctx str,
-) -> TaskResult<impl Renderable> {
+) -> Result<impl Renderable, RuntimeError> {
     let sorted = {
         let mut vec: Vec<_> = tag_map.iter().collect();
         vec.sort_by_key(|(tag, _)| tag.to_lowercase());
@@ -120,5 +162,5 @@ pub fn tag_cloud<'ctx>(
         }
     };
 
-    page(ctx, main, "Tag index".into(), STYLES, Cow::default())
+    make_page(ctx, main, "Tag index".into(), STYLES, Cow::default())
 }

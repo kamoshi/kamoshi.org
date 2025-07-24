@@ -1,6 +1,6 @@
 use camino::Utf8Path;
 use hauchiwa::loader::Content;
-use hauchiwa::{Page, TaskResult, WithFile};
+use hauchiwa::{Page, RuntimeError, WithFile};
 use rss::{ChannelBuilder, ItemBuilder};
 
 use crate::model::{Post, Project};
@@ -41,7 +41,7 @@ pub(crate) fn generate_feed<T>(
     ctx: Context,
     slug: &'static str,
     title: &'static str,
-) -> TaskResult<Page>
+) -> Result<Page, RuntimeError>
 where
     T: 'static,
     for<'a> WithFile<'a, T>: ToFeed,

@@ -1,31 +1,31 @@
 mod about;
 mod home;
 mod hook;
-mod html;
-mod md;
+mod markdown;
 mod model;
 mod posts;
 mod projects;
 mod rss;
+mod shared;
 mod slides;
+mod tags;
 mod ts;
+mod twtxt;
 mod typst;
 mod wiki;
 
-use std::borrow::Cow;
 use std::process::{Command, ExitCode};
 
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::loader::{Content, Script};
-use hauchiwa::{Hook, Page, TaskResult, Website, WithFile, loader};
+use hauchiwa::loader::{self, Script, Svelte};
+use hauchiwa::{Hook, Page, RuntimeError, Website};
 use hayagriva::Library;
-use hypertext::Renderable;
-use model::{Post, Slideshow, Wiki};
-use sequoia_openpgp::anyhow;
+use hypertext::{Raw, Renderable};
+use model::Slideshow;
 
-use crate::model::{Microblog, MicroblogEntry};
+use crate::shared::{make_fullscreen, make_page};
 
 /// Base path for content files
 const CONTENT: &str = "content";
@@ -91,66 +91,6 @@ struct LinkDate {
     pub date: DateTime<Utc>,
 }
 
-fn render_page_post(ctx: &Context, item: WithFile<Content<Post>>) -> TaskResult<Page> {
-    let pattern = format!("{}/*.bib", item.file.area);
-    let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
-
-    let parsed = crate::md::parse(
-        ctx,
-        &item.data.text,
-        &item.file.area,
-        bibtex.map(|x| &x.data),
-    )?;
-
-    let buffer = crate::html::post::render(
-        &item.data.meta,
-        &parsed.0,
-        ctx,
-        item.file.info.as_ref(),
-        parsed.1,
-        parsed.2,
-        bibtex.map(|x| x.path.as_ref()),
-        &item.data.meta.tags,
-    )?
-    .render()
-    .into();
-
-    Ok(Page::text(item.file.area.join("index.html"), buffer))
-}
-
-fn render_page_slideshow(
-    ctx: &Context,
-    item: WithFile<Content<Slideshow>>,
-) -> anyhow::Result<Page> {
-    let parsed = html::slideshow::parse_content(ctx, &item.data.text, &item.file.area, None)?;
-    let buffer = html::slideshow::as_html(&item.data.meta, &parsed.0, ctx, parsed.1, parsed.2);
-    Ok(Page::text(item.file.area.join("index.html"), buffer))
-}
-
-fn render_page_wiki(ctx: &Context, item: WithFile<Content<Wiki>>) -> TaskResult<Page> {
-    let pattern = format!("{}/*", item.file.area);
-    let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
-
-    let parsed = crate::md::parse(
-        ctx,
-        &item.data.text,
-        &item.file.area,
-        bibtex.map(|x| &x.data),
-    )?;
-
-    let buffer = crate::html::wiki::wiki(
-        &item.data.meta,
-        &parsed.0,
-        ctx,
-        &item.file.area,
-        parsed.1,
-        &parsed.2,
-        bibtex.map(|x| x.path.as_ref()),
-    );
-
-    Ok(Page::text(item.file.area.join("index.html"), buffer))
-}
-
 struct Bibtex {
     path: Utf8PathBuf,
     data: Library,
@@ -166,7 +106,7 @@ fn main() -> ExitCode {
     }
 }
 
-fn run() -> TaskResult<()> {
+fn run() -> Result<(), RuntimeError> {
     let args = Args::parse();
 
     let mut website = Website::config()
@@ -178,26 +118,10 @@ fn run() -> TaskResult<()> {
             slides::PLUGIN,
             projects::PLUGIN,
             wiki::PLUGIN,
+            twtxt::PLUGIN,
+            tags::PLUGIN,
         ])
         .add_loaders([
-            // twtxt.txt
-            loader::glob_assets(CONTENT, "twtxt.txt", |_, data| {
-                let data = String::from_utf8_lossy(&data);
-                let entries = data
-                    .lines()
-                    .filter(|line| {
-                        let line = line.trim_start();
-                        !line.is_empty() && !line.starts_with('#')
-                    })
-                    .map(str::parse::<MicroblogEntry>)
-                    .collect::<Result<Vec<_>, _>>()
-                    .unwrap();
-
-                Ok(Microblog {
-                    entries,
-                    data: data.to_string(),
-                })
-            }),
             // .bib -> Bibtex
             loader::glob_assets(CONTENT, "**/*.bib", |rt, data| {
                 let path = rt.store(&data, "bib")?;
@@ -223,86 +147,30 @@ fn run() -> TaskResult<()> {
                 Ok(reqwest::get(URL).await?.text().await?)
             }),
         ])
-        // MAP
-        .add_task("map", |ctx| {
-            let script = ctx.get::<Script>("src/photos/main.ts")?;
+        .add_task("other", |ctx| {
+            let mut pages = vec![];
 
-            Ok(vec![Page::text(
-                "map/index.html".into(),
-                crate::html::map(&ctx, Cow::Borrowed(&[script.path.to_string()]))?
-                    .render()
-                    .to_owned()
-                    .into(),
-            )])
-        })
-        // SEARCH
-        .add_task("search", |sack| {
-            Ok(vec![Page::text(
-                "search/index.html".into(),
-                crate::html::search(&sack)?,
-            )])
-        })
-        // microblog
-        .add_task("microblog", |ctx| {
-            let data = ctx
-                .glob::<Microblog>("twtxt.txt")?
-                .into_iter()
-                .next()
-                .unwrap();
-            let html = html::microblog::render(&ctx, data)?.render().into();
+            {
+                let script = ctx.get::<Script>("src/photos/main.ts")?;
+                let script = vec![script.path.to_string()];
 
-            let mut pages = vec![
-                Page::text("twtxt.txt".into(), data.data.clone()),
-                Page::text("thoughts/index.html".into(), html),
-            ];
+                let html = Raw(r#"<div id="map" style="height: 100%; width: 100%"></div>"#);
+                let html = make_fullscreen(&ctx, html, "Map".into(), script.into())?.render();
 
-            for entry in &data.entries {
-                let html = html::microblog::render_entry(&ctx, entry)?.render().into();
-
-                pages.push(Page::text(
-                    format!("thoughts/{}/index.html", entry.date.timestamp()).into(),
-                    html,
-                ));
+                pages.push(Page::html("map", html));
             }
 
-            Ok(pages)
-        })
-        // Tags
-        .add_task("tags", |ctx| {
-            use std::collections::BTreeMap;
+            {
+                const STYLES: &[&str] = &["styles.scss", "layouts/search.scss"];
+                let Svelte { html, init } = ctx.get("src/search/App.svelte")?;
+                let component = html(&())?;
+                let script = vec![init.to_string()];
 
-            let posts = ctx
-                .glob_with_file::<Content<Post>>("posts/**/*")?
-                .into_iter()
-                .filter(|item| !item.data.meta.draft)
-                .collect::<Vec<_>>();
+                let html = Raw(format!(r#"<main>{component}</main>"#));
+                let html = make_page(&ctx, html, "Search".into(), STYLES, script.into())?.render();
 
-            let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
-
-            for post in &posts {
-                for tag in &post.data.meta.tags {
-                    tag_map
-                        .entry(tag.clone())
-                        .or_default()
-                        .push(LinkDate::from(post));
-                }
+                pages.push(Page::html("search", html));
             }
-
-            let mut pages = Vec::new();
-
-            // Render individual tag pages
-            for (tag, links) in &tag_map {
-                let path = format!("tags/{tag}/index.html");
-
-                let data = crate::html::tags::group(links);
-                let html = crate::html::tags::render_tag(&ctx, &data, tag.to_owned())?;
-
-                pages.push(Page::text(path.into(), html.render().into()));
-            }
-
-            // Render global tag index
-            // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
-            // pages.push(Page::text("tags/index.html".into(), index.render().into()));
 
             Ok(pages)
         })

@@ -107,19 +107,6 @@ pub struct Project {
     pub desc: Option<String>,
 }
 
-// impl From<QueryContent<'_, Project>> for LinkDate {
-//     fn from(query: QueryContent<Project>) -> Self {
-//         Self {
-//             link: Link {
-//                 path: Utf8Path::new("/").join(query.slug),
-//                 name: query.meta.title.clone(),
-//                 desc: query.meta.desc.clone(),
-//             },
-//             date: query.meta.date,
-//         }
-//     }
-// }
-
 /// Represents a wiki page
 #[derive(Deserialize, Debug, Clone)]
 pub struct Wiki {

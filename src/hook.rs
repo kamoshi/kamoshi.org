@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fs};
 
 use camino::Utf8Path;
-use hauchiwa::{Page, TaskResult};
+use hauchiwa::{Page, RuntimeError};
 use pagefind::{api::PagefindIndex, options::PagefindServiceConfig};
 use sitemap_rs::{
     url::{ChangeFrequency, Url},
@@ -9,7 +9,7 @@ use sitemap_rs::{
 };
 use tokio::runtime::Builder;
 
-pub fn build_pagefind(pages: &[&Page]) -> TaskResult<()> {
+pub fn build_pagefind(pages: &[&Page]) -> Result<(), RuntimeError> {
     Builder::new_multi_thread()
         .enable_all()
         .build()?
@@ -18,7 +18,7 @@ pub fn build_pagefind(pages: &[&Page]) -> TaskResult<()> {
     Ok(())
 }
 
-async fn index_pages(pages: &[&Page]) -> TaskResult<()> {
+async fn index_pages(pages: &[&Page]) -> Result<(), RuntimeError> {
     let config = PagefindServiceConfig::builder().build();
     let mut index = PagefindIndex::new(Some(config))?;
 
@@ -35,7 +35,7 @@ async fn index_pages(pages: &[&Page]) -> TaskResult<()> {
     Ok(())
 }
 
-pub fn build_sitemap(pages: &[&Page]) -> TaskResult<()> {
+pub fn build_sitemap(pages: &[&Page]) -> Result<(), RuntimeError> {
     let urls = pages
         .iter()
         .map(|page| &page.path)
