@@ -8,7 +8,9 @@ use hauchiwa::loader::Content;
 use hauchiwa::{Page, Plugin, RuntimeError};
 use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
 
-use crate::{Context, Global, LinkDate, model::Post, shared::make_page};
+use crate::{Context, Global, LinkDate, model::Post};
+
+use super::make_page;
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config.add_task("tags", |ctx| {

@@ -7,8 +7,9 @@ use hayagriva::Library;
 use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::model::Slideshow;
-use crate::shared::make_bare;
 use crate::{CONTENT, Context, Global, LinkDate};
+
+use super::{make_bare, to_list};
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config
@@ -35,9 +36,7 @@ pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
                     .map(LinkDate::from)
                     .collect();
 
-                let html =
-                    crate::shared::to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml")?
-                        .render();
+                let html = to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml")?.render();
 
                 pages.push(Page::html("slides", html));
             }

@@ -5,8 +5,9 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::markdown::Article;
 use crate::model::Post;
-use crate::shared::{make_page, render_bibliography};
 use crate::{Bibtex, CONTENT, Context, Global, LinkDate, Outline};
+
+use super::{make_page, render_bibliography, to_list};
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config
@@ -49,7 +50,7 @@ pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
         .add_task("posts_list", |ctx| {
             Ok(vec![Page::text(
                 "posts/index.html",
-                crate::shared::to_list(
+                to_list(
                     &ctx,
                     ctx.glob_with_file::<Content<Post>>("posts/**/*")?
                         .iter()

@@ -5,8 +5,9 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::markdown::md_parse_simple;
 use crate::model::{Microblog, MicroblogEntry};
-use crate::shared::make_page;
 use crate::{CONTENT, Context, Global};
+
+use super::make_page;
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config

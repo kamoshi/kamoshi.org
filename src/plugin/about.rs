@@ -6,9 +6,10 @@ use sequoia_openpgp::parse::Parse;
 
 use crate::markdown::Article;
 use crate::model::{Post, Pubkey};
-use crate::posts::render_metadata;
-use crate::shared::make_page;
 use crate::{CONTENT, Context, Global, Outline};
+
+use super::make_page;
+use super::posts::render_metadata;
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config

@@ -4,9 +4,10 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::markdown::Article;
 use crate::model::Project;
-use crate::posts::render_outline;
-use crate::shared::make_page;
 use crate::{CONTENT, Context, Global};
+
+use super::make_page;
+use super::posts::render_outline;
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config

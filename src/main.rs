@@ -1,18 +1,10 @@
-mod about;
-mod home;
 mod hook;
 mod markdown;
 mod model;
-mod posts;
-mod projects;
+mod plugin;
 mod rss;
-mod shared;
-mod slides;
-mod tags;
 mod ts;
-mod twtxt;
 mod typst;
-mod wiki;
 
 use std::process::{Command, ExitCode};
 
@@ -25,7 +17,7 @@ use hayagriva::Library;
 use hypertext::{Raw, Renderable};
 use model::Slideshow;
 
-use crate::shared::{make_fullscreen, make_page};
+use crate::plugin::{make_fullscreen, make_page};
 
 /// Base path for content files
 const CONTENT: &str = "content";
@@ -112,14 +104,14 @@ fn run() -> Result<(), RuntimeError> {
     let mut website = Website::config()
         .load_git(".")?
         .add_plugins([
-            home::PLUGIN,
-            about::PLUGIN,
-            posts::PLUGIN,
-            slides::PLUGIN,
-            projects::PLUGIN,
-            wiki::PLUGIN,
-            twtxt::PLUGIN,
-            tags::PLUGIN,
+            plugin::home::PLUGIN,
+            plugin::about::PLUGIN,
+            plugin::posts::PLUGIN,
+            plugin::slides::PLUGIN,
+            plugin::projects::PLUGIN,
+            plugin::wiki::PLUGIN,
+            plugin::twtxt::PLUGIN,
+            plugin::tags::PLUGIN,
         ])
         .add_loaders([
             // .bib -> Bibtex

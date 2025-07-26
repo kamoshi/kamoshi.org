@@ -1,3 +1,12 @@
+pub mod about;
+pub mod home;
+pub mod posts;
+pub mod projects;
+pub mod slides;
+pub mod tags;
+pub mod twtxt;
+pub mod wiki;
+
 use std::{borrow::Cow, collections::HashMap};
 
 use camino::Utf8Path;
@@ -73,7 +82,7 @@ fn make_navbar() -> impl Renderable {
                     img .p-nav__logo-icon height="48px" width="51px" src="/static/svg/aya.svg" alt="";
                     div .p-nav__logo-text {
                         div .p-nav__logo-main {
-                            (Raw(include_str!("assets/logotype.svg")))
+                            (Raw(include_str!("../assets/logotype.svg")))
                         }
                         div #p-nav-splash .p-nav__logo-sub {
                           "夢現の遥か彼方"
@@ -199,7 +208,7 @@ pub fn make_page<'ctx>(
 /// Styles relevant to this fragment
 const STYLES: &[&str] = &["styles.scss", "layouts/list.scss"];
 
-const ICON_RSS: &str = include_str!("assets/rss.svg");
+const ICON_RSS: &str = include_str!("../assets/rss.svg");
 
 pub(crate) fn to_list(
     sack: &Context,

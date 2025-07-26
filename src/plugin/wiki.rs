@@ -7,8 +7,9 @@ use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
 
 use crate::markdown::Article;
 use crate::model::Wiki;
-use crate::shared::{make_page, render_bibliography};
 use crate::{Bibtex, CONTENT, Context, Global, Link};
+
+use super::{make_page, render_bibliography};
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config
