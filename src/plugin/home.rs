@@ -1,6 +1,6 @@
 use hauchiwa::loader::{self, Content, Svelte, yaml};
 use hauchiwa::{Page, Plugin, RuntimeError};
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move, maud_static};
+use hypertext::{Raw, maud_static, prelude::*};
 
 use crate::markdown::parse;
 use crate::model::Post;
@@ -41,10 +41,10 @@ const INTRO: &str = r#"
 pub(crate) fn render(ctx: &Context, text: &str) -> Result<String, RuntimeError> {
     let intro = intro(ctx)?;
     let posts = latest_posts(ctx)?;
-    let kanji = ctx.get::<Svelte<()>>("src/kanji/App.svelte")?;
+    let kanji = ctx.get::<Svelte<()>>("kanji/App.svelte")?;
     let kanji_html = (kanji.html)(&())?;
 
-    let main = maud_move!(
+    let main = maud!(
         main .l-home {
             article .l-home__article.markdown {
                 (Raw(text))
@@ -72,7 +72,7 @@ pub(crate) fn render(ctx: &Context, text: &str) -> Result<String, RuntimeError> 
 fn intro(ctx: &Context) -> Result<impl Renderable, RuntimeError> {
     let article = parse(ctx, INTRO, "/".into(), None)?;
 
-    let html = maud_move!(
+    let html = maud!(
         section .p-card.intro-jp lang="ja-JP" {
             (Raw(&article.text))
         }
@@ -107,7 +107,7 @@ fn latest_posts(sack: &Context) -> Result<impl Renderable, RuntimeError> {
         list
     };
 
-    let html = maud_move!(
+    let html = maud!(
         section .p-card {
             h2 .p-card__heading {
                 "Latest"

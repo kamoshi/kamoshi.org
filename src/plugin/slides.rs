@@ -4,7 +4,7 @@ use camino::Utf8Path;
 use hauchiwa::loader::{self, Content, Script, yaml};
 use hauchiwa::{Page, Plugin, RuntimeError};
 use hayagriva::Library;
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
+use hypertext::{Raw, prelude::*};
 
 use crate::model::Slideshow;
 use crate::{CONTENT, Context, Global, LinkDate};
@@ -84,10 +84,10 @@ pub fn render<'ctx>(
     fm: &'ctx Slideshow,
     slides: &'ctx str,
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let script = ctx.get::<Script>("src/slides/main.ts")?;
+    let script = ctx.get::<Script>("slides/main.ts")?;
     let script = vec![script.path.to_string()];
 
-    let html = maud_move!(
+    let html = maud!(
         div .reveal {
             div .slides {
                 (Raw(slides))

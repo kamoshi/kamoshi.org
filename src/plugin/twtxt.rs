@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use hauchiwa::{Page, Plugin, RuntimeError, loader};
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
+use hypertext::{Raw, prelude::*};
 
 use crate::markdown::md_parse_simple;
 use crate::model::{Microblog, MicroblogEntry};
@@ -63,7 +63,7 @@ pub fn render<'ctx>(
     let mut entries = microblog.entries.clone();
     entries.sort_by(|a, b| b.date.cmp(&a.date));
 
-    let main = maud_move!(
+    let main = maud!(
         main {
             section .microblog {
                 @for entry in &entries {
@@ -87,7 +87,7 @@ pub fn render_entry<'ctx>(
     ctx: &'ctx Context,
     entry: &'ctx MicroblogEntry,
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let main = maud_move!(
+    let main = maud!(
         main {
             section .microblog {
                 article {

@@ -6,7 +6,7 @@ use std::{
 use chrono::Datelike;
 use hauchiwa::loader::Content;
 use hauchiwa::{Page, Plugin, RuntimeError};
-use hypertext::{GlobalAttributes, Renderable, html_elements, maud_move};
+use hypertext::prelude::*;
 
 use crate::{Context, Global, LinkDate, model::Post};
 
@@ -81,7 +81,7 @@ pub fn render_tag<'ctx>(
     title: String,
 ) -> Result<impl Renderable, RuntimeError> {
     let heading = title.clone();
-    let list = maud_move!(
+    let list = maud!(
         main .page-list-main {
             article .page-list {
                 header .directory-header .markdown {
@@ -99,7 +99,7 @@ pub fn render_tag<'ctx>(
 }
 
 fn section(year: i32, group: &[&LinkDate]) -> impl Renderable {
-    maud_move!(
+    maud!(
         section .page-list-year {
             header .page-list-year__header {
                 h2 { (year) }
@@ -113,7 +113,7 @@ fn section(year: i32, group: &[&LinkDate]) -> impl Renderable {
 
 fn link(data: &LinkDate) -> impl Renderable {
     let time = data.date.format("%m/%d");
-    maud_move!(
+    maud!(
         a .page-item href=(data.link.path.as_str()) {
             div .page-item__header {
                 h3 {
@@ -143,7 +143,7 @@ pub fn tag_cloud<'ctx>(
         vec
     };
 
-    let main = maud_move! {
+    let main = maud! {
         main {
             article {
                 header {

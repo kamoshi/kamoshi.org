@@ -118,7 +118,7 @@ pub mod svelte {
     use ts_rs::TS;
 
     #[derive(Serialize, TS)]
-    #[ts(export, export_to = "../scripts/src/search/props.ts")]
+    #[ts(export, export_to = "../scripts/search/props.ts")]
     pub struct Search {
         pub test: &'static str,
     }

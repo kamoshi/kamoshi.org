@@ -127,12 +127,12 @@ fn run() -> Result<(), RuntimeError> {
             loader::glob_images(CONTENT, "**/*.png"),
             loader::glob_images(CONTENT, "**/*.gif"),
             // svelte components
-            loader::glob_svelte::<()>(CONTENT, "**/App.svelte"),
-            loader::glob_svelte::<()>("scripts", "src/*/App.svelte"),
+            loader::glob_svelte::<()>("scripts", "*/App.svelte"),
+            // loader::glob_svelte::<Mermaid>("scripts", "mermaid/Mermaid.svelte"),
             // stylesheets
             loader::glob_styles("styles", "**/[!_]*.scss"),
             // scripts
-            loader::glob_scripts("scripts", "src/*/main.ts"),
+            loader::glob_scripts("scripts", "*/main.ts"),
             // github
             loader::async_asset("hauchiwa", async |_| {
                 const URL: &str =
@@ -145,7 +145,7 @@ fn run() -> Result<(), RuntimeError> {
             let mut pages = vec![];
 
             {
-                let script = ctx.get::<Script>("src/photos/main.ts")?;
+                let script = ctx.get::<Script>("photos/main.ts")?;
                 let script = vec![script.path.to_string()];
 
                 let html = Raw(r#"<div id="map" style="height: 100%; width: 100%"></div>"#);
@@ -156,7 +156,7 @@ fn run() -> Result<(), RuntimeError> {
 
             {
                 const STYLES: &[&str] = &["styles.scss", "layouts/search.scss"];
-                let Svelte { html, init } = ctx.get("src/search/App.svelte")?;
+                let Svelte { html, init } = ctx.get("search/App.svelte")?;
                 let component = html(&())?;
                 let script = vec![init.to_string()];
 

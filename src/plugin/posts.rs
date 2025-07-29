@@ -1,7 +1,7 @@
 use camino::Utf8Path;
 use hauchiwa::loader::{self, Content, Script, yaml};
 use hauchiwa::{Page, Plugin, RuntimeError};
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
+use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
 use crate::model::Post;
@@ -92,7 +92,7 @@ pub fn render<'ctx>(
         scripts.push(script.path.to_string());
     }
 
-    let main = maud_move!(
+    let main = maud!(
         main {
             // Outline (left)
             (render_outline(&article.outline))
@@ -107,7 +107,7 @@ pub fn render<'ctx>(
 }
 
 pub fn render_outline(outline: &Outline) -> impl Renderable {
-    maud_move!(
+    maud!(
         aside .outline {
             section {
                 h2 {
@@ -134,7 +134,7 @@ fn render_article(
     article: &Article,
     library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
-    maud_move!(
+    maud!(
         article .article {
             section .paper {
                 header {
@@ -160,7 +160,7 @@ pub fn render_metadata(
     info: Option<&hauchiwa::GitInfo>,
     tags: &[String],
 ) -> impl Renderable {
-    maud_move!(
+    maud!(
         aside .tiles {
             section .metadata {
                 h2 {

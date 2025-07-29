@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use camino::Utf8Path;
 use hauchiwa::loader::{self, Content, yaml};
 use hauchiwa::{Page, Plugin, RuntimeError};
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
+use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
 use crate::model::Wiki;
@@ -57,7 +57,13 @@ pub fn render<'ctx>(
     slug: &'ctx Utf8Path,
     library_path: Option<&'ctx Utf8Path>,
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let main = maud_move!(
+    let mut scripts = vec![];
+
+    for path in &article.scripts {
+        scripts.push(path.to_string());
+    }
+
+    let main = maud!(
         main .wiki-main {
             // Outline
             aside .outline {
@@ -72,7 +78,7 @@ pub fn render<'ctx>(
         }
     );
 
-    make_page(ctx, main, meta.title.to_owned(), STYLES, Default::default())
+    make_page(ctx, main, meta.title.to_owned(), STYLES, scripts.into())
 }
 
 fn render_article(
@@ -80,7 +86,7 @@ fn render_article(
     article: &Article,
     library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
-    maud_move!(
+    maud!(
         article .article {
             section .paper {
                 header {
@@ -150,7 +156,7 @@ pub(crate) fn show_page_tree<'ctx>(
     let tree = TreePage::from_iter(tree);
     let parts: Vec<_> = ctx.iter().collect();
 
-    maud_move!(
+    maud!(
         h2 .link-tree__heading {
           // {pages.chain(x => x.prefix)
           //   .map(pathify)
@@ -175,7 +181,7 @@ fn show_page_tree_level<'ctx>(
         subs
     };
 
-    maud_move!(
+    maud!(
         ul .link-tree__nav-list {
             @for (key, next) in &subs {
                 li .link-tree__nav-list-item {

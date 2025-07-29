@@ -1,6 +1,6 @@
 use hauchiwa::loader::{self, Content, yaml};
 use hauchiwa::{Page, Plugin, RuntimeError, WithFile};
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
+use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
 use crate::model::Project;
@@ -69,7 +69,7 @@ pub fn render_list(
 ) -> Result<String, RuntimeError> {
     data.sort_unstable_by(|a, b| a.data.meta.title.cmp(&b.data.meta.title));
 
-    let main = maud_move! {
+    let main = maud! {
         main {
             article .project-list-wrap {
                 h1 {
@@ -99,7 +99,7 @@ pub fn render_list(
 }
 
 fn render_tile(project: &Project) -> impl Renderable {
-    maud_move! {
+    maud! {
         a .project-list-tile href=(&project.link) {
             h2 { (&project.title) }
             ul .tech-stack {
@@ -120,7 +120,7 @@ pub fn render_page<'ctx>(
     ctx: &'ctx Context,
     article: &'ctx Article,
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let html = maud_move!(
+    let html = maud!(
         main {
             // Outline (left)
             (render_outline(&article.outline))

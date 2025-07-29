@@ -7,12 +7,16 @@ pub mod tags;
 pub mod twtxt;
 pub mod wiki;
 
-use std::{borrow::Cow, collections::HashMap};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    ops::Deref,
+};
 
 use camino::Utf8Path;
 use chrono::Datelike as _;
 use hauchiwa::{RuntimeError, loader::Style};
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud, maud_move};
+use hypertext::{Raw, prelude::*};
 
 use crate::{Context, LinkDate};
 
@@ -29,7 +33,7 @@ fn make_head<'ctx>(
         .map(|&style| ctx.get::<Style>(style))
         .collect::<Result<_, _>>()?;
 
-    let html = maud_move!(
+    let html = maud!(
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1";
         meta name="generator" content=(ctx.generator);
@@ -49,7 +53,7 @@ fn make_head<'ctx>(
             link rel="stylesheet" href=(style.path.as_str());
         }
 
-        @for path in script.as_ref() {
+        @for path in HashSet::<&String>::from_iter(script.deref()) {
             script type="module" src=(path) {}
         }
 
@@ -118,7 +122,7 @@ pub fn make_footer(sack: &Context) -> impl Renderable {
         .join("src/commit")
         .join(&globals.data.hash);
 
-    maud_move!(
+    maud!(
         footer .footer {
             div .left {
                 div {
@@ -152,7 +156,7 @@ pub fn make_bare<'ctx>(
 ) -> Result<impl Renderable, RuntimeError> {
     let head = make_head(sack, title, styles, script)?;
 
-    Ok(maud_move!(
+    Ok(maud!(
         !DOCTYPE
         html lang="en" {
             (head)
@@ -170,7 +174,7 @@ pub fn make_fullscreen<'ctx>(
     title: String,
     script: Cow<'ctx, [String]>,
 ) -> Result<impl Renderable, RuntimeError> {
-    let main = maud_move!(
+    let main = maud!(
         // navbar
         (make_navbar())
         // main
@@ -193,7 +197,7 @@ pub fn make_page<'ctx>(
     styles: &'static [&str],
     script: Cow<'ctx, [String]>,
 ) -> Result<impl Renderable, RuntimeError> {
-    let main = maud_move!(
+    let main = maud!(
         // navbar
         (make_navbar())
         // main
@@ -233,7 +237,7 @@ pub(crate) fn to_list(
     groups.sort_by(|a, b| b.0.cmp(&a.0));
 
     let heading = title.clone();
-    let list = maud_move!(
+    let list = maud!(
         main .page-list-main {
             article .page-list {
                 header .directory-header .markdown {
@@ -254,7 +258,7 @@ pub(crate) fn to_list(
 }
 
 fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {
-    maud_move!(
+    maud!(
         section .page-list-year {
             header .page-list-year__header {
                 h2 { (year) }
@@ -268,7 +272,7 @@ fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {
 
 fn link(data: &LinkDate) -> impl Renderable + '_ {
     let time = data.date.format("%m/%d");
-    maud_move!(
+    maud!(
         a .page-item href=(data.link.path.as_str()) {
             div .page-item__header {
                 h3 {
@@ -288,7 +292,7 @@ fn link(data: &LinkDate) -> impl Renderable + '_ {
 }
 
 pub fn render_bibliography(bib: &[String], library_path: Option<&Utf8Path>) -> impl Renderable {
-    maud_move!(
+    maud!(
         section .bibliography {
             header {
                 h2 {

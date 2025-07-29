@@ -1,6 +1,6 @@
 use hauchiwa::loader::{self, Content, yaml};
 use hauchiwa::{Page, Plugin, RuntimeError, WithFile};
-use hypertext::{GlobalAttributes, Raw, Renderable, html_elements, maud_move};
+use hypertext::{Raw, prelude::*};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
 
@@ -55,7 +55,7 @@ pub fn render<'ctx>(
     pubkey_ident: &'ctx Pubkey,
     pubkey_email: &'ctx Pubkey,
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let main = maud_move!(
+    let main = maud!(
         main {
             // Outline (left)
             (render_outline(&article.outline))
@@ -103,7 +103,7 @@ pub fn render<'ctx>(
 }
 
 fn render_outline(outline: &Outline) -> impl Renderable {
-    maud_move!(
+    maud!(
         aside .outline {
             section {
                 h2 {
