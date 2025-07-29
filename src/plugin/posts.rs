@@ -81,6 +81,17 @@ pub fn render<'ctx>(
     library_path: Option<&'ctx Utf8Path>,
     tags: &'ctx [String],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
+    let mut scripts = vec![];
+
+    for path in &article.scripts {
+        scripts.push(path.to_string());
+    }
+
+    for script in meta.scripts.iter().flatten() {
+        let script = ctx.get::<Script>(script)?;
+        scripts.push(script.path.to_string());
+    }
+
     let main = maud_move!(
         main {
             // Outline (left)
@@ -91,13 +102,6 @@ pub fn render<'ctx>(
             (render_metadata(ctx, meta, info, tags))
         }
     );
-
-    let scripts: Vec<_> = meta
-        .scripts
-        .iter()
-        .flatten()
-        .map(|path| ctx.get::<Script>(path).map(|x| x.path.to_string()))
-        .collect::<Result<_, _>>()?;
 
     make_page(ctx, main, meta.title.clone(), STYLES, scripts.into())
 }

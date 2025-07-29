@@ -1,9 +1,10 @@
 use std::collections::{HashMap, VecDeque};
+use std::fmt::Write as _;
 use std::sync::LazyLock;
 
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::RuntimeError;
-use hauchiwa::loader::Image;
+use hauchiwa::loader::{Image, Svelte};
 use hayagriva::{
     BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
     Library,
@@ -48,12 +49,28 @@ fn render_directive_block(name: &str, content: &str) -> Event<'static> {
     }
 }
 
-fn render_directive_container(name: &str, events: Vec<Event>) -> Event<'static> {
-    match name {
+fn render_container(
+    ctx: &Context,
+    path: &Utf8Path,
+    script: &mut Vec<Utf8PathBuf>,
+) -> impl FnMut(&mut DirectiveContainer) -> Event<'static> {
+    move |directive| match directive.name.as_str() {
         "sidenote" => {
-            let mut parsed = String::new();
-            pulldown_cmark::html::push_html(&mut parsed, events.into_iter());
-            Event::Html(format!("<aside class='marginnote'>{parsed}</aside>").into())
+            let mut buffer = String::new();
+            write!(&mut buffer, r#"<aside class="marginnote">"#).unwrap();
+            pulldown_cmark::html::push_html(&mut buffer, directive.content.drain(..));
+            write!(&mut buffer, r#"</aside>"#).unwrap();
+            Event::Html(buffer.into())
+        }
+        "svelte" => {
+            let path_rel = path.join(directive.identifier.as_ref().unwrap());
+            let Svelte { html, init } = ctx.get(path_rel.as_str()).unwrap();
+            let buffer = html(&()).unwrap();
+            match directive.content_inline.as_deref() {
+                Some("static") => (),
+                _ => script.push(init.to_path_buf()),
+            }
+            Event::Html(buffer.into())
         }
         other => panic!("Unknown block directive {other}"),
     }
@@ -69,6 +86,7 @@ pub fn md_parse_simple(content: &str) -> String {
 pub struct Article {
     pub text: String,
     pub outline: Outline,
+    pub scripts: Vec<Utf8PathBuf>,
     pub bibliography: Bibliography,
 }
 
@@ -79,6 +97,7 @@ pub fn parse(
     library: Option<&Library>,
 ) -> Result<Article, RuntimeError> {
     let mut outline = vec![];
+    let mut scripts = vec![];
 
     let stream = Parser::new_ext(text, OPTS_MARKDOWN);
     let stream = TextMergeStream::new(stream);
@@ -91,7 +110,8 @@ pub fn parse(
     let stream = stream.map(render_latex);
     let stream = stream.map(render_emoji);
     let stream = StreamRuby::new(stream);
-    let stream = StreamDirectiveContainer::new(stream, render_directive_container);
+
+    let stream = StreamDirectiveContainer::new(stream, render_container(ctx, path, &mut scripts));
     let stream = StreamDirectiveBlock::new(stream, render_directive_block);
     let stream = StreamDirectiveInline::new(stream, render_directive_inline);
 
@@ -106,6 +126,7 @@ pub fn parse(
     Ok(Article {
         text,
         outline: Outline(outline),
+        scripts,
         bibliography: Bibliography(bibliography),
     })
 }
@@ -367,40 +388,67 @@ fn render_emoji(event: Event) -> Event {
 // StreamDirectiveContainer
 
 // The regexes are defined without end-of-line anchors so we can split if they occur in the middle.
-static RE_DIRECTIVE_CONTAINER_START: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^:::+\s*(\w*)\s*$").unwrap());
+static RE_DIRECTIVE_CONTAINER_START: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(concat!(
+        r"^:::+",          // starting :::
+        r"\s*",            // optional space
+        r"(\w*)",          // directive name (e.g., 'note')
+        r"\s*",            //
+        r"(?:\[(.*?)\])?", // optional [inline content]
+        r"\s*",            //
+        r"(?:\((.*?)\))?", // optional (identifier)
+        r"\s*",            //
+        r"(?:\{(.*?)\})?", // optional {key=value}
+        r"\s*$"            // optional trailing space
+    ))
+    .unwrap()
+});
+
 static RE_DIRECTIVE_CONTAINER_END: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^:::+\s*$").unwrap());
 
+struct DirectiveContainer<'a> {
+    name: String,
+    content: Vec<Event<'a>>,
+    content_inline: Option<String>,
+    identifier: Option<String>,
+    attributes: Option<String>,
+}
+
 /// The iterator adapter which processes directive containers.
-struct StreamDirectiveContainer<'a, I>
+struct StreamDirectiveContainer<'ctx, 'a, I>
 where
     I: Iterator<Item = Event<'a>>,
+    'ctx: 'a,
 {
     inner: I,
     /// A stack to hold "split‐off" events that need to be returned.
     queue: VecDeque<Event<'a>>,
     /// The current state: either not in a container or accumulating a container.
-    state: Option<(String, Vec<Event<'a>>)>,
+    state: Option<DirectiveContainer<'a>>,
     /// The callback to process the container block.
-    callback: fn(&str, Vec<Event<'a>>) -> Event<'static>,
+    callback: Box<dyn FnMut(&mut DirectiveContainer<'a>) -> Event<'static> + 'ctx>,
 }
 
-impl<'a, I> StreamDirectiveContainer<'a, I>
+impl<'ctx, 'a, I> StreamDirectiveContainer<'ctx, 'a, I>
 where
     I: Iterator<Item = Event<'a>>,
+    'ctx: 'a,
 {
-    fn new(inner: I, callback: fn(&str, Vec<Event<'a>>) -> Event<'static>) -> Self {
+    fn new(
+        inner: I,
+        callback: impl FnMut(&mut DirectiveContainer<'a>) -> Event<'static> + 'ctx,
+    ) -> Self {
         Self {
             inner,
             queue: VecDeque::new(),
             state: None,
-            callback,
+            callback: Box::new(callback),
         }
     }
 }
 
-impl<'a, I> Iterator for StreamDirectiveContainer<'a, I>
+impl<'ctx, 'a, I> Iterator for StreamDirectiveContainer<'ctx, 'a, I>
 where
     I: Iterator<Item = Event<'a>>,
 {
@@ -417,82 +465,88 @@ where
                 Event::Text(line) => match &mut self.state {
                     None => {
                         // look for the start marker
-                        if let Some(m) = RE_DIRECTIVE_CONTAINER_START.find(&line) {
-                            let start_idx = m.start();
-                            let end_idx = m.end();
-
-                            let before = &line[..start_idx];
-                            let marker = &line[start_idx..end_idx];
-                            let after = &line[end_idx..];
-
-                            if let Some(captures) = RE_DIRECTIVE_CONTAINER_START.captures(marker) {
-                                let ident = captures
-                                    .get(1)
-                                    .map(|m| m.as_str())
-                                    .unwrap_or("")
-                                    .to_string();
-
-                                let mut stack = Vec::new();
-
-                                // if there's text after the marker, push it inside.
-                                if !after.is_empty() {
-                                    stack.push(Event::Text(after.to_string().into()));
-                                }
-
-                                self.state = Some((ident, stack));
-                            }
-
-                            // if there's text before the marker, we can return it instantly!
-                            match before.is_empty() {
-                                false => return Some(Event::Text(before.to_string().into())),
-                                true => continue,
-                            }
-                        } else {
+                        let matched = match RE_DIRECTIVE_CONTAINER_START.find(&line) {
+                            Some(matched) => matched,
                             // no marker found, return the event as-is.
-                            return Some(Event::Text(line));
+                            None => return Some(Event::Text(line)),
+                        };
+
+                        let idx_s = matched.start();
+                        let idx_e = matched.end();
+
+                        let before = &line[..idx_s];
+                        let marker = &line[idx_s..idx_e];
+                        let after = &line[idx_e..];
+
+                        if let Some(caps) = RE_DIRECTIVE_CONTAINER_START.captures(marker) {
+                            let directive = DirectiveContainer {
+                                name: caps
+                                    .get(1)
+                                    .map(|m| m.as_str().to_string())
+                                    .unwrap_or_default(),
+                                content: if after.is_empty() {
+                                    Vec::new()
+                                } else {
+                                    // if there's text after the marker, push it inside.
+                                    vec![Event::Text(after.to_string().into())]
+                                },
+                                content_inline: caps.get(2).map(|m| m.as_str().to_string()),
+                                identifier: caps.get(3).map(|m| m.as_str().to_string()),
+                                attributes: caps.get(4).map(|m| m.as_str().to_string()),
+                            };
+
+                            self.state = Some(directive);
+                        }
+
+                        // if there's text before the marker, we can return it instantly!
+                        match before.is_empty() {
+                            false => return Some(Event::Text(before.to_string().into())),
+                            true => continue,
                         }
                     }
                     // inside a directive block: accumulate events until the end marker is found.
-                    Some((ident, events)) => {
-                        if let Some(m) = RE_DIRECTIVE_CONTAINER_END.find(&line) {
-                            let start_idx = m.start();
-                            let end_idx = m.end();
-
-                            // Split this line into text before the marker, the marker, and after.
-                            let before = &line[..start_idx];
-                            let after = &line[end_idx..];
-
-                            // Append any text before the marker to our accumulated events.
-                            if !before.is_empty() {
-                                events.push(Event::Text(before.to_string().into()));
+                    Some(directive) => {
+                        let matched = match RE_DIRECTIVE_CONTAINER_END.find(&line) {
+                            Some(matched) => matched,
+                            None => {
+                                directive.content.push(Event::Text(line));
+                                continue;
                             }
+                        };
 
-                            // The marker indicates the end of the directive container.
-                            // Invoke the callback with the collected events.
-                            let directive_event = (self.callback)(ident, std::mem::take(events));
+                        let idx_s = matched.start();
+                        let idx_e = matched.end();
 
-                            // Reset our state back to normal.
-                            self.state = None;
+                        let before = &line[..idx_s];
+                        let after = &line[idx_e..];
 
-                            // If there is text after the end marker, push it to the stack.
-                            if !after.is_empty() {
-                                self.queue.push_back(Event::Text(after.to_string().into()));
-                            }
-
-                            return Some(directive_event);
-                        } else {
-                            // No end marker found on this line – accumulate it.
-                            events.push(Event::Text(line));
-                            // Continue the loop to read the next event.
-                            continue;
+                        // Append any text before the marker to our accumulated events.
+                        if !before.is_empty() {
+                            directive
+                                .content
+                                .push(Event::Text(before.to_string().into()));
                         }
+
+                        // The marker indicates the end of the directive container.
+                        // Invoke the callback with the collected events.
+                        let directive_event = (self.callback)(directive);
+
+                        // Reset our state back to normal.
+                        self.state = None;
+
+                        // If there is text after the end marker, push it to the stack.
+                        if !after.is_empty() {
+                            self.queue.push_back(Event::Text(after.to_string().into()));
+                        }
+
+                        return Some(directive_event);
                     }
                 },
                 // For non-text events, if we're inside a directive, accumulate them.
                 event => match &mut self.state {
                     // inside container
-                    Some((_, vec)) => {
-                        vec.push(event);
+                    Some(directive) => {
+                        directive.content.push(event);
                         continue;
                     }
                     // outside container

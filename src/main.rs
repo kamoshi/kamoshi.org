@@ -126,10 +126,12 @@ fn run() -> Result<(), RuntimeError> {
             loader::glob_images(CONTENT, "**/*.jpg"),
             loader::glob_images(CONTENT, "**/*.png"),
             loader::glob_images(CONTENT, "**/*.gif"),
+            // svelte components
+            loader::glob_svelte::<()>(CONTENT, "**/App.svelte"),
+            loader::glob_svelte::<()>("scripts", "src/*/App.svelte"),
             // stylesheets
             loader::glob_styles("styles", "**/[!_]*.scss"),
             // scripts
-            loader::glob_svelte::<()>("scripts", "src/*/App.svelte"),
             loader::glob_scripts("scripts", "src/*/main.ts"),
             // github
             loader::async_asset("hauchiwa", async |_| {

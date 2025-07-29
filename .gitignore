@@ -33,14 +33,16 @@
 content/.obsidian/
 content/.stfolder/
 
+!deno.json
+!deno.lock
+!tsconfig.json
+!tsconfig.*.json
+!**/*.js
+!**/*.ts
+!**/*.svelte
 !scripts/
 !scripts/**/
-!scripts/**/*.js
-!scripts/**/*.ts
-!scripts/**/*.svelte
-!scripts/**/*.json
-!scripts/**/*.lock
-scripts/**/node_modules/
+node_modules/
 
 !tools/
 !tools/**/
