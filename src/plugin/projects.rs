@@ -7,7 +7,6 @@ use crate::model::Project;
 use crate::{CONTENT, Context, Global};
 
 use super::make_page;
-use super::posts::render_outline;
 
 pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
     config
@@ -123,7 +122,7 @@ pub fn render_page<'ctx>(
     let html = maud!(
         main {
             // Outline (left)
-            (render_outline(&article.outline))
+            (&article.outline)
             // Article (center)
             article .article {
                 section .paper {

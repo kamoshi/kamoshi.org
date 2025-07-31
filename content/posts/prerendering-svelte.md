@@ -23,7 +23,7 @@ interactivity" approach gives you the speed benefits of a static site with the
 rich user experience of a single-page application.
 
 
-### Getting Svelte to speak HTML
+## Getting Svelte to speak HTML
 
 Before I could think about interactivity, I needed a way to simply turn a Svelte
 component into static HTML during my Rust project's build process. This is the
@@ -37,7 +37,7 @@ the `build.rs` script. For the actual JavaScript bundling, I reached for
 script orchestrate esbuild to handle the Svelte compilation in two distinct
 passes:
 
-#### The server-side build:
+### The server-side build:
 
 The first task was to compile `Button.svelte` into code that could run on the
 server (in a Node.js environment) and spit out raw HTML. A neat trick here was
@@ -72,7 +72,7 @@ const html = data.out;
 // ... then this HTML is saved to Button.html
 ```
 
-#### The client-side build
+### The client-side build
 
 At the same time, a second esbuild process compiled the exact same
 `Button.svelte` component, but this time for the browser. This created a
@@ -118,7 +118,7 @@ But, of course, it was just an unresponsive and static button. We had our
 island, but it was still lifeless, waiting for that spark of hydration.
 
 
-### The hydration riddle
+## The hydration riddle
 
 With the static HTML already rendered, the next crucial step was to infuse it
 with interactivity. I uncommented the commented-out `<script>` tag, and reloaded
@@ -217,7 +217,7 @@ correct. Svelte 5 introduced a top-level `hydrate` function from its main
 export.
 
 
-### The Astro introspection
+## The Astro introspection
 
 When faced with a fundamental challenge, the wisest approach is often to study
 how other frameworks have already solved it. My investigation turned to
@@ -295,7 +295,7 @@ Svelte's internal state (like `first_child_getter`), allowing it to attach to
 the existing DOM without errors.
 
 
-### Deno detour
+## Deno detour
 
 Armed with this critical new understanding, the project embarked on a slight
 detour: migrating the build script from Node.js to **Deno**. Deno, a modern and
@@ -377,7 +377,7 @@ issue, and it seemed too brittle anyway, so I decided to try a different
 approach.
 
 
-### More robust architecture
+## More robust architecture
 
 Armed with the hard-won lessons from Astro and the battle scars from esbuild
 module resolution quirks, the final, elegant, and robust solution began to take
@@ -386,7 +386,7 @@ while adhering to the core architectural needs of Svelte's hydration model.
 
 Here's the detailed anatomy of the final implementation:
 
-#### Simplicity on the surface
+### Simplicity on the surface
 
 I've integrated this solution into my static site generator `hauchiwa`. The
 complexity of the underlying build process is encapsulated behind a clean,
@@ -457,7 +457,7 @@ where
 }
 ```
 
-#### Rust orchestrates Deno
+### Rust orchestrates Deno
 
 The core of the Svelte integration lies in three distinct Deno calls,
 meticulously orchestrated by Rust's `Command` API. This pattern allows us to
@@ -678,7 +678,7 @@ fn compile_svelte_init(file: &Utf8Path, hash_class: Hash32) -> anyhow::Result<St
   `JSON.parse`s this attribute.
 
 
-#### Bringing it all together
+### Bringing it all together
 
 The `html` closure within the `Svelte<P>` struct is where the final pieces of
 the puzzle align. It creates the final piece of HTML, which contains prerendered
@@ -734,7 +734,7 @@ When the browser receives this HTML:
   interactive, without re-rendering the entire DOM.
 
 
-### Some future considerations
+## Some future considerations
 
 The journey to a fully hydrated Svelte component in a Rust application is
 complete. However, the path of web development is ever-evolving. Here are some
@@ -755,7 +755,7 @@ advanced considerations and future directions for this architecture:
   from Rust.
 
 
-### Conclusion
+## Conclusion
 
 My quest to integrate Svelte with a Rust backend, aiming for truly interactive
 "islands" on a fast, server-rendered site, led me through some significant

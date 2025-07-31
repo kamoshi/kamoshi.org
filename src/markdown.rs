@@ -17,7 +17,7 @@ use pulldown_cmark::{
 };
 use regex::Regex;
 
-use crate::{Bibliography, Context, Outline, ts, typst};
+use crate::{Bibliography, Context, ts, typst};
 
 const OPTS_MARKDOWN: OptsMarkdown = OptsMarkdown::empty()
     .union(OptsMarkdown::ENABLE_MATH)
@@ -125,13 +125,80 @@ pub fn parse(
 
     Ok(Article {
         text,
-        outline: Outline(outline),
+        outline: outline.into(),
         scripts,
         bibliography: Bibliography(bibliography),
     })
 }
 
 // StreamHeading
+
+pub struct Heading(String, String, Vec<Heading>);
+pub struct Outline(Vec<Heading>);
+
+impl hypertext::Renderable for Outline {
+    fn render_to(&self, output: &mut String) {
+        use hypertext::prelude::*;
+
+        fn render_heading_list(headings: &[Heading]) -> impl Renderable {
+            maud!(
+                ul {
+                    @for Heading(title, id, children) in headings {
+                        li {
+                            a href=(format!("#{id}")) { (title) }
+
+                            @if !children.is_empty() {
+                                (render_heading_list(children))
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
+        maud!(
+            aside .outline {
+                section {
+                    h2 {
+                        a href="#top" { "Outline" }
+                    }
+                    nav #table-of-contents {
+                        (render_heading_list(&self.0))
+                    }
+                }
+            }
+        )
+        .render_to(output);
+    }
+}
+
+impl From<Vec<(String, String, usize)>> for Outline {
+    fn from(flat_vec: Vec<(String, String, usize)>) -> Self {
+        let mut res = Vec::new();
+
+        for (title, url, level) in flat_vec {
+            let mut ptr = &mut res;
+            let new = Heading(title, url, vec![]);
+
+            for _ in 2..level {
+                if ptr.is_empty() {
+                    break;
+                }
+
+                match ptr.last_mut() {
+                    Some(Heading(_, _, children)) => {
+                        ptr = children;
+                    }
+                    None => unreachable!(),
+                }
+            }
+
+            ptr.push(new);
+        }
+
+        Outline(res)
+    }
+}
 
 struct StreamHeading<'a, I>
 where
@@ -142,22 +209,20 @@ where
     buffer: String,
     handle: Option<Tag<'a>>,
     events: VecDeque<Event<'a>>,
-    finish: bool,
-    out: &'a mut Vec<(String, String)>,
+    out: &'a mut Vec<(String, String, usize)>,
 }
 
 impl<'a, I> StreamHeading<'a, I>
 where
     I: Iterator<Item = Event<'a>>,
 {
-    pub fn new(iter: I, out: &'a mut Vec<(String, String)>) -> Self {
+    pub fn new(iter: I, out: &'a mut Vec<(String, String, usize)>) -> Self {
         Self {
             iter,
             counts: HashMap::new(),
             buffer: String::new(),
             handle: None,
             events: VecDeque::new(),
-            finish: false,
             out,
         }
     }
@@ -170,9 +235,8 @@ where
     type Item = Event<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.finish && !self.events.is_empty() {
-            true => return self.events.pop_front(),
-            false => self.finish = false,
+        if self.handle.is_none() && !self.events.is_empty() {
+            return self.events.pop_front();
         }
 
         for event in self.iter.by_ref() {
@@ -181,36 +245,40 @@ where
                     debug_assert!(self.handle.is_none());
                     self.handle = Some(tag);
                 }
-                Event::Text(text) if self.handle.is_some() => {
-                    self.buffer.push_str(&text);
-                    self.events.push_back(Event::Text(text));
-                }
                 event @ Event::End(TagEnd::Heading(..)) => {
                     debug_assert!(self.handle.is_some());
                     self.events.push_back(event);
 
-                    let txt = std::mem::take(&mut self.buffer);
-                    let mut url = txt.to_lowercase().replace(' ', "-");
+                    let text = std::mem::take(&mut self.buffer);
+                    let mut slug = text.to_lowercase().replace(' ', "-");
 
-                    match self.counts.get_mut(&url) {
+                    match self.counts.get_mut(&slug) {
                         Some(count) => {
                             *count += 1;
-                            url = format!("{url}-{count}");
+                            slug = format!("{slug}-{count}");
                         }
                         None => {
-                            self.counts.insert(url.clone(), 0);
+                            self.counts.insert(slug.clone(), 0);
                         }
                     }
 
                     let mut handle = self.handle.take().unwrap();
-                    match handle {
-                        Tag::Heading { ref mut id, .. } => *id = Some(url.clone().into()),
+                    let level = match &mut handle {
+                        Tag::Heading { id, level, .. } => {
+                            *id = Some(slug.clone().into());
+                            *level as usize
+                        }
                         _ => unreachable!(),
-                    }
+                    };
 
-                    self.out.push((txt, url.clone()));
-                    self.finish = true;
+                    self.out.push((text, slug.clone(), level));
                     return Some(Event::Start(handle));
+                }
+                event if self.handle.is_some() => {
+                    if let Event::Text(text) = &event {
+                        self.buffer.push_str(text);
+                    }
+                    self.events.push_back(event);
                 }
                 _ => return Some(event),
             }

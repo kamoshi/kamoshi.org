@@ -36,7 +36,6 @@ enum Mode {
 }
 
 pub struct Bibliography(pub Option<Vec<String>>);
-pub struct Outline(pub Vec<(String, String)>);
 
 #[derive(Debug, Clone)]
 struct Global {

@@ -5,7 +5,7 @@ use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
 use crate::model::Post;
-use crate::{Bibtex, CONTENT, Context, Global, LinkDate, Outline};
+use crate::{Bibtex, CONTENT, Context, Global, LinkDate};
 
 use super::{make_page, render_bibliography, to_list};
 
@@ -95,7 +95,7 @@ pub fn render<'ctx>(
     let main = maud!(
         main {
             // Outline (left)
-            (render_outline(&article.outline))
+            (&article.outline)
             // Article (center)
             (render_article(meta, &article, library_path))
             // Metadata (right)
@@ -104,29 +104,6 @@ pub fn render<'ctx>(
     );
 
     make_page(ctx, main, meta.title.clone(), STYLES, scripts.into())
-}
-
-pub fn render_outline(outline: &Outline) -> impl Renderable {
-    maud!(
-        aside .outline {
-            section {
-                h2 {
-                    a href="#top" { "Outline" }
-                }
-                nav #table-of-contents {
-                    ul {
-                        @for (title, id) in &outline.0 {
-                            li {
-                                a href=(format!("#{id}")) {
-                                    (title)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    )
 }
 
 fn render_article(

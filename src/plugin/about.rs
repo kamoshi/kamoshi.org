@@ -6,7 +6,7 @@ use sequoia_openpgp::parse::Parse;
 
 use crate::markdown::Article;
 use crate::model::{Post, Pubkey};
-use crate::{CONTENT, Context, Global, Outline};
+use crate::{CONTENT, Context, Global};
 
 use super::make_page;
 use super::posts::render_metadata;
@@ -58,7 +58,7 @@ pub fn render<'ctx>(
     let main = maud!(
         main {
             // Outline (left)
-            (render_outline(&article.outline))
+            (&article.outline)
             // Article (center)
             article .article {
                 section .paper {
@@ -99,28 +99,5 @@ pub fn render<'ctx>(
         item.data.meta.title.clone(),
         STYLES,
         Default::default(),
-    )
-}
-
-fn render_outline(outline: &Outline) -> impl Renderable {
-    maud!(
-        aside .outline {
-            section {
-                h2 {
-                    a href="#top" { "Outline" }
-                }
-                nav #table-of-contents {
-                    ul {
-                        @for (title, id) in &outline.0 {
-                            li {
-                                a href=(format!("#{id}")) {
-                                    (title)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     )
 }

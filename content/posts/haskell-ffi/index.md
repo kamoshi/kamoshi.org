@@ -1,5 +1,5 @@
 ---
-title: Haskell FFI
+title: Calling Rust from Haskell, and vice versa.
 date: 2025-07-29T18:30:29.523Z
 tags: [haskell, rust, c, ffi]
 desc: >
