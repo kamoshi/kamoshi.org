@@ -4,14 +4,14 @@ $bp-l: 90rem;
 main {
   @media (min-width: $bp-m) {
     display: grid;
-    grid-template-areas: "left . page .";
+    grid-template-areas: ". left page .";
     gap: 1rem;
-    grid-template-columns: 16rem 1fr minmax(0, 50rem) 1fr;
+    grid-template-columns: 1fr 16rem minmax(0, 50rem) 1fr;
   }
 
   @media (min-width: $bp-l) {
-    grid-template-areas: "left . page info . ";
-    grid-template-columns: 20rem auto 50rem 16rem auto;
+    grid-template-areas: ". left page info . ";
+    grid-template-columns: auto 20rem 50rem 16rem auto;
   }
 }
 
@@ -143,21 +143,12 @@ figure {
 .outline {
   height: 100%;
 
-  h2 {
-    margin-bottom: 0.5em;
-    border-bottom: 1px solid;
-    border-image: linear-gradient(to right, transparent, lightgray, transparent)
-      1;
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: 1.4rem;
+  @media (min-width: $bp-m) {
+    margin-block: 0.5rem;
+  }
 
-    a {
-      display: block;
-      text-decoration: unset;
-      text-align: center;
-      color: var(--c-primary);
-    }
+  @media (min-width: $bp-l) {
+    margin-block: 1rem;
   }
 
   section {
@@ -172,13 +163,67 @@ figure {
     }
   }
 
+  h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+
+    a {
+      text-decoration: none;
+      color: var(--c-text);
+    }
+  }
+
   ul {
     display: flex;
     flex-direction: column;
-    padding-left: 0.5em;
-    gap: 0.25rem;
+    margin-top: 0.25rem;
+    gap: 0.4rem;
     list-style: none;
+
+    ul {
+      padding-left: 1rem;
+    }
+
+    .active {
+      font-weight: bold;
+      border-left: 3px solid var(--accent-color);
+    }
   }
+
+  .outline-depth-2 {
+    border-left: 1px solid lightgray;
+  }
+
+  .outline-depth-3 {
+    border-left: 1px dashed lightgray;
+  }
+
+  a {
+    text-decoration: none;
+    color: var(--text-muted);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  /* h2 {
+    border-bottom: 1px solid;
+    border-image: linear-gradient(to right, transparent, lightgray, transparent)
+      1;
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.4rem;
+
+    a {
+      display: block;
+      text-decoration: unset;
+      text-align: center;
+    }
+  }
+
+
+
 
   a {
     color: var(--c-primary);
@@ -187,7 +232,7 @@ figure {
     &:hover {
       text-decoration: underline;
     }
-  }
+  } */
 }
 
 .metadata {

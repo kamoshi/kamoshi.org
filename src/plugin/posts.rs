@@ -81,7 +81,8 @@ pub fn render<'ctx>(
     library_path: Option<&'ctx Utf8Path>,
     tags: &'ctx [String],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let mut scripts = vec![];
+    let script_outline = ctx.get::<Script>("outline/main.ts")?;
+    let mut scripts = vec![script_outline.path.to_string()];
 
     for path in &article.scripts {
         scripts.push(path.to_string());

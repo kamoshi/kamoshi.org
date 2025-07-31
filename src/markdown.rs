@@ -140,15 +140,15 @@ impl hypertext::Renderable for Outline {
     fn render_to(&self, output: &mut String) {
         use hypertext::prelude::*;
 
-        fn render_heading_list(headings: &[Heading]) -> impl Renderable {
+        fn render_heading_list(headings: &[Heading], depth: usize) -> impl Renderable {
             maud!(
-                ul {
+                ul class=(format!("outline-depth-{depth}")) {
                     @for Heading(title, id, children) in headings {
                         li {
                             a href=(format!("#{id}")) { (title) }
 
                             @if !children.is_empty() {
-                                (render_heading_list(children))
+                                (render_heading_list(children, depth + 1))
                             }
                         }
                     }
@@ -158,12 +158,14 @@ impl hypertext::Renderable for Outline {
 
         maud!(
             aside .outline {
-                section {
-                    h2 {
-                        a href="#top" { "Outline" }
-                    }
-                    nav #table-of-contents {
-                        (render_heading_list(&self.0))
+                @if !self.0.is_empty() {
+                    section {
+                        h2 {
+                            a href="#top" { "Outline" }
+                        }
+                        nav #table-of-contents {
+                            (render_heading_list(&self.0, 1))
+                        }
                     }
                 }
             }
