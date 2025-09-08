@@ -1,5 +1,8 @@
 *
 
+!flake.nix
+!flake.lock
+
 # Whitelist
 !.gitignore
 !LICENSE
