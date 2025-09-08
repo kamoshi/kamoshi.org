@@ -4,7 +4,7 @@
 !flake.lock
 !.envrc
 
-# Whitelist
+!README.md
 !.gitignore
 !LICENSE
 !Makefile

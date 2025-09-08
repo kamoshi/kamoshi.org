@@ -1,3 +1,5 @@
+.PHONY: build watch serve deploy perf
+
 build:
 	cargo run --release
 
