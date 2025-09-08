@@ -2,6 +2,7 @@
 
 !flake.nix
 !flake.lock
+!.envrc
 
 # Whitelist
 !.gitignore
