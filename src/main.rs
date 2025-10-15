@@ -51,7 +51,7 @@ impl Global {
         Self {
             year: time.year(),
             date: time.format("%Y/%m/%d %H:%M").to_string(),
-            link: "https://git.kamoshi.org/kamov/kamoshi.org".into(),
+            link: "https://github.com/kamoshi/kamoshi.org".into(),
             hash: String::from_utf8(
                 Command::new("git")
                     .args(["rev-parse", "--short", "HEAD"])

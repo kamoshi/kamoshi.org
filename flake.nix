@@ -14,22 +14,27 @@
         pkgs = import nixpkgs {
           inherit system overlays;
         };
+
+        used = with pkgs; [
+          rust-bin.beta.latest.default
+          cargo
+          openssl
+          git
+          deno
+          biome
+        ];
       in
       {
         devShells.default = with pkgs; mkShell {
-          buildInputs = [
-            rust-bin.beta.latest.default
-            deno
-            pkg-config
-            openssl
-            git
-          ];
+          buildInputs = used;
 
           shellHook = ''
             echo ""
             echo "Available tools:"
             echo "  - Rust: $(rustc --version)"
+            echo "  - Cargo: $(cargo --version)"
             echo "  - Deno: $(deno --version | head -n1)"
+            echo "  - Biome: $(biome --version | head -n1)"
             echo ""
             echo "Run 'make' to see available build targets"
           '';

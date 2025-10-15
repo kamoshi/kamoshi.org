@@ -119,7 +119,7 @@ pub fn make_footer(sack: &Context) -> impl Renderable {
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{mail}");
     let link = Utf8Path::new(&globals.data.link)
-        .join("src/commit")
+        .join("tree")
         .join(&globals.data.hash);
 
     maud!(
