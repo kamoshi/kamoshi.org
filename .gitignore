@@ -3,6 +3,7 @@
 !flake.nix
 !flake.lock
 !.envrc
+!biome.json
 
 !README.md
 !.gitignore
