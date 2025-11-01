@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 use std::sync::LazyLock;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use hauchiwa::RuntimeError;
+use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::{Image, Svelte};
 use hayagriva::{
     BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
@@ -62,16 +62,16 @@ fn render_container(
             write!(&mut buffer, r#"</aside>"#).unwrap();
             Event::Html(buffer.into())
         }
-        "svelte" => {
-            let path_rel = path.join(directive.identifier.as_ref().unwrap());
-            let Svelte { html, init } = ctx.get(path_rel.as_str()).unwrap();
-            let buffer = html(&()).unwrap();
-            match directive.content_inline.as_deref() {
-                Some("static") => (),
-                _ => script.push(init.to_path_buf()),
-            }
-            Event::Html(buffer.into())
-        }
+        // "svelte" => {
+        //     let path_rel = path.join(directive.identifier.as_ref().unwrap());
+        //     let Svelte { html, init } = ctx.get(path_rel.as_str()).unwrap();
+        //     let buffer = html(&()).unwrap();
+        //     match directive.content_inline.as_deref() {
+        //         Some("static") => (),
+        //         _ => script.push(init.to_path_buf()),
+        //     }
+        //     Event::Html(buffer.into())
+        // }
         other => panic!("Unknown block directive {other}"),
     }
 }
@@ -106,7 +106,7 @@ pub fn parse(
     let stream = StreamCodeBlock::new(stream)
         .collect::<Result<Vec<_>, _>>()?
         .into_iter();
-    let stream = stream.map(swap_hashed_image(path, ctx));
+    // let stream = stream.map(swap_hashed_image(path, ctx));
     let stream = stream.map(render_latex);
     let stream = stream.map(render_emoji);
     let stream = StreamRuby::new(stream);
@@ -367,30 +367,30 @@ where
 
 // Swap hashed image
 
-fn swap_hashed_image<'a>(dir: &'a Utf8Path, ctx: &'a Context) -> impl Fn(Event<'a>) -> Event<'a> {
-    move |event| match event {
-        Event::Start(start) => match start {
-            Tag::Image {
-                dest_url,
-                link_type,
-                title,
-                id,
-            } => {
-                let rel = dir.join(dest_url.as_ref());
-                let img = ctx.get::<Image>(rel.as_str());
-                let hashed = img.map(|img| img.path.to_string().into());
-                Event::Start(Tag::Image {
-                    link_type,
-                    dest_url: hashed.unwrap_or(dest_url),
-                    title,
-                    id,
-                })
-            }
-            _ => Event::Start(start),
-        },
-        _ => event,
-    }
-}
+// fn swap_hashed_image<'a>(dir: &'a Utf8Path, ctx: &'a Context) -> impl Fn(Event<'a>) -> Event<'a> {
+//     move |event| match event {
+//         Event::Start(start) => match start {
+//             Tag::Image {
+//                 dest_url,
+//                 link_type,
+//                 title,
+//                 id,
+//             } => {
+//                 let rel = dir.join(dest_url.as_ref());
+//                 let img = ctx.get::<Image>(rel.as_str());
+//                 let hashed = img.map(|img| img.path.to_string().into());
+//                 Event::Start(Tag::Image {
+//                     link_type,
+//                     dest_url: hashed.unwrap_or(dest_url),
+//                     title,
+//                     id,
+//                 })
+//             }
+//             _ => Event::Start(start),
+//         },
+//         _ => event,
+//     }
+// }
 
 // LaTeX
 

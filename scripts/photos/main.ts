@@ -19,7 +19,7 @@ L.Photo = L.FeatureGroup.extend({
 
   initialize: function (photos: Photo[], options: any) {
     L.setOptions(this, options);
-    // @ts-ignore
+    // @ts-expect-error
     L.FeatureGroup.prototype.initialize.call(this, photos);
   },
 
@@ -46,15 +46,13 @@ L.Photo = L.FeatureGroup.extend({
       ),
       title: photo.caption || "",
     });
-    // @ts-ignore
+    // @ts-expect-error
     marker.photo = photo;
     return marker;
   },
 });
 
-L.photo = function (photos: any, options: any) {
-  return new L.Photo(photos, options);
-};
+L.photo = (photos: any, options: any) => new L.Photo(photos, options);
 
 if (L.MarkerClusterGroup) {
   L.Photo.Cluster = L.MarkerClusterGroup.extend({
@@ -80,7 +78,7 @@ if (L.MarkerClusterGroup) {
 
     initialize: function (options: any) {
       options = L.Util.setOptions(this, options);
-      // @ts-ignore
+      // @ts-expect-error
       L.MarkerClusterGroup.prototype.initialize.call(this);
       this._photos = options.featureGroup(null, options);
     },
@@ -96,9 +94,7 @@ if (L.MarkerClusterGroup) {
     },
   });
 
-  L.photo.cluster = function (options: any) {
-    return new L.Photo.Cluster!(options);
-  };
+  L.photo.cluster = (options: any) => new L.Photo.Cluster!(options);
 }
 
 // MAP
@@ -121,7 +117,7 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
 
-const photoLayer = L.photo.cluster().on("click", function (evt) {
+const photoLayer = L.photo.cluster().on("click", (evt) => {
   evt.layer.bindPopup(L.Util.template(template, evt.layer.photo)).openPopup();
 });
 

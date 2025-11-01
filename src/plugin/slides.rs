@@ -1,63 +1,104 @@
 use std::fmt::Write as _;
 
 use camino::Utf8Path;
-use hauchiwa::loader::{self, Content, Script, yaml};
-use hauchiwa::{Page, Plugin, RuntimeError};
+use hauchiwa::SiteConfig;
+use hauchiwa::error::RuntimeError;
+use hauchiwa::loader::{self, CSS, Content, JS, Registry, Svelte, glob_content};
+use hauchiwa::page::Page;
+use hauchiwa::task::Handle;
 use hayagriva::Library;
 use hypertext::{Raw, prelude::*};
 
 use crate::model::Slideshow;
-use crate::{CONTENT, Context, Global, LinkDate};
+use crate::plugin::to_list;
+use crate::{Context, Global, Link, LinkDate};
 
-use super::{make_bare, to_list};
+use super::make_bare;
 
-pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
-    config
-        .add_loaders([
-            loader::glob_content(CONTENT, "slides/**/*.md", yaml::<Slideshow>),
-            loader::glob_content(CONTENT, "slides/**/*.lhs", yaml::<Slideshow>),
-        ])
-        .add_task("slides", |ctx| {
+pub fn build_slides(
+    config: &mut SiteConfig<Global>,
+    styles: Handle<Registry<CSS>>,
+    scripts: Handle<Registry<JS>>,
+) -> Handle<Vec<Page>> {
+    let slides_md = glob_content::<_, Slideshow>(config, "content/slides/**/*.md");
+    let slides_hs = glob_content::<_, Slideshow>(config, "content/slides/**/*.lhs");
+
+    config.add_task(
+        (slides_md, slides_hs, styles, scripts),
+        |ctx, (slides_md, slides_hs, styles, scripts)| {
             let mut pages = vec![];
 
-            // render individual pages
-            for item in ctx.glob_with_file::<Content<Slideshow>>("slides/**/*")? {
-                let mark = parse(&ctx, &item.data.text, &item.file.area, None)?;
-                let html = render(&ctx, &item.data.meta, &mark)?.render();
+            let content = [slides_md.values(), slides_hs.values()]
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>();
 
-                pages.push(Page::html(&item.file.area, html))
+            {
+                let styles = &[
+                    styles.get("styles/styles.scss").unwrap(),
+                    styles.get("styles/reveal/reveal.scss").unwrap(),
+                ];
+
+                let scripts = &[scripts.get("scripts/slides/main.ts").unwrap()];
+
+                // render individual pages
+                for item in &content {
+                    let mark = parse(&ctx, &item.content, "".into(), None).unwrap();
+                    let html = render(&ctx, &item.metadata, &mark, styles, scripts)
+                        .unwrap()
+                        .render();
+
+                    pages.push(Page {
+                        url: item.path.to_string(),
+                        content: html.into_inner(),
+                    })
+                }
             }
 
             // render list
             {
-                let data = ctx
-                    .glob_with_file::<Content<Slideshow>>("slides/**/*")?
-                    .into_iter()
-                    .map(LinkDate::from)
+                let data = content
+                    .iter()
+                    .map(|item| LinkDate {
+                        link: Link {
+                            path: item.path.clone(),
+                            name: item.metadata.title.clone(),
+                            desc: item.metadata.desc.clone(),
+                        },
+                        date: item.metadata.date.to_utc(),
+                    })
                     .collect();
 
-                let html = to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml")?.render();
+                let styles = &[
+                    styles.get("styles/styles.scss").unwrap(),
+                    styles.get("styles/layouts/list.scss").unwrap(),
+                ];
 
-                pages.push(Page::html("slides", html));
+                let html = to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)
+                    .unwrap()
+                    .render();
+
+                pages.push(Page {
+                    url: "slides".into(),
+                    content: html.into_inner(),
+                });
             }
 
-            // render feed
-            {
-                let feed = crate::rss::generate_feed::<Content<Slideshow>>(
-                    ctx,
-                    "slides",
-                    "Kamoshi.org Slides",
-                )?;
+            //             // render feed
+            //             {
+            //                 let feed = crate::rss::generate_feed::<Content<Slideshow>>(
+            //                     ctx,
+            //                     "slides",
+            //                     "Kamoshi.org Slides",
+            //                 )?;
 
-                pages.push(feed);
-            }
+            //                 pages.push(feed);
+            //             }
 
-            Ok(pages)
-        });
-});
-
-/// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles.scss", "reveal/reveal.scss"];
+            pages
+        },
+    )
+}
 
 pub fn parse(
     ctx: &Context,
@@ -83,10 +124,9 @@ pub fn render<'ctx>(
     ctx: &'ctx Context,
     fm: &'ctx Slideshow,
     slides: &'ctx str,
+    styles: &'ctx [&CSS],
+    scripts: &'ctx [&JS],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let script = ctx.get::<Script>("slides/main.ts")?;
-    let script = vec![script.path.to_string()];
-
     let html = maud!(
         div .reveal {
             div .slides {
@@ -95,5 +135,5 @@ pub fn render<'ctx>(
         }
     );
 
-    make_bare(ctx, html, fm.title.clone(), STYLES, script.into())
+    make_bare(ctx, html, fm.title.clone(), styles, scripts)
 }

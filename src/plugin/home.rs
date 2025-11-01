@@ -1,30 +1,46 @@
-use hauchiwa::loader::{self, Content, Svelte, yaml};
-use hauchiwa::{Page, Plugin, RuntimeError};
+use hauchiwa::SiteConfig;
+use hauchiwa::error::RuntimeError;
+use hauchiwa::loader::{CSS, JS, Registry, Svelte, glob_content};
+use hauchiwa::page::Page;
+use hauchiwa::task::Handle;
 use hypertext::{Raw, maud_static, prelude::*};
 
+use crate::Context;
 use crate::markdown::parse;
-use crate::model::Post;
-use crate::{CONTENT, Global, model::Home};
-use crate::{Context, LinkDate};
+use crate::{Global, model::Home};
 
 use super::make_page;
 
-pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
-    config
-        .add_loaders([
-            //
-            loader::glob_content(CONTENT, "index.md", yaml::<Home>),
-        ])
-        .add_task("home", |ctx| {
-            let item = ctx.glob_one_with_file::<Content<Home>>("")?;
-            let article = parse(&ctx, &item.data.text, &item.file.area, None)?;
-            let html = render(&ctx, &article.text)?;
-            Ok(vec![Page::text("index.html", html)])
-        });
-});
+pub fn build_home(
+    site_config: &mut SiteConfig<Global>,
+    styles: Handle<Registry<CSS>>,
+    svelte: Handle<Registry<Svelte>>,
+) -> Handle<Page> {
+    let page = glob_content::<_, Home>(site_config, "content/index.md");
 
-/// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles.scss", "layouts/home.scss", "components/kanji.scss"];
+    site_config.add_task((page, styles, svelte), |ctx, (page, styles, svelte)| {
+        let page = page.get("content/index.md").unwrap();
+
+        let styles = &[
+            styles.get("styles/styles.scss").unwrap(),
+            styles.get("styles/layouts/home.scss").unwrap(),
+            styles.get("styles/components/kanji.scss").unwrap(),
+        ];
+
+        let kanji = svelte.get("scripts/kanji/App.svelte").unwrap();
+        let kanji_html = (kanji.html)(&()).unwrap();
+
+        let scripts = &[&kanji.init];
+
+        let article = parse(&ctx, &page.content, "".into(), None).unwrap();
+        let html = render(&ctx, &article.text, &kanji_html, styles, scripts).unwrap();
+
+        Page {
+            url: "index.html".into(),
+            content: html,
+        }
+    })
+}
 
 const INTRO: &str = r#"
 ## かもし
@@ -38,11 +54,15 @@ const INTRO: &str = r#"
 質問があったらメールを送信してくれてください。
 "#;
 
-pub(crate) fn render(ctx: &Context, text: &str) -> Result<String, RuntimeError> {
+pub(crate) fn render(
+    ctx: &Context,
+    text: &str,
+    kanji: &str,
+    styles: &[&CSS],
+    scripts: &[&JS],
+) -> Result<String, RuntimeError> {
     let intro = intro(ctx)?;
-    let posts = latest_posts(ctx)?;
-    let kanji = ctx.get::<Svelte<()>>("kanji/App.svelte")?;
-    let kanji_html = (kanji.html)(&())?;
+    // let posts = latest_posts(ctx)?;
 
     let main = maud!(
         main .l-home {
@@ -53,16 +73,15 @@ pub(crate) fn render(ctx: &Context, text: &str) -> Result<String, RuntimeError> 
                 (intro)
                 // (Raw(SECTION_IMAGE))
                 section .p-card {
-                    (Raw(&kanji_html))
+                    (Raw(kanji))
                 }
-                (posts)
+                // (posts)
                 (SECTION_BUTTONS)
             }
         }
     );
 
-    let scripts = vec![kanji.init.to_string()];
-    let rendered = make_page(ctx, main, "Home".into(), STYLES, scripts.into())?
+    let rendered = make_page(ctx, main, "Home".into(), styles, scripts)?
         .render()
         .into();
 
@@ -96,36 +115,36 @@ fn intro(ctx: &Context) -> Result<impl Renderable, RuntimeError> {
 //     )
 // };
 
-fn latest_posts(sack: &Context) -> Result<impl Renderable, RuntimeError> {
-    let list = {
-        let mut list: Vec<_> = sack
-            .glob_with_file::<Content<Post>>("**")?
-            .iter()
-            .map(LinkDate::from)
-            .collect();
-        list.sort_by(|a, b| b.date.cmp(&a.date));
-        list
-    };
+// fn latest_posts(sack: &Context) -> Result<impl Renderable, RuntimeError> {
+//     let list = {
+//         let mut list: Vec<_> = sack
+//             .glob_with_file::<Content<Post>>("**")?
+//             .iter()
+//             .map(LinkDate::from)
+//             .collect();
+//         list.sort_by(|a, b| b.date.cmp(&a.date));
+//         list
+//     };
 
-    let html = maud!(
-        section .p-card {
-            h2 .p-card__heading {
-                "Latest"
-            }
-            ol .p-card__latest {
-                @for link in list.iter().take(5) {
-                    li {
-                        a href=(link.link.path.as_str()) {
-                            (&link.link.name)
-                        }
-                    }
-                }
-            }
-        }
-    );
+//     let html = maud!(
+//         section .p-card {
+//             h2 .p-card__heading {
+//                 "Latest"
+//             }
+//             ol .p-card__latest {
+//                 @for link in list.iter().take(5) {
+//                     li {
+//                         a href=(link.link.path.as_str()) {
+//                             (&link.link.name)
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     );
 
-    Ok(html)
-}
+//     Ok(html)
+// }
 
 const SECTION_BUTTONS: Raw<&str> = {
     maud_static!(

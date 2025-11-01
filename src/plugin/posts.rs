@@ -1,6 +1,5 @@
 use camino::Utf8Path;
-use hauchiwa::loader::{self, Content, Script, yaml};
-use hauchiwa::{Page, Plugin, RuntimeError};
+use hauchiwa::loader::{self, Content, yaml};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;

@@ -2,12 +2,12 @@ use std::str::FromStr;
 
 use camino::Utf8Path;
 use chrono::{DateTime, Utc};
-use hauchiwa::{WithFile, loader::Content};
+// use hauchiwa::{WithFile, loader::Content};
 use serde::Deserialize;
 
 use crate::{Link, LinkDate};
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct Pubkey {
     pub fingerprint: String,
     pub data: String,
@@ -20,7 +20,7 @@ pub struct MicroblogEntry {
     pub text: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct Microblog {
     pub entries: Vec<MicroblogEntry>,
     pub data: String,
@@ -62,18 +62,18 @@ pub struct Post {
     pub scripts: Option<Vec<String>>,
 }
 
-impl From<&WithFile<'_, Content<Post>>> for LinkDate {
-    fn from(item: &WithFile<Content<Post>>) -> Self {
-        Self {
-            link: Link {
-                path: Utf8Path::new("/").join(&item.file.area),
-                name: item.data.meta.title.clone(),
-                desc: item.data.meta.desc.clone(),
-            },
-            date: item.data.meta.date,
-        }
-    }
-}
+// impl From<&WithFile<'_, Content<Post>>> for LinkDate {
+//     fn from(item: &WithFile<Content<Post>>) -> Self {
+//         Self {
+//             link: Link {
+//                 path: Utf8Path::new("/").join(&item.file.area),
+//                 name: item.data.meta.title.clone(),
+//                 desc: item.data.meta.desc.clone(),
+//             },
+//             date: item.data.meta.date,
+//         }
+//     }
+// }
 
 /// Represents a slideshow
 #[derive(Deserialize, Debug, Clone)]
@@ -84,18 +84,18 @@ pub(crate) struct Slideshow {
     pub desc: Option<String>,
 }
 
-impl From<WithFile<'_, Content<Slideshow>>> for LinkDate {
-    fn from(item: WithFile<Content<Slideshow>>) -> Self {
-        Self {
-            link: Link {
-                path: Utf8Path::new("/").join(&item.file.area),
-                name: item.data.meta.title.clone(),
-                desc: item.data.meta.desc.clone(),
-            },
-            date: item.data.meta.date,
-        }
-    }
-}
+// impl From<WithFile<'_, Content<Slideshow>>> for LinkDate {
+//     fn from(item: WithFile<Content<Slideshow>>) -> Self {
+//         Self {
+//             link: Link {
+//                 path: Utf8Path::new("/").join(&item.file.area),
+//                 name: item.data.meta.title.clone(),
+//                 desc: item.data.meta.desc.clone(),
+//             },
+//             date: item.data.meta.date,
+//         }
+//     }
+// }
 
 /// Represents a simple post.
 #[derive(Deserialize, Debug, Clone)]

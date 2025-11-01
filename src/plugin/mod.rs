@@ -1,37 +1,34 @@
 pub mod about;
 pub mod home;
-pub mod posts;
-pub mod projects;
+// pub mod posts;
+// pub mod projects;
 pub mod slides;
-pub mod tags;
+// pub mod tags;
 pub mod twtxt;
-pub mod wiki;
+// pub mod wiki;
 
-use std::{
-    borrow::Cow,
-    collections::{HashMap, HashSet},
-    ops::Deref,
-};
+use std::collections::HashMap;
 
 use camino::Utf8Path;
 use chrono::Datelike as _;
-use hauchiwa::{RuntimeError, loader::Style};
+use hauchiwa::{
+    error::RuntimeError,
+    loader::{CSS, JS},
+};
+// use hauchiwa::{RuntimeError, loader::Style};
 use hypertext::{Raw, prelude::*};
 
 use crate::{Context, LinkDate};
 
+// use crate::{Context, LinkDate};
+
 fn make_head<'ctx>(
     ctx: &'ctx Context,
     title: String,
-    styles: &'static [&str],
-    script: Cow<'ctx, [String]>,
+    styles: &[&CSS],
+    scripts: &[&JS],
 ) -> Result<impl Renderable, RuntimeError> {
     let title = format!("{title} | kamoshi.org");
-
-    let styles: Vec<_> = styles
-        .iter()
-        .map(|&style| ctx.get::<Style>(style))
-        .collect::<Result<_, _>>()?;
 
     let html = maud!(
         meta charset="utf-8";
@@ -49,12 +46,12 @@ fn make_head<'ctx>(
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
 
-        @for style in &styles {
+        @for style in styles {
             link rel="stylesheet" href=(style.path.as_str());
         }
 
-        @for path in HashSet::<&String>::from_iter(script.deref()) {
-            script type="module" src=(path) {}
+        @for script in scripts {
+            script type="module" src=(script.path.as_str()) {}
         }
 
         @if let Some(reload_script) = ctx.get_refresh_script() {
@@ -112,15 +109,13 @@ fn make_navbar() -> impl Renderable {
     )
 }
 
-pub fn make_footer(sack: &Context) -> impl Renderable {
-    let globals = sack.get_globals();
-
-    let copy = format!("Copyright &copy; {} Maciej Jur", &globals.data.year);
+pub fn make_footer(ctx: &Context) -> impl Renderable {
+    let copy = format!("Copyright &copy; {} Maciej Jur", &ctx.data.year);
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{mail}");
-    let link = Utf8Path::new(&globals.data.link)
+    let link = Utf8Path::new(&ctx.data.link)
         .join("tree")
-        .join(&globals.data.hash);
+        .join(&ctx.data.hash);
 
     maud!(
         footer .footer {
@@ -134,10 +129,10 @@ pub fn make_footer(sack: &Context) -> impl Renderable {
             }
             div .repo {
                 a href=(link.as_str()) {
-                    (&sack.get_globals().data.hash)
+                    (&ctx.data.hash)
                 }
                 div {
-                    (&sack.get_globals().data.date)
+                    (&ctx.data.date)
                 }
             }
             a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {
@@ -148,13 +143,13 @@ pub fn make_footer(sack: &Context) -> impl Renderable {
 }
 
 pub fn make_bare<'ctx>(
-    sack: &'ctx Context,
+    ctx: &'ctx Context,
     main: impl Renderable + 'ctx,
     title: String,
-    styles: &'static [&str],
-    script: Cow<'ctx, [String]>,
+    styles: &[&CSS],
+    scripts: &[&JS],
 ) -> Result<impl Renderable, RuntimeError> {
-    let head = make_head(sack, title, styles, script)?;
+    let head = make_head(ctx, title, styles, scripts)?;
 
     Ok(maud!(
         !DOCTYPE
@@ -169,10 +164,11 @@ pub fn make_bare<'ctx>(
 }
 
 pub fn make_fullscreen<'ctx>(
-    sack: &'ctx Context,
+    ctx: &'ctx Context,
     main: impl Renderable + 'ctx,
     title: String,
-    script: Cow<'ctx, [String]>,
+    styles: &[&CSS],
+    scripts: &[&JS],
 ) -> Result<impl Renderable, RuntimeError> {
     let main = maud!(
         // navbar
@@ -181,21 +177,15 @@ pub fn make_fullscreen<'ctx>(
         (main)
     );
 
-    make_bare(
-        sack,
-        main,
-        title,
-        &["styles.scss", "photos/leaflet.scss", "layouts/map.scss"],
-        script,
-    )
+    make_bare(ctx, main, title, styles, scripts)
 }
 
 pub fn make_page<'ctx>(
     sack: &'ctx Context,
     main: impl Renderable + 'ctx,
     title: String,
-    styles: &'static [&str],
-    script: Cow<'ctx, [String]>,
+    styles: &[&CSS],
+    scripts: &[&JS],
 ) -> Result<impl Renderable, RuntimeError> {
     let main = maud!(
         // navbar
@@ -206,11 +196,8 @@ pub fn make_page<'ctx>(
         (make_footer(sack))
     );
 
-    make_bare(sack, main, title, styles, script)
+    make_bare(sack, main, title, styles, scripts)
 }
-
-/// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles.scss", "layouts/list.scss"];
 
 const ICON_RSS: &str = include_str!("../assets/rss.svg");
 
@@ -219,6 +206,7 @@ pub(crate) fn to_list(
     list: Vec<LinkDate>,
     title: String,
     rss: &'static str,
+    styles: &[&CSS],
 ) -> Result<impl Renderable, RuntimeError> {
     let mut groups = HashMap::<i32, Vec<_>>::new();
 
@@ -254,7 +242,7 @@ pub(crate) fn to_list(
         }
     );
 
-    make_page(sack, list, title, STYLES, Cow::default())
+    make_page(sack, list, title, styles, &[])
 }
 
 fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {
@@ -291,26 +279,26 @@ fn link(data: &LinkDate) -> impl Renderable + '_ {
     )
 }
 
-pub fn render_bibliography(bib: &[String], library_path: Option<&Utf8Path>) -> impl Renderable {
-    maud!(
-        section .bibliography {
-            header {
-                h2 {
-                    "Bibliography"
-                }
-                @if let Some(path) = library_path {
-                    a href=(path.as_str()) download="bibliography.bib" {
-                        "Bibtex"
-                    }
-                }
-            }
-            ol {
-                @for item in bib {
-                    li {
-                        (Raw(item))
-                    }
-                }
-            }
-        }
-    )
-}
+// pub fn render_bibliography(bib: &[String], library_path: Option<&Utf8Path>) -> impl Renderable {
+//     maud!(
+//         section .bibliography {
+//             header {
+//                 h2 {
+//                     "Bibliography"
+//                 }
+//                 @if let Some(path) = library_path {
+//                     a href=(path.as_str()) download="bibliography.bib" {
+//                         "Bibtex"
+//                     }
+//                 }
+//             }
+//             ol {
+//                 @for item in bib {
+//                     li {
+//                         (Raw(item))
+//                     }
+//                 }
+//             }
+//         }
+//     )
+// }

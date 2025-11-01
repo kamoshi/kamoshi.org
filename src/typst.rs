@@ -3,7 +3,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use hauchiwa::RuntimeError;
+use hauchiwa::error::RuntimeError;
 use sequoia_openpgp::anyhow;
 
 pub fn render_typst(code: &str) -> Result<String, RuntimeError> {

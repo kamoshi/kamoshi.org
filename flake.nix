@@ -16,12 +16,13 @@
         };
 
         used = with pkgs; [
-          rust-bin.beta.latest.default
+          rust-bin.stable.latest.default
           cargo
           openssl
           git
           deno
           biome
+          esbuild
         ];
       in
       {
@@ -35,9 +36,13 @@
             echo "  - Cargo: $(cargo --version)"
             echo "  - Deno: $(deno --version | head -n1)"
             echo "  - Biome: $(biome --version | head -n1)"
+            echo "  - Esbuild: $(esbuild --version | head -n1)"
+
             echo ""
             echo "Run 'make' to see available build targets"
           '';
+
+          RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
         };
       }
     );

@@ -1,59 +1,76 @@
-use hauchiwa::loader::{self, Content, yaml};
-use hauchiwa::{Page, Plugin, RuntimeError, WithFile};
+use hauchiwa::SiteConfig;
+use hauchiwa::error::RuntimeError;
+use hauchiwa::loader::{CSS, Content, Registry, glob_assets, glob_content};
+use hauchiwa::page::Page;
+use hauchiwa::task::Handle;
 use hypertext::{Raw, prelude::*};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
 
 use crate::markdown::Article;
 use crate::model::{Post, Pubkey};
-use crate::{CONTENT, Context, Global};
+use crate::{Context, Global};
 
 use super::make_page;
-use super::posts::render_metadata;
 
-pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
-    config
-        .add_loaders([
-            loader::glob_content(CONTENT, "about/index.md", yaml::<Post>),
-            // .asc -> Pubkey
-            loader::glob_assets(CONTENT, "about/*.asc", |_, data| {
-                Ok(Pubkey {
-                    fingerprint: Cert::from_reader(data.as_slice())?
-                        .primary_key()
-                        .key()
-                        .fingerprint()
-                        .to_spaced_hex(),
-                    data: String::from_utf8(data)?.to_string(),
-                })
-            }),
-        ])
-        .add_task("about", |ctx| {
-            let item = ctx.glob_one_with_file::<Content<Post>>("about.md")?;
-            let pubkey_ident = ctx.get::<Pubkey>("about/pubkey-ident.asc")?;
-            let pubkey_email = ctx.get::<Pubkey>("about/pubkey-email.asc")?;
+pub fn build_about(
+    site_config: &mut SiteConfig<Global>,
+    styles: Handle<Registry<CSS>>,
+) -> Handle<Vec<Page>> {
+    let page = glob_content::<_, Post>(site_config, "content/about/index.md");
 
-            let article = crate::markdown::parse(&ctx, &item.data.text, &item.file.area, None)?;
-            let html = render(&ctx, &item, article, pubkey_ident, pubkey_email)?.render();
+    let cert = glob_assets(site_config, "content/about/*.asc", |_, file| {
+        Ok(Pubkey {
+            fingerprint: Cert::from_reader(file.metadata.as_slice())?
+                .primary_key()
+                .key()
+                .fingerprint()
+                .to_spaced_hex(),
+            data: String::from_utf8(file.metadata)?.to_string(),
+        })
+    });
 
-            let pages = vec![
-                Page::html_with_file(&item.file.area, html, item.file.clone()),
-                Page::text("pubkey_ident.asc", pubkey_ident.data.clone()),
-                Page::text("pubkey_email.asc", pubkey_email.data.clone()),
-            ];
+    site_config.add_task((page, cert, styles), |ctx, (page, cert, styles)| {
+        let item = page.get("content/about/index.md").unwrap();
+        let pubkey_ident = cert.get("content/about/pubkey-ident.asc").unwrap();
+        let pubkey_email = cert.get("content/about/pubkey-email.asc").unwrap();
 
-            Ok(pages)
-        });
-});
+        let styles = &[
+            styles.get("styles/styles.scss").unwrap(),
+            styles.get("styles/layouts/page.scss").unwrap(),
+        ];
 
-/// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles.scss", "layouts/page.scss"];
+        let article = crate::markdown::parse(&ctx, &item.content, "".into(), None).unwrap();
+        let html = render(&ctx, &item, article, pubkey_ident, pubkey_email, styles)
+            .unwrap()
+            .render();
+
+        let pages = vec![
+            Page {
+                url: "about".into(),
+                content: html.into_inner(),
+            },
+            Page {
+                url: "pubkey_ident.asc".into(),
+                content: pubkey_ident.data.clone(),
+            },
+            Page {
+                url: "pubkey_email.asc".into(),
+                content: pubkey_email.data.clone(),
+            },
+        ];
+
+        pages
+    })
+}
 
 pub fn render<'ctx>(
     ctx: &'ctx Context,
-    item: &'ctx WithFile<Content<Post>>,
+    item: &'ctx Content<Post>,
     article: Article,
     pubkey_ident: &'ctx Pubkey,
     pubkey_email: &'ctx Pubkey,
+    styles: &'ctx [&CSS],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let main = maud!(
         main {
@@ -64,7 +81,7 @@ pub fn render<'ctx>(
                 section .paper {
                     header {
                         h1 #top {
-                            (&item.data.meta.title)
+                            (&item.metadata.title)
                         }
                     }
                     section .wiki-article__markdown.markdown {
@@ -89,15 +106,9 @@ pub fn render<'ctx>(
                 }
             }
             // Metadata (right)
-            (render_metadata(ctx, &item.data.meta, item.file.info.as_ref(), &[]))
+            // (render_metadata(ctx, &item.data.meta, item.file.info.as_ref(), &[]))
         }
     );
 
-    make_page(
-        ctx,
-        main,
-        item.data.meta.title.clone(),
-        STYLES,
-        Default::default(),
-    )
+    make_page(ctx, main, item.metadata.title.clone(), styles, &[])
 }

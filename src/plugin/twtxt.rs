@@ -1,64 +1,75 @@
-use std::borrow::Cow;
-
-use hauchiwa::{Page, Plugin, RuntimeError, loader};
+use hauchiwa::SiteConfig;
+use hauchiwa::error::RuntimeError;
+use hauchiwa::loader::{CSS, Registry, glob_assets};
+use hauchiwa::page::Page;
+use hauchiwa::task::Handle;
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::md_parse_simple;
 use crate::model::{Microblog, MicroblogEntry};
-use crate::{CONTENT, Context, Global};
+use crate::{Context, Global};
 
 use super::make_page;
 
-pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
-    config
-        .add_loaders([loader::glob_assets(CONTENT, "twtxt.txt", |_, data| {
-            let data = String::from_utf8_lossy(&data);
-            let entries = data
-                .lines()
-                .filter(|line| {
-                    let line = line.trim_start();
-                    !line.is_empty() && !line.starts_with('#')
-                })
-                .map(str::parse::<MicroblogEntry>)
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap();
-
-            Ok(Microblog {
-                entries,
-                data: data.to_string(),
+pub fn build_twtxt(
+    config: &mut SiteConfig<Global>,
+    styles: Handle<Registry<CSS>>,
+) -> Handle<Vec<Page>> {
+    let twtxt = glob_assets(config, "content/twtxt.txt", |_, file| {
+        let data = String::from_utf8_lossy(&file.metadata);
+        let entries = data
+            .lines()
+            .filter(|line| {
+                let line = line.trim_start();
+                !line.is_empty() && !line.starts_with('#')
             })
-        })])
-        .add_task("microblog", |ctx| {
-            let data = ctx
-                .glob::<Microblog>("twtxt.txt")?
-                .into_iter()
-                .next()
-                .unwrap();
-            let html = render(&ctx, data)?.render();
+            .map(str::parse::<MicroblogEntry>)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
 
-            let mut pages = vec![
-                Page::text("twtxt.txt", data.data.clone()),
-                Page::text("thoughts/index.html", html),
-            ];
+        Ok(Microblog {
+            entries,
+            data: data.to_string(),
+        })
+    });
 
-            for entry in &data.entries {
-                let html = render_entry(&ctx, entry)?.render();
+    config.add_task((twtxt, styles), |ctx, (twtxt, styles)| {
+        let styles = &[
+            styles.get("styles/styles.scss").unwrap(),
+            styles.get("styles/microblog.scss").unwrap(),
+        ];
 
-                pages.push(Page::html(
-                    format!("thoughts/{}", entry.date.timestamp()),
-                    html,
-                ));
-            }
+        let data = twtxt.get("content/twtxt.txt").unwrap();
+        let html = render(&ctx, data, styles).unwrap().render();
 
-            Ok(pages)
-        });
-});
+        let mut pages = vec![
+            Page {
+                url: "twtxt.txt".into(),
+                content: data.data.clone(),
+            },
+            Page {
+                url: "thoughts/index.html".into(),
+                content: html.into_inner(),
+            },
+        ];
 
-const STYLES: &[&str] = &["styles.scss", "microblog.scss"];
+        for entry in &data.entries {
+            let html = render_entry(&ctx, entry, styles).unwrap().render();
+
+            pages.push(Page {
+                url: format!("thoughts/{}", entry.date.timestamp()),
+                content: html.into_inner(),
+            });
+        }
+
+        pages
+    })
+}
 
 pub fn render<'ctx>(
     ctx: &'ctx Context,
     microblog: &'ctx Microblog,
+    styles: &'ctx [&CSS],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let mut entries = microblog.entries.clone();
     entries.sort_by(|a, b| b.date.cmp(&a.date));
@@ -80,12 +91,13 @@ pub fn render<'ctx>(
         }
     );
 
-    make_page(ctx, main, "microblog".into(), STYLES, Cow::default())
+    make_page(ctx, main, "microblog".into(), styles, &[])
 }
 
 pub fn render_entry<'ctx>(
     ctx: &'ctx Context,
     entry: &'ctx MicroblogEntry,
+    styles: &'ctx [&CSS],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let main = maud!(
         main {
@@ -100,5 +112,5 @@ pub fn render_entry<'ctx>(
         }
     );
 
-    make_page(ctx, main, "microblog".into(), STYLES, Cow::default())
+    make_page(ctx, main, "microblog".into(), styles, &[])
 }
