@@ -1,72 +1,65 @@
-use hauchiwa::loader::{self, Content, yaml};
-use hauchiwa::{Page, Plugin, RuntimeError, WithFile};
+use hauchiwa::error::RuntimeError;
+use hauchiwa::loader::{self, CSS, Content, Registry, glob_content};
+use hauchiwa::page::Page;
+use hauchiwa::task::Handle;
+use hauchiwa::{SiteConfig, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
-use crate::model::Project;
+use crate::model::{Post, Project};
 use crate::{CONTENT, Context, Global};
 
 use super::make_page;
 
-pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
-    config
-        .add_loaders([
-            //
-            loader::glob_content(CONTENT, "projects/**/*.md", yaml::<Project>),
-        ])
-        .add_task("projects", |ctx| {
-            let mut pages = vec![];
+pub fn build_projects(
+    config: &mut SiteConfig<Global>,
+    styles: Handle<Registry<CSS>>,
+) -> Handle<Vec<Page>> {
+    let projects = glob_content::<_, Project>(config, "content/projects/**/*.md");
 
-            let data = ctx.glob_with_file::<Content<Project>>("projects/**/*")?;
-            let list = render_list(&ctx, data)?;
+    config.add_task((projects, styles), |ctx, (projects, styles)| {
+        let mut pages = vec![];
+
+        let styles_list = &[
+            styles.get("styles/styles.scss").unwrap(),
+            styles.get("styles/layouts/projects.scss").unwrap(),
+        ];
+
+        // let styles_page = &[
+        //     styles.get("styles/styles.scss").unwrap(),
+        //     styles.get("styles/layouts/page.scss").unwrap(),
+        // ];
+
+        {
+            let data = projects.values().collect::<Vec<_>>();
+            let list = render_list(&ctx, data, styles_list).unwrap();
             pages.push(Page::html("projects", list));
 
-            let text = ctx.get::<String>("hauchiwa")?;
-            let article = crate::markdown::parse(&ctx, text, "".into(), None)?;
-            let html = render_page(&ctx, &article)?.render();
-            pages.push(Page::html("projects/hauchiwa", html));
+            // let text = ctx.get::<String>("hauchiwa")?;
+            // let article = crate::markdown::parse(&ctx, text, "".into(), None)?;
+            // let html = render_page(&ctx, &article)?.render();
+            // pages.push(Page::html("projects/hauchiwa", html));
+        }
 
-            Ok(pages)
-        })
-        // .add_task(|sack| {
-        //     let query = sack.get_content("projects/flox")?;
-        //     let (parsed, outline, bib) =
-        //         html::post::parse_content(query.content, &sack, query.area, None);
-        //     let out_buff = html::as_html(query.meta, &parsed, &sack, outline, bib);
-        //     Ok(vec![(query.slug.join("index.html"), out_buff)])
-        // })
-        // .add_task(|sack| {
-        //     Ok(vec![(
-        //         "projects/index.html".into(),
-        //         crate::html::to_list(
-        //             &sack,
-        //             sack.query_content::<Project>("projects/**/*")?
-        //                 .into_iter()
-        //                 .map(LinkDate::from)
-        //                 .collect(),
-        //             "Projects".into(),
-        //             "/projects/rss.xml",
-        //         ),
-        //     )])
-        // })
-        .add_task("projects_feed", |sack| {
-            let feed = crate::rss::generate_feed::<Content<Project>>(
-                sack,
-                "projects",
-                "Kamoshi.org Projects",
-            )?;
-            Ok(vec![feed])
-        });
-});
+        {
+            //             let feed = crate::rss::generate_feed::<Content<Project>>(
+            //                 sack,
+            //                 "projects",
+            //                 "Kamoshi.org Projects",
+            //             )?;
+            //             Ok(vec![feed])
+        }
 
-const STYLES_LIST: &[&str] = &["styles.scss", "layouts/projects.scss"];
-const STYLES_PAGE: &[&str] = &["styles.scss", "layouts/page.scss"];
+        pages
+    })
+}
 
 pub fn render_list(
     ctx: &Context,
-    mut data: Vec<WithFile<Content<Project>>>,
+    mut data: Vec<&Content<Project>>,
+    styles: &[&CSS],
 ) -> Result<String, RuntimeError> {
-    data.sort_unstable_by(|a, b| a.data.meta.title.cmp(&b.data.meta.title));
+    data.sort_unstable_by(|a, b| a.metadata.title.cmp(&b.metadata.title));
 
     let main = maud! {
         main {
@@ -77,22 +70,16 @@ pub fn render_list(
 
                 div .project-list-flex {
                     @for item in &data {
-                        (render_tile(&item.data.meta))
+                        (render_tile(&item.metadata))
                     }
                 }
             }
         }
     };
 
-    let html = make_page(
-        ctx,
-        main,
-        "Projects".into(),
-        STYLES_LIST,
-        Default::default(),
-    )?
-    .render()
-    .into_inner();
+    let html = make_page(ctx, main, "Projects".into(), styles, &[])?
+        .render()
+        .into_inner();
 
     Ok(html)
 }
@@ -118,6 +105,7 @@ fn render_tile(project: &Project) -> impl Renderable {
 pub fn render_page<'ctx>(
     ctx: &'ctx Context,
     article: &'ctx Article,
+    styles: &'ctx [&CSS],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let html = maud!(
         main {
@@ -139,7 +127,7 @@ pub fn render_page<'ctx>(
         }
     );
 
-    let html = make_page(ctx, html, "".into(), STYLES_PAGE, Default::default())?;
+    let html = make_page(ctx, html, "".into(), styles, &[])?;
 
     Ok(html)
 }

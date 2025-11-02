@@ -1,35 +1,50 @@
-use std::{
-    borrow::Cow,
-    collections::{BTreeMap, HashMap},
-};
+use std::collections::{BTreeMap, HashMap};
 
 use chrono::Datelike;
-use hauchiwa::loader::Content;
-use hauchiwa::{Page, Plugin, RuntimeError};
+use hauchiwa::{
+    SiteConfig,
+    loader::{CSS, Content, Registry},
+    page::{Page, absolutize},
+    task::Handle,
+};
+use hauchiwa::{error::RuntimeError, task};
 use hypertext::prelude::*;
 
-use crate::{Context, Global, LinkDate, model::Post};
+use crate::{Context, Global, Link, LinkDate, model::Post};
 
 use super::make_page;
 
-pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
-    config.add_task("tags", |ctx| {
+pub fn build_tags(
+    config: &mut SiteConfig<Global>,
+    posts: Handle<Registry<Content<Post>>>,
+    styles: Handle<Registry<CSS>>,
+) -> Handle<Vec<Page>> {
+    task!(config, |ctx, posts, styles| {
         use std::collections::BTreeMap;
 
-        let posts = ctx
-            .glob_with_file::<Content<Post>>("posts/**/*")?
-            .into_iter()
-            .filter(|item| !item.data.meta.draft)
+        let styles = &[
+            styles.get("styles/styles.scss").unwrap(),
+            styles.get("styles/layouts/list.scss").unwrap(),
+            styles.get("styles/layouts/tags.scss").unwrap(),
+        ];
+
+        let posts = posts
+            .values()
+            .filter(|item| !item.metadata.draft)
             .collect::<Vec<_>>();
 
         let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
 
         for post in &posts {
-            for tag in &post.data.meta.tags {
-                tag_map
-                    .entry(tag.clone())
-                    .or_default()
-                    .push(LinkDate::from(post));
+            for tag in &post.metadata.tags {
+                tag_map.entry(tag.clone()).or_default().push(LinkDate {
+                    link: Link {
+                        path: absolutize("content", &post.path),
+                        name: post.metadata.title.clone(),
+                        desc: post.metadata.desc.clone(),
+                    },
+                    date: post.metadata.date.clone(),
+                });
             }
         }
 
@@ -40,21 +55,18 @@ pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
             let path = format!("tags/{tag}/index.html");
 
             let data = group(links);
-            let html = render_tag(&ctx, &data, tag.to_owned())?;
+            let html = render_tag(&ctx, &data, tag.to_owned(), styles).unwrap();
 
-            pages.push(Page::text(path, html.render()));
+            pages.push(Page::html(path, html.render()));
+
+            // Render global tag index
+            // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
+            // pages.push(Page::text("tags/index.html".into(), index.render().into()));
         }
 
-        // Render global tag index
-        // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
-        // pages.push(Page::text("tags/index.html".into(), index.render().into()));
-
-        Ok(pages)
-    });
-});
-
-/// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles.scss", "layouts/list.scss", "layouts/tags.scss"];
+        pages
+    })
+}
 
 pub fn group(links: &[LinkDate]) -> Vec<(i32, Vec<&LinkDate>)> {
     let mut groups = HashMap::<_, Vec<_>>::new();
@@ -79,6 +91,7 @@ pub fn render_tag<'ctx>(
     ctx: &'ctx Context,
     links: &[(i32, Vec<&'ctx LinkDate>)],
     title: String,
+    styles: &'ctx [&CSS],
 ) -> Result<impl Renderable, RuntimeError> {
     let heading = title.clone();
     let list = maud!(
@@ -95,7 +108,7 @@ pub fn render_tag<'ctx>(
         }
     );
 
-    make_page(ctx, list, title, STYLES, Cow::default())
+    make_page(ctx, list, title, styles, &[])
 }
 
 fn section(year: i32, group: &[&LinkDate]) -> impl Renderable {
@@ -136,6 +149,7 @@ pub fn tag_cloud<'ctx>(
     ctx: &'ctx Context,
     tag_map: &'ctx BTreeMap<String, Vec<LinkDate>>,
     title: &'ctx str,
+    styles: &'ctx [&CSS],
 ) -> Result<impl Renderable, RuntimeError> {
     let sorted = {
         let mut vec: Vec<_> = tag_map.iter().collect();
@@ -164,5 +178,5 @@ pub fn tag_cloud<'ctx>(
         }
     };
 
-    make_page(ctx, main, "Tag index".into(), STYLES, Cow::default())
+    make_page(ctx, main, "Tag index".into(), styles, &[])
 }

@@ -1,11 +1,11 @@
 pub mod about;
 pub mod home;
 pub mod posts;
-// pub mod projects;
+pub mod projects;
 pub mod slides;
-// pub mod tags;
+pub mod tags;
 pub mod twtxt;
-// pub mod wiki;
+pub mod wiki;
 
 use std::collections::HashMap;
 

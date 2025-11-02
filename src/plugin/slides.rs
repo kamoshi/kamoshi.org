@@ -2,7 +2,7 @@ use std::fmt::Write as _;
 
 use camino::Utf8Path;
 use hauchiwa::error::RuntimeError;
-use hauchiwa::loader::{self, CSS, Content, JS, Registry, Svelte, glob_content};
+use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, Svelte, glob_content};
 use hauchiwa::page::{Page, absolutize, normalize_prefixed};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -17,16 +17,17 @@ use super::make_bare;
 
 pub fn build_slides(
     config: &mut SiteConfig<Global>,
+    images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
     scripts: Handle<Registry<JS>>,
 ) -> Handle<Vec<Page>> {
-    let slides_md = glob_content::<_, Slideshow>(config, "content/slides/**/*.md");
-    let slides_hs = glob_content::<_, Slideshow>(config, "content/slides/**/*.lhs");
+    let md = glob_content::<_, Slideshow>(config, "content/slides/**/*.md");
+    let hs = glob_content::<_, Slideshow>(config, "content/slides/**/*.lhs");
 
-    task!(config, |ctx, slides_md, slides_hs, styles, scripts| {
+    task!(config, |ctx, md, hs, images, styles, scripts| {
         let mut pages = vec![];
 
-        let content = [slides_md.values(), slides_hs.values()]
+        let content = [md.values(), hs.values()]
             .into_iter()
             .flatten()
             .collect::<Vec<_>>();
@@ -41,7 +42,7 @@ pub fn build_slides(
 
             // render individual pages
             for item in &content {
-                let mark = parse(&ctx, &item.content, "".into(), None).unwrap();
+                let mark = parse(&item.content, &item.path, None, Some(images)).unwrap();
                 let html = render(&ctx, &item.metadata, &mark, styles, scripts)
                     .unwrap()
                     .render();
@@ -95,17 +96,17 @@ pub fn build_slides(
 }
 
 pub fn parse(
-    ctx: &Context,
     text: &str,
     path: &Utf8Path,
     library: Option<&Library>,
+    images: Option<&Registry<Image>>,
 ) -> Result<String, RuntimeError> {
     let mut buff = String::new();
 
     for stack in text.split("\n-----\n") {
         buff.push_str("<section>");
         for slide in stack.split("\n---\n") {
-            let article = crate::markdown::parse(ctx, slide, path, library)?;
+            let article = crate::markdown::parse(slide, path, library, images)?;
             write!(buff, "<section>{}</section>", article.text).unwrap();
         }
         buff.push_str("</section>");

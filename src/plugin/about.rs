@@ -1,5 +1,5 @@
 use hauchiwa::error::RuntimeError;
-use hauchiwa::loader::{CSS, Content, Registry, glob_assets, glob_content};
+use hauchiwa::loader::{CSS, Content, Image, Registry, glob_assets, glob_content};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -15,6 +15,7 @@ use super::make_page;
 
 pub fn build_about(
     site_config: &mut SiteConfig<Global>,
+    images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
 ) -> Handle<Vec<Page>> {
     let page = glob_content::<_, Post>(site_config, "content/about/index.md");
@@ -30,7 +31,7 @@ pub fn build_about(
         })
     });
 
-    task!(site_config, |ctx, page, cert, styles| {
+    task!(site_config, |ctx, page, cert, images, styles| {
         let item = page.get("content/about/index.md").unwrap();
         let pubkey_ident = cert.get("content/about/pubkey-ident.asc").unwrap();
         let pubkey_email = cert.get("content/about/pubkey-email.asc").unwrap();
@@ -40,7 +41,8 @@ pub fn build_about(
             styles.get("styles/layouts/page.scss").unwrap(),
         ];
 
-        let article = crate::markdown::parse(&ctx, &item.content, "".into(), None).unwrap();
+        let article =
+            crate::markdown::parse(&item.content, &item.path, None, Some(images)).unwrap();
         let html = render(&ctx, &item, article, pubkey_ident, pubkey_email, styles)
             .unwrap()
             .render();

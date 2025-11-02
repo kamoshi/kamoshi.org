@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
 use camino::Utf8Path;
-use hauchiwa::loader::{self, Content, yaml};
-use hauchiwa::{Page, Plugin, RuntimeError};
+use hauchiwa::error::RuntimeError;
+use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, glob_content};
+use hauchiwa::page::{Page, absolutize, normalize_prefixed};
+use hauchiwa::task::Handle;
+use hauchiwa::{SiteConfig, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
@@ -11,44 +14,56 @@ use crate::{Bibtex, CONTENT, Context, Global, Link};
 
 use super::{make_page, render_bibliography};
 
-pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
-    config
-        .add_loaders([
-            //
-            loader::glob_content(CONTENT, "wiki/**/*.md", yaml::<Wiki>),
-        ])
-        .add_task("wiki", |ctx| {
-            let mut pages = vec![];
+pub fn build_wiki(
+    config: &mut SiteConfig<Global>,
+    images: Handle<Registry<Image>>,
+    styles: Handle<Registry<CSS>>,
+) -> Handle<Vec<Page>> {
+    let wiki = glob_content::<_, Wiki>(config, "content/wiki/**/*.md");
 
-            for item in ctx.glob_with_file::<Content<Wiki>>("**/*")? {
-                let pattern = format!("{}/*", item.file.area);
-                let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
+    task!(config, |ctx, wiki, images, styles| {
+        let mut pages = vec![];
 
-                let article = crate::markdown::parse(
-                    &ctx,
-                    &item.data.text,
-                    &item.file.area,
-                    bibtex.map(|x| &x.data),
-                )?;
+        let styles = &[
+            styles.get("styles/styles.scss").unwrap(),
+            styles.get("styles/layouts/page.scss").unwrap(),
+        ];
 
-                let buffer = render(
-                    &ctx,
-                    &item.data.meta,
-                    &article,
-                    &item.file.area,
-                    bibtex.map(|x| x.path.as_ref()),
-                )?
-                .render();
+        for item in wiki.values() {
+            // let pattern = format!("{}/*", item.file.area);
+            // let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
 
-                pages.push(Page::html(&item.file.area, buffer));
-            }
+            // let mut js = vec![];
 
-            Ok(pages)
-        });
-});
+            // for path in &item.metadata {
+            //     js.push(path.to_string());
+            // }
 
-/// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles.scss", "layouts/page.scss"];
+            let article =
+                crate::markdown::parse(&item.content, &item.path, None, Some(images)).unwrap();
+
+            let buffer = render(
+                &ctx,
+                &item.metadata,
+                &article,
+                "".into(),
+                None,
+                &wiki,
+                styles,
+                &[],
+            )
+            .unwrap()
+            .render();
+
+            pages.push(Page::html(
+                normalize_prefixed("content", &item.path),
+                buffer,
+            ));
+        }
+
+        pages
+    })
+}
 
 pub fn render<'ctx>(
     ctx: &'ctx Context,
@@ -56,20 +71,17 @@ pub fn render<'ctx>(
     article: &'ctx Article,
     slug: &'ctx Utf8Path,
     library_path: Option<&'ctx Utf8Path>,
+    wiki: &'ctx Registry<Content<Wiki>>,
+    styles: &'ctx [&CSS],
+    scripts: &'ctx [&JS],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let mut scripts = vec![];
-
-    for path in &article.scripts {
-        scripts.push(path.to_string());
-    }
-
     let main = maud!(
         main .wiki-main {
             // Outline
             aside .outline {
                 section {
                     div {
-                        (show_page_tree(slug, ctx))
+                        (show_page_tree(slug, wiki))
                     }
                 }
             }
@@ -78,7 +90,7 @@ pub fn render<'ctx>(
         }
     );
 
-    make_page(ctx, main, meta.title.to_owned(), STYLES, scripts.into())
+    make_page(ctx, main, meta.title.to_owned(), styles, scripts)
 }
 
 fn render_article(
@@ -141,17 +153,13 @@ impl TreePage {
 /// Render the page tree
 pub(crate) fn show_page_tree<'ctx>(
     ctx: &'ctx Utf8Path,
-    sack: &'ctx Context,
+    wiki: &'ctx Registry<Content<Wiki>>,
 ) -> impl Renderable + use<'ctx> {
-    let tree = sack
-        .glob_with_file::<Content<Wiki>>("**/*")
-        .unwrap()
-        .into_iter()
-        .map(|item| Link {
-            path: Utf8Path::new("/").join(&item.file.area),
-            name: item.data.meta.title.clone(),
-            desc: None,
-        });
+    let tree = wiki.values().map(|item| Link {
+        path: absolutize("content", &item.path),
+        name: item.metadata.title.clone(),
+        desc: None,
+    });
 
     let tree = TreePage::from_iter(tree);
     let parts: Vec<_> = ctx.iter().collect();

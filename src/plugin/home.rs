@@ -1,5 +1,5 @@
 use hauchiwa::error::RuntimeError;
-use hauchiwa::loader::{CSS, JS, Registry, Svelte, glob_content};
+use hauchiwa::loader::{CSS, Image, JS, Registry, Svelte, glob_content};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -13,12 +13,13 @@ use super::make_page;
 
 pub fn build_home(
     site_config: &mut SiteConfig<Global>,
+    images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
     svelte: Handle<Registry<Svelte>>,
 ) -> Handle<Vec<Page>> {
     let page = glob_content::<_, Home>(site_config, "content/index.md");
 
-    task!(site_config, |ctx, page, styles, svelte| {
+    task!(site_config, |ctx, page, images, styles, svelte| {
         let page = page.get("content/index.md").unwrap();
 
         let styles = &[
@@ -32,7 +33,7 @@ pub fn build_home(
 
         let scripts = &[&kanji.init];
 
-        let article = parse(&ctx, &page.content, "".into(), None).unwrap();
+        let article = parse(&page.content, &page.path, None, Some(images)).unwrap();
         let html = render(&ctx, &article.text, &kanji_html, styles, scripts).unwrap();
 
         vec![Page::html("", html)]
@@ -86,7 +87,7 @@ pub(crate) fn render(
 }
 
 fn intro(ctx: &Context) -> Result<impl Renderable, RuntimeError> {
-    let article = parse(ctx, INTRO, "/".into(), None)?;
+    let article = parse(INTRO, "".into(), None, None)?;
 
     let html = maud!(
         section .p-card.intro-jp lang="ja-JP" {

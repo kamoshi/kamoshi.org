@@ -13,9 +13,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
-use hauchiwa::executor::run_once_parallel;
 use hauchiwa::loader::{Runtime, glob_assets, glob_images};
-use hauchiwa::page::save_pages_to_dist;
 use hauchiwa::{Site, task};
 use hauchiwa::{SiteConfig, page::Page};
 use hayagriva::Library;
@@ -24,8 +22,11 @@ use hypertext::{Raw, Renderable};
 use crate::plugin::about::build_about;
 use crate::plugin::home::build_home;
 use crate::plugin::posts::build_posts;
+use crate::plugin::projects::build_projects;
 use crate::plugin::slides::build_slides;
+use crate::plugin::tags::build_tags;
 use crate::plugin::twtxt::build_twtxt;
+use crate::plugin::wiki::build_wiki;
 use crate::plugin::{make_fullscreen, make_page};
 
 /// Base path for content files
@@ -124,9 +125,7 @@ fn run() -> Result<(), RuntimeError> {
         hauchiwa::loader::build_svelte(&mut site, "scripts/**/App.svelte", "scripts/**/*.svelte");
 
     // images
-    let images = glob_images(&mut site, "**/*.jpg");
-    // glob_images(&mut site, "**/*.png");
-    // glob_images(&mut site, "**/*.gif");
+    let images = glob_images(&mut site, &["**/*.jpg", "**/*.png", "**/*.gif"]);
 
     let bibtex = glob_assets(&mut site, "**/*.bib", |_, file| {
         let rt = Runtime;
@@ -137,11 +136,14 @@ fn run() -> Result<(), RuntimeError> {
         Ok(Bibtex { path, data })
     });
 
-    let home = build_home(&mut site, styles, svelte);
-    let about = build_about(&mut site, styles);
-    let twtxt = build_twtxt(&mut site, styles);
-    let posts = build_posts(&mut site, styles, scripts);
-    let slides = build_slides(&mut site, styles, scripts);
+    let home = build_home(&mut site, images, styles, svelte);
+    let about = build_about(&mut site, images, styles);
+    let _ = build_twtxt(&mut site, styles);
+    let (posts_data, posts) = build_posts(&mut site, images, styles, scripts);
+    let slides = build_slides(&mut site, images, styles, scripts);
+    let _ = build_wiki(&mut site, images, styles);
+    let _ = build_projects(&mut site, styles);
+    let _ = build_tags(&mut site, posts_data, styles);
 
     let other = task!(site, |ctx, styles, scripts, svelte| {
         let mut pages = vec![];
@@ -253,23 +255,14 @@ fn run() -> Result<(), RuntimeError> {
     });
 
     let mut site = Site::new(site);
-    let globals = hauchiwa::Globals {
-        generator: "hauchiwa",
-        mode: hauchiwa::Mode::Build,
-        port: None,
-        data: Global::new(),
-    };
-    let (_, pages) = run_once_parallel(&mut site, &globals);
 
-    save_pages_to_dist(&pages);
+    match args.mode {
+        Mode::Build => site.build(Global::new()),
+        Mode::Watch => site.watch(Global::new()),
+    };
 
     // let mut website = Website::config()
     //     .load_git(".")?
-    //     // .add_plugins([
-    //     //     plugin::projects::PLUGIN,
-    //     //     plugin::wiki::PLUGIN,
-    //     //     plugin::tags::PLUGIN,
-    //     // ])
     //     .add_loaders([
     //         // github
     //         loader::async_asset("hauchiwa", async |_| {
@@ -279,14 +272,6 @@ fn run() -> Result<(), RuntimeError> {
     //             Ok(reqwest::get(URL).await?.text().await?)
     //         }),
     //     ])
-    //     .add_hook(Hook::post_build(crate::hook::build_pagefind))
-    //     .add_hook(Hook::post_build(crate::hook::build_sitemap))
-    //     .finish();
-
-    // match args.mode {
-    //     Mode::Build => website.build(Global::new())?,
-    //     Mode::Watch => website.watch(Global::new())?,
-    // };
 
     Ok(())
 }

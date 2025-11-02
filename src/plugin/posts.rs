@@ -1,7 +1,7 @@
 use camino::Utf8Path;
 use hauchiwa::error::RuntimeError;
 use hauchiwa::gitmap::GitInfo;
-use hauchiwa::loader::{self, CSS, Content, JS, Registry, glob_content};
+use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, glob_content};
 use hauchiwa::page::{Page, absolutize, normalize_prefixed};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -15,12 +15,13 @@ use super::{make_page, render_bibliography, to_list};
 
 pub fn build_posts(
     config: &mut SiteConfig<Global>,
+    images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
     scripts: Handle<Registry<JS>>,
-) -> Handle<Vec<Page>> {
+) -> (Handle<Registry<Content<Post>>>, Handle<Vec<Page>>) {
     let posts = glob_content::<_, Post>(config, "content/posts/**/*.md");
 
-    task!(config, |ctx, posts, styles, scripts| {
+    let pages = task!(config, |ctx, posts, images, styles, scripts| {
         let mut pages = vec![];
 
         let posts = posts
@@ -47,7 +48,8 @@ pub fn build_posts(
                 }
             }
 
-            let article = crate::markdown::parse(&ctx, &item.content, "".into(), None).unwrap();
+            let article =
+                crate::markdown::parse(&item.content, &item.path, None, Some(images)).unwrap();
 
             let buffer = render(
                 &ctx,
@@ -104,7 +106,9 @@ pub fn build_posts(
         }
 
         pages
-    })
+    });
+
+    (posts, pages)
 }
 
 pub fn render<'ctx>(
