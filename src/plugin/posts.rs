@@ -1,97 +1,122 @@
 use camino::Utf8Path;
-use hauchiwa::loader::{self, Content, yaml};
+use hauchiwa::error::RuntimeError;
+use hauchiwa::gitmap::GitInfo;
+use hauchiwa::loader::{self, CSS, Content, JS, Registry, glob_content};
+use hauchiwa::page::{Page, absolutize, normalize_prefixed};
+use hauchiwa::task::Handle;
+use hauchiwa::{SiteConfig, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
 use crate::model::Post;
-use crate::{Bibtex, CONTENT, Context, Global, LinkDate};
+use crate::{Bibtex, CONTENT, Context, Global, Link, LinkDate};
 
 use super::{make_page, render_bibliography, to_list};
 
-pub const PLUGIN: Plugin<Global> = Plugin::new(|config| {
-    config
-        .add_loaders([
-            //
-            loader::glob_content(CONTENT, "posts/**/*.md", yaml::<Post>),
-        ])
-        .add_task("posts", |ctx| {
-            let mut pages = vec![];
+pub fn build_posts(
+    config: &mut SiteConfig<Global>,
+    styles: Handle<Registry<CSS>>,
+    scripts: Handle<Registry<JS>>,
+) -> Handle<Vec<Page>> {
+    let posts = glob_content::<_, Post>(config, "content/posts/**/*.md");
 
-            for item in ctx
-                .glob_with_file::<Content<Post>>("posts/**/*")?
-                .into_iter()
-                .filter(|item| !item.data.meta.draft)
-            {
-                let pattern = format!("{}/*.bib", item.file.area);
-                let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
+    task!(config, |ctx, posts, styles, scripts| {
+        let mut pages = vec![];
 
-                let article = crate::markdown::parse(
-                    &ctx,
-                    &item.data.text,
-                    &item.file.area,
-                    bibtex.map(|x| &x.data),
-                )?;
+        let posts = posts
+            .values()
+            .filter(|item| !item.metadata.draft)
+            .collect::<Vec<_>>();
 
-                let buffer = render(
-                    &ctx,
-                    &item.data.meta,
-                    article,
-                    item.file.info.as_ref(),
-                    bibtex.map(|x| x.path.as_ref()),
-                    &item.data.meta.tags,
-                )?
-                .render();
+        // render the posts
+        for item in &posts {
+            // let pattern = format!("{}/*.bib", item.file.area);
+            // let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
 
-                pages.push(Page::text(item.file.area.join("index.html"), buffer))
+            let styles = &[
+                styles.get("styles/styles.scss").unwrap(),
+                styles.get("styles/layouts/page.scss").unwrap(),
+            ];
+
+            let mut js = vec![scripts.get("scripts/outline/main.ts").unwrap()];
+
+            if let Some(entries) = &item.metadata.scripts {
+                for entry in entries {
+                    let key = format!("scripts/{}", entry);
+                    js.push(scripts.get(key).unwrap());
+                }
             }
-            Ok(pages)
-        })
-        .add_task("posts_list", |ctx| {
-            Ok(vec![Page::text(
-                "posts/index.html",
-                to_list(
-                    &ctx,
-                    ctx.glob_with_file::<Content<Post>>("posts/**/*")?
-                        .iter()
-                        .filter(|item| !item.data.meta.draft)
-                        .map(LinkDate::from)
-                        .collect(),
-                    "Posts".into(),
-                    "/posts/rss.xml",
-                )?
-                .render(),
-            )])
-        })
-        .add_task("posts_feed", |sack| {
-            let feed =
-                crate::rss::generate_feed::<Content<Post>>(sack, "posts", "Kamoshi.org Posts")?;
-            Ok(vec![feed])
-        });
-});
 
-/// Styles relevant to this fragment
-const STYLES: &[&str] = &["styles.scss", "layouts/page.scss"];
+            let article = crate::markdown::parse(&ctx, &item.content, "".into(), None).unwrap();
+
+            let buffer = render(
+                &ctx,
+                &item.metadata,
+                article,
+                None,
+                None,
+                &item.metadata.tags,
+                styles,
+                &js,
+            )
+            .unwrap()
+            .render();
+
+            pages.push(Page::html(
+                item.path.strip_prefix("content/").unwrap(),
+                buffer,
+            ));
+        }
+
+        {
+            let styles = &[
+                styles.get("styles/styles.scss").unwrap(),
+                styles.get("styles/layouts/list.scss").unwrap(),
+            ];
+
+            let html = to_list(
+                &ctx,
+                posts
+                    .iter()
+                    .map(|item| LinkDate {
+                        link: Link {
+                            path: absolutize("content", &item.path),
+                            name: item.metadata.title.clone(),
+                            desc: item.metadata.desc.clone(),
+                        },
+                        date: item.metadata.date.clone(),
+                    })
+                    .collect(),
+                "Posts".into(),
+                "/posts/rss.xml",
+                styles,
+            )
+            .unwrap()
+            .render();
+
+            pages.push(Page::html("posts", html));
+        }
+
+        {
+            // let feed =
+            //     crate::rss::generate_feed::<Content<Post>>(sack, "posts", "Kamoshi.org Posts")?;
+            // Ok(vec![feed])
+        }
+
+        pages
+    })
+}
 
 pub fn render<'ctx>(
     ctx: &'ctx Context,
     meta: &'ctx Post,
     article: Article,
-    info: Option<&'ctx hauchiwa::GitInfo>,
+    info: Option<&'ctx GitInfo>,
     library_path: Option<&'ctx Utf8Path>,
     tags: &'ctx [String],
+    styles: &'ctx [&CSS],
+    scripts: &'ctx [&JS],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let script_outline = ctx.get::<Script>("outline/main.ts")?;
-    let mut scripts = vec![script_outline.path.to_string()];
-
-    for path in &article.scripts {
-        scripts.push(path.to_string());
-    }
-
-    for script in meta.scripts.iter().flatten() {
-        let script = ctx.get::<Script>(script)?;
-        scripts.push(script.path.to_string());
-    }
-
     let main = maud!(
         main {
             // Outline (left)
@@ -103,7 +128,7 @@ pub fn render<'ctx>(
         }
     );
 
-    make_page(ctx, main, meta.title.clone(), STYLES, scripts.into())
+    make_page(ctx, main, meta.title.clone(), styles, scripts)
 }
 
 fn render_article(
@@ -134,7 +159,7 @@ fn render_article(
 pub fn render_metadata(
     ctx: &Context,
     meta: &Post,
-    info: Option<&hauchiwa::GitInfo>,
+    info: Option<&GitInfo>,
     tags: &[String],
 ) -> impl Renderable {
     maud!(
@@ -158,7 +183,7 @@ pub fn render_metadata(
                     }
                     div {
                         img src="/static/svg/lucide/git-graph.svg" title="Link to commit";
-                        a href=(format!("{}/commit/{}", &ctx.get_globals().data.link, &info.abbreviated_hash)) {
+                        a href=(format!("{}/commit/{}", &ctx.data.link, &info.abbreviated_hash)) {
                             (&info.abbreviated_hash)
                         }
                     }

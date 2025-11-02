@@ -1,4 +1,3 @@
-// mod hook;
 mod markdown;
 mod model;
 mod plugin;
@@ -6,23 +5,25 @@ mod plugin;
 mod ts;
 mod typst;
 
+use std::collections::HashSet;
+use std::fs;
 use std::process::{Command, ExitCode};
 
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
-use hauchiwa::Site;
 use hauchiwa::error::RuntimeError;
-use hauchiwa::executor::run_once;
+use hauchiwa::executor::run_once_parallel;
+use hauchiwa::loader::{Runtime, glob_assets, glob_images};
+use hauchiwa::page::save_pages_to_dist;
+use hauchiwa::{Site, task};
 use hauchiwa::{SiteConfig, page::Page};
-// use hauchiwa::loader::{self, Script, Svelte};
-// use hauchiwa::{Hook, Page, RuntimeError, Website};
 use hayagriva::Library;
 use hypertext::{Raw, Renderable};
-// use model::Slideshow;
 
 use crate::plugin::about::build_about;
 use crate::plugin::home::build_home;
+use crate::plugin::posts::build_posts;
 use crate::plugin::slides::build_slides;
 use crate::plugin::twtxt::build_twtxt;
 use crate::plugin::{make_fullscreen, make_page};
@@ -90,6 +91,7 @@ struct LinkDate {
     pub date: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone)]
 struct Bibtex {
     path: Utf8PathBuf,
     data: Library,
@@ -108,6 +110,8 @@ fn main() -> ExitCode {
 fn run() -> Result<(), RuntimeError> {
     let args = Args::parse();
 
+    let _ = fs::remove_dir_all("./dist");
+
     let mut site = SiteConfig::new();
 
     let styles =
@@ -119,61 +123,134 @@ fn run() -> Result<(), RuntimeError> {
     let svelte =
         hauchiwa::loader::build_svelte(&mut site, "scripts/**/App.svelte", "scripts/**/*.svelte");
 
-    build_home(&mut site, styles, svelte);
-    build_about(&mut site, styles);
-    build_twtxt(&mut site, styles);
-    build_slides(&mut site, styles, scripts);
+    // images
+    let images = glob_images(&mut site, "**/*.jpg");
+    // glob_images(&mut site, "**/*.png");
+    // glob_images(&mut site, "**/*.gif");
 
-    site.add_task(
-        (styles, scripts, svelte),
-        |ctx, (styles, scripts, svelte)| {
-            let mut pages = vec![];
+    let bibtex = glob_assets(&mut site, "**/*.bib", |_, file| {
+        let rt = Runtime;
+        let path = rt.store(&file.metadata, "bib")?;
+        let text = String::from_utf8_lossy(&file.metadata);
+        let data = hayagriva::io::from_biblatex_str(&text).unwrap();
 
-            {
-                let html = Raw(r#"<div id="map" style="height: 100%; width: 100%"></div>"#);
+        Ok(Bibtex { path, data })
+    });
 
-                let styles = &[
-                    styles.get("styles/styles.scss").unwrap(),
-                    styles.get("styles/photos/leaflet.scss").unwrap(),
-                    styles.get("styles/layouts/map.scss").unwrap(),
-                ];
+    let home = build_home(&mut site, styles, svelte);
+    let about = build_about(&mut site, styles);
+    let twtxt = build_twtxt(&mut site, styles);
+    let posts = build_posts(&mut site, styles, scripts);
+    let slides = build_slides(&mut site, styles, scripts);
 
-                let scripts = &[scripts.get("scripts/photos/main.ts").unwrap()];
+    let other = task!(site, |ctx, styles, scripts, svelte| {
+        let mut pages = vec![];
 
-                let html = make_fullscreen(&ctx, html, "Map".into(), styles, scripts)
-                    .unwrap()
-                    .render();
+        {
+            let html = Raw(r#"<div id="map" style="height: 100%; width: 100%"></div>"#);
 
-                pages.push(Page {
-                    url: "map".into(),
-                    content: html.into_inner(),
-                });
+            let styles = &[
+                styles.get("styles/styles.scss").unwrap(),
+                styles.get("styles/photos/leaflet.scss").unwrap(),
+                styles.get("styles/layouts/map.scss").unwrap(),
+            ];
+
+            let scripts = &[scripts.get("scripts/photos/main.ts").unwrap()];
+
+            let html = make_fullscreen(&ctx, html, "Map".into(), styles, scripts)
+                .unwrap()
+                .render();
+
+            pages.push(Page::html("map", html));
+        }
+
+        {
+            let styles = &[
+                styles.get("styles/styles.scss").unwrap(),
+                styles.get("styles/layouts/search.scss").unwrap(),
+            ];
+
+            let component = svelte.get("scripts/search/App.svelte").unwrap();
+            let scripts = &[&component.init];
+
+            let html = (component.html)(&()).unwrap();
+            let html = Raw(format!(r#"<main>{html}</main>"#));
+            let html = make_page(&ctx, html, "Search".into(), styles, scripts)
+                .unwrap()
+                .render();
+
+            pages.push(Page::html("search", html));
+        }
+
+        pages
+    });
+
+    task!(site, |_, home, about, posts, slides, other| {
+        use pagefind::api::PagefindIndex;
+        use pagefind::options::PagefindServiceConfig;
+        use tokio::runtime::Builder;
+
+        let run = async move |pages: &[&Page]| -> Result<(), RuntimeError> {
+            let config = PagefindServiceConfig::builder().build();
+            let mut index = PagefindIndex::new(Some(config))?;
+
+            for page in pages {
+                if let Some("html") = page.url.extension() {
+                    index
+                        .add_html_file(Some(page.url.to_string()), None, page.content.to_string())
+                        .await?;
+                }
             }
 
-            {
-                let styles = &[
-                    styles.get("styles/styles.scss").unwrap(),
-                    styles.get("styles/layouts/search.scss").unwrap(),
-                ];
+            let _ = index.write_files(Some("dist/pagefind".into())).await?;
 
-                let component = svelte.get("scripts/search/App.svelte").unwrap();
-                let scripts = &[&component.init];
+            Ok(())
+        };
 
-                let html = (component.html)(&()).unwrap();
-                let html = Raw(format!(r#"<main>{html}</main>"#));
-                let html = make_page(&ctx, html, "Search".into(), styles, scripts)
-                    .unwrap()
-                    .render();
+        let pages = [&home, &about, &posts, &slides, &other]
+            .into_iter()
+            .flat_map(|source| source.into_iter())
+            .collect::<Vec<_>>();
 
-                pages.push(Page {
-                    url: "search".into(),
-                    content: html.into_inner(),
-                });
-            }
+        Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(run(&pages))
+            .unwrap();
+    });
 
-            pages
-        },
-    );
+    task!(site, |_, home, about, posts, slides, other| {
+        use sitemap_rs::{
+            url::{ChangeFrequency, Url},
+            url_set::UrlSet,
+        };
+
+        let pages = [&home, &about, &posts, &slides, &other]
+            .into_iter()
+            .flat_map(|source| source.into_iter())
+            .collect::<Vec<_>>();
+
+        let urls = pages
+            .iter()
+            .map(|page| &page.url)
+            .collect::<HashSet<_>>()
+            .iter()
+            .map(|path| {
+                Url::builder(Utf8Path::new("/").join(path).parent().unwrap().to_string())
+                    .change_frequency(ChangeFrequency::Monthly)
+                    .priority(0.8)
+                    .build()
+                    .expect("failed a <url> validation")
+            })
+            .collect::<Vec<_>>();
+
+        let urls = UrlSet::new(urls).expect("failed a <urlset> validation");
+        let mut buf = Vec::<u8>::new();
+        urls.write(&mut buf).expect("failed to write XML");
+
+        Page::file("sitemap.xml", String::from_utf8(buf).unwrap())
+    });
 
     let mut site = Site::new(site);
     let globals = hauchiwa::Globals {
@@ -182,42 +259,18 @@ fn run() -> Result<(), RuntimeError> {
         port: None,
         data: Global::new(),
     };
-    let (_, pages) = run_once(&mut site, &globals);
+    let (_, pages) = run_once_parallel(&mut site, &globals);
 
-    for page in pages {
-        println!("Page: {} ({} bytes)", page.url, page.content.len());
-    }
+    save_pages_to_dist(&pages);
 
     // let mut website = Website::config()
     //     .load_git(".")?
     //     // .add_plugins([
-    //     //     plugin::home::PLUGIN,
-    //     //     plugin::about::PLUGIN,
-    //     //     plugin::posts::PLUGIN,
-    //     //     plugin::slides::PLUGIN,
     //     //     plugin::projects::PLUGIN,
     //     //     plugin::wiki::PLUGIN,
-    //     //     plugin::twtxt::PLUGIN,
     //     //     plugin::tags::PLUGIN,
     //     // ])
     //     .add_loaders([
-    //         // .bib -> Bibtex
-    //         loader::glob_assets(CONTENT, "**/*.bib", |rt, data| {
-    //             let path = rt.store(&data, "bib")?;
-    //             let text = String::from_utf8_lossy(&data);
-    //             let data = hayagriva::io::from_biblatex_str(&text).unwrap();
-
-    //             Ok(Bibtex { path, data })
-    //         }),
-    //         // images
-    //         loader::glob_images(CONTENT, "**/*.jpg"),
-    //         loader::glob_images(CONTENT, "**/*.png"),
-    //         loader::glob_images(CONTENT, "**/*.gif"),
-    //         // svelte components
-    //         loader::glob_svelte::<()>("scripts", "*/App.svelte"),
-    //         // loader::glob_svelte::<Mermaid>("scripts", "mermaid/Mermaid.svelte"),
-    //         // stylesheets
-    //         // scripts
     //         // github
     //         loader::async_asset("hauchiwa", async |_| {
     //             const URL: &str =

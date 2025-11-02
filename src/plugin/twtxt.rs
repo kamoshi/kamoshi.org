@@ -1,8 +1,8 @@
-use hauchiwa::SiteConfig;
 use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::{CSS, Registry, glob_assets};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
+use hauchiwa::{SiteConfig, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::md_parse_simple;
@@ -33,7 +33,7 @@ pub fn build_twtxt(
         })
     });
 
-    config.add_task((twtxt, styles), |ctx, (twtxt, styles)| {
+    task!(config, |ctx, twtxt, styles| {
         let styles = &[
             styles.get("styles/styles.scss").unwrap(),
             styles.get("styles/microblog.scss").unwrap(),
@@ -43,23 +43,17 @@ pub fn build_twtxt(
         let html = render(&ctx, data, styles).unwrap().render();
 
         let mut pages = vec![
-            Page {
-                url: "twtxt.txt".into(),
-                content: data.data.clone(),
-            },
-            Page {
-                url: "thoughts/index.html".into(),
-                content: html.into_inner(),
-            },
+            Page::file("twtxt.txt", data.data.clone()),
+            Page::html("thoughts", html),
         ];
 
         for entry in &data.entries {
             let html = render_entry(&ctx, entry, styles).unwrap().render();
 
-            pages.push(Page {
-                url: format!("thoughts/{}", entry.date.timestamp()),
-                content: html.into_inner(),
-            });
+            pages.push(Page::html(
+                format!("thoughts/{}", entry.date.timestamp()),
+                html.into_inner(),
+            ));
         }
 
         pages

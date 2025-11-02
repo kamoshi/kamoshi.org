@@ -1,11 +1,11 @@
 use std::fmt::Write as _;
 
 use camino::Utf8Path;
-use hauchiwa::SiteConfig;
 use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::{self, CSS, Content, JS, Registry, Svelte, glob_content};
-use hauchiwa::page::Page;
+use hauchiwa::page::{Page, absolutize, normalize_prefixed};
 use hauchiwa::task::Handle;
+use hauchiwa::{SiteConfig, task};
 use hayagriva::Library;
 use hypertext::{Raw, prelude::*};
 
@@ -23,81 +23,75 @@ pub fn build_slides(
     let slides_md = glob_content::<_, Slideshow>(config, "content/slides/**/*.md");
     let slides_hs = glob_content::<_, Slideshow>(config, "content/slides/**/*.lhs");
 
-    config.add_task(
-        (slides_md, slides_hs, styles, scripts),
-        |ctx, (slides_md, slides_hs, styles, scripts)| {
-            let mut pages = vec![];
+    task!(config, |ctx, slides_md, slides_hs, styles, scripts| {
+        let mut pages = vec![];
 
-            let content = [slides_md.values(), slides_hs.values()]
-                .into_iter()
-                .flatten()
-                .collect::<Vec<_>>();
+        let content = [slides_md.values(), slides_hs.values()]
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
 
-            {
-                let styles = &[
-                    styles.get("styles/styles.scss").unwrap(),
-                    styles.get("styles/reveal/reveal.scss").unwrap(),
-                ];
+        {
+            let styles = &[
+                styles.get("styles/styles.scss").unwrap(),
+                styles.get("styles/reveal/reveal.scss").unwrap(),
+            ];
 
-                let scripts = &[scripts.get("scripts/slides/main.ts").unwrap()];
+            let scripts = &[scripts.get("scripts/slides/main.ts").unwrap()];
 
-                // render individual pages
-                for item in &content {
-                    let mark = parse(&ctx, &item.content, "".into(), None).unwrap();
-                    let html = render(&ctx, &item.metadata, &mark, styles, scripts)
-                        .unwrap()
-                        .render();
-
-                    pages.push(Page {
-                        url: item.path.to_string(),
-                        content: html.into_inner(),
-                    })
-                }
-            }
-
-            // render list
-            {
-                let data = content
-                    .iter()
-                    .map(|item| LinkDate {
-                        link: Link {
-                            path: item.path.clone(),
-                            name: item.metadata.title.clone(),
-                            desc: item.metadata.desc.clone(),
-                        },
-                        date: item.metadata.date.to_utc(),
-                    })
-                    .collect();
-
-                let styles = &[
-                    styles.get("styles/styles.scss").unwrap(),
-                    styles.get("styles/layouts/list.scss").unwrap(),
-                ];
-
-                let html = to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)
+            // render individual pages
+            for item in &content {
+                let mark = parse(&ctx, &item.content, "".into(), None).unwrap();
+                let html = render(&ctx, &item.metadata, &mark, styles, scripts)
                     .unwrap()
                     .render();
 
-                pages.push(Page {
-                    url: "slides".into(),
-                    content: html.into_inner(),
-                });
+                pages.push(Page::html(
+                    item.path.strip_prefix("content/").unwrap(),
+                    html,
+                ))
             }
+        }
 
-            //             // render feed
-            //             {
-            //                 let feed = crate::rss::generate_feed::<Content<Slideshow>>(
-            //                     ctx,
-            //                     "slides",
-            //                     "Kamoshi.org Slides",
-            //                 )?;
+        // render list
+        {
+            let styles = &[
+                styles.get("styles/styles.scss").unwrap(),
+                styles.get("styles/layouts/list.scss").unwrap(),
+            ];
 
-            //                 pages.push(feed);
-            //             }
+            let data = content
+                .iter()
+                .map(|item| LinkDate {
+                    link: Link {
+                        path: absolutize("content/", &item.path),
+                        name: item.metadata.title.clone(),
+                        desc: item.metadata.desc.clone(),
+                    },
+                    date: item.metadata.date.to_utc(),
+                })
+                .collect();
 
-            pages
-        },
-    )
+            let html = to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)
+                .unwrap()
+                .render();
+
+            pages.push(Page::html("slides", html));
+        }
+
+        //             // render feed
+        //             {
+        //                 let feed = crate::rss::generate_feed::<Content<Slideshow>>(
+        //                     ctx,
+        //                     "slides",
+        //                     "Kamoshi.org Slides",
+        //                 )?;
+
+        //                 pages.push(feed);
+        //             }
+
+        pages
+    })
 }
 
 pub fn parse(

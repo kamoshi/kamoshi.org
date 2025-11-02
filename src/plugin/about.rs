@@ -1,8 +1,8 @@
-use hauchiwa::SiteConfig;
 use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::{CSS, Content, Registry, glob_assets, glob_content};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
+use hauchiwa::{SiteConfig, task};
 use hypertext::{Raw, prelude::*};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
@@ -30,7 +30,7 @@ pub fn build_about(
         })
     });
 
-    site_config.add_task((page, cert, styles), |ctx, (page, cert, styles)| {
+    task!(site_config, |ctx, page, cert, styles| {
         let item = page.get("content/about/index.md").unwrap();
         let pubkey_ident = cert.get("content/about/pubkey-ident.asc").unwrap();
         let pubkey_email = cert.get("content/about/pubkey-email.asc").unwrap();
@@ -46,18 +46,9 @@ pub fn build_about(
             .render();
 
         let pages = vec![
-            Page {
-                url: "about".into(),
-                content: html.into_inner(),
-            },
-            Page {
-                url: "pubkey_ident.asc".into(),
-                content: pubkey_ident.data.clone(),
-            },
-            Page {
-                url: "pubkey_email.asc".into(),
-                content: pubkey_email.data.clone(),
-            },
+            Page::html("about", html),
+            Page::file("pubkey_ident.asc", pubkey_ident.data.clone()),
+            Page::file("pubkey_email.asc", pubkey_email.data.clone()),
         ];
 
         pages

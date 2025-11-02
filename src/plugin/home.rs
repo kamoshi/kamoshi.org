@@ -1,8 +1,8 @@
-use hauchiwa::SiteConfig;
 use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::{CSS, JS, Registry, Svelte, glob_content};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
+use hauchiwa::{SiteConfig, task};
 use hypertext::{Raw, maud_static, prelude::*};
 
 use crate::Context;
@@ -15,10 +15,10 @@ pub fn build_home(
     site_config: &mut SiteConfig<Global>,
     styles: Handle<Registry<CSS>>,
     svelte: Handle<Registry<Svelte>>,
-) -> Handle<Page> {
+) -> Handle<Vec<Page>> {
     let page = glob_content::<_, Home>(site_config, "content/index.md");
 
-    site_config.add_task((page, styles, svelte), |ctx, (page, styles, svelte)| {
+    task!(site_config, |ctx, page, styles, svelte| {
         let page = page.get("content/index.md").unwrap();
 
         let styles = &[
@@ -35,10 +35,7 @@ pub fn build_home(
         let article = parse(&ctx, &page.content, "".into(), None).unwrap();
         let html = render(&ctx, &article.text, &kanji_html, styles, scripts).unwrap();
 
-        Page {
-            url: "index.html".into(),
-            content: html,
-        }
+        vec![Page::html("", html)]
     })
 }
 

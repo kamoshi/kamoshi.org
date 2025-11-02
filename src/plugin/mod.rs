@@ -1,6 +1,6 @@
 pub mod about;
 pub mod home;
-// pub mod posts;
+pub mod posts;
 // pub mod projects;
 pub mod slides;
 // pub mod tags;
@@ -279,26 +279,26 @@ fn link(data: &LinkDate) -> impl Renderable + '_ {
     )
 }
 
-// pub fn render_bibliography(bib: &[String], library_path: Option<&Utf8Path>) -> impl Renderable {
-//     maud!(
-//         section .bibliography {
-//             header {
-//                 h2 {
-//                     "Bibliography"
-//                 }
-//                 @if let Some(path) = library_path {
-//                     a href=(path.as_str()) download="bibliography.bib" {
-//                         "Bibtex"
-//                     }
-//                 }
-//             }
-//             ol {
-//                 @for item in bib {
-//                     li {
-//                         (Raw(item))
-//                     }
-//                 }
-//             }
-//         }
-//     )
-// }
+pub fn render_bibliography(bib: &[String], library_path: Option<&Utf8Path>) -> impl Renderable {
+    maud!(
+        section .bibliography {
+            header {
+                h2 {
+                    "Bibliography"
+                }
+                @if let Some(path) = library_path {
+                    a href=(path.as_str()) download="bibliography.bib" {
+                        "Bibtex"
+                    }
+                }
+            }
+            ol {
+                @for item in bib {
+                    li {
+                        (Raw(item))
+                    }
+                }
+            }
+        }
+    )
+}
