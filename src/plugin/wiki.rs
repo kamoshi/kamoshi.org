@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use camino::Utf8Path;
-use hauchiwa::error::RuntimeError;
+use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, glob_content};
 use hauchiwa::page::{Page, absolutize, normalize_prefixed};
 use hauchiwa::task::Handle;
@@ -18,15 +18,15 @@ pub fn build_wiki(
     config: &mut SiteConfig<Global>,
     images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
-) -> Handle<Vec<Page>> {
-    let wiki = glob_content::<_, Wiki>(config, "content/wiki/**/*.md");
+) -> Result<Handle<Vec<Page>>, HauchiwaError> {
+    let wiki = glob_content::<_, Wiki>(config, "content/wiki/**/*.md")?;
 
     task!(config, |ctx, wiki, images, styles| {
         let mut pages = vec![];
 
         let styles = &[
-            styles.get("styles/styles.scss").unwrap(),
-            styles.get("styles/layouts/page.scss").unwrap(),
+            styles.get("styles/styles.scss")?,
+            styles.get("styles/layouts/page.scss")?,
         ];
 
         for item in wiki.values() {
@@ -39,8 +39,7 @@ pub fn build_wiki(
             //     js.push(path.to_string());
             // }
 
-            let article =
-                crate::markdown::parse(&item.content, &item.path, None, Some(images)).unwrap();
+            let article = crate::markdown::parse(&item.content, &item.path, None, Some(images))?;
 
             let buffer = render(
                 &ctx,
@@ -51,8 +50,7 @@ pub fn build_wiki(
                 &wiki,
                 styles,
                 &[],
-            )
-            .unwrap()
+            )?
             .render();
 
             pages.push(Page::html(
@@ -61,8 +59,10 @@ pub fn build_wiki(
             ));
         }
 
-        pages
-    })
+        Ok(pages)
+    });
+
+    Ok(todo!())
 }
 
 pub fn render<'ctx>(

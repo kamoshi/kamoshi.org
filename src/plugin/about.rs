@@ -32,20 +32,17 @@ pub fn build_about(
     });
 
     task!(site_config, |ctx, page, cert, images, styles| {
-        let item = page.get("content/about/index.md").unwrap();
-        let pubkey_ident = cert.get("content/about/pubkey-ident.asc").unwrap();
-        let pubkey_email = cert.get("content/about/pubkey-email.asc").unwrap();
+        let item = page.get("content/about/index.md")?;
+        let pubkey_ident = cert.get("content/about/pubkey-ident.asc")?;
+        let pubkey_email = cert.get("content/about/pubkey-email.asc")?;
 
         let styles = &[
-            styles.get("styles/styles.scss").unwrap(),
-            styles.get("styles/layouts/page.scss").unwrap(),
+            styles.get("styles/styles.scss")?,
+            styles.get("styles/layouts/page.scss")?,
         ];
 
-        let article =
-            crate::markdown::parse(&item.content, &item.path, None, Some(images)).unwrap();
-        let html = render(&ctx, &item, article, pubkey_ident, pubkey_email, styles)
-            .unwrap()
-            .render();
+        let article = crate::markdown::parse(&item.content, &item.path, None, Some(images))?;
+        let html = render(&ctx, &item, article, pubkey_ident, pubkey_email, styles)?.render();
 
         let pages = vec![
             Page::html("about", html),
@@ -53,8 +50,8 @@ pub fn build_about(
             Page::file("pubkey_email.asc", pubkey_email.data.clone()),
         ];
 
-        pages
-    })
+        Ok(pages)
+    });
 }
 
 pub fn render<'ctx>(

@@ -116,16 +116,16 @@ fn run() -> Result<(), RuntimeError> {
     let mut site = SiteConfig::new();
 
     let styles =
-        hauchiwa::loader::build_styles(&mut site, "styles/**/[!_]*.scss", "styles/**/*.scss");
+        hauchiwa::loader::build_styles(&mut site, "styles/**/[!_]*.scss", "styles/**/*.scss")?;
 
     let scripts =
-        hauchiwa::loader::build_scripts(&mut site, "scripts/**/main.ts", "scripts/**/*.ts");
+        hauchiwa::loader::build_scripts(&mut site, "scripts/**/main.ts", "scripts/**/*.ts")?;
 
     let svelte =
-        hauchiwa::loader::build_svelte(&mut site, "scripts/**/App.svelte", "scripts/**/*.svelte");
+        hauchiwa::loader::build_svelte(&mut site, "scripts/**/App.svelte", "scripts/**/*.svelte")?;
 
     // images
-    let images = glob_images(&mut site, &["**/*.jpg", "**/*.png", "**/*.gif"]);
+    let images = glob_images(&mut site, &["**/*.jpg", "**/*.png", "**/*.gif"])?;
 
     let bibtex = glob_assets(&mut site, "**/*.bib", |_, file| {
         let rt = Runtime;
@@ -184,7 +184,7 @@ fn run() -> Result<(), RuntimeError> {
             pages.push(Page::html("search", html));
         }
 
-        pages
+        Ok(pages)
     });
 
     task!(site, |_, home, about, posts, slides, other| {
@@ -220,6 +220,8 @@ fn run() -> Result<(), RuntimeError> {
             .unwrap()
             .block_on(run(&pages))
             .unwrap();
+
+        Ok(())
     });
 
     task!(site, |_, home, about, posts, slides, other| {
@@ -251,7 +253,7 @@ fn run() -> Result<(), RuntimeError> {
         let mut buf = Vec::<u8>::new();
         urls.write(&mut buf).expect("failed to write XML");
 
-        Page::file("sitemap.xml", String::from_utf8(buf).unwrap())
+        Ok(Page::file("sitemap.xml", String::from_utf8(buf).unwrap()))
     });
 
     let mut site = Site::new(site);
