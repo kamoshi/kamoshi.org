@@ -1,4 +1,4 @@
-use hauchiwa::error::RuntimeError;
+use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{CSS, Content, Image, Registry, glob_assets, glob_content};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
@@ -17,8 +17,8 @@ pub fn build_about(
     site_config: &mut SiteConfig<Global>,
     images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
-) -> Handle<Vec<Page>> {
-    let page = glob_content::<_, Post>(site_config, "content/about/index.md");
+) -> Result<Handle<Vec<Page>>, HauchiwaError> {
+    let page = glob_content::<_, Post>(site_config, "content/about/index.md")?;
 
     let cert = glob_assets(site_config, "content/about/*.asc", |_, file| {
         Ok(Pubkey {
@@ -29,9 +29,9 @@ pub fn build_about(
                 .to_spaced_hex(),
             data: String::from_utf8(file.metadata)?.to_string(),
         })
-    });
+    })?;
 
-    task!(site_config, |ctx, page, cert, images, styles| {
+    Ok(task!(site_config, |ctx, page, cert, images, styles| {
         let item = page.get("content/about/index.md")?;
         let pubkey_ident = cert.get("content/about/pubkey-ident.asc")?;
         let pubkey_email = cert.get("content/about/pubkey-email.asc")?;
@@ -51,7 +51,7 @@ pub fn build_about(
         ];
 
         Ok(pages)
-    });
+    }))
 }
 
 pub fn render<'ctx>(

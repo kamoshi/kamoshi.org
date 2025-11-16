@@ -1,7 +1,7 @@
 use std::fmt::Write as _;
 
 use camino::Utf8Path;
-use hauchiwa::error::RuntimeError;
+use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, Svelte, glob_content};
 use hauchiwa::page::{Page, absolutize, normalize_prefixed};
 use hauchiwa::task::Handle;
@@ -20,11 +20,11 @@ pub fn build_slides(
     images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
     scripts: Handle<Registry<JS>>,
-) -> Handle<Vec<Page>> {
-    let md = glob_content::<_, Slideshow>(config, "content/slides/**/*.md");
-    let hs = glob_content::<_, Slideshow>(config, "content/slides/**/*.lhs");
+) -> Result<Handle<Vec<Page>>, HauchiwaError> {
+    let md = glob_content::<_, Slideshow>(config, "content/slides/**/*.md")?;
+    let hs = glob_content::<_, Slideshow>(config, "content/slides/**/*.lhs")?;
 
-    task!(config, |ctx, md, hs, images, styles, scripts| {
+    Ok(task!(config, |ctx, md, hs, images, styles, scripts| {
         let mut pages = vec![];
 
         let content = [md.values(), hs.values()]
@@ -34,31 +34,26 @@ pub fn build_slides(
 
         {
             let styles = &[
-                styles.get("styles/styles.scss").unwrap(),
-                styles.get("styles/reveal/reveal.scss").unwrap(),
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/reveal/reveal.scss")?,
             ];
 
-            let scripts = &[scripts.get("scripts/slides/main.ts").unwrap()];
+            let scripts = &[scripts.get("scripts/slides/main.ts")?];
 
             // render individual pages
             for item in &content {
-                let mark = parse(&item.content, &item.path, None, Some(images)).unwrap();
-                let html = render(&ctx, &item.metadata, &mark, styles, scripts)
-                    .unwrap()
-                    .render();
+                let mark = parse(&item.content, &item.path, None, Some(images))?;
+                let html = render(&ctx, &item.metadata, &mark, styles, scripts)?.render();
 
-                pages.push(Page::html(
-                    item.path.strip_prefix("content/").unwrap(),
-                    html,
-                ))
+                pages.push(Page::html(item.path.strip_prefix("content/")?, html))
             }
         }
 
         // render list
         {
             let styles = &[
-                styles.get("styles/styles.scss").unwrap(),
-                styles.get("styles/layouts/list.scss").unwrap(),
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/list.scss")?,
             ];
 
             let data = content
@@ -73,9 +68,8 @@ pub fn build_slides(
                 })
                 .collect();
 
-            let html = to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)
-                .unwrap()
-                .render();
+            let html =
+                to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?.render();
 
             pages.push(Page::html("slides", html));
         }
@@ -91,8 +85,8 @@ pub fn build_slides(
         //                 pages.push(feed);
         //             }
 
-        pages
-    })
+        Ok(pages)
+    }))
 }
 
 pub fn parse(

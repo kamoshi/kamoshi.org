@@ -1,5 +1,5 @@
 use camino::Utf8Path;
-use hauchiwa::error::RuntimeError;
+use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::gitmap::GitInfo;
 use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, glob_content};
 use hauchiwa::page::{Page, absolutize, normalize_prefixed};
@@ -18,8 +18,8 @@ pub fn build_posts(
     images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
     scripts: Handle<Registry<JS>>,
-) -> (Handle<Registry<Content<Post>>>, Handle<Vec<Page>>) {
-    let posts = glob_content::<_, Post>(config, "content/posts/**/*.md");
+) -> Result<(Handle<Registry<Content<Post>>>, Handle<Vec<Page>>), HauchiwaError> {
+    let posts = glob_content::<_, Post>(config, "content/posts/**/*.md")?;
 
     let pages = task!(config, |ctx, posts, images, styles, scripts| {
         let mut pages = vec![];
@@ -35,21 +35,20 @@ pub fn build_posts(
             // let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
 
             let styles = &[
-                styles.get("styles/styles.scss").unwrap(),
-                styles.get("styles/layouts/page.scss").unwrap(),
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/page.scss")?,
             ];
 
-            let mut js = vec![scripts.get("scripts/outline/main.ts").unwrap()];
+            let mut js = vec![scripts.get("scripts/outline/main.ts")?];
 
             if let Some(entries) = &item.metadata.scripts {
                 for entry in entries {
                     let key = format!("scripts/{}", entry);
-                    js.push(scripts.get(key).unwrap());
+                    js.push(scripts.get(key)?);
                 }
             }
 
-            let article =
-                crate::markdown::parse(&item.content, &item.path, None, Some(images)).unwrap();
+            let article = crate::markdown::parse(&item.content, &item.path, None, Some(images))?;
 
             let buffer = render(
                 &ctx,
@@ -60,20 +59,16 @@ pub fn build_posts(
                 &item.metadata.tags,
                 styles,
                 &js,
-            )
-            .unwrap()
+            )?
             .render();
 
-            pages.push(Page::html(
-                item.path.strip_prefix("content/").unwrap(),
-                buffer,
-            ));
+            pages.push(Page::html(item.path.strip_prefix("content/")?, buffer));
         }
 
         {
             let styles = &[
-                styles.get("styles/styles.scss").unwrap(),
-                styles.get("styles/layouts/list.scss").unwrap(),
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/list.scss")?,
             ];
 
             let html = to_list(
@@ -92,8 +87,7 @@ pub fn build_posts(
                 "Posts".into(),
                 "/posts/rss.xml",
                 styles,
-            )
-            .unwrap()
+            )?
             .render();
 
             pages.push(Page::html("posts", html));
@@ -105,10 +99,10 @@ pub fn build_posts(
             // Ok(vec![feed])
         }
 
-        pages
+        Ok(pages)
     });
 
-    (posts, pages)
+    Ok((posts, pages))
 }
 
 pub fn render<'ctx>(

@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use chrono::Datelike;
 use hauchiwa::{
     SiteConfig,
+    error::HauchiwaError,
     loader::{CSS, Content, Registry},
     page::{Page, absolutize},
     task::Handle,
@@ -18,14 +19,14 @@ pub fn build_tags(
     config: &mut SiteConfig<Global>,
     posts: Handle<Registry<Content<Post>>>,
     styles: Handle<Registry<CSS>>,
-) -> Handle<Vec<Page>> {
-    task!(config, |ctx, posts, styles| {
+) -> Result<Handle<Vec<Page>>, HauchiwaError> {
+    Ok(task!(config, |ctx, posts, styles| {
         use std::collections::BTreeMap;
 
         let styles = &[
-            styles.get("styles/styles.scss").unwrap(),
-            styles.get("styles/layouts/list.scss").unwrap(),
-            styles.get("styles/layouts/tags.scss").unwrap(),
+            styles.get("styles/styles.scss")?,
+            styles.get("styles/layouts/list.scss")?,
+            styles.get("styles/layouts/tags.scss")?,
         ];
 
         let posts = posts
@@ -55,7 +56,7 @@ pub fn build_tags(
             let path = format!("tags/{tag}/index.html");
 
             let data = group(links);
-            let html = render_tag(&ctx, &data, tag.to_owned(), styles).unwrap();
+            let html = render_tag(&ctx, &data, tag.to_owned(), styles)?;
 
             pages.push(Page::html(path, html.render()));
 
@@ -64,8 +65,8 @@ pub fn build_tags(
             // pages.push(Page::text("tags/index.html".into(), index.render().into()));
         }
 
-        pages
-    })
+        Ok(pages)
+    }))
 }
 
 pub fn group(links: &[LinkDate]) -> Vec<(i32, Vec<&LinkDate>)> {

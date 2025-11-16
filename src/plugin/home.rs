@@ -1,4 +1,4 @@
-use hauchiwa::error::RuntimeError;
+use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{CSS, Image, JS, Registry, Svelte, glob_content};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
@@ -16,28 +16,28 @@ pub fn build_home(
     images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
     svelte: Handle<Registry<Svelte>>,
-) -> Handle<Vec<Page>> {
-    let page = glob_content::<_, Home>(site_config, "content/index.md");
+) -> Result<Handle<Vec<Page>>, HauchiwaError> {
+    let page = glob_content::<_, Home>(site_config, "content/index.md")?;
 
-    task!(site_config, |ctx, page, images, styles, svelte| {
-        let page = page.get("content/index.md").unwrap();
+    Ok(task!(site_config, |ctx, page, images, styles, svelte| {
+        let page = page.get("content/index.md")?;
 
         let styles = &[
-            styles.get("styles/styles.scss").unwrap(),
-            styles.get("styles/layouts/home.scss").unwrap(),
-            styles.get("styles/components/kanji.scss").unwrap(),
+            styles.get("styles/styles.scss")?,
+            styles.get("styles/layouts/home.scss")?,
+            styles.get("styles/components/kanji.scss")?,
         ];
 
-        let kanji = svelte.get("scripts/kanji/App.svelte").unwrap();
-        let kanji_html = (kanji.html)(&()).unwrap();
+        let kanji = svelte.get("scripts/kanji/App.svelte")?;
+        let kanji_html = (kanji.html)(&())?;
 
         let scripts = &[&kanji.init];
 
-        let article = parse(&page.content, &page.path, None, Some(images)).unwrap();
-        let html = render(&ctx, &article.text, &kanji_html, styles, scripts).unwrap();
+        let article = parse(&page.content, &page.path, None, Some(images))?;
+        let html = render(&ctx, &article.text, &kanji_html, styles, scripts)?;
 
-        vec![Page::html("", html)]
-    })
+        Ok(vec![Page::html("", html)])
+    }))
 }
 
 const INTRO: &str = r#"

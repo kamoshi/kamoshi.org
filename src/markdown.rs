@@ -382,7 +382,7 @@ fn swap_hashed_image<'a>(
             } => {
                 let location = to_slug(path).join(dest_url.as_ref());
                 let location = normalize_path(&location);
-                let img = images.and_then(|images| images.get(&location));
+                let img = images.and_then(|images| images.get(&location).ok());
                 let hashed = img.map(|img| img.path.to_string().into());
                 Event::Start(Tag::Image {
                     link_type,

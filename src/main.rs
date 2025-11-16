@@ -134,16 +134,16 @@ fn run() -> Result<(), RuntimeError> {
         let data = hayagriva::io::from_biblatex_str(&text).unwrap();
 
         Ok(Bibtex { path, data })
-    });
+    })?;
 
-    let home = build_home(&mut site, images, styles, svelte);
-    let about = build_about(&mut site, images, styles);
-    let _ = build_twtxt(&mut site, styles);
-    let (posts_data, posts) = build_posts(&mut site, images, styles, scripts);
-    let slides = build_slides(&mut site, images, styles, scripts);
-    let _ = build_wiki(&mut site, images, styles);
-    let _ = build_projects(&mut site, styles);
-    let _ = build_tags(&mut site, posts_data, styles);
+    let home = build_home(&mut site, images, styles, svelte)?;
+    let about = build_about(&mut site, images, styles)?;
+    let _ = build_twtxt(&mut site, styles)?;
+    let (posts_data, posts) = build_posts(&mut site, images, styles, scripts)?;
+    let slides = build_slides(&mut site, images, styles, scripts)?;
+    let _ = build_wiki(&mut site, images, styles)?;
+    let _ = build_projects(&mut site, styles)?;
+    let _ = build_tags(&mut site, posts_data, styles)?;
 
     let other = task!(site, |ctx, styles, scripts, svelte| {
         let mut pages = vec![];
@@ -152,34 +152,30 @@ fn run() -> Result<(), RuntimeError> {
             let html = Raw(r#"<div id="map" style="height: 100%; width: 100%"></div>"#);
 
             let styles = &[
-                styles.get("styles/styles.scss").unwrap(),
-                styles.get("styles/photos/leaflet.scss").unwrap(),
-                styles.get("styles/layouts/map.scss").unwrap(),
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/photos/leaflet.scss")?,
+                styles.get("styles/layouts/map.scss")?,
             ];
 
-            let scripts = &[scripts.get("scripts/photos/main.ts").unwrap()];
+            let scripts = &[scripts.get("scripts/photos/main.ts")?];
 
-            let html = make_fullscreen(&ctx, html, "Map".into(), styles, scripts)
-                .unwrap()
-                .render();
+            let html = make_fullscreen(&ctx, html, "Map".into(), styles, scripts)?.render();
 
             pages.push(Page::html("map", html));
         }
 
         {
             let styles = &[
-                styles.get("styles/styles.scss").unwrap(),
-                styles.get("styles/layouts/search.scss").unwrap(),
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/search.scss")?,
             ];
 
-            let component = svelte.get("scripts/search/App.svelte").unwrap();
+            let component = svelte.get("scripts/search/App.svelte")?;
             let scripts = &[&component.init];
 
-            let html = (component.html)(&()).unwrap();
+            let html = (component.html)(&())?;
             let html = Raw(format!(r#"<main>{html}</main>"#));
-            let html = make_page(&ctx, html, "Search".into(), styles, scripts)
-                .unwrap()
-                .render();
+            let html = make_page(&ctx, html, "Search".into(), styles, scripts)?.render();
 
             pages.push(Page::html("search", html));
         }
@@ -216,10 +212,8 @@ fn run() -> Result<(), RuntimeError> {
 
         Builder::new_multi_thread()
             .enable_all()
-            .build()
-            .unwrap()
-            .block_on(run(&pages))
-            .unwrap();
+            .build()?
+            .block_on(run(&pages))?;
 
         Ok(())
     });

@@ -1,4 +1,4 @@
-use hauchiwa::error::RuntimeError;
+use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{self, CSS, Content, Registry, glob_content};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
@@ -14,44 +14,46 @@ use super::make_page;
 pub fn build_projects(
     config: &mut SiteConfig<Global>,
     styles: Handle<Registry<CSS>>,
-) -> Handle<Vec<Page>> {
-    let projects = glob_content::<_, Project>(config, "content/projects/**/*.md");
+) -> Result<Handle<Vec<Page>>, HauchiwaError> {
+    let projects = glob_content::<_, Project>(config, "content/projects/**/*.md")?;
 
-    config.add_task((projects, styles), |ctx, (projects, styles)| {
-        let mut pages = vec![];
+    Ok(
+        config.add_task((projects, styles), |ctx, (projects, styles)| {
+            let mut pages = vec![];
 
-        let styles_list = &[
-            styles.get("styles/styles.scss").unwrap(),
-            styles.get("styles/layouts/projects.scss").unwrap(),
-        ];
+            let styles_list = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/projects.scss")?,
+            ];
 
-        // let styles_page = &[
-        //     styles.get("styles/styles.scss").unwrap(),
-        //     styles.get("styles/layouts/page.scss").unwrap(),
-        // ];
+            // let styles_page = &[
+            //     styles.get("styles/styles.scss").unwrap(),
+            //     styles.get("styles/layouts/page.scss").unwrap(),
+            // ];
 
-        {
-            let data = projects.values().collect::<Vec<_>>();
-            let list = render_list(&ctx, data, styles_list).unwrap();
-            pages.push(Page::html("projects", list));
+            {
+                let data = projects.values().collect::<Vec<_>>();
+                let list = render_list(&ctx, data, styles_list)?;
+                pages.push(Page::html("projects", list));
 
-            // let text = ctx.get::<String>("hauchiwa")?;
-            // let article = crate::markdown::parse(&ctx, text, "".into(), None)?;
-            // let html = render_page(&ctx, &article)?.render();
-            // pages.push(Page::html("projects/hauchiwa", html));
-        }
+                // let text = ctx.get::<String>("hauchiwa")?;
+                // let article = crate::markdown::parse(&ctx, text, "".into(), None)?;
+                // let html = render_page(&ctx, &article)?.render();
+                // pages.push(Page::html("projects/hauchiwa", html));
+            }
 
-        {
-            //             let feed = crate::rss::generate_feed::<Content<Project>>(
-            //                 sack,
-            //                 "projects",
-            //                 "Kamoshi.org Projects",
-            //             )?;
-            //             Ok(vec![feed])
-        }
+            {
+                //             let feed = crate::rss::generate_feed::<Content<Project>>(
+                //                 sack,
+                //                 "projects",
+                //                 "Kamoshi.org Projects",
+                //             )?;
+                //             Ok(vec![feed])
+            }
 
-        pages
-    })
+            Ok(pages)
+        }),
+    )
 }
 
 pub fn render_list(

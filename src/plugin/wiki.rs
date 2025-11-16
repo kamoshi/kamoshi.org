@@ -21,7 +21,7 @@ pub fn build_wiki(
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
     let wiki = glob_content::<_, Wiki>(config, "content/wiki/**/*.md")?;
 
-    task!(config, |ctx, wiki, images, styles| {
+    Ok(task!(config, |ctx, wiki, images, styles| {
         let mut pages = vec![];
 
         let styles = &[
@@ -60,9 +60,7 @@ pub fn build_wiki(
         }
 
         Ok(pages)
-    });
-
-    Ok(todo!())
+    }))
 }
 
 pub fn render<'ctx>(

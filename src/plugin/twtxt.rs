@@ -1,4 +1,4 @@
-use hauchiwa::error::RuntimeError;
+use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{CSS, Registry, glob_assets};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
@@ -14,7 +14,7 @@ use super::make_page;
 pub fn build_twtxt(
     config: &mut SiteConfig<Global>,
     styles: Handle<Registry<CSS>>,
-) -> Handle<Vec<Page>> {
+) -> Result<Handle<Vec<Page>>, HauchiwaError> {
     let twtxt = glob_assets(config, "content/twtxt.txt", |_, file| {
         let data = String::from_utf8_lossy(&file.metadata);
         let entries = data
@@ -31,16 +31,16 @@ pub fn build_twtxt(
             entries,
             data: data.to_string(),
         })
-    });
+    })?;
 
-    task!(config, |ctx, twtxt, styles| {
+    Ok(task!(config, |ctx, twtxt, styles| {
         let styles = &[
-            styles.get("styles/styles.scss").unwrap(),
-            styles.get("styles/microblog.scss").unwrap(),
+            styles.get("styles/styles.scss")?,
+            styles.get("styles/microblog.scss")?,
         ];
 
-        let data = twtxt.get("content/twtxt.txt").unwrap();
-        let html = render(&ctx, data, styles).unwrap().render();
+        let data = twtxt.get("content/twtxt.txt")?;
+        let html = render(&ctx, data, styles)?.render();
 
         let mut pages = vec![
             Page::file("twtxt.txt", data.data.clone()),
@@ -48,7 +48,7 @@ pub fn build_twtxt(
         ];
 
         for entry in &data.entries {
-            let html = render_entry(&ctx, entry, styles).unwrap().render();
+            let html = render_entry(&ctx, entry, styles)?.render();
 
             pages.push(Page::html(
                 format!("thoughts/{}", entry.date.timestamp()),
@@ -56,8 +56,8 @@ pub fn build_twtxt(
             ));
         }
 
-        pages
-    })
+        Ok(pages)
+    }))
 }
 
 pub fn render<'ctx>(
