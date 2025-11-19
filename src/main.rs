@@ -255,7 +255,7 @@ fn run() -> Result<(), RuntimeError> {
     match args.mode {
         Mode::Build => site.build(Global::new()),
         Mode::Watch => site.watch(Global::new()),
-    };
+    }?;
 
     // let mut website = Website::config()
     //     .load_git(".")?
