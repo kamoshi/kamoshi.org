@@ -40,7 +40,7 @@ pub fn build_twtxt(
         ];
 
         let data = twtxt.get("content/twtxt.txt")?;
-        let html = render(&ctx, data, styles)?.render();
+        let html = render(ctx, data, styles)?.render();
 
         let mut pages = vec![
             Page::file("twtxt.txt", data.data.clone()),

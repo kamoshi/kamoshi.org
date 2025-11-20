@@ -66,12 +66,44 @@ main {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
+  header {
+    display: flex;
+    justify-content: space-between; /* Spreads items apart */
+    align-items: center;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .icon-btn {
+    display: inline-flex;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    line-height: 0;
+
+    &:hover {
+      background-color: #f0f0f0;
+
+      img {
+        opacity: 1;
+      }
+    }
+
+    img {
+      width: 20px;
+      height: 20px;
+      display: block;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+  }
+
   a {
     color: var(--c-primary);
   }
 
   h2 {
-    margin-bottom: 1rem;
     font-family: var(--serif);
     font-weight: 500;
     font-size: 1.8rem;

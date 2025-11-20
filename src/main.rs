@@ -49,6 +49,7 @@ pub struct Bibliography(pub Option<Vec<String>>);
 
 #[derive(Debug, Clone)]
 struct Global {
+    pub repo: hauchiwa::gitmap::GitRepo,
     pub year: i32,
     pub date: String,
     pub link: String,
@@ -58,7 +59,15 @@ struct Global {
 impl Global {
     fn new() -> Self {
         let time = chrono::Utc::now();
+
+        let git = hauchiwa::gitmap::map(hauchiwa::gitmap::Options {
+            repository: ".".into(),
+            revision: "main".into(),
+        })
+        .unwrap();
+
         Self {
+            repo: git,
             year: time.year(),
             date: time.format("%Y/%m/%d %H:%M").to_string(),
             link: "https://github.com/kamoshi/kamoshi.org".into(),
@@ -139,7 +148,7 @@ fn run() -> Result<(), RuntimeError> {
     let home = build_home(&mut site, images, styles, svelte)?;
     let about = build_about(&mut site, images, styles)?;
     let _ = build_twtxt(&mut site, styles)?;
-    let (posts_data, posts) = build_posts(&mut site, images, styles, scripts)?;
+    let (posts_data, posts) = build_posts(&mut site, images, styles, scripts, bibtex)?;
     let slides = build_slides(&mut site, images, styles, scripts)?;
     let _ = build_wiki(&mut site, images, styles)?;
     let _ = build_projects(&mut site, styles)?;

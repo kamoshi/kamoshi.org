@@ -42,12 +42,12 @@ pub fn build_wiki(
             let article = crate::markdown::parse(&item.content, &item.path, None, Some(images))?;
 
             let buffer = render(
-                &ctx,
+                ctx,
                 &item.metadata,
                 &article,
                 "".into(),
                 None,
-                &wiki,
+                wiki,
                 styles,
                 &[],
             )?

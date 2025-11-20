@@ -287,8 +287,8 @@ pub fn render_bibliography(bib: &[String], library_path: Option<&Utf8Path>) -> i
                     "Bibliography"
                 }
                 @if let Some(path) = library_path {
-                    a href=(path.as_str()) download="bibliography.bib" {
-                        "Bibtex"
+                    a.icon-btn href=(path.as_str()) download="bibliography.bib" title="Download BibTeX" {
+                        img src="/static/svg/lucide/file-down.svg" alt="Download";
                     }
                 }
             }

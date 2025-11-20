@@ -2,7 +2,7 @@ use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::gitmap::GitInfo;
 use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, glob_content};
-use hauchiwa::page::{Page, absolutize, normalize_prefixed};
+use hauchiwa::page::{Page, absolutize, normalize_prefixed, to_slug};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
 use hypertext::{Raw, prelude::*};
@@ -18,10 +18,11 @@ pub fn build_posts(
     images: Handle<Registry<Image>>,
     styles: Handle<Registry<CSS>>,
     scripts: Handle<Registry<JS>>,
+    bibtex: Handle<Registry<Bibtex>>,
 ) -> Result<(Handle<Registry<Content<Post>>>, Handle<Vec<Page>>), HauchiwaError> {
     let posts = glob_content::<_, Post>(config, "content/posts/**/*.md")?;
 
-    let pages = task!(config, |ctx, posts, images, styles, scripts| {
+    let pages = task!(config, |ctx, posts, images, styles, scripts, bibtex| {
         let mut pages = vec![];
 
         let posts = posts
@@ -31,8 +32,8 @@ pub fn build_posts(
 
         // render the posts
         for item in &posts {
-            // let pattern = format!("{}/*.bib", item.file.area);
-            // let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
+            let pattern = format!("{}/*.bib", to_slug(&item.path));
+            let bibtex = bibtex.glob(&pattern)?.into_iter().next();
 
             let styles = &[
                 styles.get("styles/styles.scss")?,
@@ -48,14 +49,19 @@ pub fn build_posts(
                 }
             }
 
-            let article = crate::markdown::parse(&item.content, &item.path, None, Some(images))?;
+            let article = crate::markdown::parse(
+                &item.content,
+                &item.path,
+                bibtex.map(|(_, library)| &library.data),
+                Some(images),
+            )?;
 
             let buffer = render(
-                &ctx,
+                ctx,
                 &item.metadata,
                 article,
-                None,
-                None,
+                ctx.data.repo.files.get(item.path.as_str()),
+                bibtex.map(|(_, library)| library.path.as_path()),
                 &item.metadata.tags,
                 styles,
                 &js,
@@ -72,7 +78,7 @@ pub fn build_posts(
             ];
 
             let html = to_list(
-                &ctx,
+                ctx,
                 posts
                     .iter()
                     .map(|item| LinkDate {
@@ -81,7 +87,7 @@ pub fn build_posts(
                             name: item.metadata.title.clone(),
                             desc: item.metadata.desc.clone(),
                         },
-                        date: item.metadata.date.clone(),
+                        date: item.metadata.date,
                     })
                     .collect(),
                 "Posts".into(),
