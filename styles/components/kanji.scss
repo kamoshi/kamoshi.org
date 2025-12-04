@@ -12,24 +12,26 @@
     font-weight: 700;
   }
 
-  .info-char {
+  .info-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     align-self: flex-start;
     position: relative;
     padding: 0.1em;
+    height: 6rem;
+    width: 6rem;
     border: 1px dashed black;
-    font-family: serif;
-    font-size: 5rem;
-    line-height: 1em;
 
     &::before {
       top: -0.01em;
-      left: 0.6em;
+      left: 3rem;
       width: 0;
       height: 100%;
       border-right: 1px dashed #000;
     }
     &::after {
-      top: 0.6em;
+      top: 3em;
       left: -0.01em;
       width: 100%;
       height: 0;
@@ -41,6 +43,21 @@
       position: absolute;
       display: block;
     }
+  }
+
+  .info-id {
+    position: absolute;
+    top: 0.1rem;
+    right: 0.1rem;
+    font-size: 0.75rem;
+    color: #888;
+    font-family: sans-serif;
+  }
+
+  .info-char {
+    max-height: 4.5rem;
+    font-size: 4.5rem;
+    font-family: serif;
   }
 
   .table {

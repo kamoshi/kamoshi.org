@@ -24,8 +24,13 @@
     </div>
   {:then state}
     <div class="info">
-      <div class="info-char">
-        {state.char}
+      <div class="info-box">
+        <div class="info-id">
+          #{state.id}
+        </div>
+        <div class="info-char">
+          {state.char}
+        </div>
       </div>
       <div class="info-meta">
         <div class="info-key">

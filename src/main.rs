@@ -13,7 +13,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
-use hauchiwa::loader::{Runtime, glob_assets, glob_images};
+use hauchiwa::loader::{Runtime, glob_assets};
 use hauchiwa::{Site, task};
 use hauchiwa::{SiteConfig, page::Page};
 use hayagriva::Library;
@@ -124,17 +124,12 @@ fn run() -> Result<(), RuntimeError> {
 
     let mut site = SiteConfig::new();
 
-    let styles =
-        hauchiwa::loader::build_styles(&mut site, "styles/**/[!_]*.scss", "styles/**/*.scss")?;
-
-    let scripts =
-        hauchiwa::loader::build_scripts(&mut site, "scripts/**/main.ts", "scripts/**/*.ts")?;
-
-    let svelte =
-        hauchiwa::loader::build_svelte(&mut site, "scripts/**/App.svelte", "scripts/**/*.svelte")?;
+    let styles = site.build_styles("styles/**/[!_]*.scss", "styles/**/*.scss")?;
+    let scripts = site.build_scripts("scripts/**/main.ts", "scripts/**/*.ts")?;
+    let svelte = site.build_svelte("scripts/**/App.svelte", "scripts/**/*.svelte")?;
 
     // images
-    let images = glob_images(&mut site, &["**/*.jpg", "**/*.png", "**/*.gif"])?;
+    let images = site.glob_images(&["**/*.jpg", "**/*.png", "**/*.gif"])?;
 
     let bibtex = glob_assets(&mut site, "**/*.bib", |_, file| {
         let rt = Runtime;
