@@ -12,30 +12,141 @@ main {
   }
 }
 
-.microblog {
+/* Variables */
+$c-border: #eff3f4;
+$c-text-main: #0f1419;
+$c-text-meta: #536471;
+$c-bg-hover: #f7f9f9;
+$c-link-blue: #1d9bf0;
+$font-stack:
+  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+  sans-serif;
+
+/* Main Container */
+section.microblog {
+  margin: 0 auto;
+  height: fit-content;
+  border-left: 1px solid $c-border;
+  border-right: 1px solid $c-border;
+}
+
+/* Tweet Card */
+article.tweet {
+  position: relative; /* Essential for the stretched link context */
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1rem 0;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid $c-border;
+  font-family: $font-stack;
+  background-color: #fff;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
 
-  article {
-    padding-bottom: 1rem;
-    border-bottom: 1px solid $divider-color;
+  /* Hover effect for the whole card */
+  &:hover {
+    background-color: $c-bg-hover;
+  }
 
-    time {
-      display: block;
-      font-family: monospace;
-      font-size: 0.875rem;
-      color: $timestamp-color;
-      margin-bottom: 0.5rem;
+  /* Left Column: Avatar */
+  .tweet-avatar {
+    flex-shrink: 0;
+    img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: $c-border; /* Fallback color while loading */
+    }
+  }
+
+  /* Right Column: Content */
+  .tweet-content {
+    flex-grow: 1;
+    min-width: 0; /* Prevents flex items from overflowing */
+
+    /* Header: Name, Handle, Date */
+    .tweet-header {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 15px;
+      margin-bottom: 2px;
+      line-height: 20px;
+
+      .display-name {
+        font-weight: 700;
+        color: $c-text-main;
+      }
+
+      .handle,
+      .separator {
+        color: $c-text-meta;
+        font-weight: 400;
+      }
+
+      .handle {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* The clickable timestamp */
+      .tweet-link {
+        color: $c-text-meta;
+        text-decoration: none;
+        font-weight: 400;
+
+        &:hover {
+          text-decoration: underline;
+        }
+
+        /* The "Stretched Link" Magic */
+        &::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 1; /* Covers the card */
+        }
+      }
     }
 
-    p {
-      margin: 0;
-      font-size: 1rem;
+    /* Body Text */
+    .tweet-body {
+      color: $c-text-main;
+      font-size: 15px;
       line-height: 1.5;
-      white-space: pre-wrap;
-      word-break: break-word;
+      word-wrap: break-word;
+
+      /* Internal links (raised above the card link) */
+      a {
+        color: $c-link-blue;
+        text-decoration: none;
+        position: relative;
+        z-index: 2; /* Ensures you can click links inside the text */
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      /* Markdown reset */
+      p {
+        margin: 0 0 8px 0;
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      /* Optional: formatting for blockquotes or lists inside tweets */
+      blockquote {
+        border-left: 3px solid $c-border;
+        margin: 8px 0;
+        padding-left: 12px;
+        color: $c-text-meta;
+      }
     }
   }
 }

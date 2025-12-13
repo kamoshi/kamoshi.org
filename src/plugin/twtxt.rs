@@ -48,7 +48,7 @@ pub fn build_twtxt(
         ];
 
         for entry in &data.entries {
-            let html = render_entry(&ctx, entry, styles)?.render();
+            let html = render_entry(ctx, entry, styles)?.render();
 
             pages.push(Page::html(
                 format!("thoughts/{}", entry.date.timestamp()),
@@ -72,14 +72,7 @@ pub fn render<'ctx>(
         main {
             section .microblog {
                 @for entry in &entries {
-                    article {
-                        a href=(format!("/thoughts/{}/", entry.date.timestamp())) {
-                            time datetime=(entry.date.to_rfc3339()) {
-                                (entry.date.format("%Y-%m-%d %H:%M UTC").to_string())
-                            }
-                        }
-                        (Raw(md_parse_simple(&entry.text)))
-                    }
+                    (render_tweet(entry))
                 }
             }
         }
@@ -96,15 +89,40 @@ pub fn render_entry<'ctx>(
     let main = maud!(
         main {
             section .microblog {
-                article {
-                    time datetime=(entry.date.to_rfc3339()) {
-                        (entry.date.format("%Y-%m-%d %H:%M UTC").to_string())
-                    }
-                    (Raw(md_parse_simple(&entry.text)))
-                }
+                (render_tweet(entry))
             }
         }
     );
 
     make_page(ctx, main, "microblog".into(), styles, &[])
+}
+
+fn render_tweet(entry: &MicroblogEntry) -> impl Renderable {
+    maud!(
+        article .tweet {
+            // Left Column: Avatar
+            div .tweet-avatar {
+                // Using a placeholder service. Replace src with your user's PFP url.
+                img src="/aya_shades.png" alt="Avatar";
+            }
+
+            // Right Column: Header + Content
+            div .tweet-content {
+                header .tweet-header {
+                    span .display-name { "kamov" }
+                    span .handle { "@kamov" }
+                    span .separator { "·" }
+                    a .tweet-link href=(format!("/thoughts/{}/", entry.date.timestamp())) {
+                        time datetime=(entry.date.to_rfc3339()) {
+                            (entry.date.format("%b %d").to_string())
+                        }
+                    }
+                }
+
+                div .tweet-body {
+                    (Raw(md_parse_simple(&entry.text)))
+                }
+            }
+        }
+    )
 }
