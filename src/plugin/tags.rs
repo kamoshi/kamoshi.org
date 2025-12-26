@@ -4,7 +4,7 @@ use chrono::Datelike;
 use hauchiwa::{
     SiteConfig,
     error::HauchiwaError,
-    loader::{CSS, Content, Registry},
+    loader::{Content, Registry, Stylesheet},
     page::{Page, absolutize},
     task::Handle,
 };
@@ -18,7 +18,7 @@ use super::make_page;
 pub fn build_tags(
     config: &mut SiteConfig<Global>,
     posts: Handle<Registry<Content<Post>>>,
-    styles: Handle<Registry<CSS>>,
+    styles: Handle<Registry<Stylesheet>>,
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
     Ok(task!(config, |ctx, posts, styles| {
         use std::collections::BTreeMap;
@@ -92,7 +92,7 @@ pub fn render_tag<'ctx>(
     ctx: &'ctx Context,
     links: &[(i32, Vec<&'ctx LinkDate>)],
     title: String,
-    styles: &'ctx [&CSS],
+    styles: &'ctx [&Stylesheet],
 ) -> Result<impl Renderable, RuntimeError> {
     let heading = title.clone();
     let list = maud!(
@@ -150,7 +150,7 @@ pub fn tag_cloud<'ctx>(
     ctx: &'ctx Context,
     tag_map: &'ctx BTreeMap<String, Vec<LinkDate>>,
     title: &'ctx str,
-    styles: &'ctx [&CSS],
+    styles: &'ctx [&Stylesheet],
 ) -> Result<impl Renderable, RuntimeError> {
     let sorted = {
         let mut vec: Vec<_> = tag_map.iter().collect();

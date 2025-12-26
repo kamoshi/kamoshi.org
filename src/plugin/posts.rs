@@ -1,7 +1,7 @@
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::gitmap::GitHistory;
-use hauchiwa::loader::{CSS, Content, Image, JS, Registry, glob_content};
+use hauchiwa::loader::{Content, Image, Registry, Script, Stylesheet};
 use hauchiwa::page::{Page, absolutize, to_slug};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -16,11 +16,11 @@ use super::{make_page, render_bibliography, to_list};
 pub fn build_posts(
     config: &mut SiteConfig<Global>,
     images: Handle<Registry<Image>>,
-    styles: Handle<Registry<CSS>>,
-    scripts: Handle<Registry<JS>>,
+    styles: Handle<Registry<Stylesheet>>,
+    scripts: Handle<Registry<Script>>,
     bibtex: Handle<Registry<Bibtex>>,
 ) -> Result<(Handle<Registry<Content<Post>>>, Handle<Vec<Page>>), HauchiwaError> {
-    let posts = glob_content::<_, Post>(config, "content/posts/**/*.md")?;
+    let posts = config.load_frontmatter::<Post>("content/posts/**/*.md")?;
 
     let pages = task!(config, |ctx, posts, images, styles, scripts, bibtex| {
         let mut pages = vec![];
@@ -118,8 +118,8 @@ pub fn render<'ctx>(
     info: Option<&'ctx GitHistory>,
     library_path: Option<&'ctx Utf8Path>,
     tags: &'ctx [String],
-    styles: &'ctx [&CSS],
-    scripts: &'ctx [&JS],
+    styles: &'ctx [&Stylesheet],
+    scripts: &'ctx [&Script],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let main = maud!(
         main {

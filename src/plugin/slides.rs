@@ -2,7 +2,7 @@ use std::fmt::Write as _;
 
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{CSS, Image, JS, Registry, glob_content};
+use hauchiwa::loader::{Image, Registry, Script, Stylesheet};
 use hauchiwa::page::{Page, absolutize};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -18,11 +18,11 @@ use super::make_bare;
 pub fn build_slides(
     config: &mut SiteConfig<Global>,
     images: Handle<Registry<Image>>,
-    styles: Handle<Registry<CSS>>,
-    scripts: Handle<Registry<JS>>,
+    styles: Handle<Registry<Stylesheet>>,
+    scripts: Handle<Registry<Script>>,
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let md = glob_content::<_, Slideshow>(config, "content/slides/**/*.md")?;
-    let hs = glob_content::<_, Slideshow>(config, "content/slides/**/*.lhs")?;
+    let md = config.load_frontmatter::<Slideshow>("content/slides/**/*.md")?;
+    let hs = config.load_frontmatter::<Slideshow>("content/slides/**/*.lhs")?;
 
     Ok(task!(config, |ctx, md, hs, images, styles, scripts| {
         let mut pages = vec![];
@@ -68,8 +68,7 @@ pub fn build_slides(
                 })
                 .collect();
 
-            let html =
-                to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?.render();
+            let html = to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?.render();
 
             pages.push(Page::html("slides", html));
         }
@@ -113,8 +112,8 @@ pub fn render<'ctx>(
     ctx: &'ctx Context,
     fm: &'ctx Slideshow,
     slides: &'ctx str,
-    styles: &'ctx [&CSS],
-    scripts: &'ctx [&JS],
+    styles: &'ctx [&Stylesheet],
+    scripts: &'ctx [&Script],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let html = maud!(
         div .reveal {

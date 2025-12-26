@@ -1,5 +1,5 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{CSS, Registry, glob_assets};
+use hauchiwa::loader::{Registry, Stylesheet};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -13,10 +13,10 @@ use super::make_page;
 
 pub fn build_twtxt(
     config: &mut SiteConfig<Global>,
-    styles: Handle<Registry<CSS>>,
+    styles: Handle<Registry<Stylesheet>>,
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let twtxt = glob_assets(config, "content/twtxt.txt", |_, _, file| {
-        let data = String::from_utf8_lossy(&file.metadata);
+    let twtxt = config.load("content/twtxt.txt", |_, _, file| {
+        let data = String::from_utf8_lossy(&file.data);
         let entries = data
             .lines()
             .filter(|line| {
@@ -63,7 +63,7 @@ pub fn build_twtxt(
 pub fn render<'ctx>(
     ctx: &'ctx Context,
     microblog: &'ctx Microblog,
-    styles: &'ctx [&CSS],
+    styles: &'ctx [&Stylesheet],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let mut entries = microblog.entries.clone();
     entries.sort_by(|a, b| b.date.cmp(&a.date));
@@ -84,7 +84,7 @@ pub fn render<'ctx>(
 pub fn render_entry<'ctx>(
     ctx: &'ctx Context,
     entry: &'ctx MicroblogEntry,
-    styles: &'ctx [&CSS],
+    styles: &'ctx [&Stylesheet],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let main = maud!(
         main {

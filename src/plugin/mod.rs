@@ -13,7 +13,7 @@ use camino::Utf8Path;
 use chrono::Datelike as _;
 use hauchiwa::{
     error::RuntimeError,
-    loader::{CSS, JS},
+    loader::{Script, Stylesheet},
 };
 // use hauchiwa::{RuntimeError, loader::Style};
 use hypertext::{Raw, prelude::*};
@@ -25,8 +25,8 @@ use crate::{Context, LinkDate};
 fn make_head(
     ctx: &Context,
     title: String,
-    styles: &[&CSS],
-    scripts: &[&JS],
+    styles: &[&Stylesheet],
+    scripts: &[&Script],
 ) -> Result<impl Renderable, RuntimeError> {
     let title = format!("{title} | kamoshi.org");
 
@@ -150,8 +150,8 @@ pub fn make_bare<'ctx>(
     ctx: &'ctx Context,
     main: impl Renderable + 'ctx,
     title: String,
-    styles: &[&CSS],
-    scripts: &[&JS],
+    styles: &[&Stylesheet],
+    scripts: &[&Script],
 ) -> Result<impl Renderable, RuntimeError> {
     let head = make_head(ctx, title, styles, scripts)?;
 
@@ -171,8 +171,8 @@ pub fn make_fullscreen<'ctx>(
     ctx: &'ctx Context,
     main: impl Renderable + 'ctx,
     title: String,
-    styles: &[&CSS],
-    scripts: &[&JS],
+    styles: &[&Stylesheet],
+    scripts: &[&Script],
 ) -> Result<impl Renderable, RuntimeError> {
     let main = maud!(
         // navbar
@@ -188,8 +188,8 @@ pub fn make_page<'ctx>(
     sack: &'ctx Context,
     main: impl Renderable + 'ctx,
     title: String,
-    styles: &[&CSS],
-    scripts: &[&JS],
+    styles: &[&Stylesheet],
+    scripts: &[&Script],
 ) -> Result<impl Renderable, RuntimeError> {
     let main = maud!(
         // navbar
@@ -210,7 +210,7 @@ pub(crate) fn to_list(
     list: Vec<LinkDate>,
     title: String,
     rss: &'static str,
-    styles: &[&CSS],
+    styles: &[&Stylesheet],
 ) -> Result<impl Renderable, RuntimeError> {
     let mut groups = HashMap::<i32, Vec<_>>::new();
 

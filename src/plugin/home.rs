@@ -1,5 +1,5 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{CSS, Image, JS, Registry, Svelte, glob_content};
+use hauchiwa::loader::{Image, Registry, Script, Stylesheet, Svelte};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -14,10 +14,10 @@ use super::make_page;
 pub fn build_home(
     site_config: &mut SiteConfig<Global>,
     images: Handle<Registry<Image>>,
-    styles: Handle<Registry<CSS>>,
+    styles: Handle<Registry<Stylesheet>>,
     svelte: Handle<Registry<Svelte>>,
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let page = glob_content::<_, Home>(site_config, "content/index.md")?;
+    let page = site_config.load_frontmatter::<Home>("content/index.md")?;
 
     Ok(task!(site_config, |ctx, page, images, styles, svelte| {
         let page = page.get("content/index.md")?;
@@ -56,8 +56,8 @@ pub(crate) fn render(
     ctx: &Context,
     text: &str,
     kanji: &str,
-    styles: &[&CSS],
-    scripts: &[&JS],
+    styles: &[&Stylesheet],
+    scripts: &[&Script],
 ) -> Result<String, RuntimeError> {
     let intro = intro(ctx)?;
     // let posts = latest_posts(ctx)?;

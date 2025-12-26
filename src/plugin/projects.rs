@@ -1,8 +1,8 @@
+use hauchiwa::SiteConfig;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{CSS, Content, Registry, glob_content};
+use hauchiwa::loader::{Content, Registry, Stylesheet};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
-use hauchiwa::SiteConfig;
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
@@ -13,9 +13,9 @@ use super::make_page;
 
 pub fn build_projects(
     config: &mut SiteConfig<Global>,
-    styles: Handle<Registry<CSS>>,
+    styles: Handle<Registry<Stylesheet>>,
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let projects = glob_content::<_, Project>(config, "content/projects/**/*.md")?;
+    let projects = config.load_frontmatter::<Project>("content/projects/**/*.md")?;
 
     Ok(
         config.add_task((projects, styles), |ctx, (projects, styles)| {
@@ -59,7 +59,7 @@ pub fn build_projects(
 pub fn render_list(
     ctx: &Context,
     mut data: Vec<&Content<Project>>,
-    styles: &[&CSS],
+    styles: &[&Stylesheet],
 ) -> Result<String, RuntimeError> {
     data.sort_unstable_by(|a, b| a.metadata.title.cmp(&b.metadata.title));
 
@@ -107,7 +107,7 @@ fn render_tile(project: &Project) -> impl Renderable {
 pub fn render_page<'ctx>(
     ctx: &'ctx Context,
     article: &'ctx Article,
-    styles: &'ctx [&CSS],
+    styles: &'ctx [&Stylesheet],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let html = maud!(
         main {

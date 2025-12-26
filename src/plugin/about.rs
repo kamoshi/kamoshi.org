@@ -1,5 +1,5 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{CSS, Content, Image, Registry, glob_assets, glob_content};
+use hauchiwa::loader::{Content, Image, Registry, Stylesheet};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -16,18 +16,18 @@ use super::make_page;
 pub fn build_about(
     site_config: &mut SiteConfig<Global>,
     images: Handle<Registry<Image>>,
-    styles: Handle<Registry<CSS>>,
+    styles: Handle<Registry<Stylesheet>>,
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let page = glob_content::<_, Post>(site_config, "content/about/index.md")?;
+    let page = site_config.load_frontmatter::<Post>("content/about/index.md")?;
 
-    let cert = glob_assets(site_config, "content/about/*.asc", |_, _, file| {
+    let cert = site_config.load("content/about/*.asc", |_, _, file| {
         Ok(Pubkey {
-            fingerprint: Cert::from_reader(file.metadata.as_slice())?
+            fingerprint: Cert::from_reader(&*file.data)?
                 .primary_key()
                 .key()
                 .fingerprint()
                 .to_spaced_hex(),
-            data: String::from_utf8(file.metadata)?.to_string(),
+            data: String::from_utf8(file.data.to_vec())?.to_string(),
         })
     })?;
 
@@ -60,7 +60,7 @@ pub fn render<'ctx>(
     article: Article,
     pubkey_ident: &'ctx Pubkey,
     pubkey_email: &'ctx Pubkey,
-    styles: &'ctx [&CSS],
+    styles: &'ctx [&Stylesheet],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let main = maud!(
         main {

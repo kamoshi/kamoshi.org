@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{CSS, Content, Image, JS, Registry, glob_content};
+use hauchiwa::loader::{Content, Image, Registry, Script, Stylesheet};
 use hauchiwa::page::{Page, absolutize, normalize_prefixed};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -17,9 +17,9 @@ use super::{make_page, render_bibliography};
 pub fn build_wiki(
     config: &mut SiteConfig<Global>,
     images: Handle<Registry<Image>>,
-    styles: Handle<Registry<CSS>>,
+    styles: Handle<Registry<Stylesheet>>,
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let wiki = glob_content::<_, Wiki>(config, "content/wiki/**/*.md")?;
+    let wiki = config.load_frontmatter::<Wiki>("content/wiki/**/*.md")?;
 
     Ok(task!(config, |ctx, wiki, images, styles| {
         let mut pages = vec![];
@@ -70,8 +70,8 @@ pub fn render<'ctx>(
     slug: &'ctx Utf8Path,
     library_path: Option<&'ctx Utf8Path>,
     wiki: &'ctx Registry<Content<Wiki>>,
-    styles: &'ctx [&CSS],
-    scripts: &'ctx [&JS],
+    styles: &'ctx [&Stylesheet],
+    scripts: &'ctx [&Script],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let main = maud!(
         main .wiki-main {
