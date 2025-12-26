@@ -665,13 +665,12 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let event = self.inner.next()?;
 
-        if let Event::Text(line) = &event {
-            if let Some(captures) = RE_DIRECTIVE_BLOCK.captures(line) {
+        if let Event::Text(line) = &event
+            && let Some(captures) = RE_DIRECTIVE_BLOCK.captures(line) {
                 let name = captures.get(1).unwrap().as_str();
                 let content = captures.get(2).unwrap().as_str();
                 return Some((self.callback)(name, content));
             }
-        }
 
         Some(event)
     }
@@ -764,15 +763,14 @@ fn make_bib<'a>(
     let mut driver = BibliographyDriver::new();
 
     for event in stream.iter() {
-        if let Event::InlineMath(text) = event {
-            if let Some(entry) = library.get(text) {
+        if let Event::InlineMath(text) = event
+            && let Some(entry) = library.get(text) {
                 driver.citation(CitationRequest::from_items(
                     vec![CitationItem::with_entry(entry)],
                     &STYLE,
                     &LOCALE,
                 ))
             }
-        }
     }
 
     // add fake citation to make all entries show up

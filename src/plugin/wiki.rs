@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, glob_content};
+use hauchiwa::loader::{CSS, Content, Image, JS, Registry, glob_content};
 use hauchiwa::page::{Page, absolutize, normalize_prefixed};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
@@ -10,7 +10,7 @@ use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
 use crate::model::Wiki;
-use crate::{Bibtex, CONTENT, Context, Global, Link};
+use crate::{Context, Global, Link};
 
 use super::{make_page, render_bibliography};
 

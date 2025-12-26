@@ -44,7 +44,7 @@ pub fn build_tags(
                         name: post.metadata.title.clone(),
                         desc: post.metadata.desc.clone(),
                     },
-                    date: post.metadata.date.clone(),
+                    date: post.metadata.date,
                 });
             }
         }
@@ -56,7 +56,7 @@ pub fn build_tags(
             let path = format!("tags/{tag}/index.html");
 
             let data = group(links);
-            let html = render_tag(&ctx, &data, tag.to_owned(), styles)?;
+            let html = render_tag(ctx, &data, tag.to_owned(), styles)?;
 
             pages.push(Page::html(path, html.render()));
 

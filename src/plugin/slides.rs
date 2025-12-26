@@ -2,8 +2,8 @@ use std::fmt::Write as _;
 
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, Svelte, glob_content};
-use hauchiwa::page::{Page, absolutize, normalize_prefixed};
+use hauchiwa::loader::{CSS, Image, JS, Registry, glob_content};
+use hauchiwa::page::{Page, absolutize};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
 use hayagriva::Library;
@@ -43,7 +43,7 @@ pub fn build_slides(
             // render individual pages
             for item in &content {
                 let mark = parse(&item.content, &item.path, None, Some(images))?;
-                let html = render(&ctx, &item.metadata, &mark, styles, scripts)?.render();
+                let html = render(ctx, &item.metadata, &mark, styles, scripts)?.render();
 
                 pages.push(Page::html(item.path.strip_prefix("content/")?, html))
             }
@@ -69,7 +69,7 @@ pub fn build_slides(
                 .collect();
 
             let html =
-                to_list(&ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?.render();
+                to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?.render();
 
             pages.push(Page::html("slides", html));
         }

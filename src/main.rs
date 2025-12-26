@@ -208,7 +208,7 @@ fn run() -> Result<(), RuntimeError> {
 
         let pages = [&home, &about, &posts, &slides, &other]
             .into_iter()
-            .flat_map(|source| source.into_iter())
+            .flat_map(|source| source.iter())
             .collect::<Vec<_>>();
 
         Builder::new_multi_thread()
@@ -227,7 +227,7 @@ fn run() -> Result<(), RuntimeError> {
 
         let pages = [&home, &about, &posts, &slides, &other]
             .into_iter()
-            .flat_map(|source| source.into_iter())
+            .flat_map(|source| source.iter())
             .collect::<Vec<_>>();
 
         let urls = pages

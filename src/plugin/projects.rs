@@ -1,13 +1,13 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{self, CSS, Content, Registry, glob_content};
+use hauchiwa::loader::{CSS, Content, Registry, glob_content};
 use hauchiwa::page::Page;
 use hauchiwa::task::Handle;
-use hauchiwa::{SiteConfig, task};
+use hauchiwa::SiteConfig;
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
-use crate::model::{Post, Project};
-use crate::{CONTENT, Context, Global};
+use crate::model::Project;
+use crate::{Context, Global};
 
 use super::make_page;
 
@@ -33,7 +33,7 @@ pub fn build_projects(
 
             {
                 let data = projects.values().collect::<Vec<_>>();
-                let list = render_list(&ctx, data, styles_list)?;
+                let list = render_list(ctx, data, styles_list)?;
                 pages.push(Page::html("projects", list));
 
                 // let text = ctx.get::<String>("hauchiwa")?;

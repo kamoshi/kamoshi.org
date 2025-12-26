@@ -1,15 +1,15 @@
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::gitmap::{GitHistory, GitInfo};
-use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, glob_content};
-use hauchiwa::page::{Page, absolutize, normalize_prefixed, to_slug};
+use hauchiwa::gitmap::GitHistory;
+use hauchiwa::loader::{CSS, Content, Image, JS, Registry, glob_content};
+use hauchiwa::page::{Page, absolutize, to_slug};
 use hauchiwa::task::Handle;
 use hauchiwa::{SiteConfig, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
 use crate::model::Post;
-use crate::{Bibtex, CONTENT, Context, Global, Link, LinkDate};
+use crate::{Bibtex, Context, Global, Link, LinkDate};
 
 use super::{make_page, render_bibliography, to_list};
 
