@@ -18,7 +18,7 @@ use pulldown_cmark::{
 };
 use regex::Regex;
 
-use crate::{Bibliography, Context, ts, typst};
+use crate::{Bibliography, ts, typst};
 
 const OPTS_MARKDOWN: OptsMarkdown = OptsMarkdown::empty()
     .union(OptsMarkdown::ENABLE_MATH)

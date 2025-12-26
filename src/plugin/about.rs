@@ -20,7 +20,7 @@ pub fn build_about(
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
     let page = glob_content::<_, Post>(site_config, "content/about/index.md")?;
 
-    let cert = glob_assets(site_config, "content/about/*.asc", |_, file| {
+    let cert = glob_assets(site_config, "content/about/*.asc", |_, _, file| {
         Ok(Pubkey {
             fingerprint: Cert::from_reader(file.metadata.as_slice())?
                 .primary_key()
@@ -42,7 +42,7 @@ pub fn build_about(
         ];
 
         let article = crate::markdown::parse(&item.content, &item.path, None, Some(images))?;
-        let html = render(&ctx, &item, article, pubkey_ident, pubkey_email, styles)?.render();
+        let html = render(ctx, item, article, pubkey_ident, pubkey_email, styles)?.render();
 
         let pages = vec![
             Page::html("about", html),

@@ -22,18 +22,20 @@ use crate::{Context, LinkDate};
 
 // use crate::{Context, LinkDate};
 
-fn make_head<'ctx>(
-    ctx: &'ctx Context,
+fn make_head(
+    ctx: &Context,
     title: String,
     styles: &[&CSS],
     scripts: &[&JS],
 ) -> Result<impl Renderable, RuntimeError> {
     let title = format!("{title} | kamoshi.org");
 
+    let importmap = ctx.importmap.to_json()?;
+
     let html = maud!(
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1";
-        meta name="generator" content=(ctx.generator);
+        meta name="generator" content=(ctx.globals.generator);
 
         title { (title) }
 
@@ -46,6 +48,8 @@ fn make_head<'ctx>(
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
 
+        script type="importmap" { (Raw(&importmap)) }
+
         @for style in styles {
             link rel="stylesheet" href=(style.path.as_str());
         }
@@ -54,7 +58,7 @@ fn make_head<'ctx>(
             script type="module" src=(script.path.as_str()) {}
         }
 
-        @if let Some(reload_script) = ctx.get_refresh_script() {
+        @if let Some(reload_script) = ctx.globals.get_refresh_script() {
             script { (Raw(reload_script)) }
         }
     );
@@ -110,12 +114,12 @@ fn make_navbar() -> impl Renderable {
 }
 
 pub fn make_footer(ctx: &Context) -> impl Renderable {
-    let copy = format!("Copyright &copy; {} Maciej Jur", &ctx.data.year);
+    let copy = format!("Copyright &copy; {} Maciej Jur", &ctx.globals.data.year);
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{mail}");
-    let link = Utf8Path::new(&ctx.data.link)
+    let link = Utf8Path::new(&ctx.globals.data.link)
         .join("tree")
-        .join(&ctx.data.hash);
+        .join(&ctx.globals.data.hash);
 
     maud!(
         footer .footer {
@@ -129,10 +133,10 @@ pub fn make_footer(ctx: &Context) -> impl Renderable {
             }
             div .repo {
                 a href=(link.as_str()) {
-                    (&ctx.data.hash)
+                    (&ctx.globals.data.hash)
                 }
                 div {
-                    (&ctx.data.date)
+                    (&ctx.globals.data.date)
                 }
             }
             a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {

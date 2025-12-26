@@ -34,7 +34,7 @@ pub fn build_home(
         let scripts = &[&kanji.init];
 
         let article = parse(&page.content, &page.path, None, Some(images))?;
-        let html = render(&ctx, &article.text, &kanji_html, styles, scripts)?;
+        let html = render(ctx, &article.text, &kanji_html, styles, scripts)?;
 
         Ok(vec![Page::html("", html)])
     }))

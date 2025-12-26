@@ -13,7 +13,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
-use hauchiwa::loader::{Runtime, glob_assets};
+use hauchiwa::loader::glob_assets;
 use hauchiwa::{Site, task};
 use hauchiwa::{SiteConfig, page::Page};
 use hayagriva::Library;
@@ -58,13 +58,11 @@ struct Global {
 
 impl Global {
     fn new() -> Self {
+        use hauchiwa::gitmap;
+
         let time = chrono::Utc::now();
 
-        let git = hauchiwa::gitmap::map(hauchiwa::gitmap::Options {
-            repository: ".".into(),
-            revision: "main".into(),
-        })
-        .unwrap();
+        let git = gitmap::map(gitmap::Options::new("main")).unwrap();
 
         Self {
             repo: git,
@@ -86,7 +84,7 @@ impl Global {
 }
 
 // convenient wrapper for `Context`
-type Context = hauchiwa::Globals<Global>;
+type Context<'a> = hauchiwa::Context<'a, Global>;
 
 #[derive(Debug, Clone)]
 struct Link {
@@ -131,8 +129,7 @@ fn run() -> Result<(), RuntimeError> {
     // images
     let images = site.glob_images(&["**/*.jpg", "**/*.png", "**/*.gif"])?;
 
-    let bibtex = glob_assets(&mut site, "**/*.bib", |_, file| {
-        let rt = Runtime;
+    let bibtex = glob_assets(&mut site, "**/*.bib", |_, rt, file| {
         let path = rt.store(&file.metadata, "bib")?;
         let text = String::from_utf8_lossy(&file.metadata);
         let data = hayagriva::io::from_biblatex_str(&text).unwrap();
@@ -163,7 +160,7 @@ fn run() -> Result<(), RuntimeError> {
 
             let scripts = &[scripts.get("scripts/photos/main.ts")?];
 
-            let html = make_fullscreen(&ctx, html, "Map".into(), styles, scripts)?.render();
+            let html = make_fullscreen(ctx, html, "Map".into(), styles, scripts)?.render();
 
             pages.push(Page::html("map", html));
         }
@@ -179,7 +176,7 @@ fn run() -> Result<(), RuntimeError> {
 
             let html = (component.html)(&())?;
             let html = Raw(format!(r#"<main>{html}</main>"#));
-            let html = make_page(&ctx, html, "Search".into(), styles, scripts)?.render();
+            let html = make_page(ctx, html, "Search".into(), styles, scripts)?.render();
 
             pages.push(Page::html("search", html));
         }

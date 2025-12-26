@@ -15,7 +15,7 @@ pub fn build_twtxt(
     config: &mut SiteConfig<Global>,
     styles: Handle<Registry<CSS>>,
 ) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let twtxt = glob_assets(config, "content/twtxt.txt", |_, file| {
+    let twtxt = glob_assets(config, "content/twtxt.txt", |_, _, file| {
         let data = String::from_utf8_lossy(&file.metadata);
         let entries = data
             .lines()

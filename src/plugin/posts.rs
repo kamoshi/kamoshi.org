@@ -1,6 +1,6 @@
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::gitmap::GitInfo;
+use hauchiwa::gitmap::{GitHistory, GitInfo};
 use hauchiwa::loader::{self, CSS, Content, Image, JS, Registry, glob_content};
 use hauchiwa::page::{Page, absolutize, normalize_prefixed, to_slug};
 use hauchiwa::task::Handle;
@@ -60,7 +60,7 @@ pub fn build_posts(
                 ctx,
                 &item.metadata,
                 article,
-                ctx.data.repo.files.get(item.path.as_str()),
+                ctx.globals.data.repo.files.get(item.path.as_str()),
                 bibtex.map(|(_, library)| library.path.as_path()),
                 &item.metadata.tags,
                 styles,
@@ -115,7 +115,7 @@ pub fn render<'ctx>(
     ctx: &'ctx Context,
     meta: &'ctx Post,
     article: Article,
-    info: Option<&'ctx GitInfo>,
+    info: Option<&'ctx GitHistory>,
     library_path: Option<&'ctx Utf8Path>,
     tags: &'ctx [String],
     styles: &'ctx [&CSS],
@@ -163,7 +163,7 @@ fn render_article(
 pub fn render_metadata(
     ctx: &Context,
     meta: &Post,
-    info: Option<&GitInfo>,
+    info: Option<&GitHistory>,
     tags: &[String],
 ) -> impl Renderable {
     maud!(
@@ -179,6 +179,7 @@ pub fn render_metadata(
                     }
                 }
                 @if let Some(info) = info {
+                    @let info = info[0].as_ref();
                     div {
                         img src="/static/svg/lucide/file-clock.svg" title="Updated";
                         time datetime=(info.commit_date.format("%Y-%m-%d").to_string()) {
@@ -187,7 +188,7 @@ pub fn render_metadata(
                     }
                     div {
                         img src="/static/svg/lucide/git-graph.svg" title="Link to commit";
-                        a href=(format!("{}/commit/{}", &ctx.data.link, &info.abbreviated_hash)) {
+                        a href=(format!("{}/commit/{}", &ctx.globals.data.link, &info.abbreviated_hash)) {
                             (&info.abbreviated_hash)
                         }
                     }

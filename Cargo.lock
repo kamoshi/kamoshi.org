@@ -1682,6 +1682,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gitscan"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ab1122f8a37a092b44c6fe472a0fbf2f39e8e4f42a57464903ef4ea4aa98a9f"
+dependencies = [
+ "chrono",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1824,7 +1834,7 @@ dependencies = [
 
 [[package]]
 name = "hauchiwa"
-version = "0.8.0"
+version = "0.8.3"
 dependencies = [
  "anyhow",
  "axum",
@@ -1833,6 +1843,7 @@ dependencies = [
  "chrono",
  "console 0.16.1",
  "crossbeam-channel",
+ "gitscan",
  "glob",
  "grass",
  "gray_matter",
