@@ -35,7 +35,7 @@ fn make_head(
     let html = maud!(
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1";
-        meta name="generator" content=(ctx.globals.generator);
+        meta name="generator" content=(ctx.env.generator);
 
         title { (title) }
 
@@ -58,7 +58,7 @@ fn make_head(
             script type="module" src=(script.path.as_str()) {}
         }
 
-        @if let Some(reload_script) = ctx.globals.get_refresh_script() {
+        @if let Some(reload_script) = ctx.env.get_refresh_script() {
             script { (Raw(reload_script)) }
         }
     );
@@ -114,12 +114,12 @@ fn make_navbar() -> impl Renderable {
 }
 
 pub fn make_footer(ctx: &Context) -> impl Renderable {
-    let copy = format!("Copyright &copy; {} Maciej Jur", &ctx.globals.data.year);
+    let copy = format!("Copyright &copy; {} Maciej Jur", &ctx.env.data.year);
     let mail = "maciej@kamoshi.org";
     let href = format!("mailto:{mail}");
-    let link = Utf8Path::new(&ctx.globals.data.link)
+    let link = Utf8Path::new(&ctx.env.data.link)
         .join("tree")
-        .join(&ctx.globals.data.hash);
+        .join(&ctx.env.data.hash);
 
     maud!(
         footer .footer {
@@ -133,10 +133,10 @@ pub fn make_footer(ctx: &Context) -> impl Renderable {
             }
             div .repo {
                 a href=(link.as_str()) {
-                    (&ctx.globals.data.hash)
+                    (&ctx.env.data.hash)
                 }
                 div {
-                    (&ctx.globals.data.date)
+                    (&ctx.env.data.date)
                 }
             }
             a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {

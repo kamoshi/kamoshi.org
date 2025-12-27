@@ -1,10 +1,10 @@
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::gitmap::GitHistory;
-use hauchiwa::loader::{Content, Image, Registry, Script, Stylesheet};
-use hauchiwa::page::{Page, absolutize, to_slug};
+use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
+use hauchiwa::page::{Output, absolutize, to_slug};
 use hauchiwa::task::Handle;
-use hauchiwa::{SiteConfig, task};
+use hauchiwa::{Blueprint, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
@@ -14,25 +14,25 @@ use crate::{Bibtex, Context, Global, Link, LinkDate};
 use super::{make_page, render_bibliography, to_list};
 
 pub fn build_posts(
-    config: &mut SiteConfig<Global>,
-    images: Handle<Registry<Image>>,
-    styles: Handle<Registry<Stylesheet>>,
-    scripts: Handle<Registry<Script>>,
-    bibtex: Handle<Registry<Bibtex>>,
-) -> Result<(Handle<Registry<Content<Post>>>, Handle<Vec<Page>>), HauchiwaError> {
-    let posts = config.load_frontmatter::<Post>("content/posts/**/*.md")?;
+    config: &mut Blueprint<Global>,
+    images: Handle<Assets<Image>>,
+    styles: Handle<Assets<Stylesheet>>,
+    scripts: Handle<Assets<Script>>,
+    bibtex: Handle<Assets<Bibtex>>,
+) -> Result<(Handle<Assets<Document<Post>>>, Handle<Vec<Output>>), HauchiwaError> {
+    let docs = config.load_documents::<Post>("content/posts/**/*.md")?;
 
-    let pages = task!(config, |ctx, posts, images, styles, scripts, bibtex| {
+    let pages = task!(config, |ctx, docs, images, styles, scripts, bibtex| {
         let mut pages = vec![];
 
-        let posts = posts
+        let docs = docs
             .values()
             .filter(|item| !item.metadata.draft)
             .collect::<Vec<_>>();
 
         // render the posts
-        for item in &posts {
-            let pattern = format!("{}/*.bib", to_slug(&item.path));
+        for &doc in &docs {
+            let pattern = format!("{}/*.bib", to_slug(&doc.path));
             let bibtex = bibtex.glob(&pattern)?.into_iter().next();
 
             let styles = &[
@@ -42,7 +42,7 @@ pub fn build_posts(
 
             let mut js = vec![scripts.get("scripts/outline/main.ts")?];
 
-            if let Some(entries) = &item.metadata.scripts {
+            if let Some(entries) = &doc.metadata.scripts {
                 for entry in entries {
                     let key = format!("scripts/{}", entry);
                     js.push(scripts.get(key)?);
@@ -50,25 +50,25 @@ pub fn build_posts(
             }
 
             let article = crate::markdown::parse(
-                &item.content,
-                &item.path,
+                &doc.body,
+                &doc.path,
                 bibtex.map(|(_, library)| &library.data),
                 Some(images),
             )?;
 
             let buffer = render(
                 ctx,
-                &item.metadata,
+                &doc.metadata,
                 article,
-                ctx.globals.data.repo.files.get(item.path.as_str()),
+                ctx.env.data.repo.files.get(doc.path.as_str()),
                 bibtex.map(|(_, library)| library.path.as_path()),
-                &item.metadata.tags,
+                &doc.metadata.tags,
                 styles,
                 &js,
             )?
             .render();
 
-            pages.push(Page::html(item.path.strip_prefix("content/")?, buffer));
+            pages.push(Output::html(doc.path.strip_prefix("content/")?, buffer));
         }
 
         {
@@ -79,8 +79,7 @@ pub fn build_posts(
 
             let html = to_list(
                 ctx,
-                posts
-                    .iter()
+                docs.iter()
                     .map(|item| LinkDate {
                         link: Link {
                             path: absolutize("content", &item.path),
@@ -96,7 +95,7 @@ pub fn build_posts(
             )?
             .render();
 
-            pages.push(Page::html("posts", html));
+            pages.push(Output::html("posts", html));
         }
 
         {
@@ -108,7 +107,7 @@ pub fn build_posts(
         Ok(pages)
     });
 
-    Ok((posts, pages))
+    Ok((docs, pages))
 }
 
 pub fn render<'ctx>(
@@ -188,7 +187,7 @@ pub fn render_metadata(
                     }
                     div {
                         img src="/static/svg/lucide/git-graph.svg" title="Link to commit";
-                        a href=(format!("{}/commit/{}", &ctx.globals.data.link, &info.abbreviated_hash)) {
+                        a href=(format!("{}/commit/{}", &ctx.env.data.link, &info.abbreviated_hash)) {
                             (&info.abbreviated_hash)
                         }
                     }

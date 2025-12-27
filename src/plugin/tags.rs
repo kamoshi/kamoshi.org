@@ -2,10 +2,10 @@ use std::collections::{BTreeMap, HashMap};
 
 use chrono::Datelike;
 use hauchiwa::{
-    SiteConfig,
+    Blueprint,
     error::HauchiwaError,
-    loader::{Content, Registry, Stylesheet},
-    page::{Page, absolutize},
+    loader::{Assets, Document, Stylesheet},
+    page::{Output, absolutize},
     task::Handle,
 };
 use hauchiwa::{error::RuntimeError, task};
@@ -16,10 +16,10 @@ use crate::{Context, Global, Link, LinkDate, model::Post};
 use super::make_page;
 
 pub fn build_tags(
-    config: &mut SiteConfig<Global>,
-    posts: Handle<Registry<Content<Post>>>,
-    styles: Handle<Registry<Stylesheet>>,
-) -> Result<Handle<Vec<Page>>, HauchiwaError> {
+    config: &mut Blueprint<Global>,
+    posts: Handle<Assets<Document<Post>>>,
+    styles: Handle<Assets<Stylesheet>>,
+) -> Result<Handle<Vec<Output>>, HauchiwaError> {
     Ok(task!(config, |ctx, posts, styles| {
         use std::collections::BTreeMap;
 
@@ -58,7 +58,7 @@ pub fn build_tags(
             let data = group(links);
             let html = render_tag(ctx, &data, tag.to_owned(), styles)?;
 
-            pages.push(Page::html(path, html.render()));
+            pages.push(Output::html(path, html.render()));
 
             // Render global tag index
             // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;

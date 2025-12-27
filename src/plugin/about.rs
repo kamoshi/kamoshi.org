@@ -1,8 +1,8 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Content, Image, Registry, Stylesheet};
-use hauchiwa::page::Page;
+use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
+use hauchiwa::page::Output;
 use hauchiwa::task::Handle;
-use hauchiwa::{SiteConfig, task};
+use hauchiwa::{Blueprint, task};
 use hypertext::{Raw, prelude::*};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
@@ -14,25 +14,27 @@ use crate::{Context, Global};
 use super::make_page;
 
 pub fn build_about(
-    site_config: &mut SiteConfig<Global>,
-    images: Handle<Registry<Image>>,
-    styles: Handle<Registry<Stylesheet>>,
-) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let page = site_config.load_frontmatter::<Post>("content/about/index.md")?;
+    config: &mut Blueprint<Global>,
+    images: Handle<Assets<Image>>,
+    styles: Handle<Assets<Stylesheet>>,
+) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    let docs = config.load_documents::<Post>("content/about/index.md")?;
 
-    let cert = site_config.load("content/about/*.asc", |_, _, file| {
+    let cert = config.load("content/about/*.asc", |_, _, input| {
+        let data = input.read()?;
+
         Ok(Pubkey {
-            fingerprint: Cert::from_reader(&*file.data)?
+            fingerprint: Cert::from_reader(&*data)?
                 .primary_key()
                 .key()
                 .fingerprint()
                 .to_spaced_hex(),
-            data: String::from_utf8(file.data.to_vec())?.to_string(),
+            data: String::from_utf8(data.to_vec())?.to_string(),
         })
     })?;
 
-    Ok(task!(site_config, |ctx, page, cert, images, styles| {
-        let item = page.get("content/about/index.md")?;
+    Ok(task!(config, |ctx, docs, cert, images, styles| {
+        let document = docs.get("content/about/index.md")?;
         let pubkey_ident = cert.get("content/about/pubkey-ident.asc")?;
         let pubkey_email = cert.get("content/about/pubkey-email.asc")?;
 
@@ -41,22 +43,20 @@ pub fn build_about(
             styles.get("styles/layouts/page.scss")?,
         ];
 
-        let article = crate::markdown::parse(&item.content, &item.path, None, Some(images))?;
-        let html = render(ctx, item, article, pubkey_ident, pubkey_email, styles)?.render();
+        let article = crate::markdown::parse(&document.body, &document.path, None, Some(images))?;
+        let html = render(ctx, document, article, pubkey_ident, pubkey_email, styles)?.render();
 
-        let pages = vec![
-            Page::html("about", html),
-            Page::file("pubkey_ident.asc", pubkey_ident.data.clone()),
-            Page::file("pubkey_email.asc", pubkey_email.data.clone()),
-        ];
-
-        Ok(pages)
+        Ok(vec![
+            Output::html("about", html),
+            Output::file("pubkey_ident.asc", pubkey_ident.data.clone()),
+            Output::file("pubkey_email.asc", pubkey_email.data.clone()),
+        ])
     }))
 }
 
 pub fn render<'ctx>(
     ctx: &'ctx Context,
-    item: &'ctx Content<Post>,
+    doc: &'ctx Document<Post>,
     article: Article,
     pubkey_ident: &'ctx Pubkey,
     pubkey_email: &'ctx Pubkey,
@@ -71,7 +71,7 @@ pub fn render<'ctx>(
                 section .paper {
                     header {
                         h1 #top {
-                            (&item.metadata.title)
+                            (&doc.metadata.title)
                         }
                     }
                     section .wiki-article__markdown.markdown {
@@ -100,5 +100,5 @@ pub fn render<'ctx>(
         }
     );
 
-    make_page(ctx, main, item.metadata.title.clone(), styles, &[])
+    make_page(ctx, main, doc.metadata.title.clone(), styles, &[])
 }

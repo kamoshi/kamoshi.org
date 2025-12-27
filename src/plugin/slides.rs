@@ -2,10 +2,10 @@ use std::fmt::Write as _;
 
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Image, Registry, Script, Stylesheet};
-use hauchiwa::page::{Page, absolutize};
+use hauchiwa::loader::{Assets, Image, Script, Stylesheet};
+use hauchiwa::page::{Output, absolutize};
 use hauchiwa::task::Handle;
-use hauchiwa::{SiteConfig, task};
+use hauchiwa::{Blueprint, task};
 use hayagriva::Library;
 use hypertext::{Raw, prelude::*};
 
@@ -16,18 +16,18 @@ use crate::{Context, Global, Link, LinkDate};
 use super::make_bare;
 
 pub fn build_slides(
-    config: &mut SiteConfig<Global>,
-    images: Handle<Registry<Image>>,
-    styles: Handle<Registry<Stylesheet>>,
-    scripts: Handle<Registry<Script>>,
-) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let md = config.load_frontmatter::<Slideshow>("content/slides/**/*.md")?;
-    let hs = config.load_frontmatter::<Slideshow>("content/slides/**/*.lhs")?;
+    config: &mut Blueprint<Global>,
+    images: Handle<Assets<Image>>,
+    styles: Handle<Assets<Stylesheet>>,
+    scripts: Handle<Assets<Script>>,
+) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    let md = config.load_documents::<Slideshow>("content/slides/**/*.md")?;
+    let hs = config.load_documents::<Slideshow>("content/slides/**/*.lhs")?;
 
     Ok(task!(config, |ctx, md, hs, images, styles, scripts| {
         let mut pages = vec![];
 
-        let content = [md.values(), hs.values()]
+        let docs = [md.values(), hs.values()]
             .into_iter()
             .flatten()
             .collect::<Vec<_>>();
@@ -41,11 +41,11 @@ pub fn build_slides(
             let scripts = &[scripts.get("scripts/slides/main.ts")?];
 
             // render individual pages
-            for item in &content {
-                let mark = parse(&item.content, &item.path, None, Some(images))?;
-                let html = render(ctx, &item.metadata, &mark, styles, scripts)?.render();
+            for doc in &docs {
+                let mark = parse(&doc.body, &doc.path, None, Some(images))?;
+                let html = render(ctx, &doc.metadata, &mark, styles, scripts)?.render();
 
-                pages.push(Page::html(item.path.strip_prefix("content/")?, html))
+                pages.push(Output::html(doc.path.strip_prefix("content/")?, html))
             }
         }
 
@@ -56,7 +56,7 @@ pub fn build_slides(
                 styles.get("styles/layouts/list.scss")?,
             ];
 
-            let data = content
+            let data = docs
                 .iter()
                 .map(|item| LinkDate {
                     link: Link {
@@ -70,7 +70,7 @@ pub fn build_slides(
 
             let html = to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?.render();
 
-            pages.push(Page::html("slides", html));
+            pages.push(Output::html("slides", html));
         }
 
         //             // render feed
@@ -92,7 +92,7 @@ pub fn parse(
     text: &str,
     path: &Utf8Path,
     library: Option<&Library>,
-    images: Option<&Registry<Image>>,
+    images: Option<&Assets<Image>>,
 ) -> Result<String, RuntimeError> {
     let mut buff = String::new();
 

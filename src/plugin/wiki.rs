@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Content, Image, Registry, Script, Stylesheet};
-use hauchiwa::page::{Page, absolutize, normalize_prefixed};
+use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
+use hauchiwa::page::{Output, absolutize, normalize_prefixed};
 use hauchiwa::task::Handle;
-use hauchiwa::{SiteConfig, task};
+use hauchiwa::{Blueprint, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
@@ -15,11 +15,11 @@ use crate::{Context, Global, Link};
 use super::{make_page, render_bibliography};
 
 pub fn build_wiki(
-    config: &mut SiteConfig<Global>,
-    images: Handle<Registry<Image>>,
-    styles: Handle<Registry<Stylesheet>>,
-) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let wiki = config.load_frontmatter::<Wiki>("content/wiki/**/*.md")?;
+    config: &mut Blueprint<Global>,
+    images: Handle<Assets<Image>>,
+    styles: Handle<Assets<Stylesheet>>,
+) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    let wiki = config.load_documents::<Wiki>("content/wiki/**/*.md")?;
 
     Ok(task!(config, |ctx, wiki, images, styles| {
         let mut pages = vec![];
@@ -29,7 +29,7 @@ pub fn build_wiki(
             styles.get("styles/layouts/page.scss")?,
         ];
 
-        for item in wiki.values() {
+        for doc in wiki.values() {
             // let pattern = format!("{}/*", item.file.area);
             // let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
 
@@ -39,11 +39,11 @@ pub fn build_wiki(
             //     js.push(path.to_string());
             // }
 
-            let article = crate::markdown::parse(&item.content, &item.path, None, Some(images))?;
+            let article = crate::markdown::parse(&doc.body, &doc.path, None, Some(images))?;
 
             let buffer = render(
                 ctx,
-                &item.metadata,
+                &doc.metadata,
                 &article,
                 "".into(),
                 None,
@@ -53,8 +53,8 @@ pub fn build_wiki(
             )?
             .render();
 
-            pages.push(Page::html(
-                normalize_prefixed("content", &item.path),
+            pages.push(Output::html(
+                normalize_prefixed("content", &doc.path),
                 buffer,
             ));
         }
@@ -69,7 +69,7 @@ pub fn render<'ctx>(
     article: &'ctx Article,
     slug: &'ctx Utf8Path,
     library_path: Option<&'ctx Utf8Path>,
-    wiki: &'ctx Registry<Content<Wiki>>,
+    wiki: &'ctx Assets<Document<Wiki>>,
     styles: &'ctx [&Stylesheet],
     scripts: &'ctx [&Script],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
@@ -151,7 +151,7 @@ impl TreePage {
 /// Render the page tree
 pub(crate) fn show_page_tree<'ctx>(
     ctx: &'ctx Utf8Path,
-    wiki: &'ctx Registry<Content<Wiki>>,
+    wiki: &'ctx Assets<Document<Wiki>>,
 ) -> impl Renderable + use<'ctx> {
     let tree = wiki.values().map(|item| Link {
         path: absolutize("content", &item.path),

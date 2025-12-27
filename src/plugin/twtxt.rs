@@ -1,8 +1,8 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Registry, Stylesheet};
-use hauchiwa::page::Page;
+use hauchiwa::loader::{Assets, Stylesheet};
+use hauchiwa::page::Output;
 use hauchiwa::task::Handle;
-use hauchiwa::{SiteConfig, task};
+use hauchiwa::{Blueprint, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::md_parse_simple;
@@ -12,11 +12,13 @@ use crate::{Context, Global};
 use super::make_page;
 
 pub fn build_twtxt(
-    config: &mut SiteConfig<Global>,
-    styles: Handle<Registry<Stylesheet>>,
-) -> Result<Handle<Vec<Page>>, HauchiwaError> {
+    config: &mut Blueprint<Global>,
+    styles: Handle<Assets<Stylesheet>>,
+) -> Result<Handle<Vec<Output>>, HauchiwaError> {
     let twtxt = config.load("content/twtxt.txt", |_, _, file| {
-        let data = String::from_utf8_lossy(&file.data);
+        let data = file.read()?;
+        let data = String::from_utf8_lossy(&data);
+
         let entries = data
             .lines()
             .filter(|line| {
@@ -43,14 +45,14 @@ pub fn build_twtxt(
         let html = render(ctx, data, styles)?.render();
 
         let mut pages = vec![
-            Page::file("twtxt.txt", data.data.clone()),
-            Page::html("thoughts", html),
+            Output::file("twtxt.txt", data.data.clone()),
+            Output::html("thoughts", html),
         ];
 
         for entry in &data.entries {
             let html = render_entry(ctx, entry, styles)?.render();
 
-            pages.push(Page::html(
+            pages.push(Output::html(
                 format!("thoughts/{}", entry.date.timestamp()),
                 html.into_inner(),
             ));

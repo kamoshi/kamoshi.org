@@ -1,8 +1,8 @@
-use hauchiwa::SiteConfig;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Content, Registry, Stylesheet};
-use hauchiwa::page::Page;
+use hauchiwa::loader::{Assets, Document, Stylesheet};
+use hauchiwa::page::Output;
 use hauchiwa::task::Handle;
+use hauchiwa::{Blueprint, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
@@ -12,53 +12,51 @@ use crate::{Context, Global};
 use super::make_page;
 
 pub fn build_projects(
-    config: &mut SiteConfig<Global>,
-    styles: Handle<Registry<Stylesheet>>,
-) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let projects = config.load_frontmatter::<Project>("content/projects/**/*.md")?;
+    config: &mut Blueprint<Global>,
+    styles: Handle<Assets<Stylesheet>>,
+) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    let docs = config.load_documents::<Project>("content/projects/**/*.md")?;
 
-    Ok(
-        config.add_task((projects, styles), |ctx, (projects, styles)| {
-            let mut pages = vec![];
+    Ok(task!(config, |ctx, docs, styles| {
+        let mut pages = vec![];
 
-            let styles_list = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/layouts/projects.scss")?,
-            ];
+        let styles_list = &[
+            styles.get("styles/styles.scss")?,
+            styles.get("styles/layouts/projects.scss")?,
+        ];
 
-            // let styles_page = &[
-            //     styles.get("styles/styles.scss").unwrap(),
-            //     styles.get("styles/layouts/page.scss").unwrap(),
-            // ];
+        // let styles_page = &[
+        //     styles.get("styles/styles.scss").unwrap(),
+        //     styles.get("styles/layouts/page.scss").unwrap(),
+        // ];
 
-            {
-                let data = projects.values().collect::<Vec<_>>();
-                let list = render_list(ctx, data, styles_list)?;
-                pages.push(Page::html("projects", list));
+        {
+            let data = docs.values().collect::<Vec<_>>();
+            let list = render_list(ctx, data, styles_list)?;
+            pages.push(Output::html("projects", list));
 
-                // let text = ctx.get::<String>("hauchiwa")?;
-                // let article = crate::markdown::parse(&ctx, text, "".into(), None)?;
-                // let html = render_page(&ctx, &article)?.render();
-                // pages.push(Page::html("projects/hauchiwa", html));
-            }
+            // let text = ctx.get::<String>("hauchiwa")?;
+            // let article = crate::markdown::parse(&ctx, text, "".into(), None)?;
+            // let html = render_page(&ctx, &article)?.render();
+            // pages.push(Page::html("projects/hauchiwa", html));
+        }
 
-            {
-                //             let feed = crate::rss::generate_feed::<Content<Project>>(
-                //                 sack,
-                //                 "projects",
-                //                 "Kamoshi.org Projects",
-                //             )?;
-                //             Ok(vec![feed])
-            }
+        {
+            //             let feed = crate::rss::generate_feed::<Content<Project>>(
+            //                 sack,
+            //                 "projects",
+            //                 "Kamoshi.org Projects",
+            //             )?;
+            //             Ok(vec![feed])
+        }
 
-            Ok(pages)
-        }),
-    )
+        Ok(pages)
+    }))
 }
 
 pub fn render_list(
     ctx: &Context,
-    mut data: Vec<&Content<Project>>,
+    mut data: Vec<&Document<Project>>,
     styles: &[&Stylesheet],
 ) -> Result<String, RuntimeError> {
     data.sort_unstable_by(|a, b| a.metadata.title.cmp(&b.metadata.title));

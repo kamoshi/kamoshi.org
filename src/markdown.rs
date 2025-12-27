@@ -4,7 +4,7 @@ use std::sync::LazyLock;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::error::RuntimeError;
-use hauchiwa::loader::{Image, Registry};
+use hauchiwa::loader::{Assets, Image};
 use hauchiwa::page::{normalize_path, to_slug};
 use hayagriva::{
     BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
@@ -94,7 +94,7 @@ pub fn parse(
     text: &str,
     path: &Utf8Path,
     library: Option<&Library>,
-    images: Option<&Registry<Image>>,
+    images: Option<&Assets<Image>>,
 ) -> Result<Article, RuntimeError> {
     let mut outline = vec![];
     let mut scripts = vec![];
@@ -370,7 +370,7 @@ where
 
 fn swap_hashed_image<'a>(
     path: &'a Utf8Path,
-    images: Option<&'a Registry<Image>>,
+    images: Option<&'a Assets<Image>>,
 ) -> impl Fn(Event<'a>) -> Event<'a> {
     move |event| match event {
         Event::Start(start) => match start {
@@ -666,11 +666,12 @@ where
         let event = self.inner.next()?;
 
         if let Event::Text(line) = &event
-            && let Some(captures) = RE_DIRECTIVE_BLOCK.captures(line) {
-                let name = captures.get(1).unwrap().as_str();
-                let content = captures.get(2).unwrap().as_str();
-                return Some((self.callback)(name, content));
-            }
+            && let Some(captures) = RE_DIRECTIVE_BLOCK.captures(line)
+        {
+            let name = captures.get(1).unwrap().as_str();
+            let content = captures.get(2).unwrap().as_str();
+            return Some((self.callback)(name, content));
+        }
 
         Some(event)
     }
@@ -764,13 +765,14 @@ fn make_bib<'a>(
 
     for event in stream.iter() {
         if let Event::InlineMath(text) = event
-            && let Some(entry) = library.get(text) {
-                driver.citation(CitationRequest::from_items(
-                    vec![CitationItem::with_entry(entry)],
-                    &STYLE,
-                    &LOCALE,
-                ))
-            }
+            && let Some(entry) = library.get(text)
+        {
+            driver.citation(CitationRequest::from_items(
+                vec![CitationItem::with_entry(entry)],
+                &STYLE,
+                &LOCALE,
+            ))
+        }
     }
 
     // add fake citation to make all entries show up

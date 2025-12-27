@@ -1,8 +1,8 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Image, Registry, Script, Stylesheet, Svelte};
-use hauchiwa::page::Page;
+use hauchiwa::loader::{Assets, Image, Script, Stylesheet, Svelte};
+use hauchiwa::page::Output;
 use hauchiwa::task::Handle;
-use hauchiwa::{SiteConfig, task};
+use hauchiwa::{Blueprint, task};
 use hypertext::{Raw, maud_static, prelude::*};
 
 use crate::Context;
@@ -12,15 +12,15 @@ use crate::{Global, model::Home};
 use super::make_page;
 
 pub fn build_home(
-    site_config: &mut SiteConfig<Global>,
-    images: Handle<Registry<Image>>,
-    styles: Handle<Registry<Stylesheet>>,
-    svelte: Handle<Registry<Svelte>>,
-) -> Result<Handle<Vec<Page>>, HauchiwaError> {
-    let page = site_config.load_frontmatter::<Home>("content/index.md")?;
+    config: &mut Blueprint<Global>,
+    images: Handle<Assets<Image>>,
+    styles: Handle<Assets<Stylesheet>>,
+    svelte: Handle<Assets<Svelte>>,
+) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    let docs = config.load_documents::<Home>("content/index.md")?;
 
-    Ok(task!(site_config, |ctx, page, images, styles, svelte| {
-        let page = page.get("content/index.md")?;
+    Ok(task!(config, |ctx, docs, images, styles, svelte| {
+        let document = docs.get("content/index.md")?;
 
         let styles = &[
             styles.get("styles/styles.scss")?,
@@ -33,10 +33,10 @@ pub fn build_home(
 
         let scripts = &[&kanji.init];
 
-        let article = parse(&page.content, &page.path, None, Some(images))?;
+        let article = parse(&document.body, &document.path, None, Some(images))?;
         let html = render(ctx, &article.text, &kanji_html, styles, scripts)?;
 
-        Ok(vec![Page::html("", html)])
+        Ok(vec![Output::html("", html)])
     }))
 }
 
@@ -86,7 +86,7 @@ pub(crate) fn render(
     Ok(rendered)
 }
 
-fn intro(ctx: &Context) -> Result<impl Renderable, RuntimeError> {
+fn intro(_: &Context) -> Result<impl Renderable, RuntimeError> {
     let article = parse(INTRO, "".into(), None, None)?;
 
     let html = maud!(

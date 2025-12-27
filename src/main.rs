@@ -13,8 +13,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
-use hauchiwa::{Site, task};
-use hauchiwa::{SiteConfig, page::Page};
+use hauchiwa::page::Output;
+use hauchiwa::{TaskContext, Website, task};
 use hayagriva::Library;
 use hypertext::{Raw, Renderable};
 
@@ -83,7 +83,7 @@ impl Global {
 }
 
 // convenient wrapper for `Context`
-type Context<'a> = hauchiwa::Context<'a, Global>;
+type Context<'a> = TaskContext<'a, Global>;
 
 #[derive(Debug, Clone)]
 struct Link {
@@ -119,31 +119,32 @@ fn run() -> Result<(), RuntimeError> {
 
     let _ = fs::remove_dir_all("./dist");
 
-    let mut site = SiteConfig::new();
+    let mut config = Website::<Global>::design();
 
-    let styles = site.load_css("styles/**/[!_]*.scss", "styles/**/*.scss")?;
-    let scripts = site.load_js("scripts/**/main.ts", "scripts/**/*.ts")?;
-    let svelte = site.load_svelte("scripts/**/App.svelte", "scripts/**/*.svelte")?;
-    let images = site.load_images(&["**/*.jpg", "**/*.png", "**/*.gif"])?;
+    let styles = config.load_css("styles/**/[!_]*.scss", "styles/**/*.scss")?;
+    let scripts = config.load_js("scripts/**/main.ts", "scripts/**/*.ts")?;
+    let svelte = config.load_svelte("scripts/**/App.svelte", "scripts/**/*.svelte")?;
+    let images = config.load_images(&["**/*.jpg", "**/*.png", "**/*.gif"])?;
 
-    let bibtex = site.load("**/*.bib", |_, rt, file| {
-        let path = rt.store(&file.data, "bib")?;
-        let text = String::from_utf8_lossy(&file.data);
+    let bibtex = config.load("**/*.bib", |_, store, input| {
+        let data = input.read()?;
+        let path = store.save(&data, "bib")?;
+        let text = String::from_utf8_lossy(&data);
         let data = hayagriva::io::from_biblatex_str(&text).unwrap();
 
         Ok(Bibtex { path, data })
     })?;
 
-    let home = build_home(&mut site, images, styles, svelte)?;
-    let about = build_about(&mut site, images, styles)?;
-    let _ = build_twtxt(&mut site, styles)?;
-    let (posts_data, posts) = build_posts(&mut site, images, styles, scripts, bibtex)?;
-    let slides = build_slides(&mut site, images, styles, scripts)?;
-    let _ = build_wiki(&mut site, images, styles)?;
-    let _ = build_projects(&mut site, styles)?;
-    let _ = build_tags(&mut site, posts_data, styles)?;
+    let home = build_home(&mut config, images, styles, svelte)?;
+    let about = build_about(&mut config, images, styles)?;
+    let _ = build_twtxt(&mut config, styles)?;
+    let (posts_data, posts) = build_posts(&mut config, images, styles, scripts, bibtex)?;
+    let slides = build_slides(&mut config, images, styles, scripts)?;
+    let _ = build_wiki(&mut config, images, styles)?;
+    let _ = build_projects(&mut config, styles)?;
+    let _ = build_tags(&mut config, posts_data, styles)?;
 
-    let other = task!(site, |ctx, styles, scripts, svelte| {
+    let other = task!(config, |ctx, styles, scripts, svelte| {
         let mut pages = vec![];
 
         {
@@ -159,7 +160,7 @@ fn run() -> Result<(), RuntimeError> {
 
             let html = make_fullscreen(ctx, html, "Map".into(), styles, scripts)?.render();
 
-            pages.push(Page::html("map", html));
+            pages.push(Output::html("map", html));
         }
 
         {
@@ -175,18 +176,18 @@ fn run() -> Result<(), RuntimeError> {
             let html = Raw(format!(r#"<main>{html}</main>"#));
             let html = make_page(ctx, html, "Search".into(), styles, scripts)?.render();
 
-            pages.push(Page::html("search", html));
+            pages.push(Output::html("search", html));
         }
 
         Ok(pages)
     });
 
-    task!(site, |_, home, about, posts, slides, other| {
+    task!(config, |_, home, about, posts, slides, other| {
         use pagefind::api::PagefindIndex;
         use pagefind::options::PagefindServiceConfig;
         use tokio::runtime::Builder;
 
-        let run = async move |pages: &[&Page]| -> Result<(), RuntimeError> {
+        let run = async move |pages: &[&Output]| -> Result<(), RuntimeError> {
             let config = PagefindServiceConfig::builder().build();
             let mut index = PagefindIndex::new(Some(config))?;
 
@@ -216,7 +217,7 @@ fn run() -> Result<(), RuntimeError> {
         Ok(())
     });
 
-    task!(site, |_, home, about, posts, slides, other| {
+    task!(config, |_, home, about, posts, slides, other| {
         use sitemap_rs::{
             url::{ChangeFrequency, Url},
             url_set::UrlSet,
@@ -245,27 +246,15 @@ fn run() -> Result<(), RuntimeError> {
         let mut buf = Vec::<u8>::new();
         urls.write(&mut buf).expect("failed to write XML");
 
-        Ok(Page::file("sitemap.xml", String::from_utf8(buf).unwrap()))
+        Ok(Output::file("sitemap.xml", String::from_utf8(buf).unwrap()))
     });
 
-    let mut site = Site::new(site);
+    let mut website = config.finish();
 
     match args.mode {
-        Mode::Build => site.build(Global::new()),
-        Mode::Watch => site.watch(Global::new()),
-    }?;
-
-    // let mut website = Website::config()
-    //     .load_git(".")?
-    //     .add_loaders([
-    //         // github
-    //         loader::async_asset("hauchiwa", async |_| {
-    //             const URL: &str =
-    //                 "https://raw.githubusercontent.com/kamoshi/hauchiwa/refs/heads/main/README.md";
-
-    //             Ok(reqwest::get(URL).await?.text().await?)
-    //         }),
-    //     ])
+        Mode::Build => website.build(Global::new())?,
+        Mode::Watch => website.watch(Global::new())?,
+    };
 
     Ok(())
 }
