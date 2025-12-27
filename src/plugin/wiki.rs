@@ -51,7 +51,8 @@ pub fn build_wiki(
                 styles,
                 &[],
             )?
-            .render();
+            .render()
+            .into_inner();
 
             pages.push(Output::html(
                 normalize_prefixed("content", &doc.path),
@@ -105,7 +106,7 @@ fn render_article(
                     }
                 }
                 section .wiki-article__markdown.markdown {
-                    (Raw(&article.text))
+                    (Raw::dangerously_create(&article.text))
                 }
             }
 

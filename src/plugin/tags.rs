@@ -58,7 +58,7 @@ pub fn build_tags(
             let data = group(links);
             let html = render_tag(ctx, &data, tag.to_owned(), styles)?;
 
-            pages.push(Output::html(path, html.render()));
+            pages.push(Output::html(path, html.render().into_inner()));
 
             // Render global tag index
             // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;

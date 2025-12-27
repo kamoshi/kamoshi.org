@@ -48,7 +48,7 @@ fn make_head(
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="icon" href="/favicon.ico" sizes="any";
 
-        script type="importmap" { (Raw(&importmap)) }
+        script type="importmap" { (Raw::dangerously_create(&importmap)) }
 
         @for style in styles {
             link rel="stylesheet" href=(style.path.as_str());
@@ -59,7 +59,7 @@ fn make_head(
         }
 
         @if let Some(reload_script) = ctx.env.get_refresh_script() {
-            script { (Raw(reload_script)) }
+            script { (Raw::dangerously_create(reload_script)) }
         }
     );
 
@@ -87,7 +87,7 @@ fn make_navbar() -> impl Renderable {
                     img .p-nav__logo-icon height="48px" width="51px" src="/static/svg/aya.svg" alt="";
                     div .p-nav__logo-text {
                         div .p-nav__logo-main {
-                            (Raw(include_str!("../assets/logotype.svg")))
+                            (Raw::dangerously_create(include_str!("../assets/logotype.svg")))
                         }
                         div #p-nav-splash .p-nav__logo-sub {
                           "夢現の遥か彼方"
@@ -125,7 +125,7 @@ pub fn make_footer(ctx: &Context) -> impl Renderable {
         footer .footer {
             div .left {
                 div {
-                    (Raw(&copy))
+                    (Raw::dangerously_create(&copy))
                 }
                 a href=(href)  {
                     (mail)
@@ -235,7 +235,7 @@ pub(crate) fn to_list(
                 header .directory-header .markdown {
                     h1 { (heading) }
                     a href=(rss) title="RSS feed" {
-                       (hypertext::Raw(ICON_RSS))
+                       (Raw::dangerously_create(ICON_RSS))
                     }
                 }
 
@@ -299,7 +299,7 @@ pub fn render_bibliography(bib: &[String], library_path: Option<&Utf8Path>) -> i
             ol {
                 @for item in bib {
                     li {
-                        (Raw(item))
+                        (Raw::dangerously_create(item))
                     }
                 }
             }

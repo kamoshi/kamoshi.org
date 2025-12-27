@@ -17,7 +17,7 @@ pub fn highlight(lang: &str, code: &str) -> impl Renderable {
         figure .listing.kanagawa data-lang=(lang) {
             pre {
                 code {
-                    (Raw(to_html(lang, code)))
+                    (Raw::dangerously_create(to_html(lang, code)))
                 }
             }
         }

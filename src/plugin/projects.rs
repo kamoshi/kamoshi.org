@@ -115,7 +115,7 @@ pub fn render_page<'ctx>(
             article .article {
                 section .paper {
                     section .wiki-article__markdown.markdown {
-                        (Raw(&article.text))
+                        (Raw::dangerously_create(&article.text))
                     }
                 }
             }

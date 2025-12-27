@@ -66,7 +66,8 @@ pub fn build_posts(
                 styles,
                 &js,
             )?
-            .render();
+            .render()
+            .into_inner();
 
             pages.push(Output::html(doc.path.strip_prefix("content/")?, buffer));
         }
@@ -93,7 +94,8 @@ pub fn build_posts(
                 "/posts/rss.xml",
                 styles,
             )?
-            .render();
+            .render()
+            .into_inner();
 
             pages.push(Output::html("posts", html));
         }
@@ -148,7 +150,7 @@ fn render_article(
                     }
                 }
                 section .wiki-article__markdown.markdown {
-                    (Raw(&article.text))
+                    (Raw::dangerously_create(&article.text))
                 }
             }
 

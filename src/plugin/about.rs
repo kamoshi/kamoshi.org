@@ -44,7 +44,9 @@ pub fn build_about(
         ];
 
         let article = crate::markdown::parse(&document.body, &document.path, None, Some(images))?;
-        let html = render(ctx, document, article, pubkey_ident, pubkey_email, styles)?.render();
+        let html = render(ctx, document, article, pubkey_ident, pubkey_email, styles)?
+            .render()
+            .into_inner();
 
         Ok(vec![
             Output::html("about", html),
@@ -75,7 +77,7 @@ pub fn render<'ctx>(
                         }
                     }
                     section .wiki-article__markdown.markdown {
-                        (Raw(&article.text))
+                        (Raw::dangerously_create(&article.text))
 
                         h2 {
                            "Keys"

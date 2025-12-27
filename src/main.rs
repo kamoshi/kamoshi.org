@@ -148,7 +148,9 @@ fn run() -> Result<(), RuntimeError> {
         let mut pages = vec![];
 
         {
-            let html = Raw(r#"<div id="map" style="height: 100%; width: 100%"></div>"#);
+            let html = Raw::dangerously_create(
+                r#"<div id="map" style="height: 100%; width: 100%"></div>"#,
+            );
 
             let styles = &[
                 styles.get("styles/styles.scss")?,
@@ -158,7 +160,9 @@ fn run() -> Result<(), RuntimeError> {
 
             let scripts = &[scripts.get("scripts/photos/main.ts")?];
 
-            let html = make_fullscreen(ctx, html, "Map".into(), styles, scripts)?.render();
+            let html = make_fullscreen(ctx, html, "Map".into(), styles, scripts)?
+                .render()
+                .into_inner();
 
             pages.push(Output::html("map", html));
         }
@@ -173,8 +177,10 @@ fn run() -> Result<(), RuntimeError> {
             let scripts = &[&component.init];
 
             let html = (component.html)(&())?;
-            let html = Raw(format!(r#"<main>{html}</main>"#));
-            let html = make_page(ctx, html, "Search".into(), styles, scripts)?.render();
+            let html = Raw::dangerously_create(format!(r#"<main>{html}</main>"#));
+            let html = make_page(ctx, html, "Search".into(), styles, scripts)?
+                .render()
+                .into_inner();
 
             pages.push(Output::html("search", html));
         }

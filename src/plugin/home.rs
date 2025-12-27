@@ -65,13 +65,13 @@ pub(crate) fn render(
     let main = maud!(
         main .l-home {
             article .l-home__article.markdown {
-                (Raw(text))
+                (Raw::dangerously_create(text))
             }
             aside .l-home__aside {
                 (intro)
                 // (Raw(SECTION_IMAGE))
                 section .p-card {
-                    (Raw(kanji))
+                    (Raw::dangerously_create(kanji))
                 }
                 // (posts)
                 (SECTION_BUTTONS)
@@ -81,7 +81,7 @@ pub(crate) fn render(
 
     let rendered = make_page(ctx, main, "Home".into(), styles, scripts)?
         .render()
-        .into();
+        .into_inner();
 
     Ok(rendered)
 }
@@ -91,7 +91,7 @@ fn intro(_: &Context) -> Result<impl Renderable, RuntimeError> {
 
     let html = maud!(
         section .p-card.intro-jp lang="ja-JP" {
-            (Raw(&article.text))
+            (Raw::dangerously_create(&article.text))
         }
     );
 

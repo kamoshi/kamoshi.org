@@ -138,7 +138,7 @@ pub struct Heading(String, String, Vec<Heading>);
 pub struct Outline(Vec<Heading>);
 
 impl hypertext::Renderable for Outline {
-    fn render_to(&self, output: &mut String) {
+    fn render_to(&self, buffer: &mut hypertext::Buffer<hypertext::context::Node>) {
         use hypertext::prelude::*;
 
         fn render_heading_list(headings: &[Heading], depth: usize) -> impl Renderable {
@@ -171,7 +171,7 @@ impl hypertext::Renderable for Outline {
                 }
             }
         )
-        .render_to(output);
+        .render_to(buffer);
     }
 }
 
@@ -341,10 +341,7 @@ where
 
                     let html = match lang.as_str() {
                         "typst svg" => typst::render_typst(&self.code),
-                        _ => Ok(ts::highlight(&lang, &self.code)
-                            .render()
-                            .as_str()
-                            .to_owned()),
+                        _ => Ok(ts::highlight(&lang, &self.code).render().into_inner()),
                     };
 
                     self.code.clear(); // Clear buffer for the next block

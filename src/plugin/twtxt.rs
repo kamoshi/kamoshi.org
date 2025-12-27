@@ -42,7 +42,7 @@ pub fn build_twtxt(
         ];
 
         let data = twtxt.get("content/twtxt.txt")?;
-        let html = render(ctx, data, styles)?.render();
+        let html = render(ctx, data, styles)?.render().into_inner();
 
         let mut pages = vec![
             Output::file("twtxt.txt", data.data.clone()),
@@ -122,7 +122,7 @@ fn render_tweet(entry: &MicroblogEntry) -> impl Renderable {
                 }
 
                 div .tweet-body {
-                    (Raw(md_parse_simple(&entry.text)))
+                    (Raw::dangerously_create(md_parse_simple(&entry.text)))
                 }
             }
         }

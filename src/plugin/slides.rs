@@ -43,7 +43,9 @@ pub fn build_slides(
             // render individual pages
             for doc in &docs {
                 let mark = parse(&doc.body, &doc.path, None, Some(images))?;
-                let html = render(ctx, &doc.metadata, &mark, styles, scripts)?.render();
+                let html = render(ctx, &doc.metadata, &mark, styles, scripts)?
+                    .render()
+                    .into_inner();
 
                 pages.push(Output::html(doc.path.strip_prefix("content/")?, html))
             }
@@ -68,7 +70,9 @@ pub fn build_slides(
                 })
                 .collect();
 
-            let html = to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?.render();
+            let html = to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?
+                .render()
+                .into_inner();
 
             pages.push(Output::html("slides", html));
         }
@@ -118,7 +122,7 @@ pub fn render<'ctx>(
     let html = maud!(
         div .reveal {
             div .slides {
-                (Raw(slides))
+                (Raw::dangerously_create(slides))
             }
         }
     );
