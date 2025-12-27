@@ -3,9 +3,8 @@ use std::fmt::Write as _;
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Image, Script, Stylesheet};
-use hauchiwa::page::{Output, absolutize};
-use hauchiwa::task::Handle;
-use hauchiwa::{Blueprint, task};
+use hauchiwa::page::absolutize;
+use hauchiwa::{Blueprint, Handle, Output, task};
 use hayagriva::Library;
 use hypertext::{Raw, prelude::*};
 

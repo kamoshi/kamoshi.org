@@ -1,8 +1,6 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Document, Stylesheet};
-use hauchiwa::page::Output;
-use hauchiwa::task::Handle;
-use hauchiwa::{Blueprint, task};
+use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;

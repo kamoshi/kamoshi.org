@@ -48,7 +48,7 @@ pub struct Bibliography(pub Option<Vec<String>>);
 
 #[derive(Debug, Clone)]
 struct Global {
-    pub repo: hauchiwa::gitmap::GitRepo,
+    pub repo: hauchiwa::git::GitRepo,
     pub year: i32,
     pub date: String,
     pub link: String,
@@ -57,14 +57,12 @@ struct Global {
 
 impl Global {
     fn new() -> Self {
-        use hauchiwa::gitmap;
+        use hauchiwa::git;
 
         let time = chrono::Utc::now();
 
-        let git = gitmap::map(gitmap::Options::new("main")).unwrap();
-
         Self {
-            repo: git,
+            repo: git::map(git::Options::new("main")).unwrap(),
             year: time.year(),
             date: time.format("%Y/%m/%d %H:%M").to_string(),
             link: "https://github.com/kamoshi/kamoshi.org".into(),
@@ -174,9 +172,9 @@ fn run() -> Result<(), RuntimeError> {
             ];
 
             let component = svelte.get("scripts/search/App.svelte")?;
-            let scripts = &[&component.init];
+            let scripts = &[&component.hydration];
 
-            let html = (component.html)(&())?;
+            let html = (component.prerender)(&())?;
             let html = Raw::dangerously_create(format!(r#"<main>{html}</main>"#));
             let html = make_page(ctx, html, "Search".into(), styles, scripts)?
                 .render()

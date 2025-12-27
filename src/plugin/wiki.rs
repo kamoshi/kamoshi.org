@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
-use hauchiwa::page::{Output, absolutize, normalize_prefixed};
-use hauchiwa::task::Handle;
-use hauchiwa::{Blueprint, task};
+use hauchiwa::page::{absolutize, normalize_prefixed};
+use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;

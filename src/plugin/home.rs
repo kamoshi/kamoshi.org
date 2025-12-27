@@ -1,8 +1,6 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Image, Script, Stylesheet, Svelte};
-use hauchiwa::page::Output;
-use hauchiwa::task::Handle;
-use hauchiwa::{Blueprint, task};
+use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, maud_static, prelude::*};
 
 use crate::Context;
@@ -29,9 +27,9 @@ pub fn build_home(
         ];
 
         let kanji = svelte.get("scripts/kanji/App.svelte")?;
-        let kanji_html = (kanji.html)(&())?;
+        let kanji_html = (kanji.prerender)(&())?;
 
-        let scripts = &[&kanji.init];
+        let scripts = &[&kanji.hydration];
 
         let article = parse(&document.body, &document.path, None, Some(images))?;
         let html = render(ctx, &article.text, &kanji_html, styles, scripts)?;

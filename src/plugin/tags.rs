@@ -1,14 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
 
 use chrono::Datelike;
-use hauchiwa::{
-    Blueprint,
-    error::HauchiwaError,
-    loader::{Assets, Document, Stylesheet},
-    page::{Output, absolutize},
-    task::Handle,
-};
-use hauchiwa::{error::RuntimeError, task};
+use hauchiwa::error::{HauchiwaError, RuntimeError};
+use hauchiwa::loader::{Assets, Document, Stylesheet};
+use hauchiwa::page::absolutize;
+use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::prelude::*;
 
 use crate::{Context, Global, Link, LinkDate, model::Post};

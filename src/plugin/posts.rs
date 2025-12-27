@@ -1,10 +1,9 @@
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::gitmap::GitHistory;
+use hauchiwa::git::GitHistory;
 use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
-use hauchiwa::page::{Output, absolutize, to_slug};
-use hauchiwa::task::Handle;
-use hauchiwa::{Blueprint, task};
+use hauchiwa::page::{absolutize, to_slug};
+use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
 use crate::markdown::Article;
