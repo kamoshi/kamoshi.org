@@ -16,7 +16,7 @@ pub fn build_projects(
     let docs = config.load_documents::<Project>("content/projects/**/*.md")?;
 
     Ok(task!(config, |ctx, docs, styles| {
-        let mut pages = vec![];
+        let docs = docs.values().collect::<Vec<_>>();
 
         let styles_list = &[
             styles.get("styles/styles.scss")?,
@@ -28,24 +28,24 @@ pub fn build_projects(
         //     styles.get("styles/layouts/page.scss").unwrap(),
         // ];
 
+        let mut pages = vec![];
+
         {
-            let data = docs.values().collect::<Vec<_>>();
-            let list = render_list(ctx, data, styles_list)?;
+            pages.push(crate::rss::generate_feed(
+                &docs,
+                "projects",
+                "Kamoshi.org Projects",
+            ));
+        }
+
+        {
+            let list = render_list(ctx, docs, styles_list)?;
             pages.push(Output::html("projects", list));
 
             // let text = ctx.get::<String>("hauchiwa")?;
             // let article = crate::markdown::parse(&ctx, text, "".into(), None)?;
             // let html = render_page(&ctx, &article)?.render();
             // pages.push(Page::html("projects/hauchiwa", html));
-        }
-
-        {
-            //             let feed = crate::rss::generate_feed::<Content<Project>>(
-            //                 sack,
-            //                 "projects",
-            //                 "Kamoshi.org Projects",
-            //             )?;
-            //             Ok(vec![feed])
         }
 
         Ok(pages)

@@ -1,67 +1,60 @@
-use camino::Utf8Path;
-use hauchiwa::loader::Content;
-use hauchiwa::{Page, RuntimeError, WithFile};
+use hauchiwa::Output;
+use hauchiwa::camino::Utf8Path;
+use hauchiwa::loader::Document;
+use hauchiwa::page::normalize_prefixed;
 use rss::{ChannelBuilder, ItemBuilder};
 
-use crate::model::{Post, Project};
-use crate::{BASE_URL, Context, Slideshow};
+use crate::BASE_URL;
+use crate::model::{Post, Project, Slideshow};
 
 pub(crate) trait ToFeed: Sized {
     fn to_feed(&self) -> rss::Item;
 }
 
-impl ToFeed for WithFile<'_, Content<Post>> {
+impl ToFeed for &Document<Post> {
     fn to_feed(&self) -> rss::Item {
+        let path = normalize_prefixed("content/", &self.path);
         ItemBuilder::default()
-            .title(self.data.meta.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&self.file.area).to_string())
+            .title(self.metadata.title.clone())
+            .link(Utf8Path::new(BASE_URL).join(&path).to_string())
             .build()
     }
 }
 
-impl ToFeed for WithFile<'_, Content<Slideshow>> {
+impl ToFeed for &Document<Slideshow> {
     fn to_feed(&self) -> rss::Item {
+        let path = normalize_prefixed("content/", &self.path);
         ItemBuilder::default()
-            .title(self.data.meta.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&self.file.area).to_string())
+            .title(self.metadata.title.clone())
+            .link(Utf8Path::new(BASE_URL).join(&path).to_string())
             .build()
     }
 }
 
-impl ToFeed for WithFile<'_, Content<Project>> {
+impl ToFeed for &Document<Project> {
     fn to_feed(&self) -> rss::Item {
+        let path = normalize_prefixed("content/", &self.path);
         ItemBuilder::default()
-            .title(self.data.meta.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&self.file.area).to_string())
+            .title(self.metadata.title.clone())
+            .link(Utf8Path::new(BASE_URL).join(&path).to_string())
             .build()
     }
 }
 
-pub(crate) fn generate_feed<T>(
-    ctx: Context,
-    slug: &'static str,
-    title: &'static str,
-) -> Result<Page, RuntimeError>
+pub fn generate_feed<'a, T>(data: &[&'a T], slug: &'static str, title: &'static str) -> Output
 where
-    T: 'static,
-    for<'a> WithFile<'a, T>: ToFeed,
+    &'a T: ToFeed + Clone,
 {
     let slug = Utf8Path::new(slug);
-    let glob = slug.join("**/*");
+    let data = data.iter().map(ToFeed::to_feed).collect::<Vec<_>>();
 
-    let items = ctx
-        .glob_with_file::<T>(glob.as_str())?
-        .iter()
-        .map(ToFeed::to_feed)
-        .collect::<Vec<_>>();
-
-    Ok(Page::text(
+    Output::file(
         slug.join("rss.xml"),
         ChannelBuilder::default()
             .title(title)
             .link(Utf8Path::new(BASE_URL).join(slug).to_string())
-            .items(items)
+            .items(data)
             .build()
             .to_string(),
-    ))
+    )
 }

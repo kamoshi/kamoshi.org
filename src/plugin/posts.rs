@@ -100,9 +100,11 @@ pub fn build_posts(
         }
 
         {
-            // let feed =
-            //     crate::rss::generate_feed::<Content<Post>>(sack, "posts", "Kamoshi.org Posts")?;
-            // Ok(vec![feed])
+            pages.push(crate::rss::generate_feed(
+                &docs,
+                "posts",
+                "Kamoshi.org Posts",
+            ));
         }
 
         Ok(pages)

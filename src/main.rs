@@ -1,7 +1,7 @@
 mod markdown;
 mod model;
 mod plugin;
-// mod rss;
+mod rss;
 mod ts;
 mod typst;
 
@@ -256,8 +256,14 @@ fn run() -> Result<(), RuntimeError> {
     let mut website = config.finish();
 
     match args.mode {
-        Mode::Build => website.build(Global::new())?,
-        Mode::Watch => website.watch(Global::new())?,
+        Mode::Build => {
+            website
+                .build(Global::new())?
+                .render_waterfall_to_file(&website, "waterfall.svg")?;
+        }
+        Mode::Watch => {
+            website.watch(Global::new())?;
+        }
     };
 
     Ok(())

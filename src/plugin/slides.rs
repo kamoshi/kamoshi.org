@@ -76,16 +76,14 @@ pub fn build_slides(
             pages.push(Output::html("slides", html));
         }
 
-        //             // render feed
-        //             {
-        //                 let feed = crate::rss::generate_feed::<Content<Slideshow>>(
-        //                     ctx,
-        //                     "slides",
-        //                     "Kamoshi.org Slides",
-        //                 )?;
-
-        //                 pages.push(feed);
-        //             }
+        // render feed
+        {
+            pages.push(crate::rss::generate_feed(
+                &docs,
+                "slides",
+                "Kamoshi.org Slides",
+            ));
+        }
 
         Ok(pages)
     }))

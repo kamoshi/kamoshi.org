@@ -3,16 +3,13 @@ name = "kamoshi"
 version = "0.0.0"
 edition = "2024"
 
-[dependencies.hauchiwa]
-path = "../hauchiwa"
-features = ["images", "server"]
-
 [dependencies]
 camino                  = { version = "1.2", features = ["serde1"] }
 chrono                  = "0.4"
 clap                    = { version = "4.5", features = ["derive"] }
 emojis                  = "0.8"
 glob                    = "0.3"
+hauchiwa                = "0.9.1"
 hayagriva               = "0.9"
 hypertext               = "0.12"
 pulldown-latex          = "0.7"
