@@ -506,49 +506,61 @@ export class KanjiGraphEngine {
   }
 
   // --- INTERACTION ---
-
   private setupInteraction() {
+    // --- 1. DEFINE ZOOM ---
     const zoom = d3
       .zoom<HTMLCanvasElement, unknown>()
-      .scaleExtent([0.1, 4])
+      .scaleExtent([0.1, 8])
       .on('zoom', (e) => {
-        this.transform = e.transform;
-        this.render(); // Force render on zoom
+        this.transform = e.transform; // Sync class property for render()
+        this.render();
       });
 
-    d3.select(this.canvas).call(zoom).on('dblclick.zoom', null); // Disable double click zoom
-
-    // Drag
-    const dragSubject = (event: any) => {
-      const transform = d3.zoomTransform(this.canvas);
-      const x = transform.invertX(event.x);
-      const y = transform.invertY(event.y);
-
-      let subject = null;
-      let minInfo = 25;
-      for (const n of this.nodes) {
-        if (!n.x || !n.y) continue;
-        const dist = Math.hypot(x - n.x, y - n.y);
-        if (dist < minInfo) {
-          minInfo = dist;
-          subject = n;
-        }
-      }
-      return subject;
-    };
-
+    // --- 2. DEFINE DRAG ---
     const drag = d3
       .drag<HTMLCanvasElement, Node>()
-      .subject(dragSubject)
+      .container(this.canvas)
+      .subject((event) => {
+        // Always get the LIVE transform state directly from the DOM
+        // This ensures we are perfectly in sync with what the user sees.
+        const t = d3.zoomTransform(this.canvas);
+
+        // Get simple screen coordinates
+        const [screenX, screenY] = d3.pointer(event, this.canvas);
+
+        // Invert to World Coordinates
+        const worldX = t.invertX(screenX);
+        const worldY = t.invertY(screenY);
+
+        let subject: Node | null = null;
+        let minDist = 30; // Hit radius
+
+        for (const n of this.nodes) {
+          if (n.x === undefined || n.y === undefined) continue;
+          const dist = Math.hypot(worldX - n.x, worldY - n.y);
+
+          // Debugging: Uncomment if you still can't grab nodes
+          // if (dist < 50) console.log('Hover:', n.id, dist);
+
+          if (dist < minDist) {
+            minDist = dist;
+            subject = n;
+          }
+        }
+        return subject;
+      })
       .on('start', (event) => {
         if (!event.active) this.simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
       })
       .on('drag', (event) => {
-        const transform = d3.zoomTransform(this.canvas);
-        event.subject.fx = transform.invertX(event.x);
-        event.subject.fy = transform.invertY(event.y);
+        // We must re-invert the coordinates during the drag loop too
+        const t = d3.zoomTransform(this.canvas);
+        const [screenX, screenY] = d3.pointer(event, this.canvas);
+
+        event.subject.fx = t.invertX(screenX);
+        event.subject.fy = t.invertY(screenY);
       })
       .on('end', (event) => {
         if (!event.active) this.simulation.alphaTarget(0);
@@ -556,22 +568,39 @@ export class KanjiGraphEngine {
         event.subject.fy = null;
       });
 
-    d3.select(this.canvas).call(drag);
+    // --- 3. APPLY LISTENERS ---
+    // Apply Zoom first, then Drag? Or vice versa?
+    // D3 handles the priority internally based on .subject(),
+    // but applying them to the same element is key.
+    d3.select(this.canvas)
+      .call(drag) // Drag checks for hits first
+      .call(zoom) // Zoom catches whatever misses
+      .on('dblclick.zoom', null);
 
-    // Click (Selection)
+    // --- 4. CLICK LOGIC ---
     d3.select(this.canvas).on('click', (event) => {
-      // Prevent click if it was a drag
       if (event.defaultPrevented) return;
 
-      const subject = dragSubject({ x: event.offsetX, y: event.offsetY }); // Simplified pointer
+      const t = d3.zoomTransform(this.canvas);
+      const [x, y] = d3.pointer(event, this.canvas);
+      const wx = t.invertX(x);
+      const wy = t.invertY(y);
+
+      let subject = null;
+      let minDist = 30;
+
+      for (const n of this.nodes) {
+        if (!n.x || !n.y) continue;
+        const dist = Math.hypot(wx - n.x, wy - n.y);
+        if (dist < minDist) {
+          minDist = dist;
+          subject = n;
+        }
+      }
+
       if (subject) {
         this.selectedNodeId = subject.id;
-
-        // Auto expand shadow nodes
-        if (subject.status === 'shadow') {
-          this.expandNode(subject.id);
-        }
-
+        if (subject.status === 'shadow') this.expandNode(subject.id);
         if (this.onNodeSelect) this.onNodeSelect(subject);
       } else {
         this.selectedNodeId = null;
