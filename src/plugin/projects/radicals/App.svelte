@@ -12,54 +12,82 @@
     jlpt: number | null;
   }
 
+  const STORAGE_KEY = "kanji-graph-roots";
+
   let htmlCanvas = $state<HTMLCanvasElement | null>(null);
   let htmlContainer = $state<HTMLDivElement | null>(null);
   let data = $state<Record<string, string[]> | null>(null);
-  let inputText = $state("亜");
-  let selectedNode: Node | null = $state(null);
-  let apiData: KanjiApiData | null = $state(null);
+  let inputText = $state(""); // Clear default, we load from storage
+  let selectedNode = $state<Node | null>(null); // Removed type annotation in generic to fix Svelte parsing if strict
+  let apiData = $state<KanjiApiData | null>(null);
   let loadingApi = $state(false);
   let engine = $state<KanjiGraphEngine | null>(null);
   let isEngineReady = $state(false);
+
+  // Track active roots for persistence
+  let activeRoots = $state<Set<string>>(new Set());
+
+  // --- 1. Load Persistence on Init ---
+  function loadPersistedState() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          activeRoots = new Set(parsed);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load graph state", e);
+    }
+    // Default fallback if storage is empty
+    activeRoots = new Set(["亜"]);
+  }
+
+  // --- 2. Save Persistence Helper ---
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...activeRoots]));
+    } catch (e) {
+      console.error("Failed to save state", e);
+    }
+  }
 
   $effect(() => {
     fetch(url)
       .then((res) => res.json())
       .then((res) => {
         data = res;
+        loadPersistedState(); // Load saved roots once data is fetched
       });
   });
 
-  // --- INITIALIZATION EFFECT ---
   $effect(() => {
     if (!htmlCanvas || !data || !htmlContainer) return;
 
-    // 1. Instantiate
     const instance = new KanjiGraphEngine(htmlCanvas, data);
 
-    // 2. Configure Callbacks
     instance.onNodeSelect = (node) => {
       selectedNode = node;
     };
 
-    // 3. Define what happens when ready
     instance.onReady = () => {
       isEngineReady = true;
-      // Only expand once the engine is fully ready and viewport exists
-      instance.expandNode("亜");
+
+      // RESTORE: Expand all nodes found in localStorage
+      if (activeRoots.size > 0) {
+        activeRoots.forEach((root) => instance.expandNode(root));
+      }
     };
 
-    // 4. Start Async Init
     instance.init().catch((e) => console.error("Engine Init Failed", e));
 
-    // 5. Setup Resize Observer
     const resizeObserver = new ResizeObserver(() => instance.resize());
     resizeObserver.observe(htmlContainer);
 
-    // 6. Save reference
     engine = instance;
 
-    // 7. Cleanup
     return () => {
       resizeObserver.disconnect();
       instance.destroy();
@@ -102,8 +130,39 @@
       return;
     }
 
+    // Update Engine
     engine.promoteToRoot(inputText);
+
+    // Update Persistence
+    activeRoots.add(inputText);
+    saveState();
+
     inputText = "";
+  }
+
+  // --- 3. UI Reactivity Fix ---
+  function toggleNodeStatus(targetStatus: "visible" | "shadow") {
+    if (!selectedNode || !engine) return;
+
+    const id = selectedNode.id;
+
+    const nodeSnapshot = { ...selectedNode };
+
+    if (targetStatus === "visible") {
+      engine.expandNode(id);
+      activeRoots.add(id);
+    } else {
+      engine.hideNode(id);
+      activeRoots.delete(id);
+    }
+
+    saveState();
+
+    // 2. Force the UI to use our snapshot with the updated status
+    selectedNode = {
+      ...nodeSnapshot,
+      status: targetStatus,
+    };
   }
 </script>
 
@@ -152,14 +211,14 @@
         {#if selectedNode.status === "visible"}
           <button
             class="action-btn delete"
-            onclick={() => engine?.hideNode(selectedNode!.id)}
+            onclick={() => toggleNodeStatus("shadow")}
           >
             Remove
           </button>
         {:else}
           <button
             class="action-btn expand"
-            onclick={() => engine?.expandNode(selectedNode!.id)}
+            onclick={() => toggleNodeStatus("visible")}
           >
             Expand
           </button>
