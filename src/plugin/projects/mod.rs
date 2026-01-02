@@ -1,5 +1,8 @@
+mod radicals;
+
+use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Assets, Document, Stylesheet};
+use hauchiwa::loader::{Assets, Stylesheet}; // Document is removed from imports
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
@@ -9,44 +12,74 @@ use crate::{Context, Global};
 
 use super::make_page;
 
+/// A local view model to decouple the renderer from the external Document struct.
+/// We use references ('a) to avoid unnecessary cloning of strings.
+pub struct ProjectView<'a> {
+    pub title: &'a str,
+    pub tech: Vec<String>,
+    pub link: String,
+    pub desc: Option<&'a str>,
+}
+
 pub fn build_projects(
     config: &mut Blueprint<Global>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    // Load the documents as before
     let docs = config.load_documents::<Project>("content/projects/**/*.md")?;
 
-    Ok(task!(config, |ctx, docs, styles| {
-        let docs = docs.values().collect::<Vec<_>>();
+    let page_radicals = radicals::build(config, styles)?;
 
+    Ok(task!(config, |ctx, docs, styles, page_radicals| {
         let styles_list = &[
             styles.get("styles/styles.scss")?,
             styles.get("styles/layouts/projects.scss")?,
         ];
 
-        // let styles_page = &[
-        //     styles.get("styles/styles.scss").unwrap(),
-        //     styles.get("styles/layouts/page.scss").unwrap(),
-        // ];
+        // Map the external Document<Project> to our local ProjectView
+        // This effectively "strips" the external container
+        let mut project_views: Vec<ProjectView> = docs
+            .values()
+            .map(|doc| ProjectView {
+                title: &doc.metadata.title,
+                tech: doc.metadata.tech.clone(),
+                link: doc.metadata.link.clone(),
+                desc: doc.metadata.desc.as_deref(),
+            })
+            .collect();
+
+        project_views.push(ProjectView {
+            title: "Radicals",
+            tech: vec!["Svelte".into(), "TypeScript".into()],
+            link: Utf8PathBuf::from("/")
+                .join(&page_radicals.url)
+                .parent()
+                .unwrap()
+                .to_string(),
+            desc: Some("An interactive graph of related radicals and kanji."),
+        });
 
         let mut pages = vec![];
 
+        // Note: crate::rss::generate_feed likely still needs the original docs
+        // or a similar transformation depending on its signature.
+        // Assuming it keeps working with references to the raw map:
         {
+            let docs_vec = docs.values().collect::<Vec<_>>();
             pages.push(crate::rss::generate_feed(
-                &docs,
+                &docs_vec,
                 "projects",
                 "Kamoshi.org Projects",
             ));
         }
 
         {
-            let list = render_list(ctx, docs, styles_list)?;
+            // Pass the mapped views instead of the docs
+            let list = render_list(ctx, project_views, styles_list)?;
             pages.push(Output::html("projects", list));
-
-            // let text = ctx.get::<String>("hauchiwa")?;
-            // let article = crate::markdown::parse(&ctx, text, "".into(), None)?;
-            // let html = render_page(&ctx, &article)?.render();
-            // pages.push(Page::html("projects/hauchiwa", html));
         }
+
+        // Removed `pages.push(value);` as `value` was undefined in snippet
 
         Ok(pages)
     }))
@@ -54,10 +87,11 @@ pub fn build_projects(
 
 pub fn render_list(
     ctx: &Context,
-    mut data: Vec<&Document<Project>>,
+    mut projects: Vec<ProjectView>, // Now accepts our local struct
     styles: &[&Stylesheet],
 ) -> Result<String, RuntimeError> {
-    data.sort_unstable_by(|a, b| a.metadata.title.cmp(&b.metadata.title));
+    // Sort logic remains the same, but operates on the view struct
+    projects.sort_unstable_by(|a, b| a.title.cmp(b.title));
 
     let main = maud! {
         main {
@@ -67,8 +101,8 @@ pub fn render_list(
                 }
 
                 div .project-list-flex {
-                    @for item in &data {
-                        (render_tile(&item.metadata))
+                    @for item in &projects {
+                        (render_tile(item))
                     }
                 }
             }
@@ -82,10 +116,11 @@ pub fn render_list(
     Ok(html)
 }
 
-fn render_tile(project: &Project) -> impl Renderable {
+// Updated to take the ProjectView
+fn render_tile(project: &ProjectView) -> impl Renderable {
     maud! {
-        a .project-list-tile href=(&project.link) {
-            h2 { (&project.title) }
+        a .project-list-tile href=(project.link) {
+            h2 { (project.title) }
             ul .tech-stack {
                 @for tech in &project.tech {
                     li {
@@ -93,7 +128,7 @@ fn render_tile(project: &Project) -> impl Renderable {
                     }
                 }
             }
-            @if let Some(desc) = &project.desc {
+            @if let Some(desc) = project.desc {
                 p { (desc) }
             }
         }

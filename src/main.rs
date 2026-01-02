@@ -188,8 +188,6 @@ fn run() -> Result<(), RuntimeError> {
         Ok(pages)
     });
 
-    let res = plugin::radicals::build(&mut config, styles)?;
-
     task!(config, |_, home, about, posts, slides, other| {
         use pagefind::api::PagefindIndex;
         use pagefind::options::PagefindServiceConfig;
