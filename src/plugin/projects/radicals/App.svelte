@@ -247,4 +247,8 @@
     <div class="legend-item"><span class="dot visible"></span> Loaded</div>
     <div class="legend-item"><span class="dot shadow"></span> Unloaded</div>
   </div>
+
+  <div class="kanji-counter">
+    {activeRoots.size}
+  </div>
 </div>
