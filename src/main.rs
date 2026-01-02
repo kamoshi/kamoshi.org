@@ -185,26 +185,10 @@ fn run() -> Result<(), RuntimeError> {
             pages.push(Output::html("search", html));
         }
 
-        {
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/radicals.scss")?,
-            ];
-
-            let component = svelte.get("scripts/radicals/App.svelte")?;
-            let scripts = &[&component.hydration];
-
-            let html = (component.prerender)(&())?;
-            let html = Raw::dangerously_create(format!(r#"<main>{html}</main>"#));
-            let html = make_fullscreen(ctx, html, "Radicals".into(), styles, scripts)?
-                .render()
-                .into_inner();
-
-            pages.push(Output::html("radicals", html));
-        }
-
         Ok(pages)
     });
+
+    let res = plugin::radicals::build(&mut config, styles)?;
 
     task!(config, |_, home, about, posts, slides, other| {
         use pagefind::api::PagefindIndex;

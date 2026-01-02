@@ -109,6 +109,9 @@ export class KanjiGraphEngine {
   private width: number = 0;
   private height: number = 0;
 
+  // Data
+  private data: Record<string, string[]>;
+
   // Physics
   private simulation: d3.Simulation<Node, Link>;
   private nodes: Node[] = [];
@@ -119,7 +122,9 @@ export class KanjiGraphEngine {
   public onNodeSelect: ((node: Node | null) => void) | null = null;
   private selectedNodeId: string | null = null;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, data: Record<string, string[]>) {
+    this.data = data ?? KANJI_DATA;
+
     const ctx = canvas.getContext('2d');
     if (!canvas || !ctx) {
       throw new Error('Canvas context not available');
@@ -131,18 +136,22 @@ export class KanjiGraphEngine {
     // 1. Init Simulation FIRST
     this.simulation = d3
       .forceSimulation<Node, Link>()
+      .velocityDecay(0.6)
       .force(
         'link',
         d3
           .forceLink<Node, Link>()
           .id((d: any) => d.id)
-          .distance(100),
+          .distance(60),
       )
-      .force('charge', d3.forceManyBody().strength(-300))
+      .force('charge', d3.forceManyBody().strength(-600))
       // Center force will be updated in resize,
       // but we need a placeholder or initial value here to prevent errors if we didn't use resize immediately.
       .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-      .force('collide', d3.forceCollide().radius(30));
+      .force('collide', d3.forceCollide().radius(30).iterations(2))
+      // Gently pulls individual nodes inward.
+      .force('x', d3.forceX(this.width / 2).strength(0.1))
+      .force('y', d3.forceY(this.height / 2).strength(0.1));
 
     this.simulation.on('tick', () => this.render());
 
@@ -153,31 +162,40 @@ export class KanjiGraphEngine {
   }
 
   public resize() {
+    // We measure the PARENT, not the canvas itself,
+    // because the canvas is now absolute and might not have caught up yet.
     const parent = this.canvas.parentElement;
+
     if (parent) {
+      // 1. Get the exact size of the container in CSS pixels
       const rect = parent.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
 
+      // 2. Set the internal resolution (physical pixels) for sharpness
       this.canvas.width = rect.width * dpr;
       this.canvas.height = rect.height * dpr;
 
-      // CSS display size
+      // 3. Set the CSS display size to match container exactly
       this.canvas.style.width = `${rect.width}px`;
       this.canvas.style.height = `${rect.height}px`;
 
-      this.width = this.canvas.width;
-      this.height = this.canvas.height;
+      // 4. Update internal state dimensions (use logical/CSS pixels for D3 calculations)
+      this.width = rect.width;
+      this.height = rect.height;
 
-      // --- SAFETY CHECK ---
-      // If simulation hasn't been created yet, stop here.
-      if (!this.simulation) return;
+      // 5. Update Center Force
+      // Since we scale the context by DPR in render(),
+      // the simulation coordinates should remain in CSS/Logical pixels.
+      if (this.simulation) {
+        this.simulation.force(
+          'center',
+          d3.forceCenter(this.width / 2, this.height / 2),
+        );
+        this.simulation.alpha(0.3).restart();
+      }
 
-      // Update center force
-      this.simulation.force(
-        'center',
-        d3.forceCenter(this.width / 2 / dpr, this.height / 2 / dpr),
-      );
-      this.simulation.alpha(0.3).restart();
+      // 6. Force a redraw immediately
+      this.render();
     }
   }
 
@@ -188,7 +206,7 @@ export class KanjiGraphEngine {
   // --- LOGIC: GRAPH MANIPULATION ---
 
   public search(kanji: string) {
-    if (KANJI_DATA[kanji]) {
+    if (this.data[kanji]) {
       this.expandNode(kanji);
       this.selectedNodeId = kanji;
       const node = this.nodes.find((n) => n.id === kanji);
@@ -196,6 +214,53 @@ export class KanjiGraphEngine {
     } else {
       alert('Kanji not found in dataset');
     }
+  }
+
+  public promoteToRoot(targetId: string) {
+    // 1. Validation: Does it exist in our dictionary?
+    if (!this.data[targetId]) {
+      alert('Kanji not found in dataset');
+      return;
+    }
+
+    // 2. Demote existing roots
+    this.nodes.forEach((n) => {
+      if (n.type === 'root') {
+        n.type = 'standard';
+      }
+    });
+
+    // 3. Find or Create the new Root
+    let targetNode = this.nodes.find((n) => n.id === targetId);
+
+    if (targetNode) {
+      // If it's already on screen (visible or shadow), just update it
+      targetNode.type = 'root';
+      targetNode.status = 'visible'; // Ensure it's fully visible
+    } else {
+      // If it's brand new to the canvas, create it
+      // We spawn it near the center or near a random existing node to avoid overlap
+      targetNode = {
+        id: targetId,
+        radicals: this.data[targetId],
+        status: 'visible',
+        type: 'root', // <--- Make it RED
+        x: this.width / 2 / (window.devicePixelRatio || 1),
+        y: this.height / 2 / (window.devicePixelRatio || 1),
+      };
+      this.nodes.push(targetNode);
+    }
+
+    // 4. Select it (optional, but good UX)
+    this.selectedNodeId = targetId;
+    if (this.onNodeSelect) this.onNodeSelect(targetNode);
+
+    // 5. Expand its neighbors (using your existing logic)
+    // This brings in the surrounding context for the new root
+    this.expandNode(targetId);
+
+    // 6. Restart Physics
+    this.updateSimulation();
   }
 
   public removeNode(id: string) {
@@ -235,7 +300,7 @@ export class KanjiGraphEngine {
   }
 
   public expandNode(targetId: string) {
-    const targetRadicals = KANJI_DATA[targetId];
+    const targetRadicals = this.data[targetId];
     if (!targetRadicals) return;
 
     // 1. Add Target
@@ -255,12 +320,29 @@ export class KanjiGraphEngine {
     }
 
     // 2. Add Neighbors
-    Object.keys(KANJI_DATA).forEach((key) => {
+    Object.keys(this.data).forEach((key) => {
       if (key === targetId) return;
-      const otherRadicals = KANJI_DATA[key];
+      const otherRadicals = this.data[key];
       const relation = determineRelationship(targetRadicals, otherRadicals);
 
       if (relation) {
+        // Calculate complexity difference (e.g., 5 radicals vs 4 radicals)
+        const complexityDiff = Math.abs(
+          otherRadicals.length - targetRadicals.length,
+        );
+
+        // If 'child' (meaning 'key' is more complex than 'target'),
+        // we strictly limit it to those that are only 1 step away (immediate supersets).
+        // e.g. If target is '八' (2), we allow '分' (3), but skip '貧' (7).
+        if (relation === 'child' && complexityDiff > 1) {
+          return;
+        }
+
+        // Optional: If you also want to limit looking "down" (parents)
+        // to only immediate parents, uncomment the line below.
+        // Usually, seeing all roots is fine, so we can leave this commented.
+        // if (relation === 'parent' && complexityDiff > 1) return;
+
         let neighbor = this.nodes.find((n) => n.id === key);
         if (!neighbor) {
           neighbor = {
@@ -297,6 +379,51 @@ export class KanjiGraphEngine {
     this.updateSimulation();
   }
 
+  public hideNode(targetId: string) {
+    // 1. Remove the target node immediately
+    this.nodes = this.nodes.filter((n) => n.id !== targetId);
+
+    // 2. Remove any links connected to that node
+    // Note: D3 converts source/target to objects, so we check .id if it exists, else the string
+    this.links = this.links.filter((l) => {
+      const sourceId = (l.source as Node).id || l.source;
+      const targetIdVal = (l.target as Node).id || l.target;
+      return sourceId !== targetId && targetIdVal !== targetId;
+    });
+
+    // 3. Garbage Collection (Optional but Recommended)
+    // Remove any non-root nodes that now have 0 connections (orphans)
+    // because their only parent/neighbor was just hidden.
+    let changed = true;
+    while (changed) {
+      changed = false;
+
+      // Calculate active connections
+      const connectedIds = new Set<string>();
+      this.links.forEach((l) => {
+        connectedIds.add((l.source as Node).id || (l.source as string));
+        connectedIds.add((l.target as Node).id || (l.target as string));
+      });
+
+      // Filter out orphans (unless they are a ROOT, we keep roots)
+      const initialCount = this.nodes.length;
+      this.nodes = this.nodes.filter(
+        (n) => n.type === 'root' || connectedIds.has(n.id),
+      );
+
+      if (this.nodes.length !== initialCount) changed = true;
+    }
+
+    // 4. Restart Physics
+    this.updateSimulation();
+
+    // Clear selection if we just hid the selected node
+    if (this.selectedNodeId === targetId) {
+      this.selectedNodeId = null;
+      if (this.onNodeSelect) this.onNodeSelect(null);
+    }
+  }
+
   private updateSimulation() {
     this.simulation.nodes(this.nodes);
     (this.simulation.force('link') as d3.ForceLink<Node, Link>).links(
@@ -311,10 +438,15 @@ export class KanjiGraphEngine {
     const dpr = window.devicePixelRatio || 1;
 
     this.ctx.save();
-    this.ctx.clearRect(0, 0, this.width, this.height);
 
-    // Transform
+    // Clear using physical dimensions (this.canvas.width)
+    // to ensure no artifacts remain on resize
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Transform system:
+    // 1. Scale by DPR (so 1 D3 unit = 1 CSS pixel = X Physical pixels)
     this.ctx.scale(dpr, dpr);
+    // 2. Apply Pan/Zoom transform
     this.ctx.translate(this.transform.x, this.transform.y);
     this.ctx.scale(this.transform.k, this.transform.k);
 

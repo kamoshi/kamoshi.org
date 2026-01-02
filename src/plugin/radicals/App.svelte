@@ -1,6 +1,8 @@
 <script lang="ts">
   import { KanjiGraphEngine, type Node } from "./engine";
 
+  let { url } = $props() as { url: string };
+
   // --- API DATA TYPES ---
   interface KanjiApiData {
     kanji: string;
@@ -14,14 +16,24 @@
   let htmlCanvas = $state<HTMLCanvasElement | null>(null);
   let htmlContainer = $state<HTMLDivElement | null>(null);
 
+  let data = $state<Record<string, string[]> | null>(null);
+
   let engine = $derived.by(
-    () => htmlCanvas && new KanjiGraphEngine(htmlCanvas),
+    () => htmlCanvas && data && new KanjiGraphEngine(htmlCanvas, data),
   );
 
   let inputText = $state("亜");
   let selectedNode: Node | null = $state(null);
   let apiData: KanjiApiData | null = $state(null);
   let loadingApi = $state(false);
+
+  $effect(() => {
+    fetch(url)
+      .then((res) => res.json())
+      .then((res) => {
+        data = res;
+      });
+  });
 
   $effect(() => {
     if (engine) {
@@ -67,13 +79,23 @@
       apiData = null;
     }
   });
+
+  function handleSearch(e: Event) {
+    e.preventDefault();
+
+    if (!engine) return;
+    if (!inputText) return;
+
+    engine.promoteToRoot(inputText);
+    inputText = "";
+  }
 </script>
 
 <div class="app-container" bind:this={htmlContainer}>
   <canvas bind:this={htmlCanvas} class="graph-canvas"></canvas>
 
   <div class="search-panel">
-    <form onsubmit={() => {}} class="search-form">
+    <form onsubmit={handleSearch} class="search-form">
       <!-- <Search size={18} class="text-slate-400" /> -->
       <input
         type="text"
@@ -116,29 +138,21 @@
           <button
             class="action-btn delete"
             onclick={() => {
-              // const res = removeNode(
-              //   selectedNode!.id,
-              //   graphData.nodes,
-              //   graphData.links,
-              // );
-              // graphData = res;
-              // selectedNode = null;
-              // restartSimulation();
+              if (engine && selectedNode) {
+                engine.hideNode(selectedNode.id);
+              }
             }}
           >
-            <!-- <Trash2 size={16} /> Prune Branch -->
+            <!-- <Trash2 size={16} /> -->
+            Remove from graph
           </button>
         {:else}
           <button
             class="action-btn expand"
             onclick={() => {
-              // const res = expandNode(
-              //   selectedNode!.id,
-              //   graphData.nodes,
-              //   graphData.links,
-              // );
-              // graphData = res;
-              // restartSimulation();
+              if (engine && selectedNode) {
+                engine.expandNode(selectedNode.id);
+              }
             }}
           >
             <!-- <BookOpen size={16} /> Expand Node -->
