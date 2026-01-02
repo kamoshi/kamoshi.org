@@ -1846,8 +1846,6 @@ dependencies = [
 [[package]]
 name = "hauchiwa"
 version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79504de23297f03e5bf9c2e6274b12b5a3a6f28187c51f0c9024a7894e8846d1"
 dependencies = [
  "anyhow",
  "axum",

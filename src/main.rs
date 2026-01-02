@@ -119,10 +119,12 @@ fn run() -> Result<(), RuntimeError> {
 
     let mut config = Website::<Global>::design();
 
-    let styles = config.load_css("styles/**/[!_]*.scss", "styles/**/*.scss")?;
-    let scripts = config.load_js("scripts/**/main.ts", "scripts/**/*.ts")?;
-    let svelte = config.load_svelte("scripts/**/App.svelte", "scripts/**/*.svelte")?;
-    let images = config.load_images(&["**/*.jpg", "**/*.png", "**/*.gif"])?;
+    let styles = config.load_css("styles/**/[!_]*.scss", "styles/")?;
+    let scripts = config.load_js("scripts/**/main.ts", "scripts/")?;
+    let svelte = config.load_svelte("scripts/**/App.svelte", "scripts/")?;
+
+    let images =
+        config.load_images(&["content/**/*.jpg", "content/**/*.png", "content/**/*.gif"])?;
 
     let bibtex = config.load("**/*.bib", |_, store, input| {
         let data = input.read()?;
@@ -181,6 +183,24 @@ fn run() -> Result<(), RuntimeError> {
                 .into_inner();
 
             pages.push(Output::html("search", html));
+        }
+
+        {
+            let styles = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/radicals.scss")?,
+            ];
+
+            let component = svelte.get("scripts/radicals/App.svelte")?;
+            let scripts = &[&component.hydration];
+
+            let html = (component.prerender)(&())?;
+            let html = Raw::dangerously_create(format!(r#"<main>{html}</main>"#));
+            let html = make_fullscreen(ctx, html, "Radicals".into(), styles, scripts)?
+                .render()
+                .into_inner();
+
+            pages.push(Output::html("radicals", html));
         }
 
         Ok(pages)

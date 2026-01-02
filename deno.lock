@@ -3,7 +3,7 @@
   "specifiers": {
     "npm:@codemirror/commands@^6.10.1": "6.10.1",
     "npm:@codemirror/state@^6.5.3": "6.5.3",
-    "npm:@codemirror/view@^6.39.7": "6.39.7",
+    "npm:@codemirror/view@^6.39.8": "6.39.8",
     "npm:@sveltejs/vite-plugin-svelte@^6.2.1": "6.2.1_svelte@5.46.1__acorn@8.15.0_vite@7.3.0__picomatch@4.0.3",
     "npm:@tsconfig/svelte@^5.0.6": "5.0.6",
     "npm:@types/leaflet.markercluster@^1.5.6": "1.5.6",
@@ -37,14 +37,14 @@
       "dependencies": [
         "@chevrotain/gast",
         "@chevrotain/types",
-        "lodash-es@4.17.21"
+        "lodash-es"
       ]
     },
     "@chevrotain/gast@11.0.3": {
       "integrity": "sha512-+qNfcoNk70PyS/uxmj3li5NiECO+2YKZZQMbmjTqRI3Qchu8Hig/Q9vgkHpI3alNjr7M+a2St5pw5w5F6NL5/Q==",
       "dependencies": [
         "@chevrotain/types",
-        "lodash-es@4.17.21"
+        "lodash-es"
       ]
     },
     "@chevrotain/regexp-to-ast@11.0.3": {
@@ -107,8 +107,8 @@
         "@marijn/find-cluster-break"
       ]
     },
-    "@codemirror/view@6.39.7": {
-      "integrity": "sha512-3Vif9hnNHJnl2YgOtkR/wzGzhYcQ8gy3LGdUhkLUU8xSBbgsTxrE8he/CMTpeINm5TgxLe2FmzvF6IYQL/BSAg==",
+    "@codemirror/view@6.39.8": {
+      "integrity": "sha512-1rASYd9Z/mE3tkbC9wInRlCNyCkSn+nLsiQKZhEDUUJiUfs/5FHDpCUDaQpoTIaNGeDc6/bhaEAyLmeEucEFPw==",
       "dependencies": [
         "@codemirror/state",
         "crelt",
@@ -776,7 +776,7 @@
       "integrity": "sha512-b7g+y9A0v4mxCW1qUhf3BSVPg+/NvGErk/dOkrDaHA0nQIQGAtrOjlX//9OQtRlSCy+x9rfB5N8yC71lH1nvMw==",
       "dependencies": [
         "chevrotain",
-        "lodash-es@4.17.22"
+        "lodash-es"
       ]
     },
     "chevrotain@11.0.3": {
@@ -787,7 +787,7 @@
         "@chevrotain/regexp-to-ast",
         "@chevrotain/types",
         "@chevrotain/utils",
-        "lodash-es@4.17.21"
+        "lodash-es"
       ]
     },
     "clsx@2.1.1": {
@@ -849,13 +849,13 @@
     "d3-array@2.12.1": {
       "integrity": "sha512-B0ErZK/66mHtEsR1TkPEEkwdy+WDesimkM5gpZr5Dsg54BiTA5RXtYW5qTLIAcekaS9xfZrzBLF/OAkB3Qn1YQ==",
       "dependencies": [
-        "internmap@1.0.1"
+        "internmap"
       ]
     },
     "d3-array@3.2.4": {
       "integrity": "sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==",
       "dependencies": [
-        "internmap@2.0.3"
+        "internmap"
       ]
     },
     "d3-axis@3.0.0": {
@@ -1075,7 +1075,7 @@
       "integrity": "sha512-efEhnxpSuwpYOKRm/L5KbqoZmNNukHa/Flty4Wp62JRvgH2ojwVgPgdYyr4twpieZnyRDdIH7PY2mopX26+j2Q==",
       "dependencies": [
         "d3",
-        "lodash-es@4.17.22"
+        "lodash-es"
       ]
     },
     "dayjs@1.11.19": {
@@ -1214,9 +1214,6 @@
     "internmap@1.0.1": {
       "integrity": "sha512-lDB5YccMydFBtasVtxnZ3MRBHuaoE8GKsppq+EchKL2U4nK/DmEpPHNH8MZe5HkMtpSiTSOZwfN0tzYjO/lJEw=="
     },
-    "internmap@2.0.3": {
-      "integrity": "sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg=="
-    },
     "is-reference@3.0.3": {
       "integrity": "sha512-ixkJoqQvAP88E6wLydLGGqCJsrFUnqoH6HnaczB8XmDH1oaWU+xxdptvikTgaEhtZ53Ky6YXiBuUI2WXLMCwjw==",
       "dependencies": [
@@ -1264,9 +1261,6 @@
     "lodash-es@4.17.21": {
       "integrity": "sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw=="
     },
-    "lodash-es@4.17.22": {
-      "integrity": "sha512-XEawp1t0gxSi9x01glktRZ5HDy0HXqrM0x5pXQM98EaI0NxO6jVM7omDOxsuEo5UIASAnm2bRp1Jt/e0a2XU8Q=="
-    },
     "magic-string@0.30.21": {
       "integrity": "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==",
       "dependencies": [
@@ -1294,7 +1288,7 @@
         "dompurify",
         "katex",
         "khroma",
-        "lodash-es@4.17.22",
+        "lodash-es",
         "marked",
         "roughjs",
         "stylis",
@@ -1522,7 +1516,7 @@
     "dependencies": [
       "npm:@codemirror/commands@^6.10.1",
       "npm:@codemirror/state@^6.5.3",
-      "npm:@codemirror/view@^6.39.7",
+      "npm:@codemirror/view@^6.39.8",
       "npm:@sveltejs/vite-plugin-svelte@^6.2.1",
       "npm:@tsconfig/svelte@^5.0.6",
       "npm:@types/leaflet.markercluster@^1.5.6",
