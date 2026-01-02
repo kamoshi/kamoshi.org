@@ -1,4 +1,6 @@
 import * as d3 from 'd3';
+import { Application, Container, Graphics, Text, FederatedPointerEvent } from 'pixi.js';
+import { Viewport } from 'pixi-viewport';
 
 // --- TYPES ---
 export type RelationType = 'sibling' | 'parent' | 'child';
@@ -12,6 +14,7 @@ export interface Node extends d3.SimulationNodeDatum {
   y?: number;
   fx?: number | null;
   fy?: number | null;
+  gfx?: Container;
 }
 
 export interface Link extends d3.SimulationLinkDatum<Node> {
@@ -20,65 +23,7 @@ export interface Link extends d3.SimulationLinkDatum<Node> {
   relation: RelationType;
 }
 
-// --- DATA & HELPERS ---
-const KANJI_DATA: Record<string, string[]> = {
-  亜: ['｜', '一', '口'],
-  唖: ['｜', '一', '口'],
-  娃: ['女', '土'],
-  阿: ['一', '口', '亅', '阡'],
-  哀: ['衣', '口', '亠'],
-  愛: ['心', '爪', '冖', '夂'],
-  挨: ['矢', '厶', '扎', '乞'],
-  姶: ['一', '口', '女', '个'],
-  逢: ['｜', '込', '二', '夂'],
-  葵: ['人', '大', '二', '癶', '艾', 'ノ'],
-  茜: ['西', '艾'],
-  穐: ['禾', '亀', '乙', '勹', '田'],
-  悪: ['｜', '一', '口', '心'],
-  握: ['至', '土', '厶', '尸', '扎'],
-  渥: ['至', '汁', '土', '厶', '尸'],
-  旭: ['日', '九'],
-  葦: ['口', '艾', '韋'],
-  芦: ['戸', '艾', '一', '尸'],
-  鯵: ['魚', '大', '田', '厶', '彡', '杰'],
-  梓: ['十', '辛', '木', '立'],
-  圧: ['土', '厂'],
-  斡: ['十', '斗', '日', '个'],
-  扱: ['扎', '及'],
-  宛: ['夕', '卩', '宀'],
-  姐: ['女', '目'],
-  虻: ['虫', '亡', '亠'],
-  飴: ['口', '食', '厶'],
-  絢: ['糸', '幺', '小', '日', '勹'],
-  綾: ['糸', '幺', '小', '土', '儿', '夂'],
-  鮎: ['魚', '口', '田', '卜', '杰'],
-  或: ['口', '戈', '一'],
-  粟: ['西', '米'],
-  袷: ['口', '初', '个', '一'],
-  安: ['女', '宀'],
-  庵: ['田', '广', '大'],
-  按: ['女', '宀', '扎'],
-  暗: ['音', '日', '立'],
-  案: ['女', '木', '宀'],
-  闇: ['音', '日', '門', '立'],
-  鞍: ['女', '宀', '革'],
-  杏: ['口', '木'],
-  以: ['｜', '人', '丶'],
-  伊: ['｜', 'ヨ', '化'],
-  位: ['化', '立'],
-  依: ['衣', '化', '亠'],
-  偉: ['化', '口', '韋'],
-  囲: ['囗', '井'],
-  夷: ['ノ', '一', '弓', '大'],
-  口: ['口'],
-  心: ['心'],
-  一: ['一'],
-  '｜': ['｜'],
-  女: ['女'],
-  木: ['木'],
-  日: ['日'],
-  土: ['土'],
-};
+// --- HELPER FUNCTIONS (MUST BE DEFINED HERE) ---
 
 const isSubset = (subset: string[], superset: string[]) => {
   const setB = new Set(superset);
@@ -104,509 +49,405 @@ const determineRelationship = (
 // --- THE ENGINE ---
 
 export class KanjiGraphEngine {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private width: number = 0;
-  private height: number = 0;
+  private app: Application;
+  private viewport!: Viewport;
 
-  // Data
+  // Rendering Layers - Initialized in constructor
+  private linkLayer: Graphics;
+  private nodeLayer: Container;
+
+  // State
+  private width: number = 800;
+  private height: number = 600;
   private data: Record<string, string[]>;
+  private canvasElement: HTMLCanvasElement;
+  private isInitialized: boolean = false;
 
   // Physics
-  private simulation: d3.Simulation<Node, Link>;
+  private simulation!: d3.Simulation<Node, Link>;
   private nodes: Node[] = [];
   private links: Link[] = [];
-  private transform = d3.zoomIdentity;
 
   // Interaction
   public onNodeSelect: ((node: Node | null) => void) | null = null;
+  public onReady: (() => void) | null = null;
   private selectedNodeId: string | null = null;
+  private draggingNode: Node | null = null;
 
-  constructor(canvas: HTMLCanvasElement, data: Record<string, string[]>) {
-    this.data = data ?? KANJI_DATA;
+  constructor(canvasElement: HTMLCanvasElement, data: Record<string, string[]>) {
+    this.data = data || {};
+    this.canvasElement = canvasElement;
 
-    const ctx = canvas.getContext('2d');
-    if (!canvas || !ctx) {
-      throw new Error('Canvas context not available');
-    }
+    this.app = new Application();
 
-    this.canvas = canvas;
-    this.ctx = ctx;
+    // SAFEGUARD: Create layers immediately so accessing them never throws error
+    this.linkLayer = new Graphics();
+    this.nodeLayer = new Container();
+  }
 
-    // 1. Init Simulation FIRST
+  public async init() {
+    if (this.isInitialized) return;
+
+    // 1. Measure Canvas Parent instead of canvas itself
+    // We want the size of the container, not the current size of the canvas element
+    const parent = this.canvasElement.parentElement;
+    const rect = parent?.getBoundingClientRect();
+    this.width = rect?.width || 800;
+    this.height = rect?.height || 600;
+
+    // 2. Init Pixi Application
+    await this.app.init({
+      canvas: this.canvasElement,
+      width: this.width,
+      height: this.height,
+      antialias: true,
+      autoDensity: true,
+      resolution: window.devicePixelRatio || 1,
+      background: '#f8fafc',
+    });
+
+    // 3. Setup Viewport
+    this.viewport = new Viewport({
+      screenWidth: this.width,
+      screenHeight: this.height,
+      worldWidth: 2000,
+      worldHeight: 2000,
+      events: this.app.renderer.events,
+    });
+
+    this.app.stage.addChild(this.viewport);
+
+    // 4. Attach Layers
+    this.viewport.addChild(this.linkLayer);
+    this.viewport.addChild(this.nodeLayer);
+
+    // 5. Activate Camera
+    this.viewport.drag().pinch().wheel().decelerate();
+
+    // 6. Init Physics
     this.simulation = d3
       .forceSimulation<Node, Link>()
       .velocityDecay(0.6)
-      .force(
-        'link',
-        d3
-          .forceLink<Node, Link>()
-          .id((d: any) => d.id)
-          .distance(60),
-      )
-      .force('charge', d3.forceManyBody().strength(-600))
-      // Center force will be updated in resize,
-      // but we need a placeholder or initial value here to prevent errors if we didn't use resize immediately.
+      .force('link', d3.forceLink<Node, Link>().id((d: any) => d.id).distance(80))
+      .force('charge', d3.forceManyBody().strength(-800))
+      .force('collide', d3.forceCollide().radius(40).iterations(2))
       .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-      .force('collide', d3.forceCollide().radius(30).iterations(2))
-      // Gently pulls individual nodes inward.
-      .force('x', d3.forceX(this.width / 2).strength(0.1))
-      .force('y', d3.forceY(this.height / 2).strength(0.1));
+      .force('x', d3.forceX(this.width / 2).strength(0.05))
+      .force('y', d3.forceY(this.height / 2).strength(0.05));
 
-    this.simulation.on('tick', () => this.render());
+    this.simulation.on('tick', () => this.renderTick());
 
-    this.setupInteraction();
+    this.isInitialized = true;
 
-    // 2. Initial Resize SECOND (Now this.simulation exists)
-    this.resize();
+    if (this.onReady) this.onReady();
   }
 
   public resize() {
-    // We measure the PARENT, not the canvas itself,
-    // because the canvas is now absolute and might not have caught up yet.
-    const parent = this.canvas.parentElement;
+    // 1. Safety check
+    if (!this.isInitialized || !this.app.renderer || !this.canvasElement.parentElement) return;
 
-    if (parent) {
-      // 1. Get the exact size of the container in CSS pixels
-      const rect = parent.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
+    // 2. Measure the Container (The Source of Truth)
+    const parent = this.canvasElement.parentElement;
+    const rect = parent.getBoundingClientRect();
 
-      // 2. Set the internal resolution (physical pixels) for sharpness
-      this.canvas.width = rect.width * dpr;
-      this.canvas.height = rect.height * dpr;
+    // Check if size actually changed to avoid unnecessary computations
+    if (this.width === rect.width && this.height === rect.height) return;
 
-      // 3. Set the CSS display size to match container exactly
-      this.canvas.style.width = `${rect.width}px`;
-      this.canvas.style.height = `${rect.height}px`;
+    this.width = rect.width;
+    this.height = rect.height;
 
-      // 4. Update internal state dimensions (use logical/CSS pixels for D3 calculations)
-      this.width = rect.width;
-      this.height = rect.height;
+    // 3. Tell Pixi to Resize the Renderer
+    this.app.renderer.resize(this.width, this.height);
 
-      // 5. Update Center Force
-      // Since we scale the context by DPR in render(),
-      // the simulation coordinates should remain in CSS/Logical pixels.
-      if (this.simulation) {
-        this.simulation.force(
-          'center',
-          d3.forceCenter(this.width / 2, this.height / 2),
-        );
-        this.simulation.alpha(0.3).restart();
-      }
-
-      // 6. Force a redraw immediately
-      this.render();
+    // 4. Update Viewport World Dimensions
+    if (this.viewport) {
+      this.viewport.resize(this.width, this.height);
     }
+
+    // 5. Update D3 Simulation Forces
+    if (this.simulation) {
+      // Re-center the gravity to the new middle of the screen
+      this.simulation.force('center', d3.forceCenter(this.width / 2, this.height / 2));
+
+      // Update the gentle X/Y positioning forces
+      this.simulation.force('x', d3.forceX(this.width / 2).strength(0.05));
+      this.simulation.force('y', d3.forceY(this.height / 2).strength(0.05));
+
+      // "Wake up" the simulation slightly so nodes drift to new center
+      this.simulation.alpha(0.3).restart();
+    }
+
+    this.app.render();
   }
 
   public destroy() {
-    this.simulation.stop();
+    this.simulation?.stop();
+    this.app.destroy(true, { children: true });
   }
 
-  // --- LOGIC: GRAPH MANIPULATION ---
+  // --- LOGIC ---
 
   public search(kanji: string) {
     if (this.data[kanji]) {
-      this.expandNode(kanji);
-      this.selectedNodeId = kanji;
-      const node = this.nodes.find((n) => n.id === kanji);
-      if (this.onNodeSelect && node) this.onNodeSelect(node);
+      this.promoteToRoot(kanji);
     } else {
       alert('Kanji not found in dataset');
     }
   }
 
   public promoteToRoot(targetId: string) {
-    // 1. Validation: Does it exist in our dictionary?
-    if (!this.data[targetId]) {
-      alert('Kanji not found in dataset');
-      return;
-    }
+    this.nodes.forEach(n => { if(n.type === 'root') n.type = 'standard'; });
 
-    // 2. Demote existing roots
-    this.nodes.forEach((n) => {
-      if (n.type === 'root') {
-        n.type = 'standard';
-      }
-    });
-
-    // 3. Find or Create the new Root
-    let targetNode = this.nodes.find((n) => n.id === targetId);
-
+    let targetNode = this.nodes.find(n => n.id === targetId);
     if (targetNode) {
-      // If it's already on screen (visible or shadow), just update it
       targetNode.type = 'root';
-      targetNode.status = 'visible'; // Ensure it's fully visible
+      targetNode.status = 'visible';
     } else {
-      // If it's brand new to the canvas, create it
-      // We spawn it near the center or near a random existing node to avoid overlap
-      targetNode = {
-        id: targetId,
-        radicals: this.data[targetId],
-        status: 'visible',
-        type: 'root', // <--- Make it RED
-        x: this.width / 2 / (window.devicePixelRatio || 1),
-        y: this.height / 2 / (window.devicePixelRatio || 1),
-      };
+      targetNode = this.createNode(targetId, 'root');
       this.nodes.push(targetNode);
     }
 
-    // 4. Select it (optional, but good UX)
     this.selectedNodeId = targetId;
     if (this.onNodeSelect) this.onNodeSelect(targetNode);
 
-    // 5. Expand its neighbors (using your existing logic)
-    // This brings in the surrounding context for the new root
     this.expandNode(targetId);
-
-    // 6. Restart Physics
-    this.updateSimulation();
-  }
-
-  public removeNode(id: string) {
-    // Downgrade to shadow
-    const node = this.nodes.find((n) => n.id === id);
-    if (node) node.status = 'shadow';
-
-    // Prune logic
-    const activeIds = new Set<string>();
-    this.nodes.forEach((n) => {
-      if (n.status === 'visible') activeIds.add(n.id);
-    });
-
-    // Filter links based on visibility
-    this.links = this.links.filter((l) => {
-      const sourceId = (l.source as Node).id;
-      const targetId = (l.target as Node).id;
-      // Keep link if either end is visible
-      const sourceVisible =
-        this.nodes.find((n) => n.id === sourceId)?.status === 'visible';
-      const targetVisible =
-        this.nodes.find((n) => n.id === targetId)?.status === 'visible';
-
-      if (sourceVisible || targetVisible) {
-        activeIds.add(sourceId);
-        activeIds.add(targetId);
-        return true;
-      }
-      return false;
-    });
-
-    // Remove orphaned shadows
-    this.nodes = this.nodes.filter((n) => activeIds.has(n.id));
-
-    this.updateSimulation();
-    this.selectedNodeId = null;
   }
 
   public expandNode(targetId: string) {
     const targetRadicals = this.data[targetId];
-    if (!targetRadicals) return;
-
-    // 1. Add Target
-    let targetNode = this.nodes.find((n) => n.id === targetId);
-    if (!targetNode) {
-      targetNode = {
-        id: targetId,
-        radicals: targetRadicals,
-        status: 'visible',
-        type: this.nodes.length === 0 ? 'root' : 'standard',
-        x: this.width / 2 / (window.devicePixelRatio || 1),
-        y: this.height / 2 / (window.devicePixelRatio || 1),
-      };
-      this.nodes.push(targetNode);
-    } else {
-      targetNode.status = 'visible';
+    if (!targetRadicals) {
+        console.warn("No data for", targetId);
+        return;
     }
 
-    // 2. Add Neighbors
-    Object.keys(this.data).forEach((key) => {
-      if (key === targetId) return;
-      const otherRadicals = this.data[key];
-      const relation = determineRelationship(targetRadicals, otherRadicals);
+    let targetNode = this.nodes.find(n => n.id === targetId);
+    if (!targetNode) {
+        targetNode = this.createNode(targetId, this.nodes.length === 0 ? 'root' : 'standard');
+        this.nodes.push(targetNode);
+    }
+    targetNode.status = 'visible';
 
-      if (relation) {
-        // Calculate complexity difference (e.g., 5 radicals vs 4 radicals)
-        const complexityDiff = Math.abs(
-          otherRadicals.length - targetRadicals.length,
-        );
+    // Neighbor Discovery
+    Object.keys(this.data).forEach(key => {
+        if (key === targetId) return;
 
-        // If 'child' (meaning 'key' is more complex than 'target'),
-        // we strictly limit it to those that are only 1 step away (immediate supersets).
-        // e.g. If target is '八' (2), we allow '分' (3), but skip '貧' (7).
-        if (relation === 'child' && complexityDiff > 1) {
-          return;
-        }
+        const otherRadicals = this.data[key];
+        const relation = determineRelationship(targetRadicals, otherRadicals);
 
-        // Optional: If you also want to limit looking "down" (parents)
-        // to only immediate parents, uncomment the line below.
-        // Usually, seeing all roots is fine, so we can leave this commented.
-        // if (relation === 'parent' && complexityDiff > 1) return;
+        if (relation) {
+            const complexityDiff = Math.abs(otherRadicals.length - targetRadicals.length);
+            if (relation === 'child' && complexityDiff > 1) return;
 
-        let neighbor = this.nodes.find((n) => n.id === key);
-        if (!neighbor) {
-          neighbor = {
-            id: key,
-            radicals: otherRadicals,
-            status: 'shadow',
-            type: 'standard',
-            x: targetNode!.x,
-            y: targetNode!.y,
-          };
-          this.nodes.push(neighbor);
-        }
+            let neighbor = this.nodes.find(n => n.id === key);
+            if (!neighbor) {
+                neighbor = this.createNode(key, 'standard');
+                neighbor.x = targetNode!.x;
+                neighbor.y = targetNode!.y;
+                neighbor.status = 'shadow';
+                this.nodes.push(neighbor);
+            }
 
-        const linkExists = this.links.some((l) => {
-          const s = (l.source as Node).id || l.source;
-          const t = (l.target as Node).id || l.target;
-          return (s === targetId && t === key) || (s === key && t === targetId);
-        });
-
-        if (!linkExists) {
-          if (relation === 'child')
-            this.links.push({ source: targetId, target: key, relation });
-          else if (relation === 'parent')
-            this.links.push({
-              source: key,
-              target: targetId,
-              relation: 'child',
+            const linkExists = this.links.some(l => {
+                const s = (l.source as Node).id || l.source;
+                const t = (l.target as Node).id || l.target;
+                return (s === targetId && t === key) || (s === key && t === targetId);
             });
-          else this.links.push({ source: targetId, target: key, relation });
+
+            if (!linkExists) {
+                let src = targetId, tgt = key, rel = relation;
+                if (relation === 'parent') { src = key; tgt = targetId; rel = 'child'; }
+                this.links.push({ source: src, target: tgt, relation: rel } as any);
+            }
         }
-      }
     });
 
+    this.syncVisuals();
     this.updateSimulation();
   }
 
   public hideNode(targetId: string) {
-    // 1. Remove the target node immediately
-    this.nodes = this.nodes.filter((n) => n.id !== targetId);
-
-    // 2. Remove any links connected to that node
-    // Note: D3 converts source/target to objects, so we check .id if it exists, else the string
-    this.links = this.links.filter((l) => {
-      const sourceId = (l.source as Node).id || l.source;
-      const targetIdVal = (l.target as Node).id || l.target;
-      return sourceId !== targetId && targetIdVal !== targetId;
+    this.nodes = this.nodes.filter(n => n.id !== targetId);
+    this.links = this.links.filter(l => {
+        const s = (l.source as Node).id || l.source;
+        const t = (l.target as Node).id || l.target;
+        return s !== targetId && t !== targetId;
     });
 
-    // 3. Garbage Collection (Optional but Recommended)
-    // Remove any non-root nodes that now have 0 connections (orphans)
-    // because their only parent/neighbor was just hidden.
-    let changed = true;
-    while (changed) {
-      changed = false;
+    const connectedIds = new Set<string>();
+    this.links.forEach(l => {
+        connectedIds.add((l.source as Node).id || l.source as string);
+        connectedIds.add((l.target as Node).id || l.target as string);
+    });
+    this.nodes = this.nodes.filter(n => n.type === 'root' || connectedIds.has(n.id));
 
-      // Calculate active connections
-      const connectedIds = new Set<string>();
-      this.links.forEach((l) => {
-        connectedIds.add((l.source as Node).id || (l.source as string));
-        connectedIds.add((l.target as Node).id || (l.target as string));
-      });
-
-      // Filter out orphans (unless they are a ROOT, we keep roots)
-      const initialCount = this.nodes.length;
-      this.nodes = this.nodes.filter(
-        (n) => n.type === 'root' || connectedIds.has(n.id),
-      );
-
-      if (this.nodes.length !== initialCount) changed = true;
-    }
-
-    // 4. Restart Physics
-    this.updateSimulation();
-
-    // Clear selection if we just hid the selected node
     if (this.selectedNodeId === targetId) {
-      this.selectedNodeId = null;
-      if (this.onNodeSelect) this.onNodeSelect(null);
+        this.selectedNodeId = null;
+        if (this.onNodeSelect) this.onNodeSelect(null);
     }
+    this.syncVisuals();
+    this.updateSimulation();
+  }
+
+  // --- INTERNAL UTILS ---
+
+  private createNode(id: string, type: 'root' | 'standard'): Node {
+      return {
+          id,
+          radicals: this.data[id] || [],
+          status: 'visible',
+          type,
+          x: this.width / 2 + (Math.random() - 0.5) * 10,
+          y: this.height / 2 + (Math.random() - 0.5) * 10
+      };
   }
 
   private updateSimulation() {
+    if (!this.simulation) return;
     this.simulation.nodes(this.nodes);
-    (this.simulation.force('link') as d3.ForceLink<Node, Link>).links(
-      this.links,
-    );
+    (this.simulation.force('link') as d3.ForceLink<Node, Link>).links(this.links);
     this.simulation.alpha(1).restart();
   }
 
-  // --- RENDER ---
+  // --- VISUAL RENDERING ---
 
-  private render() {
-    const dpr = window.devicePixelRatio || 1;
+  private syncVisuals() {
+      // 1. Cleanup
+      const liveIds = new Set(this.nodes.map(n => n.id));
+      for (let i = this.nodeLayer.children.length - 1; i >= 0; i--) {
+          const child = this.nodeLayer.children[i] as Container;
+          if (!liveIds.has(child.name)) {
+              this.nodeLayer.removeChild(child);
+              child.destroy({ children: true });
+          }
+      }
 
-    this.ctx.save();
+      // 2. Create/Update
+      this.nodes.forEach(node => {
+          let container = this.nodeLayer.getChildByName(node.id) as Container;
 
-    // Clear using physical dimensions (this.canvas.width)
-    // to ensure no artifacts remain on resize
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          if (!container) {
+              container = new Container();
+              container.name = node.id;
+              container.eventMode = 'static';
+              container.cursor = 'pointer';
+              container.on('pointerdown', (e) => this.onDragStart(e, node));
+              container.on('pointerup', (e) => this.onDragEnd());
+              container.on('pointerupoutside', (e) => this.onDragEnd());
 
-    // Transform system:
-    // 1. Scale by DPR (so 1 D3 unit = 1 CSS pixel = X Physical pixels)
-    this.ctx.scale(dpr, dpr);
-    // 2. Apply Pan/Zoom transform
-    this.ctx.translate(this.transform.x, this.transform.y);
-    this.ctx.scale(this.transform.k, this.transform.k);
+              const circle = new Graphics();
+              circle.name = 'circle';
+              container.addChild(circle);
 
-    // Draw Links
-    this.links.forEach((link) => {
-      const source = link.source as Node;
-      const target = link.target as Node;
-      if (source.x === undefined || target.x === undefined) return;
+              const RESOLUTION_MULTIPLIER = 4;
+              const BASE_SIZE = 16;
 
-      this.ctx.beginPath();
-      this.ctx.moveTo(source.x, source.y);
-      this.ctx.lineTo(target.x, target.y);
-      this.ctx.lineWidth = link.relation === 'sibling' ? 1 : 2;
-      this.ctx.strokeStyle =
-        link.relation === 'sibling' ? '#94a3b8' : '#64748b';
-      if (link.relation === 'sibling') this.ctx.setLineDash([4, 4]);
-      else this.ctx.setLineDash([]);
-      this.ctx.stroke();
-    });
+              const label = new Text({
+                text: node.id,
+                style: {
+                  fontFamily: '"Noto Sans JP", "Hiragino Kaku Gothic Pro", sans-serif', // Better Kanji fonts
+                  // 2. Render the font HUGE
+                  fontSize: BASE_SIZE * RESOLUTION_MULTIPLIER,
+                  fill: '#1e293b',
+                  align: 'center'
+                }
+              });
 
-    // Draw Nodes
-    this.nodes.forEach((node) => {
-      if (node.x === undefined) return;
+              // 3. Shrink the object back down to normal size
+              // (1 / 4 = 0.25 scale)
+              label.scale.set(1 / RESOLUTION_MULTIPLIER);
 
-      const isSelected = this.selectedNodeId === node.id;
+              label.anchor.set(0.5);
+              label.name = 'label';
+              container.addChild(label);
 
-      this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+              this.nodeLayer.addChild(container);
+              node.gfx = container;
+          }
 
-      // Fill
-      if (isSelected) this.ctx.fillStyle = '#eff6ff';
-      else if (node.status === 'shadow') this.ctx.fillStyle = '#f1f5f9';
-      else if (node.type === 'root') this.ctx.fillStyle = '#fee2e2';
-      else this.ctx.fillStyle = '#fff';
-      this.ctx.fill();
+          // Update Props
+          const circle = container.getChildByName('circle') as Graphics;
+          const label = container.getChildByName('label') as Text;
+          const isSelected = this.selectedNodeId === node.id;
 
-      // Stroke
-      this.ctx.lineWidth = isSelected ? 3 : node.status === 'shadow' ? 1 : 2;
-      this.ctx.strokeStyle = isSelected
-        ? '#2563eb'
-        : node.type === 'root'
-          ? '#ef4444'
-          : '#3b82f6';
-      if (node.status === 'shadow') this.ctx.setLineDash([5, 5]);
-      else this.ctx.setLineDash([]);
-      this.ctx.stroke();
+          let fillColor = 0xffffff;
+          if (isSelected) fillColor = 0xeff6ff;
+          else if (node.status === 'shadow') fillColor = 0xf1f5f9;
+          else if (node.type === 'root') fillColor = 0xfee2e2;
 
-      // Text
-      this.ctx.fillStyle = node.status === 'shadow' ? '#94a3b8' : '#1e293b';
-      this.ctx.font = '14px sans-serif';
-      this.ctx.textAlign = 'center';
-      this.ctx.textBaseline = 'middle';
-      this.ctx.fillText(node.id, node.x, node.y);
-    });
+          let strokeColor = 0x3b82f6;
+          if (isSelected) strokeColor = 0x2563eb;
+          else if (node.type === 'root') strokeColor = 0xef4444;
 
-    this.ctx.restore();
+          const strokeWidth = isSelected ? 3 : (node.status === 'shadow' ? 1 : 2);
+          const alpha = node.status === 'shadow' ? 0.6 : 1.0;
+
+          circle.clear();
+          circle.beginPath();
+          circle.roundRect(-20, -20, 40, 40, 20);
+          circle.fill({ color: fillColor, alpha: 1 });
+          circle.stroke({ width: strokeWidth, color: strokeColor, alpha });
+
+          label.style.fill = node.status === 'shadow' ? '#94a3b8' : '#1e293b';
+      });
+  }
+
+  private renderTick() {
+      if (!this.linkLayer) return;
+
+      this.linkLayer.clear();
+
+      this.links.forEach(link => {
+          const s = link.source as Node;
+          const t = link.target as Node;
+
+          if (s.x == null || s.y == null || t.x == null || t.y == null) return;
+
+          const isSibling = link.relation === 'sibling';
+          const alpha = isSibling ? 0.3 : 1.0;
+          const color = isSibling ? 0x94a3b8 : 0x64748b;
+          const width = isSibling ? 1 : 2;
+
+          this.linkLayer.moveTo(s.x, s.y);
+          this.linkLayer.lineTo(t.x, t.y);
+          this.linkLayer.stroke({ width, color, alpha });
+      });
+
+      this.nodes.forEach(node => {
+          if (node.gfx && node.x != null && node.y != null) {
+              node.gfx.x = node.x;
+              node.gfx.y = node.y;
+          }
+      });
   }
 
   // --- INTERACTION ---
-  private setupInteraction() {
-    // --- 1. DEFINE ZOOM ---
-    const zoom = d3
-      .zoom<HTMLCanvasElement, unknown>()
-      .scaleExtent([0.1, 8])
-      .on('zoom', (e) => {
-        this.transform = e.transform; // Sync class property for render()
-        this.render();
-      });
+  private onDragStart(event: FederatedPointerEvent, node: Node) {
+      if (!this.viewport) return;
+      this.viewport.plugins.pause('drag');
+      this.draggingNode = node;
+      this.selectedNodeId = node.id;
+      if (this.onNodeSelect) this.onNodeSelect(node);
+      this.syncVisuals();
+      if (this.simulation) this.simulation.alphaTarget(0.3).restart();
+      node.fx = node.x;
+      node.fy = node.y;
+      this.viewport.on('pointermove', this.onDragMove, this);
+  }
 
-    // --- 2. DEFINE DRAG ---
-    const drag = d3
-      .drag<HTMLCanvasElement, Node>()
-      .container(this.canvas)
-      .subject((event) => {
-        // Always get the LIVE transform state directly from the DOM
-        // This ensures we are perfectly in sync with what the user sees.
-        const t = d3.zoomTransform(this.canvas);
+  private onDragMove(event: FederatedPointerEvent) {
+      if (!this.draggingNode || !this.viewport) return;
+      const worldPos = this.viewport.toWorld(event.global);
+      this.draggingNode.fx = worldPos.x;
+      this.draggingNode.fy = worldPos.y;
+  }
 
-        // Get simple screen coordinates
-        const [screenX, screenY] = d3.pointer(event, this.canvas);
-
-        // Invert to World Coordinates
-        const worldX = t.invertX(screenX);
-        const worldY = t.invertY(screenY);
-
-        let subject: Node | null = null;
-        let minDist = 30; // Hit radius
-
-        for (const n of this.nodes) {
-          if (n.x === undefined || n.y === undefined) continue;
-          const dist = Math.hypot(worldX - n.x, worldY - n.y);
-
-          // Debugging: Uncomment if you still can't grab nodes
-          // if (dist < 50) console.log('Hover:', n.id, dist);
-
-          if (dist < minDist) {
-            minDist = dist;
-            subject = n;
-          }
-        }
-        return subject;
-      })
-      .on('start', (event) => {
-        if (!event.active) this.simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-      })
-      .on('drag', (event) => {
-        // We must re-invert the coordinates during the drag loop too
-        const t = d3.zoomTransform(this.canvas);
-        const [screenX, screenY] = d3.pointer(event, this.canvas);
-
-        event.subject.fx = t.invertX(screenX);
-        event.subject.fy = t.invertY(screenY);
-      })
-      .on('end', (event) => {
-        if (!event.active) this.simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-      });
-
-    // --- 3. APPLY LISTENERS ---
-    // Apply Zoom first, then Drag? Or vice versa?
-    // D3 handles the priority internally based on .subject(),
-    // but applying them to the same element is key.
-    d3.select(this.canvas)
-      .call(drag) // Drag checks for hits first
-      .call(zoom) // Zoom catches whatever misses
-      .on('dblclick.zoom', null);
-
-    // --- 4. CLICK LOGIC ---
-    d3.select(this.canvas).on('click', (event) => {
-      if (event.defaultPrevented) return;
-
-      const t = d3.zoomTransform(this.canvas);
-      const [x, y] = d3.pointer(event, this.canvas);
-      const wx = t.invertX(x);
-      const wy = t.invertY(y);
-
-      let subject = null;
-      let minDist = 30;
-
-      for (const n of this.nodes) {
-        if (!n.x || !n.y) continue;
-        const dist = Math.hypot(wx - n.x, wy - n.y);
-        if (dist < minDist) {
-          minDist = dist;
-          subject = n;
-        }
-      }
-
-      if (subject) {
-        this.selectedNodeId = subject.id;
-        if (subject.status === 'shadow') this.expandNode(subject.id);
-        if (this.onNodeSelect) this.onNodeSelect(subject);
-      } else {
-        this.selectedNodeId = null;
-        if (this.onNodeSelect) this.onNodeSelect(null);
-      }
-      this.render();
-    });
+  private onDragEnd() {
+      if (!this.draggingNode || !this.viewport) return;
+      this.viewport.plugins.resume('drag');
+      if (this.simulation) this.simulation.alphaTarget(0);
+      this.draggingNode.fx = null;
+      this.draggingNode.fy = null;
+      this.draggingNode = null;
+      this.viewport.off('pointermove', this.onDragMove, this);
   }
 }

@@ -16,6 +16,8 @@
     "npm:leaflet.markercluster@^1.5.3": "1.5.3_leaflet@1.9.4",
     "npm:leaflet@^1.9.4": "1.9.4",
     "npm:mermaid@^11.12.2": "11.12.2_cytoscape@3.33.1",
+    "npm:pixi-viewport@^6.0.3": "6.0.3_pixi.js@8.14.3",
+    "npm:pixi.js@^8.14.3": "8.14.3",
     "npm:reveal.js@^5.2.1": "5.2.1",
     "npm:svelte@*": "5.46.1_acorn@8.15.0",
     "npm:svelte@5.46.1": "5.46.1_acorn@8.15.0",
@@ -438,6 +440,9 @@
         "langium"
       ]
     },
+    "@pixi/colord@2.9.6": {
+      "integrity": "sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA=="
+    },
     "@rollup/rollup-android-arm-eabi@4.54.0": {
       "integrity": "sha512-OywsdRHrFvCdvsewAInDKCNyR3laPA2mc9bRYJ6LBp5IyvF3fvXbbNR0bSzHlZVFtn6E0xw2oZlyjg4rKCVcng==",
       "os": ["android"],
@@ -577,6 +582,9 @@
     },
     "@tsconfig/svelte@5.0.6": {
       "integrity": "sha512-yGxYL0I9eETH1/DR9qVJey4DAsCdeau4a9wYPKuXfEhm8lFO8wg+LLYJjIpAm6Fw7HSlhepPhYPDop75485yWQ=="
+    },
+    "@types/css-font-loading-module@0.0.12": {
+      "integrity": "sha512-x2tZZYkSxXqWvTDgveSynfjq/T2HyiZHXb00j/+gy19yp70PHCizM48XFdjBCWH7eHBD0R5i/pw9yMBP/BH5uA=="
     },
     "@types/d3-array@3.2.2": {
       "integrity": "sha512-hOLWVbm7uRza0BYXpIIW5pxfrKe0W+D5lrFiAEYR+pb6w3N2SwSMaJbXdUfSEv+dT4MfHBLtn5js0LAWaO6otw=="
@@ -738,6 +746,9 @@
         "@types/d3-zoom"
       ]
     },
+    "@types/earcut@3.0.0": {
+      "integrity": "sha512-k/9fOUGO39yd2sCjrbAJvGDEQvRwRnQIZlBz43roGwUZo5SHAmyVvSFyaVVZkicRVCaDXPKlbxrUcBuJoSWunQ=="
+    },
     "@types/estree@1.0.8": {
       "integrity": "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="
     },
@@ -761,6 +772,12 @@
     },
     "@types/trusted-types@2.0.7": {
       "integrity": "sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw=="
+    },
+    "@webgpu/types@0.1.68": {
+      "integrity": "sha512-3ab1B59Ojb6RwjOspYLsTpCzbNB3ZaamIAxBMmvnNkiDoLTZUOBXZ9p5nAYVEkQlDdf6qAZWi1pqj9+ypiqznA=="
+    },
+    "@xmldom/xmldom@0.8.11": {
+      "integrity": "sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw=="
     },
     "acorn@8.15.0": {
       "integrity": "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==",
@@ -1105,6 +1122,9 @@
         "@types/trusted-types"
       ]
     },
+    "earcut@3.0.2": {
+      "integrity": "sha512-X7hshQbLyMJ/3RPhyObLARM2sNxxmRALLKx1+NVFFnQ9gKzmCrxm9+uLIAdBcvc8FNLpctqlQ2V6AE92Ol9UDQ=="
+    },
     "esbuild-svelte@0.9.4_esbuild@0.25.11_svelte@5.46.1__acorn@8.15.0": {
       "integrity": "sha512-v/a0GjkKN06nal2QLluxjk2GXsei3fdtjIuHRa6pVnri5rQBZ6pj4a2WwjLfRojgRsLwDHl4xSeZ1BeUHsqQrw==",
       "dependencies": [
@@ -1188,6 +1208,9 @@
         "@jridgewell/sourcemap-codec"
       ]
     },
+    "eventemitter3@5.0.1": {
+      "integrity": "sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA=="
+    },
     "fdir@6.5.0_picomatch@4.0.3": {
       "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
       "dependencies": [
@@ -1201,6 +1224,12 @@
       "integrity": "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==",
       "os": ["darwin"],
       "scripts": true
+    },
+    "gifuct-js@2.1.2": {
+      "integrity": "sha512-rI2asw77u0mGgwhV3qA+OEgYqaDn5UNqgs+Bx0FGwSpuqfYn+Ir6RQY5ENNQ8SbIiG/m5gVa7CD5RriO4f4Lsg==",
+      "dependencies": [
+        "js-binary-schema-parser"
+      ]
     },
     "hachure-fill@0.5.2": {
       "integrity": "sha512-3GKBOn+m2LX9iq+JC1064cSFprJY4jL1jCXTcpnfER5HYE2l/4EfWSGzkPa/ZDBmYI0ZOEj5VHV/eKnPGkHuOg=="
@@ -1219,6 +1248,12 @@
       "dependencies": [
         "@types/estree"
       ]
+    },
+    "ismobilejs@1.1.1": {
+      "integrity": "sha512-VaFW53yt8QO61k2WJui0dHf4SlL8lxBofUuUmwBo0ljPk0Drz2TiuDW4jo3wDcv41qy/SxrJ+VAzJ/qYqsmzRw=="
+    },
+    "js-binary-schema-parser@2.0.3": {
+      "integrity": "sha512-xezGJmOb4lk/M1ZZLTR/jaBHQ4gG/lqQnJqdIv4721DMggsa1bDVlHXNeHYogaIEHD9vCRv0fcL4hMA+Coarkg=="
     },
     "katex@0.16.27": {
       "integrity": "sha512-aeQoDkuRWSqQN6nSvVCEFvfXdqo1OQiCmmW1kc9xSdjutPv7BGO7pqY9sQRJpMOGrEdfDgF2TfRXe5eUAD2Waw==",
@@ -1315,6 +1350,9 @@
     "package-manager-detector@1.6.0": {
       "integrity": "sha512-61A5ThoTiDG/C8s8UMZwSorAGwMJ0ERVGj2OjoW5pAalsNOg15+iQiPzrLJ4jhZ1HJzmC2PIHT2oEiH3R5fzNA=="
     },
+    "parse-svg-path@0.1.2": {
+      "integrity": "sha512-JyPSBnkTJ0AI8GGJLfMXvKq42cj5c006fnLz6fXy6zfoVjJizi8BNTpu8on8ziI1cKy9d9DGNuY17Ce7wuejpQ=="
+    },
     "path-data-parser@0.1.0": {
       "integrity": "sha512-NOnmBpt5Y2RWbuv0LMzsayp3lVylAHLPUTut412ZA3l+C4uw4ZVkQbjShYCQ8TCpUMdPapr4YjUqLYD6v68j+w=="
     },
@@ -1326,6 +1364,28 @@
     },
     "picomatch@4.0.3": {
       "integrity": "sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q=="
+    },
+    "pixi-viewport@6.0.3_pixi.js@8.14.3": {
+      "integrity": "sha512-2+qPJ0/n+8hQYhWvY+795+x9y3MiUrCOWacK0DY53whowWaGdx9iDocy7z1pBwjkZhC52YvrJQuZKK0sdVLtBw==",
+      "dependencies": [
+        "pixi.js"
+      ]
+    },
+    "pixi.js@8.14.3": {
+      "integrity": "sha512-6xGYARV8D9E/fO1c2NmYn+k2dQ5oZldVm5tNlLQJ8obTlOQXdL5QpMc217qTpRyHVDFaw5eoFCLF1gr6p5ZcjQ==",
+      "dependencies": [
+        "@pixi/colord",
+        "@types/css-font-loading-module",
+        "@types/earcut",
+        "@webgpu/types",
+        "@xmldom/xmldom",
+        "earcut",
+        "eventemitter3",
+        "gifuct-js",
+        "ismobilejs",
+        "parse-svg-path",
+        "tiny-lru"
+      ]
     },
     "pkg-types@1.3.1": {
       "integrity": "sha512-/Jm5M4RvtBFVkKWRu2BLUTNP8/M2a+UwuAX+ae4770q1qVGtfjG+WTCupoZixokjmHiry8uI+dlY8KXYV5HVVQ==",
@@ -1435,6 +1495,9 @@
         "zimmerframe"
       ]
     },
+    "tiny-lru@11.4.5": {
+      "integrity": "sha512-hkcz3FjNJfKXjV4mjQ1OrXSLAehg8Hw+cEZclOVT+5c/cWQWImQ9wolzTjth+dmmDe++p3bme3fTxz6Q4Etsqw=="
+    },
     "tinyexec@1.0.2": {
       "integrity": "sha512-W/KYk+NFhkmsYpuHq5JykngiOCnxeVL8v8dFnqxSD8qEEdRfXk1SDM6JzNqcERbcGYj9tMrDQBYV9cjgnunFIg=="
     },
@@ -1526,6 +1589,8 @@
       "npm:leaflet.markercluster@^1.5.3",
       "npm:leaflet@^1.9.4",
       "npm:mermaid@^11.12.2",
+      "npm:pixi-viewport@^6.0.3",
+      "npm:pixi.js@^8.14.3",
       "npm:reveal.js@^5.2.1",
       "npm:svelte@^5.46.1"
     ]

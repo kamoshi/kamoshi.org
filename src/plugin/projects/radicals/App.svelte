@@ -3,7 +3,6 @@
 
   let { url } = $props() as { url: string };
 
-  // --- API DATA TYPES ---
   interface KanjiApiData {
     kanji: string;
     grade: number | null;
@@ -15,17 +14,13 @@
 
   let htmlCanvas = $state<HTMLCanvasElement | null>(null);
   let htmlContainer = $state<HTMLDivElement | null>(null);
-
   let data = $state<Record<string, string[]> | null>(null);
-
-  let engine = $derived.by(
-    () => htmlCanvas && data && new KanjiGraphEngine(htmlCanvas, data),
-  );
-
   let inputText = $state("亜");
   let selectedNode: Node | null = $state(null);
   let apiData: KanjiApiData | null = $state(null);
   let loadingApi = $state(false);
+  let engine = $state<KanjiGraphEngine | null>(null);
+  let isEngineReady = $state(false);
 
   $effect(() => {
     fetch(url)
@@ -35,24 +30,42 @@
       });
   });
 
+  // --- INITIALIZATION EFFECT ---
   $effect(() => {
-    if (engine) {
-      engine.onNodeSelect = (node) => {
-        selectedNode = node; // Svelte reacts to this
-      };
+    if (!htmlCanvas || !data || !htmlContainer) return;
 
-      // Initial load
-      engine.expandNode("亜");
+    // 1. Instantiate
+    const instance = new KanjiGraphEngine(htmlCanvas, data);
 
-      // Handle window resize
-      const resizeObserver = new ResizeObserver(() => engine.resize());
-      resizeObserver.observe(htmlContainer);
+    // 2. Configure Callbacks
+    instance.onNodeSelect = (node) => {
+      selectedNode = node;
+    };
 
-      // return () => {
-      //   resizeObserver.disconnect();
-      //   engine.destroy();
-      // };
-    }
+    // 3. Define what happens when ready
+    instance.onReady = () => {
+      isEngineReady = true;
+      // Only expand once the engine is fully ready and viewport exists
+      instance.expandNode("亜");
+    };
+
+    // 4. Start Async Init
+    instance.init().catch((e) => console.error("Engine Init Failed", e));
+
+    // 5. Setup Resize Observer
+    const resizeObserver = new ResizeObserver(() => instance.resize());
+    resizeObserver.observe(htmlContainer);
+
+    // 6. Save reference
+    engine = instance;
+
+    // 7. Cleanup
+    return () => {
+      resizeObserver.disconnect();
+      instance.destroy();
+      engine = null;
+      isEngineReady = false;
+    };
   });
 
   async function fetchApiData(kanji: string) {
@@ -82,9 +95,12 @@
 
   function handleSearch(e: Event) {
     e.preventDefault();
+    if (!engine || !isEngineReady || !inputText) return;
 
-    if (!engine) return;
-    if (!inputText) return;
+    if (data && !data[inputText]) {
+      alert("Kanji not found in local dataset");
+      return;
+    }
 
     engine.promoteToRoot(inputText);
     inputText = "";
@@ -96,14 +112,13 @@
 
   <div class="search-panel">
     <form onsubmit={handleSearch} class="search-form">
-      <!-- <Search size={18} class="text-slate-400" /> -->
       <input
         type="text"
         bind:value={inputText}
         placeholder="Search Kanji (e.g. 亜)"
         maxlength="1"
       />
-      <button type="submit">Go</button>
+      <button type="submit" disabled={!isEngineReady}>Go</button>
     </form>
   </div>
 
@@ -119,9 +134,9 @@
             {selectedNode.status}
           </span>
         </div>
-        <button class="close-btn" onclick={() => (selectedNode = null)}>
-          <!-- <X size={18} /> -->
-        </button>
+        <button class="close-btn" onclick={() => (selectedNode = null)}
+          >×</button
+        >
       </div>
 
       <div class="info-content">
@@ -137,49 +152,32 @@
         {#if selectedNode.status === "visible"}
           <button
             class="action-btn delete"
-            onclick={() => {
-              if (engine && selectedNode) {
-                engine.hideNode(selectedNode.id);
-              }
-            }}
+            onclick={() => engine?.hideNode(selectedNode!.id)}
           >
-            <!-- <Trash2 size={16} /> -->
-            Remove from graph
+            Remove
           </button>
         {:else}
           <button
             class="action-btn expand"
-            onclick={() => {
-              if (engine && selectedNode) {
-                engine.expandNode(selectedNode.id);
-              }
-            }}
+            onclick={() => engine?.expandNode(selectedNode!.id)}
           >
-            <!-- <BookOpen size={16} /> Expand Node -->
+            Expand
           </button>
         {/if}
 
         <hr />
 
         {#if loadingApi}
-          <div class="loader">
-            <!-- <Loader2 class="animate-spin" /> Loading details... -->
-          </div>
+          <div class="loader">Loading...</div>
         {:else if apiData}
           <div class="api-details">
             <p>
               <strong>Meanings:</strong>
               {apiData.meanings.slice(0, 3).join(", ")}
             </p>
-            <p><strong>Onyomi:</strong> {apiData.on_readings.join("、")}</p>
-            <p><strong>Kunyomi:</strong> {apiData.kun_readings.join("、")}</p>
-            <div class="stats">
-              <span>JLPT: N{apiData.jlpt}</span>
-              <span>Grade: {apiData.grade}</span>
-            </div>
+            <p><strong>On:</strong> {apiData.on_readings.join("、")}</p>
+            <p><strong>Kun:</strong> {apiData.kun_readings.join("、")}</p>
           </div>
-        {:else}
-          <p class="text-sm text-slate-500">No API data available.</p>
         {/if}
       </div>
     </div>
@@ -189,6 +187,5 @@
     <div class="legend-item"><span class="dot root"></span> Root</div>
     <div class="legend-item"><span class="dot visible"></span> Loaded</div>
     <div class="legend-item"><span class="dot shadow"></span> Unloaded</div>
-    <div class="legend-item"><span class="line child"></span> Component</div>
   </div>
 </div>

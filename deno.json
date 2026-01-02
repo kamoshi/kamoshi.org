@@ -11,6 +11,8 @@
     "leaflet": "npm:leaflet@^1.9.4",
     "leaflet.markercluster": "npm:leaflet.markercluster@^1.5.3",
     "mermaid": "npm:mermaid@^11.12.2",
+    "pixi-viewport": "npm:pixi-viewport@^6.0.3",
+    "pixi.js": "npm:pixi.js@^8.14.3",
     "reveal.js": "npm:reveal.js@^5.2.1",
     "svelte": "npm:svelte@^5.46.1",
     "@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@^6.2.1",
