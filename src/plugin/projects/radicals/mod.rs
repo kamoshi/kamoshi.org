@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::Read;
 
@@ -18,6 +18,8 @@ struct Props {
     url: String,
 }
 
+const CHARS: &str = include_str!("./kklc.txt");
+
 pub fn build(
     config: &mut Blueprint<Global>,
     styles: Handle<Assets<Stylesheet>>,
@@ -30,6 +32,8 @@ pub fn build(
     let radicals = config.load(
         "src/plugin/projects/radicals/kradfile.gz",
         |_, store, input| {
+            let set = CHARS.chars().map(|c| c.to_string()).collect::<HashSet<_>>();
+
             let mut kanji_radicals: HashMap<String, Vec<String>> = HashMap::new();
 
             let file = File::open(&input.path)?;
@@ -59,7 +63,9 @@ pub fn build(
                         .map(|s| s.to_string())
                         .collect();
 
-                    kanji_radicals.insert(kanji.to_string(), radicals);
+                    if set.contains(kanji) {
+                        kanji_radicals.insert(kanji.to_string(), radicals);
+                    }
                 }
             }
 
