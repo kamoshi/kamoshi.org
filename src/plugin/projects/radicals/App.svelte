@@ -133,8 +133,9 @@
     // Update Engine
     engine.promoteToRoot(inputText);
 
-    // Update Persistence
-    activeRoots.add(inputText);
+    // Update Persistence & Reactivity
+    // FIX: Create a new Set to trigger Svelte reactivity
+    activeRoots = new Set(activeRoots.add(inputText));
     saveState();
 
     inputText = "";
@@ -145,17 +146,21 @@
     if (!selectedNode || !engine) return;
 
     const id = selectedNode.id;
-
     const nodeSnapshot = { ...selectedNode };
+
+    // FIX: Clone the set to ensure reassignment triggers UI update
+    const nextRoots = new Set(activeRoots);
 
     if (targetStatus === "visible") {
       engine.expandNode(id);
-      activeRoots.add(id);
+      nextRoots.add(id);
     } else {
       engine.hideNode(id);
-      activeRoots.delete(id);
+      nextRoots.delete(id);
     }
 
+    // Reassign to trigger update
+    activeRoots = nextRoots;
     saveState();
 
     // 2. Force the UI to use our snapshot with the updated status

@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
-import { Application, Container, Graphics, Text, FederatedPointerEvent } from 'pixi.js';
+import type { FederatedPointerEvent } from 'pixi.js';
+import { Application, Container, Graphics, Text } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 
 // --- TYPES ---
@@ -23,7 +24,7 @@ export interface Link extends d3.SimulationLinkDatum<Node> {
   relation: RelationType;
 }
 
-// --- HELPER FUNCTIONS (MUST BE DEFINED HERE) ---
+// --- HELPER FUNCTIONS ---
 
 const isSubset = (subset: string[], superset: string[]) => {
   const setB = new Set(superset);
@@ -52,7 +53,7 @@ export class KanjiGraphEngine {
   private app: Application;
   private viewport!: Viewport;
 
-  // Rendering Layers - Initialized in constructor
+  // Rendering Layers
   private linkLayer: Graphics;
   private nodeLayer: Container;
 
@@ -63,24 +64,30 @@ export class KanjiGraphEngine {
   private canvasElement: HTMLCanvasElement;
   private isInitialized: boolean = false;
 
+  // Interaction State
+  private hoveredNodeId: string | null = null;
+  private selectedNodeId: string | null = null;
+  private draggingNode: Node | null = null;
+
   // Physics
   private simulation!: d3.Simulation<Node, Link>;
   private nodes: Node[] = [];
   private links: Link[] = [];
 
-  // Interaction
+  // Callbacks
   public onNodeSelect: ((node: Node | null) => void) | null = null;
   public onReady: (() => void) | null = null;
-  private selectedNodeId: string | null = null;
-  private draggingNode: Node | null = null;
 
-  constructor(canvasElement: HTMLCanvasElement, data: Record<string, string[]>) {
+  constructor(
+    canvasElement: HTMLCanvasElement,
+    data: Record<string, string[]>,
+  ) {
     this.data = data || {};
     this.canvasElement = canvasElement;
 
     this.app = new Application();
 
-    // SAFEGUARD: Create layers immediately so accessing them never throws error
+    // Create layers immediately
     this.linkLayer = new Graphics();
     this.nodeLayer = new Container();
   }
@@ -88,8 +95,7 @@ export class KanjiGraphEngine {
   public async init() {
     if (this.isInitialized) return;
 
-    // 1. Measure Canvas Parent instead of canvas itself
-    // We want the size of the container, not the current size of the canvas element
+    // 1. Measure Container
     const parent = this.canvasElement.parentElement;
     const rect = parent?.getBoundingClientRect();
     this.width = rect?.width || 800;
@@ -122,13 +128,22 @@ export class KanjiGraphEngine {
     this.viewport.addChild(this.nodeLayer);
 
     // 5. Activate Camera
-    this.viewport.drag().pinch().wheel().decelerate();
+    this.viewport.drag().pinch().wheel().decelerate().clampZoom({
+      minScale: 0.2, // Max Zoom Out (The "Kagen" or lower limit)
+      maxScale: 3.0, // Max Zoom In (The "Jogen" or upper limit)
+    });
 
     // 6. Init Physics
     this.simulation = d3
       .forceSimulation<Node, Link>()
       .velocityDecay(0.6)
-      .force('link', d3.forceLink<Node, Link>().id((d: any) => d.id).distance(80))
+      .force(
+        'link',
+        d3
+          .forceLink<Node, Link>()
+          .id((d: any) => d.id)
+          .distance(80),
+      )
       .force('charge', d3.forceManyBody().strength(-800))
       .force('collide', d3.forceCollide().radius(40).iterations(2))
       .force('center', d3.forceCenter(this.width / 2, this.height / 2))
@@ -143,37 +158,34 @@ export class KanjiGraphEngine {
   }
 
   public resize() {
-    // 1. Safety check
-    if (!this.isInitialized || !this.app.renderer || !this.canvasElement.parentElement) return;
+    if (
+      !this.isInitialized ||
+      !this.app.renderer ||
+      !this.canvasElement.parentElement
+    )
+      return;
 
-    // 2. Measure the Container (The Source of Truth)
     const parent = this.canvasElement.parentElement;
     const rect = parent.getBoundingClientRect();
 
-    // Check if size actually changed to avoid unnecessary computations
     if (this.width === rect.width && this.height === rect.height) return;
 
     this.width = rect.width;
     this.height = rect.height;
 
-    // 3. Tell Pixi to Resize the Renderer
     this.app.renderer.resize(this.width, this.height);
 
-    // 4. Update Viewport World Dimensions
     if (this.viewport) {
       this.viewport.resize(this.width, this.height);
     }
 
-    // 5. Update D3 Simulation Forces
     if (this.simulation) {
-      // Re-center the gravity to the new middle of the screen
-      this.simulation.force('center', d3.forceCenter(this.width / 2, this.height / 2));
-
-      // Update the gentle X/Y positioning forces
+      this.simulation.force(
+        'center',
+        d3.forceCenter(this.width / 2, this.height / 2),
+      );
       this.simulation.force('x', d3.forceX(this.width / 2).strength(0.05));
       this.simulation.force('y', d3.forceY(this.height / 2).strength(0.05));
-
-      // "Wake up" the simulation slightly so nodes drift to new center
       this.simulation.alpha(0.3).restart();
     }
 
@@ -185,7 +197,7 @@ export class KanjiGraphEngine {
     this.app.destroy(true, { children: true });
   }
 
-  // --- LOGIC ---
+  // --- GRAPH LOGIC ---
 
   public search(kanji: string) {
     if (this.data[kanji]) {
@@ -196,9 +208,11 @@ export class KanjiGraphEngine {
   }
 
   public promoteToRoot(targetId: string) {
-    this.nodes.forEach(n => { if(n.type === 'root') n.type = 'standard'; });
+    this.nodes.forEach((n) => {
+      if (n.type === 'root') n.type = 'standard';
+    });
 
-    let targetNode = this.nodes.find(n => n.id === targetId);
+    let targetNode = this.nodes.find((n) => n.id === targetId);
     if (targetNode) {
       targetNode.type = 'root';
       targetNode.status = 'visible';
@@ -211,54 +225,75 @@ export class KanjiGraphEngine {
     if (this.onNodeSelect) this.onNodeSelect(targetNode);
 
     this.expandNode(targetId);
+
+    // We use a slight timeout or wait for the node's position to settle if it was just created.
+    // However, since createNode gives a position, we can animate immediately.
+    if (targetNode.x != null && targetNode.y != null) {
+      this.viewport.animate({
+        position: { x: targetNode.x, y: targetNode.y },
+        scale: 1.5, // Optional: Zoom in slightly to focus
+        time: 1000, // Duration in ms
+        ease: 'easeInOutSine', // Smooth easing function
+      });
+    }
   }
 
   public expandNode(targetId: string) {
     const targetRadicals = this.data[targetId];
     if (!targetRadicals) {
-        console.warn("No data for", targetId);
-        return;
+      console.warn('No data for', targetId);
+      return;
     }
 
-    let targetNode = this.nodes.find(n => n.id === targetId);
+    let targetNode = this.nodes.find((n) => n.id === targetId);
     if (!targetNode) {
-        targetNode = this.createNode(targetId, this.nodes.length === 0 ? 'root' : 'standard');
-        this.nodes.push(targetNode);
+      targetNode = this.createNode(
+        targetId,
+        this.nodes.length === 0 ? 'root' : 'standard',
+      );
+      this.nodes.push(targetNode);
     }
     targetNode.status = 'visible';
 
-    // Neighbor Discovery
-    Object.keys(this.data).forEach(key => {
-        if (key === targetId) return;
+    Object.keys(this.data).forEach((key) => {
+      if (key === targetId) return;
 
-        const otherRadicals = this.data[key];
-        const relation = determineRelationship(targetRadicals, otherRadicals);
+      const otherRadicals = this.data[key];
+      const relation = determineRelationship(targetRadicals, otherRadicals);
 
-        if (relation) {
-            const complexityDiff = Math.abs(otherRadicals.length - targetRadicals.length);
-            if (relation === 'child' && complexityDiff > 1) return;
+      if (relation) {
+        const complexityDiff = Math.abs(
+          otherRadicals.length - targetRadicals.length,
+        );
+        if (relation === 'child' && complexityDiff > 1) return;
 
-            let neighbor = this.nodes.find(n => n.id === key);
-            if (!neighbor) {
-                neighbor = this.createNode(key, 'standard');
-                neighbor.x = targetNode!.x;
-                neighbor.y = targetNode!.y;
-                neighbor.status = 'shadow';
-                this.nodes.push(neighbor);
-            }
-
-            const linkExists = this.links.some(l => {
-                const s = (l.source as Node).id || l.source;
-                const t = (l.target as Node).id || l.target;
-                return (s === targetId && t === key) || (s === key && t === targetId);
-            });
-
-            if (!linkExists) {
-                let src = targetId, tgt = key, rel = relation;
-                if (relation === 'parent') { src = key; tgt = targetId; rel = 'child'; }
-                this.links.push({ source: src, target: tgt, relation: rel } as any);
-            }
+        let neighbor = this.nodes.find((n) => n.id === key);
+        if (!neighbor) {
+          neighbor = this.createNode(key, 'standard');
+          neighbor.x = targetNode!.x;
+          neighbor.y = targetNode!.y;
+          neighbor.status = 'shadow';
+          this.nodes.push(neighbor);
         }
+
+        const linkExists = this.links.some((l) => {
+          const s = (l.source as Node).id || l.source;
+          const t = (l.target as Node).id || l.target;
+          return (s === targetId && t === key) || (s === key && t === targetId);
+        });
+
+        if (!linkExists) {
+          let src = targetId,
+            tgt = key,
+            rel = relation;
+          if (relation === 'parent') {
+            src = key;
+            tgt = targetId;
+            rel = 'child';
+          }
+          this.links.push({ source: src, target: tgt, relation: rel } as any);
+        }
+      }
     });
 
     this.syncVisuals();
@@ -266,23 +301,25 @@ export class KanjiGraphEngine {
   }
 
   public hideNode(targetId: string) {
-    this.nodes = this.nodes.filter(n => n.id !== targetId);
-    this.links = this.links.filter(l => {
-        const s = (l.source as Node).id || l.source;
-        const t = (l.target as Node).id || l.target;
-        return s !== targetId && t !== targetId;
+    this.nodes = this.nodes.filter((n) => n.id !== targetId);
+    this.links = this.links.filter((l) => {
+      const s = (l.source as Node).id || l.source;
+      const t = (l.target as Node).id || l.target;
+      return s !== targetId && t !== targetId;
     });
 
     const connectedIds = new Set<string>();
-    this.links.forEach(l => {
-        connectedIds.add((l.source as Node).id || l.source as string);
-        connectedIds.add((l.target as Node).id || l.target as string);
+    this.links.forEach((l) => {
+      connectedIds.add((l.source as Node).id || (l.source as string));
+      connectedIds.add((l.target as Node).id || (l.target as string));
     });
-    this.nodes = this.nodes.filter(n => n.type === 'root' || connectedIds.has(n.id));
+    this.nodes = this.nodes.filter(
+      (n) => n.type === 'root' || connectedIds.has(n.id),
+    );
 
     if (this.selectedNodeId === targetId) {
-        this.selectedNodeId = null;
-        if (this.onNodeSelect) this.onNodeSelect(null);
+      this.selectedNodeId = null;
+      if (this.onNodeSelect) this.onNodeSelect(null);
     }
     this.syncVisuals();
     this.updateSimulation();
@@ -291,163 +328,247 @@ export class KanjiGraphEngine {
   // --- INTERNAL UTILS ---
 
   private createNode(id: string, type: 'root' | 'standard'): Node {
-      return {
-          id,
-          radicals: this.data[id] || [],
-          status: 'visible',
-          type,
-          x: this.width / 2 + (Math.random() - 0.5) * 10,
-          y: this.height / 2 + (Math.random() - 0.5) * 10
-      };
+    return {
+      id,
+      radicals: this.data[id] || [],
+      status: 'visible',
+      type,
+      x: this.width / 2 + (Math.random() - 0.5) * 10,
+      y: this.height / 2 + (Math.random() - 0.5) * 10,
+    };
   }
 
   private updateSimulation() {
     if (!this.simulation) return;
     this.simulation.nodes(this.nodes);
-    (this.simulation.force('link') as d3.ForceLink<Node, Link>).links(this.links);
+    (this.simulation.force('link') as d3.ForceLink<Node, Link>).links(
+      this.links,
+    );
     this.simulation.alpha(1).restart();
   }
 
   // --- VISUAL RENDERING ---
 
   private syncVisuals() {
-      // 1. Cleanup
-      const liveIds = new Set(this.nodes.map(n => n.id));
-      for (let i = this.nodeLayer.children.length - 1; i >= 0; i--) {
-          const child = this.nodeLayer.children[i] as Container;
-          if (!liveIds.has(child.name)) {
-              this.nodeLayer.removeChild(child);
-              child.destroy({ children: true });
-          }
+    // 1. Cleanup Dead Nodes
+    const liveIds = new Set(this.nodes.map((n) => n.id));
+    for (let i = this.nodeLayer.children.length - 1; i >= 0; i--) {
+      const child = this.nodeLayer.children[i] as Container;
+      if (!liveIds.has(child.name)) {
+        this.nodeLayer.removeChild(child);
+        child.destroy({ children: true });
+      }
+    }
+
+    // 2. Pre-calculate neighbors of the hovered node for "Ukibori" effect
+    const hoveredNeighbors = new Set<string>();
+    if (this.hoveredNodeId) {
+      this.links.forEach((l) => {
+        const s = (l.source as Node).id || (l.source as string);
+        const t = (l.target as Node).id || (l.target as string);
+        if (s === this.hoveredNodeId) hoveredNeighbors.add(t);
+        if (t === this.hoveredNodeId) hoveredNeighbors.add(s);
+      });
+    }
+
+    // 3. Create/Update Nodes
+    this.nodes.forEach((node) => {
+      let container = this.nodeLayer.getChildByName(node.id) as Container;
+
+      if (!container) {
+        container = new Container();
+        container.name = node.id;
+        container.eventMode = 'static';
+        container.cursor = 'pointer';
+
+        // Event Listeners
+        container.on('pointerenter', () => this.onNodeHover(node.id));
+        container.on('pointerleave', () => this.onNodeHover(null));
+        container.on('pointerdown', (e) => this.onDragStart(e, node));
+        container.on('pointerup', (e) => this.onDragEnd());
+        container.on('pointerupoutside', (e) => this.onDragEnd());
+
+        const circle = new Graphics();
+        circle.name = 'circle';
+        container.addChild(circle);
+
+        const RESOLUTION_MULTIPLIER = 4;
+        const BASE_SIZE = 16;
+
+        const label = new Text({
+          text: node.id,
+          style: {
+            fontFamily:
+              '"Noto Sans JP", "Hiragino Kaku Gothic Pro", sans-serif',
+            fontSize: BASE_SIZE * RESOLUTION_MULTIPLIER,
+            fill: '#1e293b',
+            align: 'center',
+          },
+        });
+
+        label.scale.set(1 / RESOLUTION_MULTIPLIER);
+        label.anchor.set(0.5);
+        label.name = 'label';
+        container.addChild(label);
+
+        this.nodeLayer.addChild(container);
+        node.gfx = container;
       }
 
-      // 2. Create/Update
-      this.nodes.forEach(node => {
-          let container = this.nodeLayer.getChildByName(node.id) as Container;
+      // Update Visuals
+      const circle = container.getChildByName('circle') as Graphics;
+      const label = container.getChildByName('label') as Text;
 
-          if (!container) {
-              container = new Container();
-              container.name = node.id;
-              container.eventMode = 'static';
-              container.cursor = 'pointer';
-              container.on('pointerdown', (e) => this.onDragStart(e, node));
-              container.on('pointerup', (e) => this.onDragEnd());
-              container.on('pointerupoutside', (e) => this.onDragEnd());
+      const isSelected = this.selectedNodeId === node.id;
+      const isHovered = this.hoveredNodeId === node.id;
+      const isHoverNeighbor = hoveredNeighbors.has(node.id);
 
-              const circle = new Graphics();
-              circle.name = 'circle';
-              container.addChild(circle);
+      // --- Fill Color ---
+      let fillColor = 0xffffff;
+      if (isSelected) fillColor = 0xeff6ff;
+      else if (node.status === 'shadow') fillColor = 0xf1f5f9;
+      else if (node.type === 'root') fillColor = 0xfee2e2;
 
-              const RESOLUTION_MULTIPLIER = 4;
-              const BASE_SIZE = 16;
+      // --- Stroke Color ---
+      let strokeColor = 0x3b82f6;
+      if (isSelected) strokeColor = 0x2563eb;
+      else if (node.type === 'root') strokeColor = 0xef4444;
 
-              const label = new Text({
-                text: node.id,
-                style: {
-                  fontFamily: '"Noto Sans JP", "Hiragino Kaku Gothic Pro", sans-serif', // Better Kanji fonts
-                  // 2. Render the font HUGE
-                  fontSize: BASE_SIZE * RESOLUTION_MULTIPLIER,
-                  fill: '#1e293b',
-                  align: 'center'
-                }
-              });
+      // --- Stroke Width & Alpha Logic ---
+      // Default: 3 (Selected), 1 (Shadow), 2 (Standard)
+      let strokeWidth = isSelected ? 3 : node.status === 'shadow' ? 1 : 2;
 
-              // 3. Shrink the object back down to normal size
-              // (1 / 4 = 0.25 scale)
-              label.scale.set(1 / RESOLUTION_MULTIPLIER);
+      // Ukibori: If Shadow AND (Hovered OR Connected to Hovered), bump visibility
+      if (node.status === 'shadow' && (isHovered || isHoverNeighbor)) {
+        strokeWidth = 2; // Make it look active
+        strokeColor = 0x94a3b8; // Darker grey to stand out
+      }
 
-              label.anchor.set(0.5);
-              label.name = 'label';
-              container.addChild(label);
+      let alpha = node.status === 'shadow' ? 0.6 : 1.0;
+      if (node.status === 'shadow' && (isHovered || isHoverNeighbor)) {
+        alpha = 1.0;
+      }
 
-              this.nodeLayer.addChild(container);
-              node.gfx = container;
-          }
+      circle.clear();
+      circle.beginPath();
+      circle.roundRect(-20, -20, 40, 40, 20);
+      circle.fill({ color: fillColor, alpha: 1 });
+      circle.stroke({ width: strokeWidth, color: strokeColor, alpha });
 
-          // Update Props
-          const circle = container.getChildByName('circle') as Graphics;
-          const label = container.getChildByName('label') as Text;
-          const isSelected = this.selectedNodeId === node.id;
-
-          let fillColor = 0xffffff;
-          if (isSelected) fillColor = 0xeff6ff;
-          else if (node.status === 'shadow') fillColor = 0xf1f5f9;
-          else if (node.type === 'root') fillColor = 0xfee2e2;
-
-          let strokeColor = 0x3b82f6;
-          if (isSelected) strokeColor = 0x2563eb;
-          else if (node.type === 'root') strokeColor = 0xef4444;
-
-          const strokeWidth = isSelected ? 3 : (node.status === 'shadow' ? 1 : 2);
-          const alpha = node.status === 'shadow' ? 0.6 : 1.0;
-
-          circle.clear();
-          circle.beginPath();
-          circle.roundRect(-20, -20, 40, 40, 20);
-          circle.fill({ color: fillColor, alpha: 1 });
-          circle.stroke({ width: strokeWidth, color: strokeColor, alpha });
-
-          label.style.fill = node.status === 'shadow' ? '#94a3b8' : '#1e293b';
-      });
+      // Label Color Logic
+      if (node.status === 'shadow' && (isHovered || isHoverNeighbor)) {
+        label.style.fill = '#475569'; // Darker text for readability during hover
+      } else {
+        label.style.fill = node.status === 'shadow' ? '#94a3b8' : '#1e293b';
+      }
+    });
   }
 
   private renderTick() {
-      if (!this.linkLayer) return;
+    if (!this.linkLayer) return;
 
-      this.linkLayer.clear();
+    this.linkLayer.clear();
 
-      this.links.forEach(link => {
-          const s = link.source as Node;
-          const t = link.target as Node;
+    // Sort links: Shadows bottom, Active middle, Hovered top
+    this.links.sort((a, b) => {
+      const aHovered =
+        (a.source as Node).id === this.hoveredNodeId ||
+        (a.target as Node).id === this.hoveredNodeId;
+      const bHovered =
+        (b.source as Node).id === this.hoveredNodeId ||
+        (b.target as Node).id === this.hoveredNodeId;
+      return Number(aHovered) - Number(bHovered);
+    });
 
-          if (s.x == null || s.y == null || t.x == null || t.y == null) return;
+    this.links.forEach((link) => {
+      const s = link.source as Node;
+      const t = link.target as Node;
 
-          const isSibling = link.relation === 'sibling';
-          const alpha = isSibling ? 0.3 : 1.0;
-          const color = isSibling ? 0x94a3b8 : 0x64748b;
-          const width = isSibling ? 1 : 2;
+      if (s.x == null || s.y == null || t.x == null || t.y == null) return;
 
-          this.linkLayer.moveTo(s.x, s.y);
-          this.linkLayer.lineTo(t.x, t.y);
-          this.linkLayer.stroke({ width, color, alpha });
-      });
+      const isShadow = s.status === 'shadow' || t.status === 'shadow';
+      const isSibling = link.relation === 'sibling';
+      const connectedToHover =
+        s.id === this.hoveredNodeId || t.id === this.hoveredNodeId;
 
-      this.nodes.forEach(node => {
-          if (node.gfx && node.x != null && node.y != null) {
-              node.gfx.x = node.x;
-              node.gfx.y = node.y;
-          }
-      });
+      let alpha = 1.0;
+      let color = 0x64748b; // Slate 500
+      let width = 2;
+
+      if (isShadow) {
+        if (connectedToHover) {
+          // Ukibori: Hovering a node reveals its shadow connections
+          alpha = 0.6;
+          color = 0x94a3b8;
+          width = 2;
+        } else {
+          // Hikaeme: Inactive shadows are very subtle
+          alpha = 0.15;
+          color = 0xcbd5e1;
+          width = 1;
+        }
+      } else if (isSibling) {
+        // Active siblings are secondary to parent/child
+        alpha = 0.3;
+        color = 0x94a3b8;
+        width = 1;
+      }
+
+      this.linkLayer.moveTo(s.x, s.y);
+      this.linkLayer.lineTo(t.x, t.y);
+      this.linkLayer.stroke({ width, color, alpha });
+    });
+
+    this.nodes.forEach((node) => {
+      if (node.gfx && node.x != null && node.y != null) {
+        node.gfx.x = node.x;
+        node.gfx.y = node.y;
+      }
+    });
   }
 
-  // --- INTERACTION ---
+  // --- INTERACTION HANDLERS ---
+
+  private onNodeHover(nodeId: string | null) {
+    if (this.hoveredNodeId === nodeId) return;
+    this.hoveredNodeId = nodeId;
+
+    // Update visuals immediately without waiting for tick
+    this.syncVisuals();
+    this.renderTick();
+    this.app.render();
+  }
+
   private onDragStart(event: FederatedPointerEvent, node: Node) {
-      if (!this.viewport) return;
-      this.viewport.plugins.pause('drag');
-      this.draggingNode = node;
-      this.selectedNodeId = node.id;
-      if (this.onNodeSelect) this.onNodeSelect(node);
-      this.syncVisuals();
-      if (this.simulation) this.simulation.alphaTarget(0.3).restart();
-      node.fx = node.x;
-      node.fy = node.y;
-      this.viewport.on('pointermove', this.onDragMove, this);
+    if (!this.viewport) return;
+    this.viewport.plugins.pause('drag');
+    this.draggingNode = node;
+    this.selectedNodeId = node.id;
+
+    if (this.onNodeSelect) this.onNodeSelect(node);
+
+    this.syncVisuals();
+    if (this.simulation) this.simulation.alphaTarget(0.1).restart();
+
+    node.fx = node.x;
+    node.fy = node.y;
+    this.viewport.on('pointermove', this.onDragMove, this);
   }
 
   private onDragMove(event: FederatedPointerEvent) {
-      if (!this.draggingNode || !this.viewport) return;
-      const worldPos = this.viewport.toWorld(event.global);
-      this.draggingNode.fx = worldPos.x;
-      this.draggingNode.fy = worldPos.y;
+    if (!this.draggingNode || !this.viewport) return;
+    const worldPos = this.viewport.toWorld(event.global);
+    this.draggingNode.fx = worldPos.x;
+    this.draggingNode.fy = worldPos.y;
   }
 
   private onDragEnd() {
-      if (!this.draggingNode || !this.viewport) return;
-      this.viewport.plugins.resume('drag');
-      if (this.simulation) this.simulation.alphaTarget(0);
-      this.draggingNode.fx = null;
-      this.draggingNode.fy = null;
-      this.draggingNode = null;
-      this.viewport.off('pointermove', this.onDragMove, this);
+    if (!this.draggingNode || !this.viewport) return;
+    this.viewport.plugins.resume('drag');
+    if (this.simulation) this.simulation.alphaTarget(0);
+    this.draggingNode.fx = null;
+    this.draggingNode.fy = null;
+    this.draggingNode = null;
+    this.viewport.off('pointermove', this.onDragMove, this);
   }
 }
