@@ -119,9 +119,9 @@ fn run() -> Result<(), RuntimeError> {
 
     let mut config = Website::<Global>::design();
 
-    let styles = config.load_css("styles/**/[!_]*.scss", "styles/")?;
-    let scripts = config.load_js("scripts/**/main.ts", "scripts/")?;
-    let svelte = config.load_svelte("scripts/**/App.svelte", "scripts/")?;
+    let styles = config.load_css("styles/**/[!_]*.scss", "styles/**/*.scss")?;
+    let scripts = config.load_js("scripts/**/main.ts", "scripts/**/*.ts")?;
+    let svelte = config.load_svelte("scripts/**/App.svelte", "scripts/**/*.svelte")?;
 
     let images =
         config.load_images(&["content/**/*.jpg", "content/**/*.png", "content/**/*.gif"])?;
