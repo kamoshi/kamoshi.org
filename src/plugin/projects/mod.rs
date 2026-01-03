@@ -1,6 +1,6 @@
 mod radicals;
 
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Stylesheet}; // Document is removed from imports
 use hauchiwa::{Blueprint, Handle, Output, task};
@@ -49,14 +49,14 @@ pub fn build_projects(
             .collect();
 
         project_views.push(ProjectView {
-            title: "Radicals",
+            title: "Constellations",
             tech: vec!["Svelte".into(), "TypeScript".into()],
             link: Utf8PathBuf::from("/")
                 .join(&page_radicals.url)
                 .parent()
                 .unwrap()
                 .to_string(),
-            desc: Some("An interactive graph of related radicals and kanji."),
+            desc: Some("Try adding kanji you know and see how they connect to each other."),
         });
 
         let mut pages = vec![];
