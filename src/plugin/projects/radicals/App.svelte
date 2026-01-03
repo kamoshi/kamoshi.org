@@ -42,7 +42,7 @@
       console.warn("Failed to load graph state", e);
     }
     // Default fallback if storage is empty
-    activeRoots = new Set(["陽"]);
+    activeRoots = new Set(["星"]);
   }
 
   // --- 2. Save Persistence Helper ---

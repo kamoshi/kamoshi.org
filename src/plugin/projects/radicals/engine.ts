@@ -676,7 +676,15 @@ export class KanjiGraphEngine {
 
       starBody.clear();
 
-      // 1. Draw Glow (Outer Haze)
+      // 1. Hitbox
+      // Draw a transparent circle first. This expands the clickable area
+      // without affecting the visual rendering.
+      // We set a minimum radius of 25px for easy clicking.
+      starBody.circle(0, 0, 25);
+      // Alpha 0 is invisible but still registers as a hit in the container
+      starBody.fill({ color: 0x000000, alpha: 0 });
+
+      // 2. Glow (Outer Haze)
       if (node.status !== 'shadow' || isHovered || isHoverNeighbor) {
         starBody.circle(0, 0, coreRadius * 3);
         starBody.fill({ color: glowColor, alpha: 0.2 * alpha });
@@ -685,11 +693,11 @@ export class KanjiGraphEngine {
         starBody.fill({ color: glowColor, alpha: 0.4 * alpha });
       }
 
-      // 2. Draw Core (Solid Star)
+      // 3. Core (Solid Star)
       starBody.circle(0, 0, coreRadius);
       starBody.fill({ color: coreColor, alpha: alpha });
 
-      // 3. Optional: Tiny white center for extra shine
+      // 4. Optional: Tiny white center for extra shine
       if (node.type === 'root' || isSelected) {
         starBody.circle(0, 0, coreRadius * 0.4);
         starBody.fill({ color: '#ffffff', alpha: 1 });
