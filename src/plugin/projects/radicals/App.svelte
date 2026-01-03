@@ -247,11 +247,11 @@
     </div>
   {/if}
 
-  <div class="legend">
+  <!-- <div class="legend">
     <div class="legend-item"><span class="dot root"></span> Root</div>
     <div class="legend-item"><span class="dot visible"></span> Loaded</div>
     <div class="legend-item"><span class="dot shadow"></span> Unloaded</div>
-  </div>
+  </div> -->
 
   <div class="kanji-counter">
     {activeRoots.size}
