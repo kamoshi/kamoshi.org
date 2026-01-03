@@ -11,6 +11,7 @@ use hauchiwa::{
 };
 use hypertext::{Raw, Renderable};
 
+use crate::plugin::make_bare;
 use crate::{Global, plugin::make_fullscreen};
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
@@ -96,7 +97,7 @@ pub fn build(
 
         let scripts = &[hydration];
 
-        let html = make_fullscreen(
+        let html = make_bare(
             ctx,
             Raw::dangerously_create(format!(r#"<main>{}</main>"#, prerender(&props)?)),
             "Radicals".into(),
