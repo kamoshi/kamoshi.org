@@ -11,3 +11,4 @@
 2025-07-17T21:25:52.824Z    日本語は、読むより書くほうが難しくて、アウトプットが大変ってことね
 2025-07-21T21:53:29.274Z    I've uploaded a new version 0.6.1 of the hauchiwa static site generator to [crates.io](https://crates.io/crates/hauchiwa). It features completely reworked API and it's also way more future-proof.
 2025-12-13T21:43:05.350Z    Half year ago I've bought a MacBook Air with the M4 processor and it's been great so far. I'm really enjoying the performance and battery life. This is probably the best possible ARM laptop on the market right now. Maybe some day Linux ARM laptops will be as good as Apple's.
+2026-01-03T21:50:17.445Z    Came across this album titled [「春と修羅」](https://youtu.be/bbNNDP6IA5U), which I remember someone recommended to me back in 2018. It's really good, and it fills me with nostalgia. The way I came across it is kinda funny, because I was thinking about trying to search for it, and after a week or two I saw it inside a meme.
