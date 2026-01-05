@@ -120,6 +120,7 @@ export class KanjiGraphEngine {
   private shootingStarRarity: number;
 
   // Callbacks
+  public onStatsUpdate: ((active: number, total: number) => void) | null = null;
   public onNodeSelect: ((node: Node | null) => void) | null = null;
   public onReady: (() => void) | null = null;
 
@@ -445,6 +446,8 @@ export class KanjiGraphEngine {
         ease: 'easeInOutSine',
       });
     }
+
+    this.emitStats();
   }
 
   public expandNode(targetId: string) {
@@ -507,6 +510,7 @@ export class KanjiGraphEngine {
 
     this.syncVisuals();
     this.updateSimulation();
+    this.emitStats();
   }
 
   public hideNode(targetId: string) {
@@ -532,6 +536,7 @@ export class KanjiGraphEngine {
     }
     this.syncVisuals();
     this.updateSimulation();
+    this.emitStats();
   }
 
   // --- INTERNAL UTILS ---
@@ -827,5 +832,18 @@ export class KanjiGraphEngine {
     this.draggingNode.fy = null;
     this.draggingNode = null;
     this.viewport.off('pointermove', this.onDragMove, this);
+  }
+
+  private emitStats() {
+    if (!this.onStatsUpdate) return;
+
+    // "Active" = Full visible nodes (Roots + Standard)
+    const activeCount = this.nodes.filter((n) => n.status === 'visible').length;
+
+    // "Total" = All nodes currently in the render loop (Active + Shadows)
+    // This strictly excludes any data NOT currently on canvas.
+    const totalRenderedCount = this.nodes.length;
+
+    this.onStatsUpdate(activeCount, totalRenderedCount);
   }
 }

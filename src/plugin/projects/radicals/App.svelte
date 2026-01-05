@@ -23,6 +23,7 @@
   let loadingApi = $state(false);
   let engine = $state<KanjiGraphEngine | null>(null);
   let isEngineReady = $state(false);
+  let graphStats = $state({ active: 0, total: 0 });
 
   // Track active roots for persistence
   let activeRoots = $state<Set<string>>(new Set());
@@ -70,6 +71,10 @@
 
     instance.onNodeSelect = (node) => {
       selectedNode = node;
+    };
+
+    instance.onStatsUpdate = (active, total) => {
+      graphStats = { active, total };
     };
 
     instance.onReady = () => {
@@ -254,6 +259,6 @@
   </div> -->
 
   <div class="kanji-counter">
-    {activeRoots.size}
+    {graphStats.active} / {graphStats.total}
   </div>
 </div>
