@@ -1,5 +1,5 @@
 ---
-title: Computer Science lore
+title: Computer Science
 ---
 
 ## General
@@ -12,4 +12,3 @@ title: Computer Science lore
 ## Haskell
 
 - [A History of Haskell: Being Lazy With Class](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/history.pdf)
-
