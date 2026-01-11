@@ -7,6 +7,8 @@ pub mod tags;
 pub mod twtxt;
 pub mod wiki;
 
+pub mod datalog;
+
 use std::collections::HashMap;
 
 use camino::Utf8Path;

@@ -1042,6 +1042,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "crepe"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d6bb2d4233a2b6b6e72b1cfbf5190dd329a37325d6be25c23536d5cc9b0b0df"
+dependencies = [
+ "petgraph 0.6.5",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.114",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2395,6 +2408,7 @@ dependencies = [
  "chrono",
  "clap",
  "comrak",
+ "crepe",
  "emojis 0.8.0",
  "encoding_rs",
  "flate2",

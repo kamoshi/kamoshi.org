@@ -1,22 +1,18 @@
 use std::collections::HashMap;
 
+use camino::Utf8Path;
 use hauchiwa::error::HauchiwaError;
-use hauchiwa::loader::{Assets, Image, Stylesheet};
+use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
 use hauchiwa::page::{absolutize, normalize_prefixed};
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, maud_borrow, prelude::*};
 
 use crate::md::WikiLinkResolver;
 use crate::model::Wiki;
+use crate::plugin::datalog::Datalog;
 use crate::{Global, Link};
 
 use super::make_page;
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-struct Props {
-    root: String,
-    data: HashMap<String, Vec<String>>,
-}
 
 pub fn build(
     config: &mut Blueprint<Global>,
@@ -26,79 +22,98 @@ pub fn build(
     let input = config.load_documents::<Wiki>("content/wiki/**/*.md")?;
 
     Ok(task!(config, |ctx, input, images, styles| {
-        let mut pages = vec![];
-
         let styles = &[
             styles.get("styles/styles.scss")?,
             styles.get("styles/layouts/page.scss")?,
         ];
 
+        // documents ordered sequentially, index can be used as datalog id
+        let documents = input
+            .values()
+            .map(|document| (document.href("content/"), document))
+            .collect::<Vec<_>>();
+
+        // this can track complex relationships between documents
+        let mut datalog = Datalog::new();
+
+        // this can resolve wiki links
+        let resolver = WikiLinkResolver::from_assets::<Wiki>("content/", input);
+
+        // pass 1: parse markdown
+        let parsed = {
+            let mut parsed = Vec::new();
+
+            for (id, (href, doc)) in documents.iter().enumerate() {
+                let (html, refs) = crate::md::parse_markdown(&doc.body, &resolver)?;
+
+                for target in &refs {
+                    if let Some(target) = documents.iter().position(|(href, _)| href == target) {
+                        datalog.add_link(id, target);
+                    }
+                }
+
+                parsed.push((id, doc, html, href));
+            }
+
+            parsed
+        };
+
+        // here we can solve the datalog rules
+        let solution = datalog.solve();
+
+        // this tracks the parent child relationships between documents, for now
         let tree = TreePage::from_iter(input.values().map(|item| Link {
             path: absolutize("content", &item.path),
             name: item.metadata.title.clone(),
             desc: None,
         }));
 
-        let resolver = WikiLinkResolver::from_assets::<Wiki>("content/", input);
+        // pass 2: render html
+        let pages = {
+            let mut pages = vec![];
 
-        // Pre-calculation: Parse HTML and Build Backlink Map
-        // Target URL -> List of Source Links (pages that point to Target)
-        let mut backlinks = HashMap::new();
-        // Keep parsed HTML to avoid parsing Markdown twice
-        let mut parsed = Vec::new();
+            for (id, document, html, href) in &parsed {
+                let path_parts = Utf8Path::new(href)
+                    .strip_prefix("/")
+                    .unwrap()
+                    .iter()
+                    .collect::<Vec<_>>();
 
-        for doc in input.values() {
-            let (html, refs) = crate::md::parse_markdown(&doc.body, &resolver)?;
-            let href = doc.href("content/");
+                let backrefs = solution.get_backlinks(*id).map(|slice| {
+                    slice
+                        .iter()
+                        .map(|index| &documents[*index])
+                        .collect::<Vec<_>>()
+                });
 
-            for target in &refs {
-                backlinks
-                    .entry(target.clone())
-                    .or_insert_with(Vec::new)
-                    .push((href.clone(), doc.metadata.title.clone()));
-            }
-
-            parsed.push((doc, html, href, refs));
-        }
-
-        for (doc, html, href, refs) in parsed {
-            let path_parts = doc
-                .path
-                .strip_prefix("content/")
-                .unwrap()
-                .iter()
-                .collect::<Vec<_>>();
-
-            // Fetch backlinks for this specific page, if any
-            let backrefs = backlinks.get(&href).map(Vec::as_slice);
-
-            let props = Props {
-                root: href.clone(),
-                data: HashMap::new(),
-            };
-
-            let main = maud_borrow!(
-                main .wiki-main {
-                    // Outline
-                    aside .outline {
-                        section {
-                            div {
-                                (show_page_tree(&tree, &path_parts))
+                let main = maud_borrow!(
+                    main .wiki-main {
+                        // Outline
+                        aside .outline {
+                            section {
+                                div {
+                                    (show_page_tree(&tree, &path_parts))
+                                }
                             }
                         }
+
+                        // Article
+                        (render_article(&document.metadata, html, backrefs.as_deref()))
                     }
+                );
 
-                    // Article
-                    (render_article(&doc.metadata, &html, &refs, backrefs))
-                }
-            );
+                let page = make_page(ctx, main, document.metadata.title.to_owned(), styles, &[])?
+                    .render()
+                    .into_inner();
 
-            let page = make_page(ctx, main, doc.metadata.title.to_owned(), styles, &[])?
-                .render()
-                .into_inner();
+                pages.push(Output::html(
+                    normalize_prefixed("content", &document.path),
+                    page,
+                ));
+            }
 
-            pages.push(Output::html(normalize_prefixed("content", &doc.path), page));
-        }
+            pages
+        };
 
         Ok(pages)
     }))
@@ -107,8 +122,7 @@ pub fn build(
 fn render_article(
     meta: &Wiki,
     text: &str,
-    refs: &[String],
-    backlinks: Option<&[(String, String)]>,
+    backlinks: Option<&[&(String, &Document<Wiki>)]>,
 ) -> impl Renderable {
     maud!(
         article .article {
@@ -136,7 +150,7 @@ fn render_article(
                         @for link in backlinks {
                             li {
                                 "Is referenced by "
-                                a href=(link.0) { (&link.1) }
+                                a href=(link.0) { (&link.1.metadata.title) }
                             }
                         }
                     }
