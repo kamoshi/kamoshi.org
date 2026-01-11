@@ -4,6 +4,7 @@ version = "0.0.0"
 edition = "2024"
 
 [dependencies]
+comrak                  = { version = "0.49", default-features = false, features = ["shortcodes"] }
 camino                  = { version = "1.2", features = ["serde1"] }
 chrono                  = "0.4"
 clap                    = { version = "4.5", features = ["derive"] }
@@ -20,6 +21,7 @@ serde                   = { version = "1.0", features = ["derive"] }
 sequoia-openpgp         = { version = "2.0.0", default-features = false, features = ["crypto-openssl"] }
 sitemap-rs              = "0.4"
 ts-rs                   = "11"
+thiserror               = "2.0"
 
 flate2 = "1.0"                                          # For GZIP decompression
 encoding_rs = "0.8"                                     # For EUC-JP decoding

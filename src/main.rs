@@ -1,4 +1,5 @@
 mod markdown;
+mod md;
 mod model;
 mod plugin;
 mod rss;
@@ -25,7 +26,6 @@ use crate::plugin::projects::build_projects;
 use crate::plugin::slides::build_slides;
 use crate::plugin::tags::build_tags;
 use crate::plugin::twtxt::build_twtxt;
-use crate::plugin::wiki::build_wiki;
 use crate::plugin::{make_fullscreen, make_page};
 
 /// Base path for content files
@@ -140,9 +140,11 @@ fn run() -> Result<(), RuntimeError> {
     let _ = build_twtxt(&mut config, styles)?;
     let (posts_data, posts) = build_posts(&mut config, images, styles, scripts, bibtex)?;
     let slides = build_slides(&mut config, images, styles, scripts)?;
-    let _ = build_wiki(&mut config, images, styles)?;
     let _ = build_projects(&mut config, styles)?;
     let _ = build_tags(&mut config, posts_data, styles)?;
+
+    // digital garden
+    let _ = crate::plugin::wiki::build(&mut config, images, styles)?;
 
     let other = task!(config, |ctx, styles, scripts, svelte| {
         let mut pages = vec![];

@@ -1,26 +1,31 @@
 use std::collections::HashMap;
 
-use camino::Utf8Path;
-use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
+use hauchiwa::error::HauchiwaError;
+use hauchiwa::loader::{Assets, Image, Stylesheet};
 use hauchiwa::page::{absolutize, normalize_prefixed};
 use hauchiwa::{Blueprint, Handle, Output, task};
-use hypertext::{Raw, prelude::*};
+use hypertext::{Raw, maud_borrow, prelude::*};
 
-use crate::markdown::Article;
+use crate::md::WikiLinkResolver;
 use crate::model::Wiki;
-use crate::{Context, Global, Link};
+use crate::{Global, Link};
 
-use super::{make_page, render_bibliography};
+use super::make_page;
 
-pub fn build_wiki(
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct Props {
+    root: String,
+    data: HashMap<String, Vec<String>>,
+}
+
+pub fn build(
     config: &mut Blueprint<Global>,
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
-    let wiki = config.load_documents::<Wiki>("content/wiki/**/*.md")?;
+    let input = config.load_documents::<Wiki>("content/wiki/**/*.md")?;
 
-    Ok(task!(config, |ctx, wiki, images, styles| {
+    Ok(task!(config, |ctx, input, images, styles| {
         let mut pages = vec![];
 
         let styles = &[
@@ -28,73 +33,82 @@ pub fn build_wiki(
             styles.get("styles/layouts/page.scss")?,
         ];
 
-        for doc in wiki.values() {
-            // let pattern = format!("{}/*", item.file.area);
-            // let bibtex = ctx.glob::<Bibtex>(&pattern)?.into_iter().next();
+        let tree = TreePage::from_iter(input.values().map(|item| Link {
+            path: absolutize("content", &item.path),
+            name: item.metadata.title.clone(),
+            desc: None,
+        }));
 
-            // let mut js = vec![];
+        let resolver = WikiLinkResolver::from_assets::<Wiki>("content/", input);
 
-            // for path in &item.metadata {
-            //     js.push(path.to_string());
-            // }
+        // Pre-calculation: Parse HTML and Build Backlink Map
+        // Target URL -> List of Source Links (pages that point to Target)
+        let mut backlinks = HashMap::new();
+        // Keep parsed HTML to avoid parsing Markdown twice
+        let mut parsed = Vec::new();
 
-            let article = crate::markdown::parse(&doc.body, &doc.path, None, Some(images))?;
+        for doc in input.values() {
+            let (html, refs) = crate::md::parse_markdown(&doc.body, &resolver)?;
+            let href = doc.href("content/");
 
-            let buffer = render(
-                ctx,
-                &doc.metadata,
-                &article,
-                "".into(),
-                None,
-                wiki,
-                styles,
-                &[],
-            )?
-            .render()
-            .into_inner();
+            for target in &refs {
+                backlinks
+                    .entry(target.clone())
+                    .or_insert_with(Vec::new)
+                    .push((href.clone(), doc.metadata.title.clone()));
+            }
 
-            pages.push(Output::html(
-                normalize_prefixed("content", &doc.path),
-                buffer,
-            ));
+            parsed.push((doc, html, href, refs));
+        }
+
+        for (doc, html, href, refs) in parsed {
+            let path_parts = doc
+                .path
+                .strip_prefix("content/")
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>();
+
+            // Fetch backlinks for this specific page, if any
+            let backrefs = backlinks.get(&href).map(Vec::as_slice);
+
+            let props = Props {
+                root: href.clone(),
+                data: HashMap::new(),
+            };
+
+            let main = maud_borrow!(
+                main .wiki-main {
+                    // Outline
+                    aside .outline {
+                        section {
+                            div {
+                                (show_page_tree(&tree, &path_parts))
+                            }
+                        }
+                    }
+
+                    // Article
+                    (render_article(&doc.metadata, &html, &refs, backrefs))
+                }
+            );
+
+            let page = make_page(ctx, main, doc.metadata.title.to_owned(), styles, &[])?
+                .render()
+                .into_inner();
+
+            pages.push(Output::html(normalize_prefixed("content", &doc.path), page));
         }
 
         Ok(pages)
     }))
 }
 
-pub fn render<'ctx>(
-    ctx: &'ctx Context,
-    meta: &'ctx Wiki,
-    article: &'ctx Article,
-    slug: &'ctx Utf8Path,
-    library_path: Option<&'ctx Utf8Path>,
-    wiki: &'ctx Assets<Document<Wiki>>,
-    styles: &'ctx [&Stylesheet],
-    scripts: &'ctx [&Script],
-) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let main = maud!(
-        main .wiki-main {
-            // Outline
-            aside .outline {
-                section {
-                    div {
-                        (show_page_tree(slug, wiki))
-                    }
-                }
-            }
-            // Article
-            (render_article(meta, article, library_path))
-        }
-    );
-
-    make_page(ctx, main, meta.title.to_owned(), styles, scripts)
-}
-
 fn render_article(
     meta: &Wiki,
-    article: &Article,
-    library_path: Option<&Utf8Path>,
+    text: &str,
+    refs: &[String],
+    backlinks: Option<&[(String, String)]>,
 ) -> impl Renderable {
     maud!(
         article .article {
@@ -105,12 +119,28 @@ fn render_article(
                     }
                 }
                 section .wiki-article__markdown.markdown {
-                    (Raw::dangerously_create(&article.text))
+                    (Raw::dangerously_create(text))
                 }
             }
 
-            @if let Some(bib) = &article.bibliography.0 {
-                (render_bibliography(bib, library_path))
+            // @if let Some(bib) = &article.bibliography.0 {
+            //     (render_bibliography(bib, library_path))
+            // }
+
+            // Backlinks Footer
+            @if let Some(backlinks) = backlinks {
+                div {
+                    h3 { "Backlinks" }
+
+                    ul .backlinks-list {
+                        @for link in backlinks {
+                            li {
+                                "Is referenced by "
+                                a href=(link.0) { (&link.1) }
+                            }
+                        }
+                    }
+                }
             }
         }
     )
@@ -150,18 +180,9 @@ impl TreePage {
 
 /// Render the page tree
 pub(crate) fn show_page_tree<'ctx>(
-    ctx: &'ctx Utf8Path,
-    wiki: &'ctx Assets<Document<Wiki>>,
+    tree: &'ctx TreePage,
+    path: &'ctx [&str],
 ) -> impl Renderable + use<'ctx> {
-    let tree = wiki.values().map(|item| Link {
-        path: absolutize("content", &item.path),
-        name: item.metadata.title.clone(),
-        desc: None,
-    });
-
-    let tree = TreePage::from_iter(tree);
-    let parts: Vec<_> = ctx.iter().collect();
-
     maud!(
         h2 .link-tree__heading {
           // {pages.chain(x => x.prefix)
@@ -172,14 +193,14 @@ pub(crate) fn show_page_tree<'ctx>(
           // )}
         }
         nav .link-tree__nav {
-            (show_page_tree_level(&tree, &parts))
+            (show_page_tree_level(tree, path))
         }
     )
 }
 
 fn show_page_tree_level<'ctx>(
     tree: &'ctx TreePage,
-    parts: &'ctx [&str],
+    path: &'ctx [&str],
 ) -> impl Renderable + use<'ctx> {
     let subs = {
         let mut subs: Vec<_> = tree.subs.iter().collect();
@@ -202,9 +223,9 @@ fn show_page_tree_level<'ctx>(
                             }
                         }
                     }
-                    @if let Some(part) = parts.first() {
+                    @if let Some(part) = path.first() {
                         @if key == part && !next.subs.is_empty()  {
-                            (show_page_tree_level(next, &parts[1..]))
+                            (show_page_tree_level(next, &path[1..]))
                         }
                     }
                 }
