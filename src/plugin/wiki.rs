@@ -3,14 +3,13 @@ use std::collections::HashMap;
 use camino::Utf8Path;
 use hauchiwa::error::HauchiwaError;
 use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
-use hauchiwa::page::{absolutize, normalize_prefixed};
+use hauchiwa::page::normalize_prefixed;
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, maud_borrow, prelude::*};
 
+use crate::Global;
 use crate::md::WikiLinkResolver;
 use crate::model::Wiki;
-use crate::plugin::datalog::Datalog;
-use crate::{Global, Link};
 
 use super::make_page;
 
@@ -39,7 +38,7 @@ pub fn build(
         };
 
         // this can track complex relationships between documents
-        let mut datalog = Datalog::new();
+        let mut datalog = super::datalog::Datalog::new();
 
         // this can resolve wiki links
         let resolver = WikiLinkResolver::from_assets::<Wiki>("content/", input);
@@ -52,9 +51,45 @@ pub fn build(
                 let (html, refs) = crate::md::parse_markdown(&document.body, &resolver)?;
                 let href = document.href("content/");
 
+                // Datalog: add wiki links
                 for target_href in &refs {
                     if doc_map.contains_key(target_href.as_str()) {
                         datalog.add_link(&href, target_href);
+                    }
+                }
+
+                // Datalog: add parent hierarchy
+                {
+                    let mut ptr = Utf8Path::new(&href);
+
+                    // Track the current child (start with the document itself)
+                    let mut current_child_str = href.clone();
+
+                    while let Some(parent) = ptr.parent() {
+                        let parent_str = parent.as_str();
+                        if parent_str.is_empty() {
+                            break;
+                        }
+
+                        // Normalize parent to ensure trailing slash
+                        let parent_normalized = if parent_str == "/" {
+                            "/".to_string()
+                        } else if !parent_str.ends_with('/') {
+                            format!("{}/", parent_str)
+                        } else {
+                            parent_str.to_string()
+                        };
+
+                        // LINK: Parent -> Child
+                        datalog.add_parent(&parent_normalized, &current_child_str);
+
+                        // UPDATE: The parent becomes the child for the next iteration
+                        current_child_str = parent_normalized;
+                        ptr = parent;
+
+                        if ptr == "/" {
+                            break;
+                        }
                     }
                 }
 
@@ -67,24 +102,11 @@ pub fn build(
         // here we can solve the datalog rules
         let solution = datalog.solve();
 
-        // this tracks the parent child relationships between documents, for now
-        let tree = TreePage::from_iter(input.values().map(|item| Link {
-            path: absolutize("content", &item.path),
-            name: item.metadata.title.clone(),
-            desc: None,
-        }));
-
         // pass 2: render html
         let pages = {
             let mut pages = vec![];
 
             for (document, html, href) in &parsed {
-                let path_parts = Utf8Path::new(href)
-                    .strip_prefix("/")
-                    .unwrap()
-                    .iter()
-                    .collect::<Vec<_>>();
-
                 // Get backlinks (list of href strings) and map them to Document objects
                 let backrefs = solution.get_backlinks(href).map(|hrefs| {
                     hrefs
@@ -100,7 +122,7 @@ pub fn build(
                         aside .outline {
                             section {
                                 div {
-                                    (show_page_tree(&tree, &path_parts))
+                                    (TreeContext::new("/", href, &doc_map, &solution))
                                 }
                             }
                         }
@@ -149,7 +171,6 @@ fn render_article(
             //     (render_bibliography(bib, library_path))
             // }
 
-            // Backlinks Footer
             @if let Some(backlinks) = backlinks {
                 div .backlinks {
                     h3 { "Backlinks" }
@@ -167,86 +188,84 @@ fn render_article(
     )
 }
 
-#[derive(Debug)]
-pub struct TreePage {
-    pub link: Option<Link>,
-    pub subs: HashMap<String, TreePage>,
+// Helper struct to bundle the context needed for rendering
+struct TreeContext<'a> {
+    root: &'a str,
+    href: &'a str,
+    solution: &'a super::datalog::Solution,
+    resolved: &'a HashMap<String, &'a Document<Wiki>>,
 }
 
-impl TreePage {
-    fn new() -> Self {
-        TreePage {
-            link: None,
-            subs: HashMap::new(),
+impl<'a> TreeContext<'a> {
+    fn new(
+        root: &'a str,
+        href: &'a str,
+        resolved: &'a HashMap<String, &Document<Wiki>>,
+        solution: &'a super::datalog::Solution,
+    ) -> Self {
+        Self {
+            root,
+            href,
+            solution,
+            resolved,
         }
-    }
-
-    fn add_link(&mut self, link: &Link) {
-        let mut ptr = self;
-        for part in link.path.iter().skip(1) {
-            ptr = ptr.subs.entry(part.to_string()).or_insert(TreePage::new());
-        }
-        ptr.link = Some(link.clone());
-    }
-
-    fn from_iter(iter: impl Iterator<Item = Link>) -> Self {
-        let mut tree = Self::new();
-        for link in iter {
-            tree.add_link(&link);
-        }
-
-        tree
     }
 }
 
-/// Render the page tree
-pub(crate) fn show_page_tree<'ctx>(
-    tree: &'ctx TreePage,
-    path: &'ctx [&str],
-) -> impl Renderable + use<'ctx> {
-    maud!(
-        h2 .link-tree__heading {
-          // {pages.chain(x => x.prefix)
-          //   .map(pathify)
-          //   .mapOrDefault(href =>
-          //     <a class="link-tree__heading-text" href={href}>{heading}</a>,
-          //     <span class="link-tree__heading-text">{heading}</span>
-          // )}
-        }
-        nav .link-tree__nav {
-            (show_page_tree_level(tree, path))
-        }
-    )
+impl hypertext::Renderable for TreeContext<'_> {
+    fn render_to(&self, buffer: &mut hypertext::Buffer<hypertext::context::Node>) {
+        maud!(
+            nav .link-tree__nav {
+                (show_tree_recursive(self, self.root))
+            }
+        )
+        .render_to(buffer);
+    }
 }
 
-fn show_page_tree_level<'ctx>(
-    tree: &'ctx TreePage,
-    path: &'ctx [&str],
-) -> impl Renderable + use<'ctx> {
-    let subs = {
-        let mut subs: Vec<_> = tree.subs.iter().collect();
-        subs.sort_by(|a, b| a.0.cmp(b.0));
-        subs
-    };
+fn show_tree_recursive(ctx: &TreeContext<'_>, href: &str) -> impl Renderable {
+    let children = ctx.solution.get_children(href).map(|mut kids| {
+        kids.sort();
+        kids
+    });
 
     maud!(
-        ul .link-tree__nav-list {
-            @for (key, next) in &subs {
-                li .link-tree__nav-list-item {
-                    span .link-tree__nav-list-text {
-                        @if let Some(ref link) = next.link {
-                            a .link-tree__nav-list-text.link href=(link.path.as_str()) {
-                                (&link.name)
-                            }
-                        } @else {
-                            span .link-tree__nav-list-text {
-                                (key)
+        @if let Some(children) = &children {
+            ul .link-tree__nav-list {
+                @for child_href in children {
+                    // Determine display name: Title if doc exists, else directory name
+                    @let (name, is_link) = if let Some(doc) = ctx.resolved.get(*child_href) {
+                        (doc.metadata.title.as_str(), true)
+                    } else {
+                        // Fallback: extract last folder name from "/wiki/cs/languages/" -> "languages"
+                        let name = child_href.trim_end_matches('/').split('/').next_back().unwrap_or(child_href);
+                        (name, false)
+                    };
+
+                    // Check if this child is part of the active path (to expand it)
+                    // e.g. if active is "/wiki/cs/datalog/", then "/wiki/cs/" is active
+                    @let is_active_path = ctx.href.starts_with(child_href);
+                    @let is_current_page = ctx.href == *child_href;
+
+                    li .link-tree__nav-list-item {
+                        span .link-tree__nav-list-text {
+                            @if is_link {
+                                a .link-tree__nav-list-text.link
+                                    .active[is_current_page]
+                                    href=(child_href)
+                                {
+                                    (name)
+                                }
+                            } @else {
+                                // a hole
+                                span .link-tree__nav-list-text { (name) }
                             }
                         }
-                    }
-                    @if let Some(part) = path.first() {
-                        @if key == part && !next.subs.is_empty()  {
-                            (show_page_tree_level(next, &path[1..]))
+
+                        // expand children if this node is part of the active
+                        // path, or if it's not a link
+                        @if is_active_path || !is_link {
+                            (show_tree_recursive(ctx, child_href))
                         }
                     }
                 }

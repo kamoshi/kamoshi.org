@@ -1,4 +1,3 @@
-//// datalog.rs
 use std::collections::HashMap;
 
 // rules
@@ -10,6 +9,14 @@ crepe::crepe! {
     struct Backlink(usize, usize);
 
     Backlink(target, source) <- Link(source, target);
+
+    @input
+    struct Parent(usize, usize);
+
+    @output
+    struct Child(usize, usize);
+
+    Child(child, parent) <- Parent(parent, child);
 }
 
 pub struct Datalog {
@@ -48,8 +55,22 @@ impl Datalog {
         self.runtime.link.push(Link(source_id, target_id));
     }
 
+    pub fn add_parent(&mut self, parent: &str, child: &str) {
+        let p_id = self.intern(parent);
+        let c_id = self.intern(child);
+        self.runtime.parent.push(Parent(p_id, c_id));
+    }
+
     pub fn solve(self) -> Solution {
-        let (backlinks,) = self.runtime.run();
+        let parents = {
+            let mut map = HashMap::new();
+            for &Parent(parent, child) in &self.runtime.parent {
+                map.insert(child, parent);
+            }
+            map
+        };
+
+        let (backlinks, children) = self.runtime.run();
 
         Solution {
             // We move the reverse map into the solution so we can look up names later
@@ -61,6 +82,14 @@ impl Datalog {
                 }
                 map
             },
+            children: {
+                let mut map = HashMap::new();
+                for Child(child, parent) in children {
+                    map.entry(parent).or_insert_with(Vec::new).push(child);
+                }
+                map
+            },
+            parents,
         }
     }
 }
@@ -70,18 +99,33 @@ pub struct Solution {
     names: Vec<String>,
     // Stores ID -> List<ID>
     backlinks: HashMap<usize, Vec<usize>>,
+    // Map child_id -> parent_id
+    parents: HashMap<usize, usize>,
+    // Map parent_id -> Vec<child_id>
+    children: HashMap<usize, Vec<usize>>,
 }
 
 impl Solution {
-    /// Returns the list of source `hrefs` that link to the target `href`
     pub fn get_backlinks(&self, target_href: &str) -> Option<Vec<&str>> {
         let target_id = self.names.iter().position(|n| n == target_href)?;
+        self.backlinks
+            .get(&target_id)
+            .map(|sources| sources.iter().map(|&id| self.names[id].as_str()).collect())
+    }
 
-        self.backlinks.get(&target_id).map(|sources| {
-            sources
-                .iter()
-                .map(|&source_id| self.names[source_id].as_str())
-                .collect()
-        })
+    /// Get the parent href for a given child href
+    pub fn get_parent(&self, child_href: &str) -> Option<&str> {
+        let child_id = self.names.iter().position(|n| n == child_href)?;
+        self.parents
+            .get(&child_id)
+            .map(|&id| self.names[id].as_str())
+    }
+
+    /// Get children hrefs for a given parent href
+    pub fn get_children(&self, parent_href: &str) -> Option<Vec<&str>> {
+        let parent_id = self.names.iter().position(|n| n == parent_href)?;
+        self.children
+            .get(&parent_id)
+            .map(|children| children.iter().map(|&id| self.names[id].as_str()).collect())
     }
 }
