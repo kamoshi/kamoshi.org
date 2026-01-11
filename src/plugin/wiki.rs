@@ -27,11 +27,16 @@ pub fn build(
             styles.get("styles/layouts/page.scss")?,
         ];
 
-        // documents ordered sequentially, index can be used as datalog id
-        let documents = input
-            .values()
-            .map(|document| (document.href("content/"), document))
-            .collect::<Vec<_>>();
+        // href -> document
+        let doc_map = {
+            let mut doc_map = HashMap::new();
+
+            for document in input.values() {
+                doc_map.insert(document.href("content/"), document);
+            }
+
+            doc_map
+        };
 
         // this can track complex relationships between documents
         let mut datalog = Datalog::new();
@@ -43,16 +48,17 @@ pub fn build(
         let parsed = {
             let mut parsed = Vec::new();
 
-            for (id, (href, doc)) in documents.iter().enumerate() {
-                let (html, refs) = crate::md::parse_markdown(&doc.body, &resolver)?;
+            for document in input.values() {
+                let (html, refs) = crate::md::parse_markdown(&document.body, &resolver)?;
+                let href = document.href("content/");
 
-                for target in &refs {
-                    if let Some(target) = documents.iter().position(|(href, _)| href == target) {
-                        datalog.add_link(id, target);
+                for target_href in &refs {
+                    if doc_map.contains_key(target_href.as_str()) {
+                        datalog.add_link(&href, target_href);
                     }
                 }
 
-                parsed.push((id, doc, html, href));
+                parsed.push((document, html, href));
             }
 
             parsed
@@ -72,17 +78,19 @@ pub fn build(
         let pages = {
             let mut pages = vec![];
 
-            for (id, document, html, href) in &parsed {
+            for (document, html, href) in &parsed {
                 let path_parts = Utf8Path::new(href)
                     .strip_prefix("/")
                     .unwrap()
                     .iter()
                     .collect::<Vec<_>>();
 
-                let backrefs = solution.get_backlinks(*id).map(|slice| {
-                    slice
+                // Get backlinks (list of href strings) and map them to Document objects
+                let backrefs = solution.get_backlinks(href).map(|hrefs| {
+                    hrefs
                         .iter()
-                        .map(|index| &documents[*index])
+                        .filter_map(|h| doc_map.get(*h))
+                        .map(|&doc| (doc.href("content/"), doc)) // Tuple for the template
                         .collect::<Vec<_>>()
                 });
 
@@ -122,7 +130,7 @@ pub fn build(
 fn render_article(
     meta: &Wiki,
     text: &str,
-    backlinks: Option<&[&(String, &Document<Wiki>)]>,
+    backlinks: Option<&[(String, &Document<Wiki>)]>,
 ) -> impl Renderable {
     maud!(
         article .article {
