@@ -143,13 +143,12 @@ fn render_article(
 
             // Backlinks Footer
             @if let Some(backlinks) = backlinks {
-                div {
+                div .backlinks {
                     h3 { "Backlinks" }
 
-                    ul .backlinks-list {
+                    ul {
                         @for link in backlinks {
                             li {
-                                "Is referenced by "
                                 a href=(link.0) { (&link.1.metadata.title) }
                             }
                         }

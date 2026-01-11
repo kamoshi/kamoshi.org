@@ -126,6 +126,25 @@ main {
   }
 }
 
+.backlinks {
+  padding: 1rem;
+  background-color: white;
+
+  @media (min-width: $bp-m) {
+    margin-top: 1em;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  h3 {
+    padding-bottom: 0.5rem;
+  }
+
+  ul {
+    padding-left: 1rem;
+  }
+}
+
 .tiles {
   display: none;
 
