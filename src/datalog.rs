@@ -2,6 +2,9 @@ use std::collections::HashMap;
 
 // rules
 crepe::crepe! {
+
+    // links
+
     @input
     struct Link(usize, usize);
 
@@ -10,6 +13,8 @@ crepe::crepe! {
 
     Backlink(target, source) <- Link(source, target);
 
+    // hierarchy
+
     @input
     struct Parent(usize, usize);
 
@@ -17,6 +22,13 @@ crepe::crepe! {
     struct Child(usize, usize);
 
     Child(child, parent) <- Parent(parent, child);
+
+    // co-citation
+
+    @output
+    struct CoCitation(usize, usize, usize);
+
+    CoCitation(witness, a, b) <- Link(witness, a), Link(witness, b), (a < b);
 }
 
 pub struct Datalog {
@@ -70,7 +82,7 @@ impl Datalog {
             map
         };
 
-        let (backlinks, children) = self.runtime.run();
+        let (backlinks, children, co_citations) = self.runtime.run();
 
         Solution {
             // We move the reverse map into the solution so we can look up names later
@@ -90,6 +102,20 @@ impl Datalog {
                 map
             },
             parents,
+            co_citations: {
+                let mut map = HashMap::new();
+                for CoCitation(_, a, b) in co_citations {
+                    *map.entry(a)
+                        .or_insert_with(HashMap::new)
+                        .entry(b)
+                        .or_default() += 1;
+                    *map.entry(b)
+                        .or_insert_with(HashMap::new)
+                        .entry(a)
+                        .or_default() += 1;
+                }
+                map
+            },
         }
     }
 }
@@ -103,6 +129,8 @@ pub struct Solution {
     parents: HashMap<usize, usize>,
     // Map parent_id -> Vec<child_id>
     children: HashMap<usize, Vec<usize>>,
+    // Map (parent_id, child_id) -> count
+    co_citations: HashMap<usize, HashMap<usize, usize>>,
 }
 
 impl Solution {
@@ -127,5 +155,16 @@ impl Solution {
         self.children
             .get(&parent_id)
             .map(|children| children.iter().map(|&id| self.names[id].as_str()).collect())
+    }
+
+    /// Get co-citations for a given parent href
+    pub fn get_co_citations(&self, href: &str) -> Option<Vec<(&str, usize)>> {
+        let id = self.names.iter().position(|n| n == href)?;
+        self.co_citations.get(&id).map(|co_citations| {
+            co_citations
+                .iter()
+                .map(|(&id, &count)| (self.names[id].as_str(), count))
+                .collect()
+        })
     }
 }

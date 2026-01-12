@@ -4,7 +4,7 @@ use camino::Utf8Path;
 use hauchiwa::error::HauchiwaError;
 use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
 use hauchiwa::page::normalize_prefixed;
-use hauchiwa::{Blueprint, Handle, Output, task};
+use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, maud_borrow, prelude::*};
 
 use crate::Global;
@@ -20,7 +20,7 @@ pub fn build(
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
     let input = config.load_documents::<Wiki>("content/wiki/**/*.md")?;
 
-    Ok(task!(config, |ctx, input, images, styles| {
+    let task = hauchiwa::task!(config, |ctx, input, images, styles| {
         let styles = &[
             styles.get("styles/styles.scss")?,
             styles.get("styles/layouts/page.scss")?,
@@ -38,10 +38,10 @@ pub fn build(
         };
 
         // this can track complex relationships between documents
-        let mut datalog = super::datalog::Datalog::new();
+        let mut datalog = crate::datalog::Datalog::new();
 
         // this can resolve wiki links
-        let resolver = WikiLinkResolver::from_assets::<Wiki>("content/", input);
+        let resolver = WikiLinkResolver::from_assets("content/", input);
 
         // pass 1: parse markdown
         let parsed = {
@@ -80,10 +80,10 @@ pub fn build(
                             parent_str.to_string()
                         };
 
-                        // LINK: Parent -> Child
+                        // add link Parent -> Child
                         datalog.add_parent(&parent_normalized, &current_child_str);
 
-                        // UPDATE: The parent becomes the child for the next iteration
+                        // The parent becomes the child for the next iteration
                         current_child_str = parent_normalized;
                         ptr = parent;
 
@@ -146,7 +146,9 @@ pub fn build(
         };
 
         Ok(pages)
-    }))
+    });
+
+    Ok(task)
 }
 
 fn render_article(
@@ -192,7 +194,7 @@ fn render_article(
 struct TreeContext<'a> {
     root: &'a str,
     href: &'a str,
-    solution: &'a super::datalog::Solution,
+    solution: &'a crate::datalog::Solution,
     resolved: &'a HashMap<String, &'a Document<Wiki>>,
 }
 
@@ -201,7 +203,7 @@ impl<'a> TreeContext<'a> {
         root: &'a str,
         href: &'a str,
         resolved: &'a HashMap<String, &Document<Wiki>>,
-        solution: &'a super::datalog::Solution,
+        solution: &'a crate::datalog::Solution,
     ) -> Self {
         Self {
             root,
