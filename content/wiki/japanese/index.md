@@ -2,6 +2,16 @@
 title: "Japanese"
 ---
 
+This is crazy when I think about it, I learned all of hiragana in like two days
+using some mnemonics from the [Tofugu website][tofugu]. My line of thought was
+that if I have to learn that sooner or later, better learn it right away. And I
+never had to use romaji as a result, in fact I detest romaji, and avoid it like
+fire, because seeing kanji always gives me more context. Seeing kanji feels like
+being right at home, and comfy.
+
+If I had to choose the one single best decision I ever made when learning
+Japanese it's learning hiragana right away.
+
 ## Browser extension
 
 I recommend using the [Yomitan](https://github.com/themoeway/yomitan) extension
@@ -32,3 +42,5 @@ of manga in English just to check if you got it right.
 
 This way you can read anything you want, and keep it both interesting and
 challenging!
+
+[tofugu]: https://www.tofugu.com/japanese/learn-hiragana/
