@@ -7,6 +7,8 @@ pub mod tags;
 pub mod twtxt;
 pub mod wiki;
 
+mod footer;
+
 use std::collections::HashMap;
 
 use camino::Utf8Path;
@@ -113,39 +115,6 @@ fn make_navbar() -> impl Renderable {
     )
 }
 
-pub fn make_footer(ctx: &Context) -> impl Renderable {
-    let copy = format!("Copyright &copy; {} Maciej Jur", &ctx.env.data.year);
-    let mail = "maciej@kamoshi.org";
-    let href = format!("mailto:{mail}");
-    let link = Utf8Path::new(&ctx.env.data.link)
-        .join("tree")
-        .join(&ctx.env.data.hash);
-
-    maud!(
-        footer .footer {
-            div .left {
-                div {
-                    (Raw::dangerously_create(&copy))
-                }
-                a href=(href)  {
-                    (mail)
-                }
-            }
-            div .repo {
-                a href=(link.as_str()) {
-                    (&ctx.env.data.hash)
-                }
-                div {
-                    (&ctx.env.data.date)
-                }
-            }
-            a .right.footer__cc-wrap rel="license" href="http://creativecommons.org/licenses/by/4.0/" {
-                img .footer__cc-stamp alt="Creative Commons License" width="88" height="31" src="/static/svg/by.svg";
-            }
-        }
-    )
-}
-
 pub fn make_bare<'ctx>(
     ctx: &'ctx Context,
     main: impl Renderable + 'ctx,
@@ -197,7 +166,7 @@ pub fn make_page<'ctx>(
         // main
         (main)
         // footer
-        (make_footer(sack))
+        (footer::render(sack))
     );
 
     make_bare(sack, main, title, styles, scripts)
