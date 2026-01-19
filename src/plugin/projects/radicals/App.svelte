@@ -157,7 +157,7 @@
     const nextRoots = new Set(activeRoots);
 
     if (targetStatus === "visible") {
-      engine.expandNode(id);
+      engine.promoteToRoot(id);
       nextRoots.add(id);
     } else {
       engine.hideNode(id);

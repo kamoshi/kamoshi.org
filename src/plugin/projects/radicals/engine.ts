@@ -43,28 +43,68 @@ interface ShootingStar {
 
 // --- HELPER FUNCTIONS ---
 
-const isSubset = (subset: string[], superset: string[]) => {
-  const setB = new Set(superset);
-  return subset.every((val) => setB.has(val));
-};
-
-const isEqualSet = (arr1: string[], arr2: string[]) => {
-  if (arr1.length !== arr2.length) return false;
-  const set1 = new Set(arr1);
-  return arr2.every((val) => set1.has(val));
-};
-
-const determineRelationship = (
-  radicalsA: string[],
-  radicalsB: string[],
+/**
+ * Checks for a direct component relationship.
+ * * Logic:
+ * 1. If Candidate is inside Target's list -> Candidate is a Component (Parent) of Target.
+ * 2. If Target is inside Candidate's list -> Candidate is a Compound (Child) of Target.
+ */
+const checkConnection = (
+  targetId: string,       // e.g. "休"
+  targetParts: string[],  // e.g. ["亻", "木"]
+  candidateId: string,    // e.g. "人"
+  candidateParts: string[]
 ): RelationType | null => {
-  if (isEqualSet(radicalsA, radicalsB)) return 'sibling';
-  if (isSubset(radicalsA, radicalsB)) return 'child';
-  if (isSubset(radicalsB, radicalsA)) return 'parent';
+
+  // --- 1. PARENT CHECK ---
+  // Is the Candidate ("人") a building block of Target ("休")?
+
+  // Get all forms of the candidate (Standard + Aliases)
+  const candidateForms = [candidateId, ...(RADICAL_ALIASES[candidateId] || [])];
+
+  // Check if ANY of these forms exist in the target's parts
+  const isParent = candidateForms.some(form => targetParts.includes(form));
+
+  if (isParent) return 'parent';
+
+
+  // --- 2. CHILD CHECK ---
+  // Is the Target ("休") a building block of Candidate?
+
+  const targetForms = [targetId, ...(RADICAL_ALIASES[targetId] || [])];
+  const isChild = targetForms.some(form => candidateParts.includes(form));
+
+  if (isChild) return 'child';
+
   return null;
 };
 
-// --- THEME & CONFIG CONSTANTS ---
+// --- CONFIGURATION ---
+
+// Key: The Standard Kanji (Node in your graph)
+// Value: The variants found in IDS sequences
+const RADICAL_ALIASES: Record<string, string[]> = {
+  '人': ['亻', '𠂉'],       // Person -> Ninben
+  '水': ['氵', '氺'],       // Water -> Sanzui
+  '手': ['扌', '龵'],       // Hand -> Tehen
+  '心': ['忄', '⺗'],       // Heart -> Risshinben
+  '刀': ['刂'],             // Sword -> Ritto
+  '火': ['灬'],             // Fire -> Rekka
+  '衣': ['衤'],             // Clothing -> Koromohen
+  '示': ['礻'],             // Show/Altar -> Shimesuhen
+  '肉': ['⺼'],             // Meat -> Nikuzuki (Moon shape)
+  '足': ['𧾷'],             // Foot -> Ashihen
+  '言': ['訁'],             // Speech -> Gonben (Simplified/Variant)
+  '糸': ['糹'],             // Thread -> Itohen
+  '金': ['釒'],             // Gold/Metal -> Kanehen
+  '食': ['飠', '𩙿'],       // Eat -> Shokuhen
+  '邑': ['阝'],             // Village (Right B) -> Ozato
+  '阜': ['阝'],             // Mound (Left B) -> Kozato
+  '草': ['艹', '艸', '䒑'], // Grass -> Kusakanmuri
+  '竹': ['⺮'],             // Bamboo -> Takekanmuri
+  '网': ['罒', '⺲', '罓'], // Net -> Amigashira
+};
+
 const THEME = {
   background: '#020617', // Deep cosmos
   starRoot: '#fbbf24', // Amber/Gold (The Sun)
@@ -467,27 +507,27 @@ export class KanjiGraphEngine {
     }
     targetNode.status = 'visible';
 
+    // Iterate through all available Kanji to find connections
     Object.keys(this.data).forEach((key) => {
       if (key === targetId) return;
 
       const otherRadicals = this.data[key];
-      const relation = determineRelationship(targetRadicals, otherRadicals);
+
+      // USE THE NEW CHECK LOGIC HERE
+      const relation = checkConnection(targetId, targetRadicals, key, otherRadicals);
 
       if (relation) {
-        const complexityDiff = Math.abs(
-          otherRadicals.length - targetRadicals.length,
-        );
-        if (relation === 'child' && complexityDiff > 1) return;
-
+        // We found a match! Create the neighbor node.
         let neighbor = this.nodes.find((n) => n.id === key);
         if (!neighbor) {
           neighbor = this.createNode(key, 'standard');
-          neighbor.x = targetNode!.x;
+          neighbor.x = targetNode!.x; // Spawn at same location
           neighbor.y = targetNode!.y;
-          neighbor.status = 'shadow';
+          neighbor.status = 'shadow'; // Start as shadow
           this.nodes.push(neighbor);
         }
 
+        // Check if link already exists to avoid duplicates
         const linkExists = this.links.some((l) => {
           const s = (l.source as Node).id || l.source;
           const t = (l.target as Node).id || l.target;
@@ -498,11 +538,15 @@ export class KanjiGraphEngine {
           let src = targetId,
             tgt = key,
             rel = relation;
+
+          // Align direction: Components (Parents) -> Compounds (Children)
+          // If 'key' is a parent component of 'targetId', source is 'key'.
           if (relation === 'parent') {
             src = key;
             tgt = targetId;
-            rel = 'child';
+            rel = 'child'; // (Optional) Normalize relation tag for link storage
           }
+
           this.links.push({ source: src, target: tgt, relation: rel } as any);
         }
       }

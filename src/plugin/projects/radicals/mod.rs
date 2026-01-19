@@ -1,9 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
-use std::io::Read;
+use std::io::{BufRead, BufReader};
 
-use encoding_rs::EUC_JP;
-use flate2::read::GzDecoder;
 use hauchiwa::{
     Blueprint, Handle, Output,
     error::HauchiwaError,
@@ -11,8 +9,8 @@ use hauchiwa::{
 };
 use hypertext::{Raw, Renderable};
 
+use crate::Global;
 use crate::plugin::make_bare;
-use crate::{Global, plugin::make_fullscreen};
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 struct Props {
@@ -30,52 +28,62 @@ pub fn build(
         "src/plugin/projects/radicals/",
     )?;
 
-    let radicals = config.load(
-        "src/plugin/projects/radicals/kradfile.gz",
-        |_, store, input| {
-            let set = CHARS.chars().map(|c| c.to_string()).collect::<HashSet<_>>();
+    let radicals = config.load("src/plugin/projects/radicals/IDS.TXT", |_, store, input| {
+        // 1. Prepare the filter set
+        let set = CHARS.chars().map(|c| c.to_string()).collect::<HashSet<_>>();
+        let mut kanji_components: HashMap<String, Vec<String>> = HashMap::new();
 
-            let mut kanji_radicals: HashMap<String, Vec<String>> = HashMap::new();
+        // 2. Open file (UTF-8 default)
+        let file = File::open(&input.path)?;
+        let reader = BufReader::new(file);
 
-            let file = File::open(&input.path)?;
-            let mut decoder = GzDecoder::new(file);
-
-            // Read the raw bytes (because we need to decode EUC-JP manually)
-            let mut buffer = Vec::new();
-            decoder.read_to_end(&mut buffer)?;
-
-            // Decode EUC-JP to UTF-8 String
-            // .0 contains the Cow<str>, .1 is the encoding used, .2 is boolean for errors
-            let (content, _, _) = EUC_JP.decode(&buffer);
-
-            // --- 3. Parse lines ---
-            for line in content.lines() {
-                let line = line.trim();
-
-                // Skip comments and empty lines
-                if line.is_empty() || line.starts_with('#') {
-                    continue;
-                }
-
-                // Split by " : "
-                if let Some((kanji, radicals_part)) = line.split_once(" : ") {
-                    let radicals: Vec<String> = radicals_part
-                        .split_whitespace() // Handles space separation
-                        .map(|s| s.to_string())
-                        .collect();
-
-                    if set.contains(kanji) {
-                        kanji_radicals.insert(kanji.to_string(), radicals);
-                    }
-                }
+        // 3. Parse lines
+        for line in reader.lines() {
+            let line = line?;
+            if line.is_empty() || line.starts_with('#') {
+                continue;
             }
 
-            let data = serde_json::to_string(&kanji_radicals)?;
-            let path = store.save(data.as_bytes(), "json")?;
+            // IDS.TXT format: U+CODE [TAB] KANJI [TAB] IDS_1 [TAB] IDS_2 ...
+            let parts: Vec<&str> = line.split('\t').collect();
 
-            Ok(path)
-        },
-    )?;
+            if parts.len() < 3 {
+                continue;
+            }
+
+            let kanji = parts[1];
+
+            // Only process if it's in our kklc.txt list
+            if set.contains(kanji) {
+                // --- SELECTING THE BEST IDS SEQUENCE ---
+                // We look for a sequence tagged with 'J' (Japan).
+                // If none found, we default to the first one (parts[2]).
+                let raw_ids = parts[2..]
+                    .iter()
+                    .find(|&s| s.contains("(J"))
+                    .unwrap_or(&parts[2]); // Fallback to generic if no 'J' tag
+
+                // --- CLEANING THE SEQUENCE ---
+                // 1. Remove structure operators (U+2FF0 to U+2FFB like ⿰, kw)
+                // 2. Remove format markers (^, $) and tags like (G), (J)
+                let components: Vec<String> = raw_ids
+                    .chars()
+                    .filter(|c| !is_ids_operator(*c)) // Remove ⿰, etc.
+                    .filter(|c| *c != '^' && *c != '$') // Remove markers
+                    // Stop processing if we hit the tags starting with '('
+                    .take_while(|c| *c != '(')
+                    .map(|c| c.to_string())
+                    .collect();
+
+                kanji_components.insert(kanji.to_string(), components);
+            }
+        }
+
+        let data = serde_json::to_string(&kanji_components)?;
+        let path = store.save(data.as_bytes(), "json")?;
+
+        Ok(path)
+    })?;
 
     Ok(hauchiwa::task!(config, |ctx, styles, svelte, radicals| {
         let Svelte {
@@ -86,7 +94,7 @@ pub fn build(
 
         let props = Props {
             url: radicals
-                .get("src/plugin/projects/radicals/kradfile.gz")?
+                .get("src/plugin/projects/radicals/IDS.TXT")?
                 .to_string(),
         };
 
@@ -109,4 +117,10 @@ pub fn build(
 
         Ok(Output::html("projects/radicals", html))
     }))
+}
+
+// Helper to identify the "operator" characters
+fn is_ids_operator(c: char) -> bool {
+    // The unicode block for Ideographic Description Characters is U+2FF0 to U+2FFB
+    matches!(c, '\u{2FF0}'..='\u{2FFB}')
 }
