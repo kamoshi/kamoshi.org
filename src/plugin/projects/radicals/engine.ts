@@ -408,6 +408,20 @@ export class KanjiGraphEngine {
   // === EXISTING CLASS METHODS BELOW HERE ===
   // =========================================
 
+  public clearSelection() {
+    if (this.selectedNodeId === null) return;
+
+    this.selectedNodeId = null;
+
+    // Notify Svelte (this will set selectedNode = null in UI)
+    if (this.onNodeSelect) this.onNodeSelect(null);
+
+    // Update visuals to remove the "Zanshin" highlight
+    this.syncVisuals();
+    this.renderTick(); // Force immediate line update
+    this.app.render(); // Force immediate render
+  }
+
   public resize() {
     if (
       !this.isInitialized ||
@@ -578,6 +592,12 @@ export class KanjiGraphEngine {
       this.selectedNodeId = null;
       if (this.onNodeSelect) this.onNodeSelect(null);
     }
+
+    // Ensure hover is also cleared if we hid the hovered node
+    if (this.hoveredNodeId === targetId) {
+        this.hoveredNodeId = null;
+    }
+
     this.syncVisuals();
     this.updateSimulation();
     this.emitStats();
@@ -618,14 +638,19 @@ export class KanjiGraphEngine {
       }
     }
 
-    // 2. Pre-calculate neighbors for Ukibori
-    const hoveredNeighbors = new Set<string>();
-    if (this.hoveredNodeId) {
+    // --- LOGIC UPDATE: ZANSHIN (Remaining Focus) ---
+    // Focus priority: Hover > Selection > Null
+    const activeId = this.hoveredNodeId ?? this.selectedNodeId;
+
+    // 2. Pre-calculate neighbors for the Active ID
+    // (Previously this only checked hoveredNodeId)
+    const activeNeighbors = new Set<string>();
+    if (activeId) {
       this.links.forEach((l) => {
         const s = (l.source as Node).id || (l.source as string);
         const t = (l.target as Node).id || (l.target as string);
-        if (s === this.hoveredNodeId) hoveredNeighbors.add(t);
-        if (t === this.hoveredNodeId) hoveredNeighbors.add(s);
+        if (s === activeId) activeNeighbors.add(t);
+        if (t === activeId) activeNeighbors.add(s);
       });
     }
 
@@ -633,44 +658,38 @@ export class KanjiGraphEngine {
     this.nodes.forEach((node) => {
       let container = this.nodeLayer.getChildByName(node.id) as Container;
 
+      // ... (Node creation block remains unchanged) ...
       if (!container) {
+        // [Existing creation code omitted for brevity - copy from your original]
         container = new Container();
         container.name = node.id;
         container.eventMode = 'static';
         container.cursor = 'pointer';
-
-        // Event Listeners
         container.on('pointerenter', () => this.onNodeHover(node.id));
         container.on('pointerleave', () => this.onNodeHover(null));
         container.on('pointerdown', (e) => this.onDragStart(e, node));
         container.on('pointerup', (e) => this.onDragEnd());
         container.on('pointerupoutside', (e) => this.onDragEnd());
-
         const circle = new Graphics();
         circle.name = 'starBody';
         container.addChild(circle);
-
         const RESOLUTION_MULTIPLIER = 2;
         const BASE_SIZE = 16;
-
         const label = new Text({
           text: node.id,
           style: {
-            fontFamily:
-              '"Noto Sans JP", "Hiragino Kaku Gothic Pro", sans-serif',
+            fontFamily: '"Noto Sans JP", "Hiragino Kaku Gothic Pro", sans-serif',
             fontSize: BASE_SIZE * RESOLUTION_MULTIPLIER,
             fill: THEME.textMain,
             align: 'center',
             fontWeight: 'bold',
           },
         });
-
         label.scale.set(1 / RESOLUTION_MULTIPLIER);
         label.anchor.set(0.5);
-        label.y = 28; // Position label below the star
+        label.y = 28;
         label.name = 'label';
         container.addChild(label);
-
         this.nodeLayer.addChild(container);
         node.gfx = container;
       }
@@ -680,8 +699,9 @@ export class KanjiGraphEngine {
       const label = container.getChildByName('label') as Text;
 
       const isSelected = this.selectedNodeId === node.id;
-      const isHovered = this.hoveredNodeId === node.id;
-      const isHoverNeighbor = hoveredNeighbors.has(node.id);
+      // Replaced 'isHovered' with 'isActive' logic
+      const isActive = activeId === node.id;
+      const isActiveNeighbor = activeNeighbors.has(node.id);
 
       // --- Palette Selection ---
       // Defaults
@@ -692,7 +712,7 @@ export class KanjiGraphEngine {
 
       if (node.type === 'root') {
         coreColor = THEME.starRoot;
-        glowColor = '#f59e0b'; // Slightly darker orange/gold
+        glowColor = '#f59e0b';
         coreRadius = 10;
       } else if (node.status === 'shadow') {
         coreColor = THEME.starShadow;
@@ -707,7 +727,8 @@ export class KanjiGraphEngine {
         glowColor = '#ffffff'; // White hot
       }
 
-      if (node.status === 'shadow' && (isHovered || isHoverNeighbor)) {
+      // Logic Update: Use isActive / isActiveNeighbor
+      if (node.status === 'shadow' && (isActive || isActiveNeighbor)) {
         // Shadow star lighting up when looked at
         coreColor = THEME.starStandard;
         glowColor = '#ffffff';
@@ -715,9 +736,9 @@ export class KanjiGraphEngine {
         coreRadius = 5;
       } else if (
         node.status === 'visible' &&
-        this.hoveredNodeId &&
-        !isHovered &&
-        !isHoverNeighbor
+        activeId && // Check if ANY focus exists
+        !isActive && // Am I the focus?
+        !isActiveNeighbor // Am I a neighbor?
       ) {
         // Dim unrelated visible nodes slightly to focus on constellation
         alpha = 0.3;
@@ -726,15 +747,12 @@ export class KanjiGraphEngine {
       starBody.clear();
 
       // 1. Hitbox
-      // Draw a transparent circle first. This expands the clickable area
-      // without affecting the visual rendering.
-      // We set a minimum radius of 25px for easy clicking.
       starBody.circle(0, 0, 25);
-      // Alpha 0 is invisible but still registers as a hit in the container
       starBody.fill({ color: 0x000000, alpha: 0 });
 
       // 2. Glow (Outer Haze)
-      if (node.status !== 'shadow' || isHovered || isHoverNeighbor) {
+      // Update: Check active state
+      if (node.status !== 'shadow' || isActive || isActiveNeighbor) {
         starBody.circle(0, 0, coreRadius * 3);
         starBody.fill({ color: glowColor, alpha: 0.2 * alpha });
 
@@ -753,17 +771,17 @@ export class KanjiGraphEngine {
       }
 
       // Label Styling
-      // Checks if the node is hovered, a neighbor, or selected.
       if (
         node.status === 'shadow' &&
-        !isHovered &&
-        !isHoverNeighbor &&
+        !isActive &&
+        !isActiveNeighbor &&
         !isSelected
       ) {
-        label.visible = false; // Hide names of distant shadow stars
+        label.visible = false;
       } else {
         label.visible = true;
-        label.style.fill = isHovered || isSelected ? '#ffffff' : THEME.textMain;
+        // Label highlights if Active OR Selected
+        label.style.fill = isActive || isSelected ? '#ffffff' : THEME.textMain;
         label.alpha = alpha;
       }
     });
@@ -774,15 +792,18 @@ export class KanjiGraphEngine {
 
     this.linkLayer.clear();
 
-    // Sort links: Shadows bottom, Active middle, Hovered top
+    // LOGIC UPDATE: Determine active focus (Hover > Selection)
+    const activeId = this.hoveredNodeId ?? this.selectedNodeId;
+
+    // Sort links: Shadows bottom, Active middle, Focused top
     this.links.sort((a, b) => {
-      const aHovered =
-        (a.source as Node).id === this.hoveredNodeId ||
-        (a.target as Node).id === this.hoveredNodeId;
-      const bHovered =
-        (b.source as Node).id === this.hoveredNodeId ||
-        (b.target as Node).id === this.hoveredNodeId;
-      return Number(aHovered) - Number(bHovered);
+      const aFocused =
+        (a.source as Node).id === activeId ||
+        (a.target as Node).id === activeId;
+      const bFocused =
+        (b.source as Node).id === activeId ||
+        (b.target as Node).id === activeId;
+      return Number(aFocused) - Number(bFocused);
     });
 
     this.links.forEach((link) => {
@@ -792,18 +813,18 @@ export class KanjiGraphEngine {
       if (s.x == null || s.y == null || t.x == null || t.y == null) return;
 
       const isShadow = s.status === 'shadow' || t.status === 'shadow';
-      const connectedToHover =
-        s.id === this.hoveredNodeId || t.id === this.hoveredNodeId;
+      // Check against activeId instead of hoveredNodeId
+      const connectedToFocus = s.id === activeId || t.id === activeId;
 
       let alpha = 1.0;
       let color = THEME.linkActive;
       let width = 1;
 
-      if (this.hoveredNodeId && !connectedToHover) {
+      if (activeId && !connectedToFocus) {
         // If focusing on a constellation, fade out unrelated lines
         alpha = 0.05;
       } else if (isShadow) {
-        if (connectedToHover) {
+        if (connectedToFocus) {
           // Reveal the potential connection
           alpha = 0.5;
           color = '#ffffff';

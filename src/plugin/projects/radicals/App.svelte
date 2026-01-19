@@ -174,6 +174,11 @@
       status: targetStatus,
     };
   }
+
+  function handleDeselect() {
+    selectedNode = null;
+    engine?.clearSelection();
+  }
 </script>
 
 <div class="app-container" bind:this={htmlContainer}>
@@ -203,9 +208,7 @@
             {selectedNode.status}
           </span>
         </div>
-        <button class="close-btn" onclick={() => (selectedNode = null)}
-          >×</button
-        >
+        <button class="close-btn" onclick={handleDeselect}>×</button>
       </div>
 
       <div class="info-content">
