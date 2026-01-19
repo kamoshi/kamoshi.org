@@ -1,12 +1,12 @@
 .footer {
   display: flex;
   align-items: center;
-  padding: 1rem 0.5rem;
+  padding: 0.5rem 0.5rem;
   gap: 2rem;
 
   .kaeru,
   .neko {
-    height: 6rem;
+    height: 5rem;
     width: auto;
     display: block;
     filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
