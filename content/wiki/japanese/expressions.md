@@ -13,6 +13,7 @@ throughout the years, ordered in moraic order (五十音).
 
 * 一期一会
 * 生花
+* 糸口
 
 ## う
 
@@ -20,11 +21,15 @@ throughout the years, ordered in moraic order (五十音).
 
 ## え
 
+* 縁の下の力持ち
+
 ## お
 
 ## か
 
 ## き
+
+肝に銘ずる
 
 ## く
 
@@ -52,6 +57,8 @@ throughout the years, ordered in moraic order (五十音).
 * 整理整頓
 
 ## そ
+
+* 袖振り合うも多生の縁
 
 ## た
 
@@ -87,6 +94,8 @@ throughout the years, ordered in moraic order (五十音).
 
 ## ひ
 
+* 日向ぼっこ
+
 ## ふ
 
 ## へ
@@ -104,6 +113,8 @@ throughout the years, ordered in moraic order (五十音).
 ## め
 
 ## も
+
+* 物の哀れ
 
 ## や
 
