@@ -1,14 +1,15 @@
-use std::{borrow::Cow, collections::HashMap, fmt::Write};
+use std::{borrow::Cow, collections::HashMap, fmt::Write, sync::LazyLock};
 
 use camino::Utf8Path;
 use comrak::{
-    Arena, Options, format_html_with_plugins,
+    Arena, Node, Options, format_html_with_plugins,
     nodes::{NodeHtmlBlock, NodeValue, NodeWikiLink},
     options::Plugins,
     parse_document,
 };
 use hauchiwa::loader::{Assets, Document};
 use hypertext::Renderable;
+use regex::Regex;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -84,6 +85,10 @@ pub fn parse_markdown(
     let plugins = get_plugins();
 
     let root = parse_document(&arena, md, &options);
+
+    // First, process ruby annotations
+    // [text]{ruby} -> <ruby><rb>text</rb><rp>(</rp><rt>ruby</rt><rp>)</rp></ruby>
+    process_ruby(&arena, &root);
 
     let mut refs = Vec::new();
 
@@ -224,5 +229,83 @@ impl WikiLinkResolver {
             [it] => Ok(it.clone()), // Perfect match
             _ => Err(MarkdownError::WikiLinkAmbiguous(link.to_string(), matches)),
         }
+    }
+}
+
+// ruby matcher
+static RE_RUBY: LazyLock<Regex> = LazyLock::new(|| {
+    // Matches [Kanji]{kana}
+    Regex::new(r"\[([^\]]+)\]\{([^}]+)\}").expect("Invalid Ruby Regex")
+});
+
+// This traverses the AST and replaces matching Text nodes with Ruby HTML nodes
+fn process_ruby<'arena, 'a>(arena: &'a Arena<'arena>, root: &'a Node<'arena>)
+where
+    'a: 'arena,
+{
+    // We store the Node, the Text, and the slices of the Ruby matches.
+    let mut nodes_to_modify = Vec::new();
+
+    // Identify candidates and calculate all slices.
+    for node in root.descendants() {
+        let mut data = node.data.borrow_mut();
+
+        if let NodeValue::Text(text) = &mut data.value {
+            // Verify matches and collect indices in one go.
+            let matches: Vec<_> = RE_RUBY
+                .captures_iter(text)
+                .map(|cap| {
+                    (
+                        cap.get(0).unwrap().range(), // Full match range: [Kanji]{kana}
+                        cap.get(1).unwrap().range(), // Kanji range
+                        cap.get(2).unwrap().range(), // Kana range
+                    )
+                })
+                .collect();
+
+            // If we found ruby, we steal the text (mem::take) and queue it up.
+            if !matches.is_empty() {
+                nodes_to_modify.push((node, std::mem::take(text), matches));
+            }
+        }
+    }
+
+    // Now we just need to go through the nodes_to_modify and replace the raw
+    // text with new text nodes interspersed with Ruby HTML.
+    for (node, text, matches) in nodes_to_modify {
+        let mut last_idx = 0;
+
+        for (full_range, kanji_range, kana_range) in matches {
+            // Insert preceding text
+            if full_range.start > last_idx {
+                let pre_text = &text[last_idx..full_range.start];
+                let pre_node = arena.alloc(NodeValue::Text(pre_text.to_string().into()).into());
+                node.insert_before(pre_node);
+            }
+
+            // Insert Ruby HTML
+            let kanji = &text[kanji_range];
+            let kana = &text[kana_range];
+
+            let ruby_html = format!(
+                "<ruby>{}<rp>(</rp><rt>{}</rt><rp>)</rp></ruby>",
+                kanji, kana
+            );
+
+            let ruby_node = arena.alloc(NodeValue::HtmlInline(ruby_html).into());
+            node.insert_before(ruby_node);
+
+            last_idx = full_range.end;
+        }
+
+        // Insert remaining text
+        if last_idx < text.len() {
+            let post_text = &text[last_idx..];
+            let post_node = arena.alloc(NodeValue::Text(post_text.to_string().into()).into());
+            node.insert_before(post_node);
+        }
+
+        // Detach empty node
+        node.detach();
     }
 }
