@@ -48,7 +48,13 @@ pub fn build(
             let mut parsed = Vec::new();
 
             for document in input.values() {
-                let (html, refs) = crate::md::parse_markdown(&document.body, &resolver)?;
+                let (html, refs) = crate::md::parse_markdown(
+                    &document.body,
+                    &document.path,
+                    &resolver,
+                    Some(images),
+                )?;
+
                 let href = document.href("content/");
 
                 // Datalog: add wiki links

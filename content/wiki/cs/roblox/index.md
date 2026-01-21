@@ -2,7 +2,7 @@
 title: Roblox
 ---
 
-![Roblox Studio 2.0 from 2012](/studio.png)
+![Roblox Studio 2.0 from 2012](./studio.png)
 
 You may not know this, but the icon pack which was used in Roblox Studio is
 called "silk" and it was made by Mark James aka famfamfam. The icons are

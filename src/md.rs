@@ -3,11 +3,14 @@ use std::{borrow::Cow, collections::HashMap, fmt::Write, sync::LazyLock};
 use camino::Utf8Path;
 use comrak::{
     Arena, Node, Options, format_html_with_plugins,
-    nodes::{NodeHtmlBlock, NodeValue, NodeWikiLink},
+    nodes::{NodeHtmlBlock, NodeLink, NodeValue, NodeWikiLink},
     options::Plugins,
     parse_document,
 };
-use hauchiwa::loader::{Assets, Document};
+use hauchiwa::{
+    loader::{Assets, Document, Image},
+    page::{normalize_path, to_slug},
+};
 use hypertext::Renderable;
 use regex::Regex;
 use thiserror::Error;
@@ -76,15 +79,17 @@ fn get_plugins() -> Plugins<'static> {
 }
 
 pub fn parse_markdown(
-    md: &str,
-    resolver: &WikiLinkResolver,
+    text: &str,
+    path: &Utf8Path,
+    linker: &WikiLinkResolver,
+    images: Option<&Assets<Image>>,
 ) -> Result<(String, Vec<String>), MarkdownError> {
     let arena = Arena::new();
 
     let options = get_options();
     let plugins = get_plugins();
 
-    let root = parse_document(&arena, md, &options);
+    let root = parse_document(&arena, text, &options);
 
     // First, process ruby annotations
     // [text]{ruby} -> <ruby><rb>text</rb><rp>(</rp><rt>ruby</rt><rp>)</rp></ruby>
@@ -96,6 +101,20 @@ pub fn parse_markdown(
         let mut data = node.data.borrow_mut();
 
         match &data.value {
+            NodeValue::Image(link) => {
+                // If we have an asset map, try to resolve and swap the image path
+                if let Some(images) = images
+                    && let Some(url) = resolve_image_path(path, &link.url, images)
+                {
+                    data.value = NodeValue::Image(
+                        NodeLink {
+                            url,
+                            title: link.title.clone(),
+                        }
+                        .into(),
+                    )
+                }
+            }
             NodeValue::Math(math) => {
                 let text = &math.literal;
                 let is_display = math.display_math;
@@ -112,7 +131,7 @@ pub fn parse_markdown(
                 }
             }
             NodeValue::WikiLink(link) => {
-                let url = resolver.resolve(&link.url)?;
+                let url = linker.resolve(&link.url)?;
 
                 refs.push(url.clone());
                 data.value = NodeValue::WikiLink(NodeWikiLink { url });
@@ -125,6 +144,24 @@ pub fn parse_markdown(
     format_html_with_plugins(root, &options, &mut html, &plugins)?;
 
     Ok((html, refs))
+}
+
+// hashed images
+
+fn resolve_image_path(
+    current_path: &Utf8Path,
+    dest_url: &str,
+    images: &Assets<Image>,
+) -> Option<String> {
+    // Skip absolute URLs (http://...)
+    if dest_url.contains("://") {
+        return None;
+    }
+
+    let location = to_slug(current_path).join(dest_url);
+    let location = normalize_path(&location);
+
+    images.get(&location).ok().map(|img| img.path.to_string())
 }
 
 // math
