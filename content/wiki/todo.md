@@ -3,5 +3,6 @@ title: Todo
 ---
 
 ## wiki
-- [ ] hash images
-- [ ] furigana
+- [x] hash images
+- [x] furigana
+- [ ] bibliography

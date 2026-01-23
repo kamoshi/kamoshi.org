@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashMap, fmt::Write, sync::LazyLock};
 
 use camino::Utf8Path;
 use comrak::{
-    Arena, Node, Options, format_html_with_plugins,
+    Anchorizer, Arena, Node, Options, format_html_with_plugins,
     nodes::{NodeHtmlBlock, NodeLink, NodeValue, NodeWikiLink},
     options::Plugins,
     parse_document,
@@ -64,6 +64,7 @@ fn get_options() -> Options<'static> {
     options.extension.table = true;
     options.extension.tasklist = true;
     options.extension.wikilinks_title_after_pipe = true;
+    options.extension.header_ids = Some("".into());
 
     options.render.r#unsafe = true;
 
