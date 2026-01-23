@@ -6,6 +6,20 @@
 }
 
 .markdown {
+  > hr {
+    margin-block: 2rem;
+    text-align: center;
+    border: none;
+
+    &::after {
+      content: "❧";
+      display: inline-block;
+      font-size: 1.5rem;
+    }
+  }
+}
+
+.markdown {
   h1 {
     font-size: 2.5rem;
   }
