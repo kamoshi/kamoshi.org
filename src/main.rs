@@ -31,7 +31,6 @@ use crate::plugin::twtxt::build_twtxt;
 use crate::plugin::{make_fullscreen, make_page};
 
 /// Base path for content files
-const CONTENT: &str = "content";
 const BASE_URL: &str = "https://kamoshi.org/";
 
 #[derive(Parser, Debug, Clone)]
@@ -130,9 +129,25 @@ fn run() -> Result<(), RuntimeError> {
         .source("content/**/*.gif")
         .register()?;
 
-    let styles = config.load_css("styles/**/[!_]*.scss", "styles/**/*.scss")?;
-    let scripts = config.load_js("scripts/**/main.ts", "scripts/**/*.ts")?;
-    let svelte = config.load_svelte("scripts/**/App.svelte", "scripts/**/*.svelte")?;
+    let styles = config
+        .load_css()
+        .entry("styles/**/[!_]*.scss")
+        .watch("styles/**/*.scss")
+        .minify(true)
+        .register()?;
+
+    let scripts = config
+        .load_js()
+        .entry("scripts/**/main.ts")
+        .watch("scripts/**/*.ts")
+        .minify(true)
+        .register()?;
+
+    let svelte = config
+        .load_svelte::<()>()
+        .entry("scripts/**/App.svelte")
+        .watch("scripts/**/*.svelte")
+        .register()?;
 
     let bibtex = config.load("**/*.bib", |_, store, input| {
         let data = input.read()?;

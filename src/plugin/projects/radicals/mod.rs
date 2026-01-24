@@ -23,10 +23,11 @@ pub fn build(
     config: &mut Blueprint<Global>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Output>, HauchiwaError> {
-    let svelte = config.load_svelte::<Props>(
-        "src/plugin/projects/radicals/App.svelte",
-        "src/plugin/projects/radicals/",
-    )?;
+    let svelte = config
+        .load_svelte::<Props>()
+        .entry("src/plugin/projects/radicals/App.svelte")
+        .watch("src/plugin/projects/radicals/")
+        .register()?;
 
     let radicals = config.load("src/plugin/projects/radicals/IDS.TXT", |_, store, input| {
         // 1. Prepare the filter set
