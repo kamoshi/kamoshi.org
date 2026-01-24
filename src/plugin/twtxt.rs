@@ -48,12 +48,10 @@ pub fn build_twtxt(
         ];
 
         for entry in &data.entries {
-            let html = render_entry(ctx, entry, styles)?.render();
+            let html = render_entry(ctx, entry, styles)?.render().into_inner();
+            let date = entry.date.timestamp();
 
-            pages.push(Output::html(
-                format!("thoughts/{}", entry.date.timestamp()),
-                html.into_inner(),
-            ));
+            pages.push(Output::html(format!("thoughts/{date}"), html));
         }
 
         Ok(pages)

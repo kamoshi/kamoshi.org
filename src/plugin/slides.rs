@@ -1,9 +1,8 @@
 use std::fmt::Write as _;
 
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Image, Script, Stylesheet};
-use hauchiwa::page::absolutize;
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hayagriva::Library;
 use hypertext::{Raw, prelude::*};
@@ -26,7 +25,7 @@ pub fn build_slides(
     Ok(task!(config, |ctx, md, hs, images, styles, scripts| {
         let mut pages = vec![];
 
-        let docs = [md.values(), hs.values()]
+        let documents = [md.values(), hs.values()]
             .into_iter()
             .flatten()
             .collect::<Vec<_>>();
@@ -39,14 +38,19 @@ pub fn build_slides(
 
             let scripts = &[scripts.get("scripts/slides/main.ts")?];
 
-            // render individual pages
-            for doc in &docs {
-                let mark = parse(&doc.body, &doc.path, None, Some(images))?;
-                let html = render(ctx, &doc.metadata, &mark, styles, scripts)?
+            for document in &documents {
+                let text = parse(&document.body, &document.path, None, Some(images))?;
+                let html = render(ctx, &document.metadata, &text, styles, scripts)?
                     .render()
                     .into_inner();
 
-                pages.push(Output::html(doc.path.strip_prefix("content/")?, html))
+                pages.push(
+                    document
+                        .output()
+                        .strip_prefix("content")?
+                        .html()
+                        .content(html),
+                );
             }
         }
 
@@ -57,11 +61,11 @@ pub fn build_slides(
                 styles.get("styles/layouts/list.scss")?,
             ];
 
-            let data = docs
+            let data = documents
                 .iter()
                 .map(|item| LinkDate {
                     link: Link {
-                        path: absolutize("content/", &item.path),
+                        path: Utf8PathBuf::from(item.href("content")),
                         name: item.metadata.title.clone(),
                         desc: item.metadata.desc.clone(),
                     },
@@ -79,7 +83,7 @@ pub fn build_slides(
         // render feed
         {
             pages.push(crate::rss::generate_feed(
-                &docs,
+                &documents,
                 "slides",
                 "Kamoshi.org Slides",
             ));

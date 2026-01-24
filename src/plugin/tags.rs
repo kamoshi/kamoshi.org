@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, HashMap};
 
+use camino::Utf8PathBuf;
 use chrono::Datelike;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Document, Stylesheet};
-use hauchiwa::page::absolutize;
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::prelude::*;
 
@@ -36,7 +36,7 @@ pub fn build_tags(
             for tag in &post.metadata.tags {
                 tag_map.entry(tag.clone()).or_default().push(LinkDate {
                     link: Link {
-                        path: absolutize("content", &post.path),
+                        path: Utf8PathBuf::from(post.href("content")),
                         name: post.metadata.title.clone(),
                         desc: post.metadata.desc.clone(),
                     },
@@ -52,9 +52,11 @@ pub fn build_tags(
             let path = format!("tags/{tag}/index.html");
 
             let data = group(links);
-            let html = render_tag(ctx, &data, tag.to_owned(), styles)?;
+            let html = render_tag(ctx, &data, tag.to_owned(), styles)?
+                .render()
+                .into_inner();
 
-            pages.push(Output::html(path, html.render().into_inner()));
+            pages.push(Output::html(path, html));
 
             // Render global tag index
             // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;

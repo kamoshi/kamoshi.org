@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use camino::Utf8Path;
 use hauchiwa::error::HauchiwaError;
 use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
-use hauchiwa::page::normalize_prefixed;
 use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, maud_borrow, prelude::*};
 
@@ -142,10 +141,13 @@ pub fn build(
                     .render()
                     .into_inner();
 
-                pages.push(Output::html(
-                    normalize_prefixed("content", &document.path),
-                    page,
-                ));
+                pages.push(
+                    document
+                        .output()
+                        .strip_prefix("content")?
+                        .html()
+                        .content(page),
+                );
             }
 
             pages

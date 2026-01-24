@@ -18,7 +18,7 @@ pub fn render(ctx: &Context) -> impl Renderable {
 
     maud!(
         footer .footer {
-            img .kaeru src="/static/svg/choju/敷物を持つカエル.svg" alt="Decoration";
+            // img .kaeru src="/static/svg/choju/敷物を持つカエル.svg" alt="Decoration";
 
             div .left {
                  div .copyright { "© " (year) " Maciej Jur" }
@@ -35,7 +35,7 @@ pub fn render(ctx: &Context) -> impl Renderable {
                 div { "(" (date) ")" }
             }
 
-            img .neko src="/static/svg/choju/猫貴族.svg" alt="Decoration";
+            // img .neko src="/static/svg/choju/猫貴族.svg" alt="Decoration";
         }
     )
 }

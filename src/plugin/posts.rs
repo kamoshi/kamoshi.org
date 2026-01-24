@@ -1,8 +1,8 @@
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::git::GitHistory;
 use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
-use hauchiwa::page::{absolutize, to_slug};
+use hauchiwa::page::to_slug;
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
@@ -24,14 +24,14 @@ pub fn build_posts(
     let pages = task!(config, |ctx, docs, images, styles, scripts, bibtex| {
         let mut pages = vec![];
 
-        let docs = docs
+        let documents = docs
             .values()
             .filter(|item| !item.metadata.draft)
             .collect::<Vec<_>>();
 
         // render the posts
-        for &doc in &docs {
-            let pattern = format!("{}/*.bib", to_slug(&doc.path));
+        for document in &documents {
+            let pattern = format!("{}/*.bib", to_slug(&document.path));
             let bibtex = bibtex.glob(&pattern)?.into_iter().next();
 
             let styles = &[
@@ -41,7 +41,7 @@ pub fn build_posts(
 
             let mut js = vec![scripts.get("scripts/outline/main.ts")?];
 
-            if let Some(entries) = &doc.metadata.scripts {
+            if let Some(entries) = &document.metadata.scripts {
                 for entry in entries {
                     let key = format!("scripts/{}", entry);
                     js.push(scripts.get(key)?);
@@ -49,26 +49,32 @@ pub fn build_posts(
             }
 
             let article = crate::markdown::parse(
-                &doc.body,
-                &doc.path,
+                &document.body,
+                &document.path,
                 bibtex.map(|(_, library)| &library.data),
                 Some(images),
             )?;
 
             let buffer = render(
                 ctx,
-                &doc.metadata,
+                &document.metadata,
                 article,
-                ctx.env.data.repo.files.get(doc.path.as_str()),
+                ctx.env.data.repo.files.get(document.path.as_str()),
                 bibtex.map(|(_, library)| library.path.as_path()),
-                &doc.metadata.tags,
+                &document.metadata.tags,
                 styles,
                 &js,
             )?
             .render()
             .into_inner();
 
-            pages.push(Output::html(doc.path.strip_prefix("content/")?, buffer));
+            pages.push(
+                document
+                    .output()
+                    .strip_prefix("content")?
+                    .html()
+                    .content(buffer),
+            );
         }
 
         {
@@ -79,10 +85,11 @@ pub fn build_posts(
 
             let html = to_list(
                 ctx,
-                docs.iter()
+                documents
+                    .iter()
                     .map(|item| LinkDate {
                         link: Link {
-                            path: absolutize("content", &item.path),
+                            path: Utf8PathBuf::from(item.href("content")),
                             name: item.metadata.title.clone(),
                             desc: item.metadata.desc.clone(),
                         },
@@ -101,7 +108,7 @@ pub fn build_posts(
 
         {
             pages.push(crate::rss::generate_feed(
-                &docs,
+                &documents,
                 "posts",
                 "Kamoshi.org Posts",
             ));
