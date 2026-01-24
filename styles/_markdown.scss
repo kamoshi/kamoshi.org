@@ -17,6 +17,23 @@
       font-size: 1.5rem;
     }
   }
+
+  > figure {
+    margin-block: 2rem;
+
+    picture {
+      display: block;
+      width: 100%;
+    }
+
+    figcaption {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      color: #666;
+    }
+  }
 }
 
 .markdown {

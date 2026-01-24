@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashMap, fmt::Write, sync::LazyLock};
 use camino::Utf8Path;
 use comrak::{
     Arena, Node, Options, format_html_with_plugins,
-    nodes::{NodeHtmlBlock, NodeLink, NodeValue, NodeWikiLink},
+    nodes::{NodeHtmlBlock, NodeValue, NodeWikiLink},
     options::Plugins,
     parse_document,
 };
@@ -92,9 +92,13 @@ pub fn parse_markdown(
 
     let root = parse_document(&arena, text, &options);
 
-    // First, process ruby annotations
+    // Process ruby annotations
     // [text]{ruby} -> <ruby><rb>text</rb><rp>(</rp><rt>ruby</rt><rp>)</rp></ruby>
     process_ruby(&arena, &root);
+
+    // Process images
+    // ![alt](path) -> <figure><picture>...</picture><figcaption>alt</figcaption></figure>
+    process_images(images, path, &arena, &root)?;
 
     let mut refs = Vec::new();
 
@@ -102,20 +106,6 @@ pub fn parse_markdown(
         let mut data = node.data.borrow_mut();
 
         match &data.value {
-            NodeValue::Image(link) => {
-                // If we have an asset map, try to resolve and swap the image path
-                if let Some(images) = images
-                    && let Some(url) = resolve_image_path(path, &link.url, images)
-                {
-                    data.value = NodeValue::Image(
-                        NodeLink {
-                            url,
-                            title: link.title.clone(),
-                        }
-                        .into(),
-                    )
-                }
-            }
             NodeValue::Math(math) => {
                 let text = &math.literal;
                 let is_display = math.display_math;
@@ -149,23 +139,108 @@ pub fn parse_markdown(
 
 // hashed images
 
-fn resolve_image_path(
-    current_path: &Utf8Path,
-    dest_url: &str,
-    images: &Assets<Image>,
-) -> Option<String> {
+fn process_images<'arena, 'a>(
+    images: Option<&'a Assets<Image>>,
+    path: &'a Utf8Path,
+    arena: &'a Arena<'arena>,
+    root: &'a Node<'arena>,
+) -> std::fmt::Result
+where
+    'a: 'arena,
+{
+    let mut nodes = Vec::new();
+
+    for node in root.descendants() {
+        if let NodeValue::Image(image) = &node.data.borrow().value {
+            nodes.push((node, image.clone()));
+        }
+    }
+
+    for (node, link) in nodes {
+        if let Some(images) = images
+            && let Some(image) = resolve_image_path(path, &link.url, images)
+        {
+            // Create a temporary Document node to act as a container for alt
+            // text nodes and render them to HTML
+            let caption = {
+                let root = arena.alloc(NodeValue::Document.into());
+
+                for child in node.children() {
+                    child.detach();
+                    root.append(child);
+                }
+
+                let mut caption = String::new();
+                comrak::format_html(root, &comrak::Options::default(), &mut caption)?;
+
+                caption
+            };
+
+            let literal = render_picture(image, &caption);
+            let html = arena.alloc(
+                NodeValue::HtmlBlock(NodeHtmlBlock {
+                    block_type: 0,
+                    literal,
+                })
+                .into(),
+            );
+
+            let mut target = node;
+
+            // check if the node is a child of a paragraph
+            if let Some(parent) = node.parent()
+                && matches!(parent.data.borrow().value, NodeValue::Paragraph)
+                && parent.children().count() == 1
+            {
+                target = parent;
+            }
+
+            target.insert_before(html);
+            target.detach();
+        }
+    }
+
+    Ok(())
+}
+
+fn resolve_image_path<'ctx, 'a>(
+    text_location: &'a Utf8Path,
+    text_url: &'a str,
+    images: &'ctx Assets<Image>,
+) -> Option<&'ctx Image> {
     // Skip absolute URLs (http://...)
-    if dest_url.contains("://") {
+    if text_url.contains("://") {
         return None;
     }
 
-    let location = to_slug(current_path).join(dest_url);
+    let location = to_slug(text_location).join(text_url);
     let location = normalize_path(&location);
 
-    images
-        .get(&location)
-        .ok()
-        .map(|img| img.default.to_string())
+    images.get(&location).ok()
+}
+
+fn render_picture(image: &Image, alt: &str) -> String {
+    use hypertext::prelude::*;
+
+    maud!(
+        figure {
+            picture {
+                @for path in image.sources.values() {
+                    source srcset=(path.as_str());
+                }
+                img
+                    alt=""
+                    src=(image.default.as_str())
+                    width=(image.width)
+                    height=(image.height);
+            }
+            figcaption {
+                (alt)
+            }
+        }
+    )
+    .render()
+    .into_inner()
 }
 
 // math

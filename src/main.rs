@@ -15,7 +15,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
-use hauchiwa::loader::image::ImageFormat;
+use hauchiwa::loader::image::{ImageFormat, Quality};
 use hauchiwa::page::Output;
 use hauchiwa::{TaskContext, Website, task};
 use hayagriva::Library;
@@ -123,6 +123,7 @@ fn run() -> Result<(), RuntimeError> {
 
     let images = config
         .load_images()
+        .format(ImageFormat::Avif(Quality::Lossy(80)))
         .format(ImageFormat::WebP)
         .source("content/**/*.jpg")
         .source("content/**/*.png")
