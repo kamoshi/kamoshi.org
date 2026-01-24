@@ -15,6 +15,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
+use hauchiwa::loader::image::ImageFormat;
 use hauchiwa::page::Output;
 use hauchiwa::{TaskContext, Website, task};
 use hayagriva::Library;
@@ -120,12 +121,17 @@ fn run() -> Result<(), RuntimeError> {
 
     let mut config = Website::<Global>::design();
 
+    let images = config
+        .load_images()
+        .format(ImageFormat::WebP)
+        .source("content/**/*.jpg")
+        .source("content/**/*.png")
+        .source("content/**/*.gif")
+        .register()?;
+
     let styles = config.load_css("styles/**/[!_]*.scss", "styles/**/*.scss")?;
     let scripts = config.load_js("scripts/**/main.ts", "scripts/**/*.ts")?;
     let svelte = config.load_svelte("scripts/**/App.svelte", "scripts/**/*.svelte")?;
-
-    let images =
-        config.load_images(&["content/**/*.jpg", "content/**/*.png", "content/**/*.gif"])?;
 
     let bibtex = config.load("**/*.bib", |_, store, input| {
         let data = input.read()?;

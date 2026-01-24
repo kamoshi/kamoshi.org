@@ -162,7 +162,10 @@ fn resolve_image_path(
     let location = to_slug(current_path).join(dest_url);
     let location = normalize_path(&location);
 
-    images.get(&location).ok().map(|img| img.path.to_string())
+    images
+        .get(&location)
+        .ok()
+        .map(|img| img.default.to_string())
 }
 
 // math
