@@ -280,36 +280,36 @@ impl WikiLinkResolver {
         }
     }
 
-    pub fn from_assets<T>(prefix: &str, assets: &Assets<Document<T>>) -> Self
+    pub fn from_assets<T>(assets: &Assets<Document<T>>) -> Self
     where
         T: Clone,
     {
         let mut resolver = Self::new();
-        resolver.add_all(prefix, assets);
+        resolver.add_all(assets);
         resolver
     }
 
-    pub fn add<T>(&mut self, prefix: &str, doc: &Document<T>)
+    pub fn add<T>(&mut self, doc: &Document<T>)
     where
         T: Clone,
     {
-        let url = doc.href(prefix);
-        let path = Utf8Path::new(&url);
+        let href = doc.href.as_str();
+        let path = Utf8Path::new(href);
         // "wiki/tech/rust.html" -> "rust"
         if let Some(stem) = path.file_stem() {
             self.index
                 .entry(stem.to_lowercase())
                 .or_default()
-                .push(url.to_string());
+                .push(href.to_string());
         }
     }
 
-    pub fn add_all<T>(&mut self, prefix: &str, docs: &Assets<Document<T>>)
+    pub fn add_all<T>(&mut self, docs: &Assets<Document<T>>)
     where
         T: Clone,
     {
         for doc in docs.values() {
-            self.add(prefix, doc);
+            self.add(doc);
         }
     }
 

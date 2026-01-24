@@ -17,9 +17,13 @@ pub fn build(
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
-    let input = config.load_documents::<Wiki>("content/wiki/**/*.md")?;
+    let documents = config
+        .load_documents::<Wiki>()
+        .source("content/wiki/**/*.md")
+        .offset("content")
+        .register()?;
 
-    let task = hauchiwa::task!(config, |ctx, input, images, styles| {
+    let task = hauchiwa::task!(config, |ctx, documents, images, styles| {
         let styles = &[
             styles.get("styles/styles.scss")?,
             styles.get("styles/layouts/page.scss")?,
@@ -29,8 +33,8 @@ pub fn build(
         let doc_map = {
             let mut doc_map = HashMap::new();
 
-            for document in input.values() {
-                doc_map.insert(document.href("content/"), document);
+            for document in documents.values() {
+                doc_map.insert(document.href.as_str(), document);
             }
 
             doc_map
@@ -40,13 +44,13 @@ pub fn build(
         let mut datalog = crate::datalog::Datalog::new();
 
         // this can resolve wiki links
-        let resolver = WikiLinkResolver::from_assets("content/", input);
+        let resolver = WikiLinkResolver::from_assets(documents);
 
         // pass 1: parse markdown
         let parsed = {
             let mut parsed = Vec::new();
 
-            for document in input.values() {
+            for document in documents.values() {
                 let (html, refs) = crate::md::parse_markdown(
                     &document.body,
                     &document.path,
@@ -54,7 +58,7 @@ pub fn build(
                     Some(images),
                 )?;
 
-                let href = document.href("content/");
+                let href = document.href.clone();
 
                 // Datalog: add wiki links
                 for target_href in &refs {
@@ -117,7 +121,7 @@ pub fn build(
                     hrefs
                         .iter()
                         .filter_map(|h| doc_map.get(*h))
-                        .map(|&doc| (doc.href("content/"), doc)) // Tuple for the template
+                        .map(|&doc| (doc.href.as_str(), doc)) // Tuple for the template
                         .collect::<Vec<_>>()
                 });
 
@@ -162,7 +166,7 @@ pub fn build(
 fn render_article(
     meta: &Wiki,
     text: &str,
-    backlinks: Option<&[(String, &Document<Wiki>)]>,
+    backlinks: Option<&[(&str, &Document<Wiki>)]>,
 ) -> impl Renderable {
     maud!(
         article .article {
@@ -203,14 +207,14 @@ struct TreeContext<'a> {
     root: &'a str,
     href: &'a str,
     solution: &'a crate::datalog::Solution,
-    resolved: &'a HashMap<String, &'a Document<Wiki>>,
+    resolved: &'a HashMap<&'a str, &'a Document<Wiki>>,
 }
 
 impl<'a> TreeContext<'a> {
     fn new(
         root: &'a str,
         href: &'a str,
-        resolved: &'a HashMap<String, &Document<Wiki>>,
+        resolved: &'a HashMap<&str, &Document<Wiki>>,
         solution: &'a crate::datalog::Solution,
     ) -> Self {
         Self {

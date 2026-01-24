@@ -149,7 +149,7 @@ fn run() -> Result<(), RuntimeError> {
         .watch("scripts/**/*.svelte")
         .register()?;
 
-    let bibtex = config.load("**/*.bib", |_, store, input| {
+    let bibtex = config.load("content/**/*.bib", |_, store, input| {
         let data = input.read()?;
         let path = store.save(&data, "bib")?;
         let text = String::from_utf8_lossy(&data);

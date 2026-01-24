@@ -15,7 +15,11 @@ pub fn build_home(
     styles: Handle<Assets<Stylesheet>>,
     svelte: Handle<Assets<Svelte>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
-    let docs = config.load_documents::<Home>("content/index.md")?;
+    let docs = config
+        .load_documents::<Home>()
+        .source("content/index.md")
+        .offset("content")
+        .register()?;
 
     Ok(task!(config, |ctx, docs, images, styles, svelte| {
         let document = docs.get("content/index.md")?;

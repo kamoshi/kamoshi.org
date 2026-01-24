@@ -25,8 +25,11 @@ pub fn build_projects(
     config: &mut Blueprint<Global>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
-    // Load the documents as before
-    let docs = config.load_documents::<Project>("content/projects/**/*.md")?;
+    let docs = config
+        .load_documents::<Project>()
+        .source("content/projects/**/*.md")
+        .offset("content")
+        .register()?;
 
     let page_radicals = radicals::build(config, styles)?;
 

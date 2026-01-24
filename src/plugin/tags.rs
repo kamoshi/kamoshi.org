@@ -36,7 +36,7 @@ pub fn build_tags(
             for tag in &post.metadata.tags {
                 tag_map.entry(tag.clone()).or_default().push(LinkDate {
                     link: Link {
-                        path: Utf8PathBuf::from(post.href("content")),
+                        path: Utf8PathBuf::from(&post.href),
                         name: post.metadata.title.clone(),
                         desc: post.metadata.desc.clone(),
                     },

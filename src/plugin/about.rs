@@ -16,7 +16,11 @@ pub fn build_about(
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
-    let docs = config.load_documents::<Post>("content/about/index.md")?;
+    let docs = config
+        .load_documents::<Post>()
+        .source("content/about/index.md")
+        .offset("content")
+        .register()?;
 
     let cert = config.load("content/about/*.asc", |_, _, input| {
         let data = input.read()?;

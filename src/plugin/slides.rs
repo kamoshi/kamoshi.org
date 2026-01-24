@@ -19,8 +19,16 @@ pub fn build_slides(
     styles: Handle<Assets<Stylesheet>>,
     scripts: Handle<Assets<Script>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
-    let md = config.load_documents::<Slideshow>("content/slides/**/*.md")?;
-    let hs = config.load_documents::<Slideshow>("content/slides/**/*.lhs")?;
+    let md = config
+        .load_documents::<Slideshow>()
+        .source("content/slides/**/*.md")
+        .offset("content")
+        .register()?;
+    let hs = config
+        .load_documents::<Slideshow>()
+        .source("content/slides/**/*.lhs")
+        .offset("content")
+        .register()?;
 
     Ok(task!(config, |ctx, md, hs, images, styles, scripts| {
         let mut pages = vec![];
@@ -65,7 +73,7 @@ pub fn build_slides(
                 .iter()
                 .map(|item| LinkDate {
                     link: Link {
-                        path: Utf8PathBuf::from(item.href("content")),
+                        path: Utf8PathBuf::from(&item.href),
                         name: item.metadata.title.clone(),
                         desc: item.metadata.desc.clone(),
                     },

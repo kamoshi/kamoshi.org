@@ -19,7 +19,11 @@ pub fn build_posts(
     scripts: Handle<Assets<Script>>,
     bibtex: Handle<Assets<Bibtex>>,
 ) -> Result<(Handle<Assets<Document<Post>>>, Handle<Vec<Output>>), HauchiwaError> {
-    let docs = config.load_documents::<Post>("content/posts/**/*.md")?;
+    let docs = config
+        .load_documents::<Post>()
+        .source("content/posts/**/*.md")
+        .offset("content")
+        .register()?;
 
     let pages = task!(config, |ctx, docs, images, styles, scripts, bibtex| {
         let mut pages = vec![];
@@ -89,7 +93,7 @@ pub fn build_posts(
                     .iter()
                     .map(|item| LinkDate {
                         link: Link {
-                            path: Utf8PathBuf::from(item.href("content")),
+                            path: Utf8PathBuf::from(&item.href),
                             name: item.metadata.title.clone(),
                             desc: item.metadata.desc.clone(),
                         },
