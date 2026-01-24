@@ -1,7 +1,6 @@
 use hauchiwa::Output;
 use hauchiwa::camino::Utf8Path;
 use hauchiwa::loader::Document;
-use hauchiwa::page::normalize_prefixed;
 use rss::{ChannelBuilder, ItemBuilder};
 
 use crate::BASE_URL;
@@ -13,30 +12,38 @@ pub(crate) trait ToFeed: Sized {
 
 impl ToFeed for &Document<Post> {
     fn to_feed(&self) -> rss::Item {
-        let path = normalize_prefixed("content/", &self.meta.path);
+        let link = self.meta.href.strip_prefix("/").unwrap_or(&self.meta.href);
+        let link = Utf8Path::new(BASE_URL).join(link);
+
         ItemBuilder::default()
             .title(self.matter.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&path).to_string())
+            .link(link.to_string())
+            .pub_date(self.matter.date.to_rfc2822())
             .build()
     }
 }
 
 impl ToFeed for &Document<Slideshow> {
     fn to_feed(&self) -> rss::Item {
-        let path = normalize_prefixed("content/", &self.meta.path);
+        let link = self.meta.href.strip_prefix("/").unwrap_or(&self.meta.href);
+        let link = Utf8Path::new(BASE_URL).join(link);
+
         ItemBuilder::default()
             .title(self.matter.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&path).to_string())
+            .link(link.to_string())
+            .pub_date(self.matter.date.to_rfc2822())
             .build()
     }
 }
 
 impl ToFeed for &Document<Project> {
     fn to_feed(&self) -> rss::Item {
-        let path = normalize_prefixed("content/", &self.meta.path);
+        let link = self.meta.href.strip_prefix("/").unwrap_or(&self.meta.href);
+        let link = Utf8Path::new(BASE_URL).join(link);
+
         ItemBuilder::default()
             .title(self.matter.title.clone())
-            .link(Utf8Path::new(BASE_URL).join(&path).to_string())
+            .link(link.to_string())
             .build()
     }
 }
