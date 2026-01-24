@@ -13,9 +13,9 @@ pub(crate) trait ToFeed: Sized {
 
 impl ToFeed for &Document<Post> {
     fn to_feed(&self) -> rss::Item {
-        let path = normalize_prefixed("content/", &self.path);
+        let path = normalize_prefixed("content/", &self.meta.path);
         ItemBuilder::default()
-            .title(self.metadata.title.clone())
+            .title(self.matter.title.clone())
             .link(Utf8Path::new(BASE_URL).join(&path).to_string())
             .build()
     }
@@ -23,9 +23,9 @@ impl ToFeed for &Document<Post> {
 
 impl ToFeed for &Document<Slideshow> {
     fn to_feed(&self) -> rss::Item {
-        let path = normalize_prefixed("content/", &self.path);
+        let path = normalize_prefixed("content/", &self.meta.path);
         ItemBuilder::default()
-            .title(self.metadata.title.clone())
+            .title(self.matter.title.clone())
             .link(Utf8Path::new(BASE_URL).join(&path).to_string())
             .build()
     }
@@ -33,9 +33,9 @@ impl ToFeed for &Document<Slideshow> {
 
 impl ToFeed for &Document<Project> {
     fn to_feed(&self) -> rss::Item {
-        let path = normalize_prefixed("content/", &self.path);
+        let path = normalize_prefixed("content/", &self.meta.path);
         ItemBuilder::default()
-            .title(self.metadata.title.clone())
+            .title(self.matter.title.clone())
             .link(Utf8Path::new(BASE_URL).join(&path).to_string())
             .build()
     }

@@ -4,8 +4,8 @@ use std::sync::LazyLock;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::error::RuntimeError;
+use hauchiwa::loader::generic::DocumentMeta;
 use hauchiwa::loader::{Assets, Image};
-use hauchiwa::page::{normalize_path, to_slug};
 use hayagriva::{
     BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
     Library,
@@ -92,7 +92,7 @@ pub struct Article {
 
 pub fn parse(
     text: &str,
-    path: &Utf8Path,
+    meta: &DocumentMeta,
     library: Option<&Library>,
     images: Option<&Assets<Image>>,
 ) -> Result<Article, RuntimeError> {
@@ -107,12 +107,12 @@ pub fn parse(
         .collect::<Result<Vec<_>, _>>()?
         .into_iter();
 
-    let stream = stream.map(swap_hashed_image(path, images));
+    let stream = stream.map(swap_hashed_image(meta, images));
     let stream = stream.map(render_latex);
     let stream = stream.map(render_emoji);
     let stream = StreamRuby::new(stream);
 
-    let stream = StreamDirectiveContainer::new(stream, render_container(path, &mut scripts));
+    let stream = StreamDirectiveContainer::new(stream, render_container(&meta.path, &mut scripts));
     let stream = StreamDirectiveBlock::new(stream, render_directive_block);
     let stream = StreamDirectiveInline::new(stream, render_directive_inline);
 
@@ -366,7 +366,7 @@ where
 // Swap hashed image
 
 fn swap_hashed_image<'a>(
-    path: &'a Utf8Path,
+    meta: &'a DocumentMeta,
     images: Option<&'a Assets<Image>>,
 ) -> impl Fn(Event<'a>) -> Event<'a> {
     move |event| match event {
@@ -377,8 +377,7 @@ fn swap_hashed_image<'a>(
                 title,
                 id,
             } => {
-                let location = to_slug(path).join(dest_url.as_ref());
-                let location = normalize_path(&location);
+                let location = meta.resolve(&dest_url);
                 let img = images.and_then(|images| images.get(&location).ok());
                 let hashed = img.map(|img| img.default.to_string().into());
                 Event::Start(Tag::Image {

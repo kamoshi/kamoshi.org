@@ -27,20 +27,20 @@ pub fn build_tags(
 
         let posts = posts
             .values()
-            .filter(|item| !item.metadata.draft)
+            .filter(|item| !item.matter.draft)
             .collect::<Vec<_>>();
 
         let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
 
         for post in &posts {
-            for tag in &post.metadata.tags {
+            for tag in &post.matter.tags {
                 tag_map.entry(tag.clone()).or_default().push(LinkDate {
                     link: Link {
-                        path: Utf8PathBuf::from(&post.href),
-                        name: post.metadata.title.clone(),
-                        desc: post.metadata.desc.clone(),
+                        path: Utf8PathBuf::from(&post.meta.href),
+                        name: post.matter.title.clone(),
+                        desc: post.matter.desc.clone(),
                     },
-                    date: post.metadata.date,
+                    date: post.matter.date,
                 });
             }
         }

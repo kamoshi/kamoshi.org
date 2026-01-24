@@ -1,7 +1,8 @@
 use std::fmt::Write as _;
 
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
+use hauchiwa::loader::generic::DocumentMeta;
 use hauchiwa::loader::{Assets, Image, Script, Stylesheet};
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hayagriva::Library;
@@ -47,8 +48,8 @@ pub fn build_slides(
             let scripts = &[scripts.get("scripts/slides/main.ts")?];
 
             for document in &documents {
-                let text = parse(&document.body, &document.path, None, Some(images))?;
-                let html = render(ctx, &document.metadata, &text, styles, scripts)?
+                let text = parse(&document.text, &document.meta, None, Some(images))?;
+                let html = render(ctx, &document.matter, &text, styles, scripts)?
                     .render()
                     .into_inner();
 
@@ -73,11 +74,11 @@ pub fn build_slides(
                 .iter()
                 .map(|item| LinkDate {
                     link: Link {
-                        path: Utf8PathBuf::from(&item.href),
-                        name: item.metadata.title.clone(),
-                        desc: item.metadata.desc.clone(),
+                        path: Utf8PathBuf::from(&item.meta.href),
+                        name: item.matter.title.clone(),
+                        desc: item.matter.desc.clone(),
                     },
-                    date: item.metadata.date.to_utc(),
+                    date: item.matter.date.to_utc(),
                 })
                 .collect();
 
@@ -103,7 +104,7 @@ pub fn build_slides(
 
 pub fn parse(
     text: &str,
-    path: &Utf8Path,
+    meta: &DocumentMeta,
     library: Option<&Library>,
     images: Option<&Assets<Image>>,
 ) -> Result<String, RuntimeError> {
@@ -112,7 +113,7 @@ pub fn parse(
     for stack in text.split("\n-----\n") {
         buff.push_str("<section>");
         for slide in stack.split("\n---\n") {
-            let article = crate::markdown::parse(slide, path, library, images)?;
+            let article = crate::markdown::parse(slide, meta, library, images)?;
             write!(buff, "<section>{}</section>", article.text).unwrap();
         }
         buff.push_str("</section>");

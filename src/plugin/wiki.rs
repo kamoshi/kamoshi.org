@@ -34,7 +34,7 @@ pub fn build(
             let mut doc_map = HashMap::new();
 
             for document in documents.values() {
-                doc_map.insert(document.href.as_str(), document);
+                doc_map.insert(document.meta.href.as_str(), document);
             }
 
             doc_map
@@ -52,13 +52,13 @@ pub fn build(
 
             for document in documents.values() {
                 let (html, refs) = crate::md::parse_markdown(
-                    &document.body,
-                    &document.path,
+                    &document.text,
+                    &document.meta,
                     &resolver,
                     Some(images),
                 )?;
 
-                let href = document.href.clone();
+                let href = document.meta.href.clone();
 
                 // Datalog: add wiki links
                 for target_href in &refs {
@@ -121,7 +121,7 @@ pub fn build(
                     hrefs
                         .iter()
                         .filter_map(|h| doc_map.get(*h))
-                        .map(|&doc| (doc.href.as_str(), doc)) // Tuple for the template
+                        .map(|&doc| (doc.meta.href.as_str(), doc)) // Tuple for the template
                         .collect::<Vec<_>>()
                 });
 
@@ -137,11 +137,11 @@ pub fn build(
                         }
 
                         // Article
-                        (render_article(&document.metadata, html, backrefs.as_deref()))
+                        (render_article(&document.matter, html, backrefs.as_deref()))
                     }
                 );
 
-                let page = make_page(ctx, main, document.metadata.title.to_owned(), styles, &[])?
+                let page = make_page(ctx, main, document.matter.title.to_owned(), styles, &[])?
                     .render()
                     .into_inner();
 
@@ -192,7 +192,7 @@ fn render_article(
                     ul {
                         @for link in backlinks {
                             li {
-                                a href=(link.0) { (&link.1.metadata.title) }
+                                a href=(link.0) { (&link.1.matter.title) }
                             }
                         }
                     }
@@ -249,7 +249,7 @@ fn show_tree_recursive(ctx: &TreeContext<'_>, href: &str) -> impl Renderable {
                 @for child_href in children {
                     // Determine display name: Title if doc exists, else directory name
                     @let (name, is_link) = if let Some(doc) = ctx.resolved.get(*child_href) {
-                        (doc.metadata.title.as_str(), true)
+                        (doc.matter.title.as_str(), true)
                     } else {
                         // Fallback: extract last folder name from "/wiki/cs/languages/" -> "languages"
                         let name = child_href.trim_end_matches('/').split('/').next_back().unwrap_or(child_href);

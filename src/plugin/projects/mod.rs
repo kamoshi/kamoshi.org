@@ -44,10 +44,10 @@ pub fn build_projects(
         let mut project_views: Vec<ProjectView> = docs
             .values()
             .map(|doc| ProjectView {
-                title: &doc.metadata.title,
-                tech: doc.metadata.tech.clone(),
-                link: doc.metadata.link.clone(),
-                desc: doc.metadata.desc.as_deref(),
+                title: &doc.matter.title,
+                tech: doc.matter.tech.clone(),
+                link: doc.matter.link.clone(),
+                desc: doc.matter.desc.as_deref(),
             })
             .collect();
 

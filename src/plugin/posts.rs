@@ -2,7 +2,6 @@ use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::git::GitHistory;
 use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
-use hauchiwa::page::to_slug;
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
@@ -30,13 +29,15 @@ pub fn build_posts(
 
         let documents = docs
             .values()
-            .filter(|item| !item.metadata.draft)
+            .filter(|item| !item.matter.draft)
             .collect::<Vec<_>>();
 
         // render the posts
         for document in &documents {
-            let pattern = format!("{}/*.bib", to_slug(&document.path));
-            let bibtex = bibtex.glob(&pattern)?.into_iter().next();
+            let bibtex = bibtex
+                .glob(&document.meta.assets("*.bib"))?
+                .into_iter()
+                .next();
 
             let styles = &[
                 styles.get("styles/styles.scss")?,
@@ -45,7 +46,7 @@ pub fn build_posts(
 
             let mut js = vec![scripts.get("scripts/outline/main.ts")?];
 
-            if let Some(entries) = &document.metadata.scripts {
+            if let Some(entries) = &document.matter.scripts {
                 for entry in entries {
                     let key = format!("scripts/{}", entry);
                     js.push(scripts.get(key)?);
@@ -53,19 +54,19 @@ pub fn build_posts(
             }
 
             let article = crate::markdown::parse(
-                &document.body,
-                &document.path,
+                &document.text,
+                &document.meta,
                 bibtex.map(|(_, library)| &library.data),
                 Some(images),
             )?;
 
             let buffer = render(
                 ctx,
-                &document.metadata,
+                &document.matter,
                 article,
-                ctx.env.data.repo.files.get(document.path.as_str()),
+                ctx.env.data.repo.files.get(document.meta.path.as_str()),
                 bibtex.map(|(_, library)| library.path.as_path()),
-                &document.metadata.tags,
+                &document.matter.tags,
                 styles,
                 &js,
             )?
@@ -93,11 +94,11 @@ pub fn build_posts(
                     .iter()
                     .map(|item| LinkDate {
                         link: Link {
-                            path: Utf8PathBuf::from(&item.href),
-                            name: item.metadata.title.clone(),
-                            desc: item.metadata.desc.clone(),
+                            path: Utf8PathBuf::from(&item.meta.href),
+                            name: item.matter.title.clone(),
+                            desc: item.matter.desc.clone(),
                         },
-                        date: item.metadata.date,
+                        date: item.matter.date,
                     })
                     .collect(),
                 "Posts".into(),

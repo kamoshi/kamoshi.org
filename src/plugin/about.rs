@@ -45,7 +45,7 @@ pub fn build_about(
             styles.get("styles/layouts/page.scss")?,
         ];
 
-        let article = crate::markdown::parse(&document.body, &document.path, None, Some(images))?;
+        let article = crate::markdown::parse(&document.text, &document.meta, None, Some(images))?;
         let html = render(ctx, document, article, pubkey_ident, pubkey_email, styles)?
             .render()
             .into_inner();
@@ -75,7 +75,7 @@ pub fn render<'ctx>(
                 section .paper {
                     header {
                         h1 #top {
-                            (&doc.metadata.title)
+                            (&doc.matter.title)
                         }
                     }
                     section .wiki-article__markdown.markdown {
@@ -104,5 +104,5 @@ pub fn render<'ctx>(
         }
     );
 
-    make_page(ctx, main, doc.metadata.title.clone(), styles, &[])
+    make_page(ctx, main, doc.matter.title.clone(), styles, &[])
 }

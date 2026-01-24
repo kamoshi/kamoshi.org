@@ -7,10 +7,7 @@ use comrak::{
     options::Plugins,
     parse_document,
 };
-use hauchiwa::{
-    loader::{Assets, Document, Image},
-    page::{normalize_path, to_slug},
-};
+use hauchiwa::loader::{Assets, Document, Image, generic::DocumentMeta};
 use hypertext::Renderable;
 use regex::Regex;
 use thiserror::Error;
@@ -80,8 +77,8 @@ fn get_plugins() -> Plugins<'static> {
 }
 
 pub fn parse_markdown(
-    text: &str,
-    path: &Utf8Path,
+    file_text: &str,
+    file_meta: &DocumentMeta,
     linker: &WikiLinkResolver,
     images: Option<&Assets<Image>>,
 ) -> Result<(String, Vec<String>), MarkdownError> {
@@ -90,7 +87,7 @@ pub fn parse_markdown(
     let options = get_options();
     let plugins = get_plugins();
 
-    let root = parse_document(&arena, text, &options);
+    let root = parse_document(&arena, file_text, &options);
 
     // Process ruby annotations
     // [text]{ruby} -> <ruby><rb>text</rb><rp>(</rp><rt>ruby</rt><rp>)</rp></ruby>
@@ -98,7 +95,7 @@ pub fn parse_markdown(
 
     // Process images
     // ![alt](path) -> <figure><picture>...</picture><figcaption>alt</figcaption></figure>
-    process_images(images, path, &arena, &root)?;
+    process_images(file_meta, images, &arena, &root)?;
 
     let mut refs = Vec::new();
 
@@ -140,8 +137,8 @@ pub fn parse_markdown(
 // hashed images
 
 fn process_images<'arena, 'a>(
+    file_meta: &'a DocumentMeta,
     images: Option<&'a Assets<Image>>,
-    path: &'a Utf8Path,
     arena: &'a Arena<'arena>,
     root: &'a Node<'arena>,
 ) -> std::fmt::Result
@@ -158,7 +155,7 @@ where
 
     for (node, link) in nodes {
         if let Some(images) = images
-            && let Some(image) = resolve_image_path(path, &link.url, images)
+            && let Some(image) = resolve_image_path(file_meta, &link.url, images)
         {
             // Create a temporary Document node to act as a container for alt
             // text nodes and render them to HTML
@@ -204,7 +201,7 @@ where
 }
 
 fn resolve_image_path<'ctx, 'a>(
-    text_location: &'a Utf8Path,
+    file_meta: &'a DocumentMeta,
     text_url: &'a str,
     images: &'ctx Assets<Image>,
 ) -> Option<&'ctx Image> {
@@ -213,10 +210,9 @@ fn resolve_image_path<'ctx, 'a>(
         return None;
     }
 
-    let location = to_slug(text_location).join(text_url);
-    let location = normalize_path(&location);
+    let relative = file_meta.resolve(text_url);
 
-    images.get(&location).ok()
+    images.get(&relative).ok()
 }
 
 fn render_picture(image: &Image, alt: &str) -> String {
@@ -293,7 +289,7 @@ impl WikiLinkResolver {
     where
         T: Clone,
     {
-        let href = doc.href.as_str();
+        let href = doc.meta.href.as_str();
         let path = Utf8Path::new(href);
         // "wiki/tech/rust.html" -> "rust"
         if let Some(stem) = path.file_stem() {

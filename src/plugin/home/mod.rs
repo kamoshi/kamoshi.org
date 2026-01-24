@@ -9,6 +9,32 @@ use crate::{Global, model::Home};
 
 use super::make_page;
 
+const INTRO: &str = include_str!("./intro.md");
+
+const SECTION_BUTTONS: Raw<&str> = {
+    maud_static!(
+        section .p-card {
+            h2 .p-card__heading {
+                "Badges"
+            }
+            div .grid_88x31 {
+                a href=r#"https://nixos.org"# title="Powered by NixOS" {
+                    img .icon_88x31 src="/static/88x31/nixos.gif" width=88 height=31;
+                }
+                a href=r#"https://crates.io/crates/hauchiwa"# title="Built with Hauchiwa" {
+                    img .icon_88x31 src="/static/88x31/hauchiwa.png" width=88 height=31;
+                }
+                a href=r#"https://www.mozilla.org/firefox/new"# title="Tested on Firefox" {
+                    img .icon_88x31 src="/static/88x31/firefox.webp" width=88 height=31;
+                }
+                a href=r#"https://creativecommons.org/licenses/by/4.0/"# title="CC BY 4.0" {
+                    img .icon_88x31 src="/static/88x31/cc-by.png" width=88 height=31;
+                }
+            }
+        }
+    )
+};
+
 pub fn build_home(
     config: &mut Blueprint<Global>,
     images: Handle<Assets<Image>>,
@@ -35,24 +61,12 @@ pub fn build_home(
 
         let scripts = &[&kanji.hydration];
 
-        let article = parse(&document.body, &document.path, None, Some(images))?;
+        let article = parse(&document.text, &document.meta, None, Some(images))?;
         let html = render(ctx, &article.text, &kanji_html, styles, scripts)?;
 
         Ok(vec![Output::html("", html)])
     }))
 }
-
-const INTRO: &str = r#"
-## かもし
-
-初めましての方は初めまして、ポーランド出身で日本語を勉強している人です。
-間違いがあったらすみません。
-
-こちらは個人的なウェブサイトで、「かもし」というのは個人サークル名といってもいいです。
-日本語を練習するため日本語を使って色々なことを書きます。
-英語も使います。趣味はプログラミングや日本語や日本の歌や同人など色々なことです。
-質問があったらメールを送信してくれてください。
-"#;
 
 pub(crate) fn render(
     ctx: &Context,
@@ -89,11 +103,11 @@ pub(crate) fn render(
 }
 
 fn intro(_: &Context) -> Result<impl Renderable, RuntimeError> {
-    let article = parse(INTRO, "".into(), None, None)?;
+    let article = comrak::markdown_to_html(INTRO, &comrak::Options::default());
 
     let html = maud!(
         section .p-card.intro-jp lang="ja-JP" {
-            (Raw::dangerously_create(&article.text))
+            (Raw::dangerously_create(&article))
         }
     );
 
@@ -145,27 +159,3 @@ fn intro(_: &Context) -> Result<impl Renderable, RuntimeError> {
 
 //     Ok(html)
 // }
-
-const SECTION_BUTTONS: Raw<&str> = {
-    maud_static!(
-        section .p-card {
-            h2 .p-card__heading {
-                "Badges"
-            }
-            div .grid_88x31 {
-                a href=r#"https://nixos.org"# title="Powered by NixOS" {
-                    img .icon_88x31 src="/static/88x31/nixos.gif" width=88 height=31;
-                }
-                a href=r#"https://crates.io/crates/hauchiwa"# title="Built with Hauchiwa" {
-                    img .icon_88x31 src="/static/88x31/hauchiwa.png" width=88 height=31;
-                }
-                a href=r#"https://www.mozilla.org/firefox/new"# title="Tested on Firefox" {
-                    img .icon_88x31 src="/static/88x31/firefox.webp" width=88 height=31;
-                }
-                a href=r#"https://creativecommons.org/licenses/by/4.0/"# title="CC BY 4.0" {
-                    img .icon_88x31 src="/static/88x31/cc-by.png" width=88 height=31;
-                }
-            }
-        }
-    )
-};
