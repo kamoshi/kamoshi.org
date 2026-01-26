@@ -6,9 +6,9 @@ use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
 use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, maud_borrow, prelude::*};
 
-use crate::Global;
-use crate::md::WikiLinkResolver;
+use crate::md::{Parsed, WikiLinkResolver};
 use crate::model::Wiki;
+use crate::{Bibtex, Global};
 
 use super::make_page;
 
@@ -16,6 +16,7 @@ pub fn build(
     config: &mut Blueprint<Global>,
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
+    bibtex: Handle<Assets<Bibtex>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
     let documents = config
         .load_documents::<Wiki>()
@@ -23,7 +24,7 @@ pub fn build(
         .offset("content")
         .register()?;
 
-    let task = hauchiwa::task!(config, |ctx, documents, images, styles| {
+    let task = hauchiwa::task!(config, |ctx, documents, images, styles, bibtex| {
         let styles = &[
             styles.get("styles/styles.scss")?,
             styles.get("styles/layouts/page.scss")?,
@@ -51,17 +52,23 @@ pub fn build(
             let mut parsed = Vec::new();
 
             for document in documents.values() {
-                let (html, refs) = crate::md::parse_markdown(
+                let library = bibtex
+                    .glob(&document.meta.assets("*.bib"))?
+                    .into_iter()
+                    .next();
+
+                let markdown = crate::md::parse_markdown(
                     &document.text,
                     &document.meta,
                     &resolver,
                     Some(images),
+                    library.map(|library| &library.1.data),
                 )?;
 
                 let href = document.meta.href.clone();
 
                 // Datalog: add wiki links
-                for target_href in &refs {
+                for target_href in &markdown.refs {
                     if doc_map.contains_key(target_href.as_str()) {
                         datalog.add_link(&href, target_href);
                     }
@@ -102,7 +109,7 @@ pub fn build(
                     }
                 }
 
-                parsed.push((document, html, href));
+                parsed.push((document, markdown, href));
             }
 
             parsed
@@ -115,7 +122,7 @@ pub fn build(
         let pages = {
             let mut pages = vec![];
 
-            for (document, html, href) in &parsed {
+            for (document, markdown, href) in &parsed {
                 // Get backlinks (list of href strings) and map them to Document objects
                 let backrefs = solution.get_backlinks(href).map(|hrefs| {
                     hrefs
@@ -137,7 +144,7 @@ pub fn build(
                         }
 
                         // Article
-                        (render_article(&document.matter, html, backrefs.as_deref()))
+                        (render_article(&document.matter, markdown, backrefs.as_deref()))
                     }
                 );
 
@@ -165,7 +172,7 @@ pub fn build(
 
 fn render_article(
     meta: &Wiki,
-    text: &str,
+    markdown: &Parsed,
     backlinks: Option<&[(&str, &Document<Wiki>)]>,
 ) -> impl Renderable {
     maud!(
@@ -177,13 +184,13 @@ fn render_article(
                     }
                 }
                 section .wiki-article__markdown.markdown {
-                    (Raw::dangerously_create(text))
+                    (Raw::dangerously_create(&markdown.html))
                 }
             }
 
-            // @if let Some(bib) = &article.bibliography.0 {
-            //     (render_bibliography(bib, library_path))
-            // }
+            @if let Some(bibliography) = &markdown.bibliography {
+                (render_bibliography(bibliography))
+            }
 
             @if let Some(backlinks) = backlinks {
                 div .backlinks {
@@ -281,6 +288,30 @@ fn show_tree_recursive(ctx: &TreeContext<'_>, href: &str) -> impl Renderable {
                         @if is_active_path || !is_link {
                             (show_tree_recursive(ctx, child_href))
                         }
+                    }
+                }
+            }
+        }
+    )
+}
+
+pub fn render_bibliography(bibliography: &[String]) -> impl Renderable {
+    maud!(
+        section .bibliography {
+            header {
+                h2 {
+                    "Bibliography"
+                }
+                // @if let Some(path) = library_path {
+                //     a.icon-btn href=(path.as_str()) download="bibliography.bib" title="Download BibTeX" {
+                //         img src="/static/svg/lucide/file-down.svg" alt="Download";
+                //     }
+                // }
+            }
+            ol {
+                @for item in bibliography {
+                    li {
+                        (Raw::dangerously_create(item))
                     }
                 }
             }

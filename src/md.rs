@@ -76,12 +76,19 @@ fn get_plugins() -> Plugins<'static> {
     plugins
 }
 
+pub struct Parsed {
+    pub html: String,
+    pub refs: Vec<String>,
+    pub bibliography: Option<Vec<String>>,
+}
+
 pub fn parse_markdown(
     file_text: &str,
     file_meta: &DocumentMeta,
     linker: &WikiLinkResolver,
     images: Option<&Assets<Image>>,
-) -> Result<(String, Vec<String>), MarkdownError> {
+    library: Option<&hayagriva::Library>,
+) -> Result<Parsed, MarkdownError> {
     let arena = Arena::new();
 
     let options = get_options();
@@ -128,10 +135,22 @@ pub fn parse_markdown(
         }
     }
 
+    process_inline_directives(&arena, &root);
+
+    let mut bibliography = None;
+
+    if let Some(library) = library {
+        bibliography = process_citations(library, &root)?;
+    }
+
     let mut html = String::new();
     format_html_with_plugins(root, &options, &mut html, &plugins)?;
 
-    Ok((html, refs))
+    Ok(Parsed {
+        html,
+        refs,
+        bibliography,
+    })
 }
 
 // hashed images
@@ -420,4 +439,179 @@ where
         // Detach empty node
         node.detach();
     }
+}
+
+// inline directive
+
+static RE_DIRECTIVE_INLINE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r":(\w+)\[(.*?)\]").expect("Invalid regex"));
+
+fn process_inline_directives<'arena, 'a>(arena: &'a Arena<'arena>, root: &'a Node<'arena>)
+where
+    'a: 'arena,
+{
+    let mut nodes_to_modify = Vec::new();
+
+    // Scan for directives in all Text nodes
+    for node in root.descendants() {
+        let mut data = node.data.borrow_mut();
+        if let NodeValue::Text(text) = &mut data.value {
+            let matches: Vec<_> = RE_DIRECTIVE_INLINE
+                .captures_iter(text)
+                .map(|cap| {
+                    (
+                        cap.get(0).unwrap().range(),              // Full match: :name[content]
+                        cap.get(1).unwrap().as_str().to_string(), // Name
+                        cap.get(2).unwrap().as_str().to_string(), // Content
+                    )
+                })
+                .collect();
+
+            if !matches.is_empty() {
+                nodes_to_modify.push((node, std::mem::take(text), matches));
+            }
+        }
+    }
+
+    // Apply transformations
+    for (node, text, matches) in nodes_to_modify {
+        let mut last_idx = 0;
+
+        for (range, name, content) in matches {
+            // Push text occurring before the directive
+            if range.start > last_idx {
+                let pre_text = &text[last_idx..range.start];
+                let pre_node = arena.alloc(NodeValue::Text(pre_text.to_string().into()).into());
+                node.insert_before(pre_node);
+            }
+
+            // Render the specific directive based on the name
+            let directive_node = match name.as_str() {
+                "icon" => {
+                    let html = format!(r#"<img class="inline-icon" src="{content}">"#);
+                    arena.alloc(NodeValue::HtmlInline(html).into())
+                }
+                "cite" => {
+                    // Repurpose Math node for citations
+                    arena.alloc(
+                        NodeValue::Math(comrak::nodes::NodeMath {
+                            dollar_math: false,
+                            display_math: false,
+                            literal: content,
+                        })
+                        .into(),
+                    )
+                }
+                _ => {
+                    // Fallback: If unknown, perhaps render as plain text or a warning
+                    let fallback = format!(":{name}[{content}]");
+                    arena.alloc(NodeValue::Text(fallback.into()).into())
+                }
+            };
+
+            node.insert_before(directive_node);
+            last_idx = range.end;
+        }
+
+        // Push any remaining text after the last directive
+        if last_idx < text.len() {
+            let post_text = &text[last_idx..];
+            let post_node = arena.alloc(NodeValue::Text(post_text.to_string().into()).into());
+            node.insert_before(post_node);
+        }
+
+        // Remove the original text node
+        node.detach();
+    }
+}
+
+// citations
+
+static LOCALE: LazyLock<Vec<hayagriva::citationberg::Locale>> =
+    LazyLock::new(hayagriva::archive::locales);
+
+static STYLE: LazyLock<hayagriva::citationberg::IndependentStyle> = LazyLock::new(|| {
+    match hayagriva::archive::ArchivedStyle::InstituteOfElectricalAndElectronicsEngineers.get() {
+        hayagriva::citationberg::Style::Independent(style) => style,
+        hayagriva::citationberg::Style::Dependent(_) => unreachable!(),
+    }
+});
+
+fn process_citations<'arena, 'a>(
+    library: &hayagriva::Library,
+    root: &'a Node<'arena>,
+) -> Result<Option<Vec<String>>, std::fmt::Error> {
+    use hayagriva::{
+        BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
+    };
+
+    // Check math nodes that exist
+    // We store the Node reference and the key to avoid borrowing issues later
+    let mut candidates = Vec::new();
+
+    for node in root.descendants() {
+        if let NodeValue::Math(math) = &node.data.borrow().value {
+            // Only process inline math that matches a library key
+            if !math.display_math && library.get(&math.literal).is_some() {
+                candidates.push((node, math.literal.clone()));
+            }
+        }
+    }
+
+    if candidates.is_empty() {
+        return Ok(None);
+    }
+
+    let mut driver = BibliographyDriver::new();
+
+    // Register each citation found in the text
+    for (_, key) in &candidates {
+        if let Some(entry) = library.get(key) {
+            driver.citation(CitationRequest::from_items(
+                vec![CitationItem::with_entry(entry)],
+                &STYLE,
+                &LOCALE,
+            ));
+        }
+    }
+
+    // This ensures *every* item in the library appears in the final
+    // bibliography list, not just the ones cited in the text.
+    driver.citation(CitationRequest::from_items(
+        library.iter().map(CitationItem::with_entry).collect(),
+        &STYLE,
+        &LOCALE,
+    ));
+
+    // Render results
+    let result = driver.finish(BibliographyRequest {
+        style: &STYLE,
+        locale: None,
+        locale_files: &LOCALE,
+    });
+
+    // Swap Math nodes for HTML <cite> tags. Skip the last entry because that
+    // corresponds to the "fake pass" that includes all items.
+    for ((node, _), item) in candidates.iter().zip(result.citations.iter()) {
+        let mut buf = String::from("<cite>");
+
+        item.citation.write_buf(&mut buf, BufWriteFormat::Html)?;
+        buf.push_str("</cite>");
+
+        node.data.borrow_mut().value = NodeValue::HtmlInline(buf);
+    }
+
+    let mut bibliography = Vec::new();
+
+    if let Some(entries) = result.bibliography {
+        for item in entries.items {
+            let mut buf = String::new();
+
+            item.content.write_buf(&mut buf, BufWriteFormat::Html)?;
+
+            bibliography.push(buf);
+        }
+    }
+
+    Ok(Some(bibliography))
 }

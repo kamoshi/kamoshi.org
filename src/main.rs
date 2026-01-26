@@ -158,6 +158,9 @@ fn run() -> Result<(), RuntimeError> {
         Ok(Bibtex { path, data })
     })?;
 
+    // digital garden
+    let _ = crate::plugin::wiki::build(&mut config, images, styles, bibtex)?;
+
     let home = build_home(&mut config, images, styles, svelte)?;
     let about = build_about(&mut config, images, styles)?;
     let _ = build_twtxt(&mut config, styles)?;
@@ -165,9 +168,6 @@ fn run() -> Result<(), RuntimeError> {
     let slides = build_slides(&mut config, images, styles, scripts)?;
     let _ = build_projects(&mut config, styles)?;
     let _ = build_tags(&mut config, posts_data, styles)?;
-
-    // digital garden
-    let _ = crate::plugin::wiki::build(&mut config, images, styles)?;
 
     let other = task!(config, |ctx, styles, scripts, svelte| {
         let mut pages = vec![];
