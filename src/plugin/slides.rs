@@ -5,7 +5,6 @@ use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::generic::DocumentMeta;
 use hauchiwa::loader::{Assets, Image, Script, Stylesheet};
 use hauchiwa::{Blueprint, Handle, Output, task};
-use hayagriva::Library;
 use hypertext::{Raw, prelude::*};
 
 use crate::model::Slideshow;
@@ -105,17 +104,19 @@ pub fn build_slides(
 pub fn parse(
     text: &str,
     meta: &DocumentMeta,
-    library: Option<&Library>,
+    library: Option<&hayagriva::Library>,
     images: Option<&Assets<Image>>,
 ) -> Result<String, RuntimeError> {
     let mut buff = String::new();
 
     for stack in text.split("\n-----\n") {
         buff.push_str("<section>");
+
         for slide in stack.split("\n---\n") {
-            let article = crate::markdown::parse(slide, meta, library, images)?;
-            write!(buff, "<section>{}</section>", article.text).unwrap();
+            let article = crate::md::parse(slide, meta, None, images, library)?;
+            write!(buff, "<section>{}</section>", article.html)?;
         }
+
         buff.push_str("</section>");
     }
 

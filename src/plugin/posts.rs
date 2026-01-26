@@ -5,7 +5,7 @@ use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
-use crate::markdown::Article;
+use crate::md::Parsed;
 use crate::model::Post;
 use crate::{Bibtex, Context, Global, Link, LinkDate};
 
@@ -53,17 +53,18 @@ pub fn build_posts(
                 }
             }
 
-            let article = crate::markdown::parse(
+            let parsed = crate::md::parse(
                 &document.text,
                 &document.meta,
-                bibtex.map(|(_, library)| &library.data),
+                None,
                 Some(images),
+                bibtex.map(|(_, library)| &library.data),
             )?;
 
             let buffer = render(
                 ctx,
                 &document.matter,
-                article,
+                parsed,
                 ctx.env.data.repo.files.get(document.meta.path.as_str()),
                 bibtex.map(|(_, library)| library.path.as_path()),
                 &document.matter.tags,
@@ -128,7 +129,7 @@ pub fn build_posts(
 pub fn render<'ctx>(
     ctx: &'ctx Context,
     meta: &'ctx Post,
-    article: Article,
+    parsed: Parsed,
     info: Option<&'ctx GitHistory>,
     library_path: Option<&'ctx Utf8Path>,
     tags: &'ctx [String],
@@ -138,9 +139,9 @@ pub fn render<'ctx>(
     let main = maud!(
         main {
             // Outline (left)
-            (&article.outline)
+            (&parsed.outline)
             // Article (center)
-            (render_article(meta, &article, library_path))
+            (render_article(meta, &parsed, library_path))
             // Metadata (right)
             (render_metadata(ctx, meta, info, tags))
         }
@@ -151,7 +152,7 @@ pub fn render<'ctx>(
 
 fn render_article(
     meta: &Post,
-    article: &Article,
+    parsed: &Parsed,
     library_path: Option<&Utf8Path>,
 ) -> impl Renderable {
     maud!(
@@ -163,12 +164,12 @@ fn render_article(
                     }
                 }
                 section .wiki-article__markdown.markdown {
-                    (Raw::dangerously_create(&article.text))
+                    (Raw::dangerously_create(&parsed.html))
                 }
             }
 
-            @if let Some(bib) = &article.bibliography.0 {
-                (render_bibliography(bib, library_path))
+            @if let Some(bibliography) = &parsed.bibliography {
+                (render_bibliography(bibliography, library_path))
             }
         }
     )

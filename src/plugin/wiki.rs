@@ -57,10 +57,10 @@ pub fn build(
                     .into_iter()
                     .next();
 
-                let markdown = crate::md::parse_markdown(
+                let markdown = crate::md::parse(
                     &document.text,
                     &document.meta,
-                    &resolver,
+                    Some(&resolver),
                     Some(images),
                     library.map(|library| &library.1.data),
                 )?;

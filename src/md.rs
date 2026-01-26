@@ -79,13 +79,14 @@ fn get_plugins() -> Plugins<'static> {
 pub struct Parsed {
     pub html: String,
     pub refs: Vec<String>,
+    pub outline: Outline,
     pub bibliography: Option<Vec<String>>,
 }
 
-pub fn parse_markdown(
+pub fn parse(
     file_text: &str,
     file_meta: &DocumentMeta,
-    linker: &WikiLinkResolver,
+    resolver: Option<&WikiLinkResolver>,
     images: Option<&Assets<Image>>,
     library: Option<&hayagriva::Library>,
 ) -> Result<Parsed, MarkdownError> {
@@ -126,10 +127,12 @@ pub fn parse_markdown(
                 }
             }
             NodeValue::WikiLink(link) => {
-                let url = linker.resolve(&link.url)?;
+                if let Some(resolver) = resolver {
+                    let url = resolver.resolve(&link.url)?;
 
-                refs.push(url.clone());
-                data.value = NodeValue::WikiLink(NodeWikiLink { url });
+                    refs.push(url.clone());
+                    data.value = NodeValue::WikiLink(NodeWikiLink { url });
+                }
             }
             _ => {}
         }
@@ -143,12 +146,15 @@ pub fn parse_markdown(
         bibliography = process_citations(library, &root)?;
     }
 
+    let outline = process_headings(&arena, &root);
+
     let mut html = String::new();
     format_html_with_plugins(root, &options, &mut html, &plugins)?;
 
     Ok(Parsed {
         html,
         refs,
+        outline,
         bibliography,
     })
 }
@@ -617,4 +623,163 @@ fn process_citations<'arena, 'a>(
     }
 
     Ok(Some(bibliography))
+}
+
+// outline
+
+#[derive(Debug, Clone)]
+pub struct Heading {
+    pub title: String,
+    pub id: String,
+    pub children: Vec<Heading>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Outline(pub Vec<Heading>);
+
+impl From<Vec<(String, String, usize)>> for Outline {
+    fn from(flat_vec: Vec<(String, String, usize)>) -> Self {
+        let mut res = Vec::<Heading>::new();
+
+        for (title, url, level) in flat_vec {
+            let mut ptr = &mut res;
+
+            let new = Heading {
+                title,
+                id: url,
+                children: vec![],
+            };
+
+            for _ in 2..level {
+                // This fixes the borrow checker issue
+                if ptr.is_empty() {
+                    break;
+                }
+
+                // We can unwrap here because we checked if the vector is empty
+                ptr = &mut ptr.last_mut().unwrap().children;
+            }
+
+            ptr.push(new);
+        }
+
+        Outline(res)
+    }
+}
+
+impl hypertext::Renderable for Outline {
+    fn render_to(&self, buffer: &mut hypertext::Buffer<hypertext::context::Node>) {
+        use hypertext::prelude::*;
+
+        fn render_heading_list(headings: &[Heading], depth: usize) -> impl Renderable {
+            maud!(
+                ul class=(format!("outline-depth-{depth}")) {
+                    @for Heading { title, id, children } in headings {
+                        li {
+                            a href=(format!("#{id}")) { (title) }
+
+                            @if !children.is_empty() {
+                                (render_heading_list(children, depth + 1))
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
+        maud!(
+            aside .outline {
+                @if !self.0.is_empty() {
+                    section {
+                        h2 {
+                            a href="#top" { "Outline" }
+                        }
+                        nav #table-of-contents {
+                            (render_heading_list(&self.0, 1))
+                        }
+                    }
+                }
+            }
+        )
+        .render_to(buffer);
+    }
+}
+
+fn process_headings<'a>(arena: &'a Arena<'a>, root: &'a Node<'a>) -> Outline {
+    let mut flat_headings = Vec::new();
+    let mut counts = HashMap::new();
+
+    let mut nodes_to_process = Vec::new();
+
+    for node in root.descendants() {
+        if let NodeValue::Heading(heading) = node.data.borrow().value {
+            nodes_to_process.push((node, heading.level));
+        }
+    }
+
+    for (node, level) in nodes_to_process {
+        let text = extract_text(&node);
+
+        let mut slug = text.to_lowercase().replace(' ', "-");
+        match counts.get_mut(&slug) {
+            Some(count) => {
+                *count += 1;
+                slug = format!("{slug}-{count}");
+            }
+            None => {
+                counts.insert(slug.clone(), 0);
+            }
+        }
+
+        // We create a temporary root to render just the children of this heading
+        let inner_html = {
+            let root = arena.alloc(NodeValue::Document.into());
+
+            for child in node.children() {
+                child.detach();
+                root.append(child);
+            }
+
+            let mut html = String::new();
+            comrak::format_html(root, &comrak::Options::default(), &mut html).unwrap();
+
+            html
+        };
+
+        // Manually build the <hX id="..."> tag
+        let html = format!("<h{level} id=\"{slug}\">{inner_html}</h{level}>");
+
+        let new_node = arena.alloc(
+            NodeValue::HtmlBlock(NodeHtmlBlock {
+                block_type: 0,
+                literal: html,
+            })
+            .into(),
+        );
+
+        // Swap the nodes
+        node.insert_before(new_node);
+        node.detach();
+
+        // Add to Outline
+        flat_headings.push((text, slug, level as usize));
+    }
+
+    Outline::from(flat_headings)
+}
+
+/// Helper to recursively extract text from a node's children
+fn extract_text(node: &Node) -> String {
+    let mut buf = String::new();
+
+    for child in node.children() {
+        let data = child.data.borrow();
+        match &data.value {
+            NodeValue::Text(t) => buf.push_str(t),
+            NodeValue::Code(c) => buf.push_str(&c.literal),
+            _ => buf.push_str(&extract_text(&child)),
+        }
+    }
+
+    buf
 }

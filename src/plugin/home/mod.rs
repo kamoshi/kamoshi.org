@@ -4,7 +4,6 @@ use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, maud_static, prelude::*};
 
 use crate::Context;
-use crate::markdown::parse;
 use crate::{Global, model::Home};
 
 use super::make_page;
@@ -61,8 +60,9 @@ pub fn build_home(
 
         let scripts = &[&kanji.hydration];
 
-        let article = parse(&document.text, &document.meta, None, Some(images))?;
-        let html = render(ctx, &article.text, &kanji_html, styles, scripts)?;
+        let parsed = crate::md::parse(&document.text, &document.meta, None, Some(images), None)?;
+
+        let html = render(ctx, &parsed.html, &kanji_html, styles, scripts)?;
 
         Ok(vec![Output::html("", html)])
     }))

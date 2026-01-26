@@ -3,7 +3,6 @@ use hauchiwa::loader::{Assets, Stylesheet};
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
-use crate::markdown::md_parse_simple;
 use crate::model::{Microblog, MicroblogEntry};
 use crate::{Context, Global};
 
@@ -96,6 +95,8 @@ pub fn render_entry<'ctx>(
 }
 
 fn render_tweet(entry: &MicroblogEntry) -> impl Renderable {
+    let html = comrak::markdown_to_html(&entry.text, &comrak::Options::default());
+
     maud!(
         article .tweet {
             // Left Column: Avatar
@@ -118,7 +119,7 @@ fn render_tweet(entry: &MicroblogEntry) -> impl Renderable {
                 }
 
                 div .tweet-body {
-                    (Raw::dangerously_create(md_parse_simple(&entry.text)))
+                    (Raw::dangerously_create(&html))
                 }
             }
         }

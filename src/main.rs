@@ -1,5 +1,4 @@
 mod datalog;
-mod markdown;
 mod md;
 mod model;
 mod plugin;

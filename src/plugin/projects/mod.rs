@@ -6,7 +6,7 @@ use hauchiwa::loader::{Assets, Stylesheet}; // Document is removed from imports
 use hauchiwa::{Blueprint, Handle, Output, task};
 use hypertext::{Raw, prelude::*};
 
-use crate::markdown::Article;
+use crate::md::Parsed;
 use crate::model::Project;
 use crate::{Context, Global};
 
@@ -140,18 +140,18 @@ fn render_tile(project: &ProjectView) -> impl Renderable {
 
 pub fn render_page<'ctx>(
     ctx: &'ctx Context,
-    article: &'ctx Article,
+    parsed: &'ctx Parsed,
     styles: &'ctx [&Stylesheet],
 ) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
     let html = maud!(
         main {
             // Outline (left)
-            (&article.outline)
+            (&parsed.outline)
             // Article (center)
             article .article {
                 section .paper {
                     section .wiki-article__markdown.markdown {
-                        (Raw::dangerously_create(&article.text))
+                        (Raw::dangerously_create(&parsed.html))
                     }
                 }
             }

@@ -5,7 +5,7 @@ use hypertext::{Raw, prelude::*};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
 
-use crate::markdown::Article;
+use crate::md::Parsed;
 use crate::model::{Post, Pubkey};
 use crate::{Context, Global};
 
@@ -45,8 +45,9 @@ pub fn build_about(
             styles.get("styles/layouts/page.scss")?,
         ];
 
-        let article = crate::markdown::parse(&document.text, &document.meta, None, Some(images))?;
-        let html = render(ctx, document, article, pubkey_ident, pubkey_email, styles)?
+        let parsed = crate::md::parse(&document.text, &document.meta, None, Some(images), None)?;
+
+        let html = render(ctx, document, parsed, pubkey_ident, pubkey_email, styles)?
             .render()
             .into_inner();
 
@@ -61,7 +62,7 @@ pub fn build_about(
 pub fn render<'ctx>(
     ctx: &'ctx Context,
     doc: &'ctx Document<Post>,
-    article: Article,
+    parsed: Parsed,
     pubkey_ident: &'ctx Pubkey,
     pubkey_email: &'ctx Pubkey,
     styles: &'ctx [&Stylesheet],
@@ -69,7 +70,7 @@ pub fn render<'ctx>(
     let main = maud!(
         main {
             // Outline (left)
-            (&article.outline)
+            (&parsed.outline)
             // Article (center)
             article .article {
                 section .paper {
@@ -79,7 +80,7 @@ pub fn render<'ctx>(
                         }
                     }
                     section .wiki-article__markdown.markdown {
-                        (Raw::dangerously_create(&article.text))
+                        (Raw::dangerously_create(&parsed.html))
 
                         h2 {
                            "Keys"
