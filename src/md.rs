@@ -446,6 +446,31 @@ where
 static RE_DIRECTIVE_INLINE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r":(\w+)\[(.*?)\]").expect("Invalid regex"));
 
+fn render_directive_inline<'a>(arena: &'a Arena<'a>, name: String, content: String) -> Node<'a> {
+    match name.as_str() {
+        "icon" => {
+            let html = format!(r#"<img class="inline-icon" src="{content}">"#);
+            arena.alloc(NodeValue::HtmlInline(html).into())
+        }
+        "cite" => {
+            // Repurpose Math node for citations
+            arena.alloc(
+                NodeValue::Math(comrak::nodes::NodeMath {
+                    dollar_math: false,
+                    display_math: false,
+                    literal: content.to_string(),
+                })
+                .into(),
+            )
+        }
+        _ => {
+            // Fallback: If unknown, perhaps render as plain text or a warning
+            let fallback = format!(":{name}[{content}]");
+            arena.alloc(NodeValue::Text(fallback.into()).into())
+        }
+    }
+}
+
 fn process_inline_directives<'arena, 'a>(arena: &'a Arena<'arena>, root: &'a Node<'arena>)
 where
     'a: 'arena,
@@ -485,29 +510,7 @@ where
                 node.insert_before(pre_node);
             }
 
-            // Render the specific directive based on the name
-            let directive_node = match name.as_str() {
-                "icon" => {
-                    let html = format!(r#"<img class="inline-icon" src="{content}">"#);
-                    arena.alloc(NodeValue::HtmlInline(html).into())
-                }
-                "cite" => {
-                    // Repurpose Math node for citations
-                    arena.alloc(
-                        NodeValue::Math(comrak::nodes::NodeMath {
-                            dollar_math: false,
-                            display_math: false,
-                            literal: content,
-                        })
-                        .into(),
-                    )
-                }
-                _ => {
-                    // Fallback: If unknown, perhaps render as plain text or a warning
-                    let fallback = format!(":{name}[{content}]");
-                    arena.alloc(NodeValue::Text(fallback.into()).into())
-                }
-            };
+            let directive_node = render_directive_inline(arena, name, content);
 
             node.insert_before(directive_node);
             last_idx = range.end;
