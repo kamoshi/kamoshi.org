@@ -42,7 +42,7 @@ pub fn build_twtxt(
         let html = render(ctx, data, styles)?.render().into_inner();
 
         let mut pages = vec![
-            Output::file("twtxt.txt", data.data.clone()),
+            Output::binary("twtxt.txt", data.data.clone()),
             Output::html("thoughts", html),
         ];
 

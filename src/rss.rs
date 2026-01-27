@@ -55,7 +55,7 @@ where
     let slug = Utf8Path::new(slug);
     let data = data.iter().map(ToFeed::to_feed).collect::<Vec<_>>();
 
-    Output::file(
+    Output::binary(
         slug.join("rss.xml"),
         ChannelBuilder::default()
             .title(title)

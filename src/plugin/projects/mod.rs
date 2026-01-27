@@ -55,7 +55,7 @@ pub fn build_projects(
             title: "Constellations",
             tech: vec!["Svelte".into(), "TypeScript".into()],
             link: Utf8PathBuf::from("/")
-                .join(&page_radicals.url)
+                .join(&page_radicals.path)
                 .parent()
                 .unwrap()
                 .to_string(),

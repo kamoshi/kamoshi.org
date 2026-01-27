@@ -53,8 +53,8 @@ pub fn build_about(
 
         Ok(vec![
             Output::html("about", html),
-            Output::file("pubkey_ident.asc", pubkey_ident.data.clone()),
-            Output::file("pubkey_email.asc", pubkey_email.data.clone()),
+            Output::binary("pubkey_ident.asc", pubkey_ident.data.clone()),
+            Output::binary("pubkey_email.asc", pubkey_email.data.clone()),
         ])
     }))
 }

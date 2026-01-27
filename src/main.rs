@@ -6,16 +6,16 @@ mod rss;
 mod ts;
 mod typst;
 
-use std::collections::HashSet;
 use std::fs;
 use std::process::{Command, ExitCode};
 
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::image::{ImageFormat, Quality};
-use hauchiwa::page::Output;
+use hauchiwa::loader::sitemap::{ChangeFrequency, Url};
+use hauchiwa::output::Output;
 use hauchiwa::{TaskContext, Website, task};
 use hayagriva::Library;
 use hypertext::{Raw, Renderable};
@@ -212,72 +212,16 @@ fn run() -> Result<(), RuntimeError> {
         Ok(pages)
     });
 
-    task!(config, |_, home, about, posts, slides, other| {
-        use pagefind::api::PagefindIndex;
-        use pagefind::options::PagefindServiceConfig;
-        use tokio::runtime::Builder;
+    config.use_pagefind([home, about, posts, slides, other]);
 
-        let run = async move |pages: &[&Output]| -> Result<(), RuntimeError> {
-            let config = PagefindServiceConfig::builder().build();
-            let mut index = PagefindIndex::new(Some(config))?;
-
-            for page in pages {
-                if let Some("html") = page.url.extension() {
-                    index
-                        .add_html_file(Some(page.url.to_string()), None, page.content.to_string())
-                        .await?;
-                }
-            }
-
-            let _ = index.write_files(Some("dist/pagefind".into())).await?;
-
-            Ok(())
-        };
-
-        let pages = [&home, &about, &posts, &slides, &other]
-            .into_iter()
-            .flat_map(|source| source.iter())
-            .collect::<Vec<_>>();
-
-        Builder::new_multi_thread()
-            .enable_all()
-            .build()?
-            .block_on(run(&pages))?;
-
-        Ok(())
-    });
-
-    task!(config, |_, home, about, posts, slides, other| {
-        use sitemap_rs::{
-            url::{ChangeFrequency, Url},
-            url_set::UrlSet,
-        };
-
-        let pages = [&home, &about, &posts, &slides, &other]
-            .into_iter()
-            .flat_map(|source| source.iter())
-            .collect::<Vec<_>>();
-
-        let urls = pages
-            .iter()
-            .map(|page| &page.url)
-            .collect::<HashSet<_>>()
-            .iter()
-            .map(|path| {
-                Url::builder(Utf8Path::new("/").join(path).parent().unwrap().to_string())
-                    .change_frequency(ChangeFrequency::Monthly)
-                    .priority(0.8)
-                    .build()
-                    .expect("failed a <url> validation")
-            })
-            .collect::<Vec<_>>();
-
-        let urls = UrlSet::new(urls).expect("failed a <urlset> validation");
-        let mut buf = Vec::<u8>::new();
-        urls.write(&mut buf).expect("failed to write XML");
-
-        Ok(Output::file("sitemap.xml", String::from_utf8(buf).unwrap()))
-    });
+    config
+        .use_sitemap(BASE_URL)
+        .add(home, ChangeFrequency::Monthly, 0.8)
+        .add(about, ChangeFrequency::Monthly, 0.8)
+        .add(posts, ChangeFrequency::Monthly, 0.8)
+        .add(slides, ChangeFrequency::Monthly, 0.8)
+        .add(other, ChangeFrequency::Monthly, 0.8)
+        .register();
 
     let mut website = config.finish();
 

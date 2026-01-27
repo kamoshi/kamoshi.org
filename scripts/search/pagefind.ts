@@ -1,4 +1,4 @@
-interface Pagefind {
+export interface Pagefind {
   search: (query: string) => Promise<PagefindResponse>;
 }
 
@@ -11,7 +11,7 @@ interface PagefindResponse {
   results: PagefindResult[];
 }
 
-interface PagefindDocument {
+export interface PagefindDocument {
   url: string;
   excerpt: string;
   filters: {
