@@ -1,6 +1,6 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output, task};
+use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, prelude::*};
 
 use crate::model::{Microblog, MicroblogEntry};
@@ -8,53 +8,61 @@ use crate::{Context, Global};
 
 use super::make_page;
 
-pub fn build_twtxt(
+pub fn add_twtxt(
     config: &mut Blueprint<Global>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
-    let twtxt = config.load("content/twtxt.txt", |_, _, file| {
-        let data = file.read()?;
-        let data = String::from_utf8_lossy(&data);
+    let twtxt = config
+        .task()
+        .source("content/twtxt.txt")
+        .run(|_, _, file| {
+            let data = file.read()?;
+            let data = String::from_utf8_lossy(&data);
 
-        let entries = data
-            .lines()
-            .filter(|line| {
-                let line = line.trim_start();
-                !line.is_empty() && !line.starts_with('#')
+            let entries = data
+                .lines()
+                .filter(|line| {
+                    let line = line.trim_start();
+                    !line.is_empty() && !line.starts_with('#')
+                })
+                .map(str::parse::<MicroblogEntry>)
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap();
+
+            Ok(Microblog {
+                entries,
+                data: data.to_string(),
             })
-            .map(str::parse::<MicroblogEntry>)
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap();
+        })?;
 
-        Ok(Microblog {
-            entries,
-            data: data.to_string(),
-        })
-    })?;
+    let handle = config
+        .task()
+        .depends_on((twtxt, styles))
+        .run(|ctx, (twtxt, styles)| {
+            let styles = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/microblog.scss")?,
+            ];
 
-    Ok(task!(config, |ctx, twtxt, styles| {
-        let styles = &[
-            styles.get("styles/styles.scss")?,
-            styles.get("styles/microblog.scss")?,
-        ];
+            let data = twtxt.get("content/twtxt.txt")?;
+            let html = render(ctx, data, styles)?.render().into_inner();
 
-        let data = twtxt.get("content/twtxt.txt")?;
-        let html = render(ctx, data, styles)?.render().into_inner();
+            let mut pages = vec![
+                Output::binary("twtxt.txt", data.data.clone()),
+                Output::html("thoughts", html),
+            ];
 
-        let mut pages = vec![
-            Output::binary("twtxt.txt", data.data.clone()),
-            Output::html("thoughts", html),
-        ];
+            for entry in &data.entries {
+                let html = render_entry(ctx, entry, styles)?.render().into_inner();
+                let date = entry.date.timestamp();
 
-        for entry in &data.entries {
-            let html = render_entry(ctx, entry, styles)?.render().into_inner();
-            let date = entry.date.timestamp();
+                pages.push(Output::html(format!("thoughts/{date}"), html));
+            }
 
-            pages.push(Output::html(format!("thoughts/{date}"), html));
-        }
+            Ok(pages)
+        });
 
-        Ok(pages)
-    }))
+    Ok(handle)
 }
 
 pub fn render<'ctx>(

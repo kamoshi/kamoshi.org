@@ -2,8 +2,8 @@ mod radicals;
 
 use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Assets, Stylesheet}; // Document is removed from imports
-use hauchiwa::{Blueprint, Handle, Output, task};
+use hauchiwa::loader::{Assets, Stylesheet};
+use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, prelude::*};
 
 use crate::md::Parsed;
@@ -12,8 +12,6 @@ use crate::{Context, Global};
 
 use super::make_page;
 
-/// A local view model to decouple the renderer from the external Document struct.
-/// We use references ('a) to avoid unnecessary cloning of strings.
 pub struct ProjectView<'a> {
     pub title: &'a str,
     pub tech: Vec<String>,
@@ -21,7 +19,7 @@ pub struct ProjectView<'a> {
     pub desc: Option<&'a str>,
 }
 
-pub fn build_projects(
+pub fn add_projects(
     config: &mut Blueprint<Global>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
@@ -33,59 +31,63 @@ pub fn build_projects(
 
     let page_radicals = radicals::build(config, styles)?;
 
-    Ok(task!(config, |ctx, docs, styles, page_radicals| {
-        let styles_list = &[
-            styles.get("styles/styles.scss")?,
-            styles.get("styles/layouts/projects.scss")?,
-        ];
+    let task = config.task().depends_on((docs, styles, page_radicals)).run(
+        |ctx, (docs, styles, page_radicals)| {
+            let styles_list = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/projects.scss")?,
+            ];
 
-        // Map the external Document<Project> to our local ProjectView
-        // This effectively "strips" the external container
-        let mut project_views: Vec<ProjectView> = docs
-            .values()
-            .map(|doc| ProjectView {
-                title: &doc.matter.title,
-                tech: doc.matter.tech.clone(),
-                link: doc.matter.link.clone(),
-                desc: doc.matter.desc.as_deref(),
-            })
-            .collect();
+            // Map the external Document<Project> to our local ProjectView
+            // This effectively "strips" the external container
+            let mut project_views: Vec<ProjectView> = docs
+                .values()
+                .map(|doc| ProjectView {
+                    title: &doc.matter.title,
+                    tech: doc.matter.tech.clone(),
+                    link: doc.matter.link.clone(),
+                    desc: doc.matter.desc.as_deref(),
+                })
+                .collect();
 
-        project_views.push(ProjectView {
-            title: "Constellations",
-            tech: vec!["Svelte".into(), "TypeScript".into()],
-            link: Utf8PathBuf::from("/")
-                .join(&page_radicals.path)
-                .parent()
-                .unwrap()
-                .to_string(),
-            desc: Some("Try adding kanji you know and see how they connect to each other."),
-        });
+            project_views.push(ProjectView {
+                title: "Constellations",
+                tech: vec!["Svelte".into(), "TypeScript".into()],
+                link: Utf8PathBuf::from("/")
+                    .join(&page_radicals.path)
+                    .parent()
+                    .unwrap()
+                    .to_string(),
+                desc: Some("Try adding kanji you know and see how they connect to each other."),
+            });
 
-        let mut pages = vec![];
+            let mut pages = vec![];
 
-        // Note: crate::rss::generate_feed likely still needs the original docs
-        // or a similar transformation depending on its signature.
-        // Assuming it keeps working with references to the raw map:
-        {
-            let docs_vec = docs.values().collect::<Vec<_>>();
-            pages.push(crate::rss::generate_feed(
-                &docs_vec,
-                "projects",
-                "Kamoshi.org Projects",
-            ));
-        }
+            // Note: crate::rss::generate_feed likely still needs the original docs
+            // or a similar transformation depending on its signature.
+            // Assuming it keeps working with references to the raw map:
+            {
+                let docs_vec = docs.values().collect::<Vec<_>>();
+                pages.push(crate::rss::generate_feed(
+                    &docs_vec,
+                    "projects",
+                    "Kamoshi.org Projects",
+                ));
+            }
 
-        {
-            // Pass the mapped views instead of the docs
-            let list = render_list(ctx, project_views, styles_list)?;
-            pages.push(Output::html("projects", list));
-        }
+            {
+                // Pass the mapped views instead of the docs
+                let list = render_list(ctx, project_views, styles_list)?;
+                pages.push(Output::html("projects", list));
+            }
 
-        // Removed `pages.push(value);` as `value` was undefined in snippet
+            // Removed `pages.push(value);` as `value` was undefined in snippet
 
-        Ok(pages)
-    }))
+            Ok(pages)
+        },
+    );
+
+    Ok(task)
 }
 
 pub fn render_list(

@@ -14,19 +14,19 @@ use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::image::{ImageFormat, Quality};
-use hauchiwa::loader::sitemap::{ChangeFrequency, Url};
-use hauchiwa::output::Output;
-use hauchiwa::{TaskContext, Website, task};
+use hauchiwa::loader::sitemap::ChangeFrequency;
+use hauchiwa::{Output, TaskContext, Website};
 use hayagriva::Library;
 use hypertext::{Raw, Renderable};
 
-use crate::plugin::about::build_about;
-use crate::plugin::home::build_home;
-use crate::plugin::posts::build_posts;
-use crate::plugin::projects::build_projects;
-use crate::plugin::slides::build_slides;
-use crate::plugin::tags::build_tags;
-use crate::plugin::twtxt::build_twtxt;
+use crate::plugin::about::add_about;
+use crate::plugin::home::add_home;
+use crate::plugin::posts::add_posts;
+use crate::plugin::projects::add_projects;
+use crate::plugin::slides::add_slides;
+use crate::plugin::tags::add_tags;
+use crate::plugin::twtxt::add_twtxt;
+use crate::plugin::wiki::add_teien;
 use crate::plugin::{make_fullscreen, make_page};
 
 /// Base path for content files
@@ -148,78 +148,104 @@ fn run() -> Result<(), RuntimeError> {
         .watch("scripts/**/*.svelte")
         .register()?;
 
-    let bibtex = config.load("content/**/*.bib", |_, store, input| {
-        let data = input.read()?;
-        let path = store.save(&data, "bib")?;
-        let text = String::from_utf8_lossy(&data);
-        let data = hayagriva::io::from_biblatex_str(&text).unwrap();
+    let bibtex = config
+        .task()
+        .name("bibtex")
+        .source("content/**/*.bib")
+        .run(|_, store, input| {
+            let data = input.read()?;
+            let path = store.save(&data, "bib")?;
+            let text = String::from_utf8_lossy(&data);
+            let data = hayagriva::io::from_biblatex_str(&text).unwrap();
 
-        Ok(Bibtex { path, data })
-    })?;
+            Ok(Bibtex { path, data })
+        })?;
+
+    // home
+    let home = add_home(&mut config, images, styles, svelte)?;
+
+    // about
+    let about = add_about(&mut config, images, styles)?;
 
     // digital garden
-    let _ = crate::plugin::wiki::build(&mut config, images, styles, bibtex)?;
+    let teien = add_teien(&mut config, images, styles, bibtex)?;
 
-    let home = build_home(&mut config, images, styles, svelte)?;
-    let about = build_about(&mut config, images, styles)?;
-    let _ = build_twtxt(&mut config, styles)?;
-    let (posts_data, posts) = build_posts(&mut config, images, styles, scripts, bibtex)?;
-    let slides = build_slides(&mut config, images, styles, scripts)?;
-    let _ = build_projects(&mut config, styles)?;
-    let _ = build_tags(&mut config, posts_data, styles)?;
+    // twtxt
+    let twtxt = add_twtxt(&mut config, styles)?;
 
-    let other = task!(config, |ctx, styles, scripts, svelte| {
-        let mut pages = vec![];
+    // posts
+    let (posts_data, posts) = add_posts(&mut config, images, styles, scripts, bibtex)?;
 
-        {
-            let html = Raw::dangerously_create(
-                r#"<div id="map" style="height: 100%; width: 100%"></div>"#,
-            );
+    // slides
+    let slides = add_slides(&mut config, images, styles, scripts)?;
 
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/photos/leaflet.scss")?,
-                styles.get("styles/layouts/map.scss")?,
-            ];
+    // projects
+    let projects = add_projects(&mut config, styles)?;
 
-            let scripts = &[scripts.get("scripts/photos/main.ts")?];
+    // tags
+    let tags = add_tags(&mut config, posts_data, styles)?;
 
-            let html = make_fullscreen(ctx, html, "Map".into(), styles, scripts)?
-                .render()
-                .into_inner();
+    // other
+    let other = config
+        .task()
+        .name("other")
+        .depends_on((styles, scripts, svelte))
+        .run(|ctx, (styles, scripts, svelte)| {
+            let mut pages = vec![];
 
-            pages.push(Output::html("map", html));
-        }
+            {
+                let html = Raw::dangerously_create(
+                    r#"<div id="map" style="height: 100%; width: 100%"></div>"#,
+                );
 
-        {
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/layouts/search.scss")?,
-            ];
+                let styles = &[
+                    styles.get("styles/styles.scss")?,
+                    styles.get("styles/photos/leaflet.scss")?,
+                    styles.get("styles/layouts/map.scss")?,
+                ];
 
-            let component = svelte.get("scripts/search/App.svelte")?;
-            let scripts = &[&component.hydration];
+                let scripts = &[scripts.get("scripts/photos/main.ts")?];
 
-            let html = (component.prerender)(&())?;
-            let html = Raw::dangerously_create(format!(r#"<main>{html}</main>"#));
-            let html = make_page(ctx, html, "Search".into(), styles, scripts)?
-                .render()
-                .into_inner();
+                let html = make_fullscreen(ctx, html, "Map".into(), styles, scripts)?
+                    .render()
+                    .into_inner();
 
-            pages.push(Output::html("search", html));
-        }
+                pages.push(Output::html("map", html));
+            }
 
-        Ok(pages)
-    });
+            {
+                let styles = &[
+                    styles.get("styles/styles.scss")?,
+                    styles.get("styles/layouts/search.scss")?,
+                ];
 
-    config.use_pagefind([home, about, posts, slides, other]);
+                let component = svelte.get("scripts/search/App.svelte")?;
+                let scripts = &[&component.hydration];
+
+                let html = (component.prerender)(&())?;
+                let html = Raw::dangerously_create(format!(r#"<main>{html}</main>"#));
+                let html = make_page(ctx, html, "Search".into(), styles, scripts)?
+                    .render()
+                    .into_inner();
+
+                pages.push(Output::html("search", html));
+            }
+
+            Ok(pages)
+        });
+
+    config.use_pagefind([home, about, teien, projects, posts, slides, other]);
 
     config
         .use_sitemap(BASE_URL)
         .add(home, ChangeFrequency::Monthly, 0.8)
         .add(about, ChangeFrequency::Monthly, 0.8)
+        .add(teien, ChangeFrequency::Monthly, 0.8)
+        .add(twtxt, ChangeFrequency::Monthly, 0.8)
         .add(posts, ChangeFrequency::Monthly, 0.8)
         .add(slides, ChangeFrequency::Monthly, 0.8)
+        .add(projects, ChangeFrequency::Monthly, 0.8)
+        .add(tags, ChangeFrequency::Monthly, 0.8)
         .add(other, ChangeFrequency::Monthly, 0.8)
         .register();
 

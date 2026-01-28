@@ -12,7 +12,7 @@ use crate::{Bibtex, Global};
 
 use super::make_page;
 
-pub fn build(
+pub fn add_teien(
     config: &mut Blueprint<Global>,
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
@@ -24,148 +24,151 @@ pub fn build(
         .offset("content")
         .register()?;
 
-    let task = hauchiwa::task!(config, |ctx, documents, images, styles, bibtex| {
-        let styles = &[
-            styles.get("styles/styles.scss")?,
-            styles.get("styles/layouts/page.scss")?,
-        ];
+    let task = config
+        .task()
+        .depends_on((documents, images, styles, bibtex))
+        .run(|ctx, (documents, images, styles, bibtex)| {
+            let styles = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/page.scss")?,
+            ];
 
-        // href -> document
-        let doc_map = {
-            let mut doc_map = HashMap::new();
+            // href -> document
+            let doc_map = {
+                let mut doc_map = HashMap::new();
 
-            for document in documents.values() {
-                doc_map.insert(document.meta.href.as_str(), document);
-            }
-
-            doc_map
-        };
-
-        // this can track complex relationships between documents
-        let mut datalog = crate::datalog::Datalog::new();
-
-        // this can resolve wiki links
-        let resolver = WikiLinkResolver::from_assets(documents);
-
-        // pass 1: parse markdown
-        let parsed = {
-            let mut parsed = Vec::new();
-
-            for document in documents.values() {
-                let library = bibtex
-                    .glob(&document.meta.assets("*.bib"))?
-                    .into_iter()
-                    .next();
-
-                let markdown = crate::md::parse(
-                    &document.text,
-                    &document.meta,
-                    Some(&resolver),
-                    Some(images),
-                    library.map(|library| &library.1.data),
-                )?;
-
-                let href = document.meta.href.clone();
-
-                // Datalog: add wiki links
-                for target_href in &markdown.refs {
-                    if doc_map.contains_key(target_href.as_str()) {
-                        datalog.add_link(&href, target_href);
-                    }
+                for document in documents.values() {
+                    doc_map.insert(document.meta.href.as_str(), document);
                 }
 
-                // Datalog: add parent hierarchy
-                {
-                    let mut ptr = Utf8Path::new(&href);
+                doc_map
+            };
 
-                    // Track the current child (start with the document itself)
-                    let mut current_child_str = href.clone();
+            // this can track complex relationships between documents
+            let mut datalog = crate::datalog::Datalog::new();
 
-                    while let Some(parent) = ptr.parent() {
-                        let parent_str = parent.as_str();
-                        if parent_str.is_empty() {
-                            break;
-                        }
+            // this can resolve wiki links
+            let resolver = WikiLinkResolver::from_assets(documents);
 
-                        // Normalize parent to ensure trailing slash
-                        let parent_normalized = if parent_str == "/" {
-                            "/".to_string()
-                        } else if !parent_str.ends_with('/') {
-                            format!("{}/", parent_str)
-                        } else {
-                            parent_str.to_string()
-                        };
+            // pass 1: parse markdown
+            let parsed = {
+                let mut parsed = Vec::new();
 
-                        // add link Parent -> Child
-                        datalog.add_parent(&parent_normalized, &current_child_str);
+                for document in documents.values() {
+                    let library = bibtex
+                        .glob(&document.meta.assets("*.bib"))?
+                        .into_iter()
+                        .next();
 
-                        // The parent becomes the child for the next iteration
-                        current_child_str = parent_normalized;
-                        ptr = parent;
+                    let markdown = crate::md::parse(
+                        &document.text,
+                        &document.meta,
+                        Some(&resolver),
+                        Some(images),
+                        library.map(|library| &library.1.data),
+                    )?;
 
-                        if ptr == "/" {
-                            break;
+                    let href = document.meta.href.clone();
+
+                    // Datalog: add wiki links
+                    for target_href in &markdown.refs {
+                        if doc_map.contains_key(target_href.as_str()) {
+                            datalog.add_link(&href, target_href);
                         }
                     }
-                }
 
-                parsed.push((document, markdown, href));
-            }
+                    // Datalog: add parent hierarchy
+                    {
+                        let mut ptr = Utf8Path::new(&href);
 
-            parsed
-        };
+                        // Track the current child (start with the document itself)
+                        let mut current_child_str = href.clone();
 
-        // here we can solve the datalog rules
-        let solution = datalog.solve();
+                        while let Some(parent) = ptr.parent() {
+                            let parent_str = parent.as_str();
+                            if parent_str.is_empty() {
+                                break;
+                            }
 
-        // pass 2: render html
-        let pages = {
-            let mut pages = vec![];
+                            // Normalize parent to ensure trailing slash
+                            let parent_normalized = if parent_str == "/" {
+                                "/".to_string()
+                            } else if !parent_str.ends_with('/') {
+                                format!("{}/", parent_str)
+                            } else {
+                                parent_str.to_string()
+                            };
 
-            for (document, markdown, href) in &parsed {
-                // Get backlinks (list of href strings) and map them to Document objects
-                let backrefs = solution.get_backlinks(href).map(|hrefs| {
-                    hrefs
-                        .iter()
-                        .filter_map(|h| doc_map.get(*h))
-                        .map(|&doc| (doc.meta.href.as_str(), doc)) // Tuple for the template
-                        .collect::<Vec<_>>()
-                });
+                            // add link Parent -> Child
+                            datalog.add_parent(&parent_normalized, &current_child_str);
 
-                let main = maud_borrow!(
-                    main .wiki-main {
-                        // Outline
-                        aside .outline {
-                            section {
-                                div {
-                                    (TreeContext::new("/", href, &doc_map, &solution))
-                                }
+                            // The parent becomes the child for the next iteration
+                            current_child_str = parent_normalized;
+                            ptr = parent;
+
+                            if ptr == "/" {
+                                break;
                             }
                         }
-
-                        // Article
-                        (render_article(&document.matter, markdown, backrefs.as_deref()))
                     }
-                );
 
-                let page = make_page(ctx, main, document.matter.title.to_owned(), styles, &[])?
-                    .render()
-                    .into_inner();
+                    parsed.push((document, markdown, href));
+                }
 
-                pages.push(
-                    document
-                        .output()
-                        .strip_prefix("content")?
-                        .html()
-                        .content(page),
-                );
-            }
+                parsed
+            };
 
-            pages
-        };
+            // here we can solve the datalog rules
+            let solution = datalog.solve();
 
-        Ok(pages)
-    });
+            // pass 2: render html
+            let pages = {
+                let mut pages = vec![];
+
+                for (document, markdown, href) in &parsed {
+                    // Get backlinks (list of href strings) and map them to Document objects
+                    let backrefs = solution.get_backlinks(href).map(|hrefs| {
+                        hrefs
+                            .iter()
+                            .filter_map(|h| doc_map.get(*h))
+                            .map(|&doc| (doc.meta.href.as_str(), doc)) // Tuple for the template
+                            .collect::<Vec<_>>()
+                    });
+
+                    let main = maud_borrow!(
+                        main .wiki-main {
+                            // Outline
+                            aside .outline {
+                                section {
+                                    div {
+                                        (TreeContext::new("/", href, &doc_map, &solution))
+                                    }
+                                }
+                            }
+
+                            // Article
+                            (render_article(&document.matter, markdown, backrefs.as_deref()))
+                        }
+                    );
+
+                    let page = make_page(ctx, main, document.matter.title.to_owned(), styles, &[])?
+                        .render()
+                        .into_inner();
+
+                    pages.push(
+                        document
+                            .output()
+                            .strip_prefix("content")?
+                            .html()
+                            .content(page),
+                    );
+                }
+
+                pages
+            };
+
+            Ok(pages)
+        });
 
     Ok(task)
 }

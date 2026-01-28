@@ -1,6 +1,6 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output, task};
+use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, prelude::*};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
@@ -11,7 +11,7 @@ use crate::{Context, Global};
 
 use super::make_page;
 
-pub fn build_about(
+pub fn add_about(
     config: &mut Blueprint<Global>,
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
@@ -22,41 +22,49 @@ pub fn build_about(
         .offset("content")
         .register()?;
 
-    let cert = config.load("content/about/*.asc", |_, _, input| {
-        let data = input.read()?;
+    let cert = config
+        .task()
+        .source("content/about/*.asc")
+        .run(|_, _, input| {
+            let data = input.read()?;
 
-        Ok(Pubkey {
-            fingerprint: Cert::from_reader(&*data)?
-                .primary_key()
-                .key()
-                .fingerprint()
-                .to_spaced_hex(),
-            data: String::from_utf8(data.to_vec())?.to_string(),
-        })
-    })?;
+            Ok(Pubkey {
+                fingerprint: Cert::from_reader(&*data)?
+                    .primary_key()
+                    .key()
+                    .fingerprint()
+                    .to_spaced_hex(),
+                data: String::from_utf8(data.to_vec())?.to_string(),
+            })
+        })?;
 
-    Ok(task!(config, |ctx, docs, cert, images, styles| {
-        let document = docs.get("content/about/index.md")?;
-        let pubkey_ident = cert.get("content/about/pubkey-ident.asc")?;
-        let pubkey_email = cert.get("content/about/pubkey-email.asc")?;
+    let handle = config.task().depends_on((docs, cert, images, styles)).run(
+        |ctx, (docs, cert, images, styles)| {
+            let document = docs.get("content/about/index.md")?;
+            let pubkey_ident = cert.get("content/about/pubkey-ident.asc")?;
+            let pubkey_email = cert.get("content/about/pubkey-email.asc")?;
 
-        let styles = &[
-            styles.get("styles/styles.scss")?,
-            styles.get("styles/layouts/page.scss")?,
-        ];
+            let styles = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/page.scss")?,
+            ];
 
-        let parsed = crate::md::parse(&document.text, &document.meta, None, Some(images), None)?;
+            let parsed =
+                crate::md::parse(&document.text, &document.meta, None, Some(images), None)?;
 
-        let html = render(ctx, document, parsed, pubkey_ident, pubkey_email, styles)?
-            .render()
-            .into_inner();
+            let html = render(ctx, document, parsed, pubkey_ident, pubkey_email, styles)?
+                .render()
+                .into_inner();
 
-        Ok(vec![
-            Output::html("about", html),
-            Output::binary("pubkey_ident.asc", pubkey_ident.data.clone()),
-            Output::binary("pubkey_email.asc", pubkey_email.data.clone()),
-        ])
-    }))
+            Ok(vec![
+                Output::html("about", html),
+                Output::binary("pubkey_ident.asc", pubkey_ident.data.clone()),
+                Output::binary("pubkey_email.asc", pubkey_email.data.clone()),
+            ])
+        },
+    );
+
+    Ok(handle)
 }
 
 pub fn render<'ctx>(

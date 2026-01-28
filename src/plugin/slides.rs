@@ -4,7 +4,7 @@ use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::generic::DocumentMeta;
 use hauchiwa::loader::{Assets, Image, Script, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output, task};
+use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, prelude::*};
 
 use crate::model::Slideshow;
@@ -13,7 +13,7 @@ use crate::{Context, Global, Link, LinkDate};
 
 use super::make_bare;
 
-pub fn build_slides(
+pub fn add_slides(
     config: &mut Blueprint<Global>,
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
@@ -24,81 +24,87 @@ pub fn build_slides(
         .source("content/slides/**/*.md")
         .offset("content")
         .register()?;
+
     let hs = config
         .load_documents::<Slideshow>()
         .source("content/slides/**/*.lhs")
         .offset("content")
         .register()?;
 
-    Ok(task!(config, |ctx, md, hs, images, styles, scripts| {
-        let mut pages = vec![];
+    let handle = config
+        .task()
+        .depends_on((md, hs, images, styles, scripts))
+        .run(|ctx, (md, hs, images, styles, scripts)| {
+            let mut pages = vec![];
 
-        let documents = [md.values(), hs.values()]
-            .into_iter()
-            .flatten()
-            .collect::<Vec<_>>();
+            let documents = [md.values(), hs.values()]
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>();
 
-        {
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/reveal/reveal.scss")?,
-            ];
+            {
+                let styles = &[
+                    styles.get("styles/styles.scss")?,
+                    styles.get("styles/reveal/reveal.scss")?,
+                ];
 
-            let scripts = &[scripts.get("scripts/slides/main.ts")?];
+                let scripts = &[scripts.get("scripts/slides/main.ts")?];
 
-            for document in &documents {
-                let text = parse(&document.text, &document.meta, None, Some(images))?;
-                let html = render(ctx, &document.matter, &text, styles, scripts)?
+                for document in &documents {
+                    let text = parse(&document.text, &document.meta, None, Some(images))?;
+                    let html = render(ctx, &document.matter, &text, styles, scripts)?
+                        .render()
+                        .into_inner();
+
+                    pages.push(
+                        document
+                            .output()
+                            .strip_prefix("content")?
+                            .html()
+                            .content(html),
+                    );
+                }
+            }
+
+            // render list
+            {
+                let styles = &[
+                    styles.get("styles/styles.scss")?,
+                    styles.get("styles/layouts/list.scss")?,
+                ];
+
+                let data = documents
+                    .iter()
+                    .map(|item| LinkDate {
+                        link: Link {
+                            path: Utf8PathBuf::from(&item.meta.href),
+                            name: item.matter.title.clone(),
+                            desc: item.matter.desc.clone(),
+                        },
+                        date: item.matter.date.to_utc(),
+                    })
+                    .collect();
+
+                let html = to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?
                     .render()
                     .into_inner();
 
-                pages.push(
-                    document
-                        .output()
-                        .strip_prefix("content")?
-                        .html()
-                        .content(html),
-                );
+                pages.push(Output::html("slides", html));
             }
-        }
 
-        // render list
-        {
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/layouts/list.scss")?,
-            ];
+            // render feed
+            {
+                pages.push(crate::rss::generate_feed(
+                    &documents,
+                    "slides",
+                    "Kamoshi.org Slides",
+                ));
+            }
 
-            let data = documents
-                .iter()
-                .map(|item| LinkDate {
-                    link: Link {
-                        path: Utf8PathBuf::from(&item.meta.href),
-                        name: item.matter.title.clone(),
-                        desc: item.matter.desc.clone(),
-                    },
-                    date: item.matter.date.to_utc(),
-                })
-                .collect();
+            Ok(pages)
+        });
 
-            let html = to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?
-                .render()
-                .into_inner();
-
-            pages.push(Output::html("slides", html));
-        }
-
-        // render feed
-        {
-            pages.push(crate::rss::generate_feed(
-                &documents,
-                "slides",
-                "Kamoshi.org Slides",
-            ));
-        }
-
-        Ok(pages)
-    }))
+    Ok(handle)
 }
 
 pub fn parse(

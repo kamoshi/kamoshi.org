@@ -1,6 +1,6 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Image, Script, Stylesheet, Svelte};
-use hauchiwa::{Blueprint, Handle, Output, task};
+use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, maud_static, prelude::*};
 
 use crate::Context;
@@ -34,7 +34,7 @@ const SECTION_BUTTONS: Raw<&str> = {
     )
 };
 
-pub fn build_home(
+pub fn add_home(
     config: &mut Blueprint<Global>,
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
@@ -46,26 +46,32 @@ pub fn build_home(
         .offset("content")
         .register()?;
 
-    Ok(task!(config, |ctx, docs, images, styles, svelte| {
-        let document = docs.get("content/index.md")?;
+    let task = config
+        .task()
+        .depends_on((docs, images, styles, svelte))
+        .run(|ctx, (docs, images, styles, svelte)| {
+            let document = docs.get("content/index.md")?;
 
-        let styles = &[
-            styles.get("styles/styles.scss")?,
-            styles.get("styles/layouts/home.scss")?,
-            styles.get("styles/components/kanji.scss")?,
-        ];
+            let styles = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/home.scss")?,
+                styles.get("styles/components/kanji.scss")?,
+            ];
 
-        let kanji = svelte.get("scripts/kanji/App.svelte")?;
-        let kanji_html = (kanji.prerender)(&())?;
+            let kanji = svelte.get("scripts/kanji/App.svelte")?;
+            let kanji_html = (kanji.prerender)(&())?;
 
-        let scripts = &[&kanji.hydration];
+            let scripts = &[&kanji.hydration];
 
-        let parsed = crate::md::parse(&document.text, &document.meta, None, Some(images), None)?;
+            let parsed =
+                crate::md::parse(&document.text, &document.meta, None, Some(images), None)?;
 
-        let html = render(ctx, &parsed.html, &kanji_html, styles, scripts)?;
+            let html = render(ctx, &parsed.html, &kanji_html, styles, scripts)?;
 
-        Ok(vec![Output::html("", html)])
-    }))
+            Ok(vec![Output::html("", html)])
+        });
+
+    Ok(task)
 }
 
 pub(crate) fn render(

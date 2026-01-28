@@ -4,67 +4,72 @@ use camino::Utf8PathBuf;
 use chrono::Datelike;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Assets, Document, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output, task};
+use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::prelude::*;
 
 use crate::{Context, Global, Link, LinkDate, model::Post};
 
 use super::make_page;
 
-pub fn build_tags(
+pub fn add_tags(
     config: &mut Blueprint<Global>,
     posts: Handle<Assets<Document<Post>>>,
     styles: Handle<Assets<Stylesheet>>,
 ) -> Result<Handle<Vec<Output>>, HauchiwaError> {
-    Ok(task!(config, |ctx, posts, styles| {
-        use std::collections::BTreeMap;
+    let handle = config
+        .task()
+        .depends_on((posts, styles))
+        .run(|ctx, (posts, styles)| {
+            use std::collections::BTreeMap;
 
-        let styles = &[
-            styles.get("styles/styles.scss")?,
-            styles.get("styles/layouts/list.scss")?,
-            styles.get("styles/layouts/tags.scss")?,
-        ];
+            let styles = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/layouts/list.scss")?,
+                styles.get("styles/layouts/tags.scss")?,
+            ];
 
-        let posts = posts
-            .values()
-            .filter(|item| !item.matter.draft)
-            .collect::<Vec<_>>();
+            let posts = posts
+                .values()
+                .filter(|item| !item.matter.draft)
+                .collect::<Vec<_>>();
 
-        let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
+            let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
 
-        for post in &posts {
-            for tag in &post.matter.tags {
-                tag_map.entry(tag.clone()).or_default().push(LinkDate {
-                    link: Link {
-                        path: Utf8PathBuf::from(&post.meta.href),
-                        name: post.matter.title.clone(),
-                        desc: post.matter.desc.clone(),
-                    },
-                    date: post.matter.date,
-                });
+            for post in &posts {
+                for tag in &post.matter.tags {
+                    tag_map.entry(tag.clone()).or_default().push(LinkDate {
+                        link: Link {
+                            path: Utf8PathBuf::from(&post.meta.href),
+                            name: post.matter.title.clone(),
+                            desc: post.matter.desc.clone(),
+                        },
+                        date: post.matter.date,
+                    });
+                }
             }
-        }
 
-        let mut pages = Vec::new();
+            let mut pages = Vec::new();
 
-        // Render individual tag pages
-        for (tag, links) in &tag_map {
-            let path = format!("tags/{tag}/index.html");
+            // Render individual tag pages
+            for (tag, links) in &tag_map {
+                let path = format!("tags/{tag}/index.html");
 
-            let data = group(links);
-            let html = render_tag(ctx, &data, tag.to_owned(), styles)?
-                .render()
-                .into_inner();
+                let data = group(links);
+                let html = render_tag(ctx, &data, tag.to_owned(), styles)?
+                    .render()
+                    .into_inner();
 
-            pages.push(Output::html(path, html));
+                pages.push(Output::html(path, html));
 
-            // Render global tag index
-            // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
-            // pages.push(Page::text("tags/index.html".into(), index.render().into()));
-        }
+                // Render global tag index
+                // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
+                // pages.push(Page::text("tags/index.html".into(), index.render().into()));
+            }
 
-        Ok(pages)
-    }))
+            Ok(pages)
+        });
+
+    Ok(handle)
 }
 
 pub fn group(links: &[LinkDate]) -> Vec<(i32, Vec<&LinkDate>)> {

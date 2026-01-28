@@ -2,7 +2,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::git::GitHistory;
 use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output, task};
+use hauchiwa::{Blueprint, Handle, Output};
 use hypertext::{Raw, prelude::*};
 
 use crate::md::Parsed;
@@ -11,7 +11,7 @@ use crate::{Bibtex, Context, Global, Link, LinkDate};
 
 use super::{make_page, render_bibliography, to_list};
 
-pub fn build_posts(
+pub fn add_posts(
     config: &mut Blueprint<Global>,
     images: Handle<Assets<Image>>,
     styles: Handle<Assets<Stylesheet>>,
@@ -24,104 +24,107 @@ pub fn build_posts(
         .offset("content")
         .register()?;
 
-    let pages = task!(config, |ctx, docs, images, styles, scripts, bibtex| {
-        let mut pages = vec![];
+    let pages = config
+        .task()
+        .depends_on((docs, images, styles, scripts, bibtex))
+        .run(|ctx, (docs, images, styles, scripts, bibtex)| {
+            let mut pages = vec![];
 
-        let documents = docs
-            .values()
-            .filter(|item| !item.matter.draft)
-            .collect::<Vec<_>>();
+            let documents = docs
+                .values()
+                .filter(|item| !item.matter.draft)
+                .collect::<Vec<_>>();
 
-        // render the posts
-        for document in &documents {
-            let bibtex = bibtex
-                .glob(&document.meta.assets("*.bib"))?
-                .into_iter()
-                .next();
+            // render the posts
+            for document in &documents {
+                let bibtex = bibtex
+                    .glob(&document.meta.assets("*.bib"))?
+                    .into_iter()
+                    .next();
 
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/layouts/page.scss")?,
-            ];
+                let styles = &[
+                    styles.get("styles/styles.scss")?,
+                    styles.get("styles/layouts/page.scss")?,
+                ];
 
-            let mut js = vec![scripts.get("scripts/outline/main.ts")?];
+                let mut js = vec![scripts.get("scripts/outline/main.ts")?];
 
-            if let Some(entries) = &document.matter.scripts {
-                for entry in entries {
-                    let key = format!("scripts/{}", entry);
-                    js.push(scripts.get(key)?);
+                if let Some(entries) = &document.matter.scripts {
+                    for entry in entries {
+                        let key = format!("scripts/{}", entry);
+                        js.push(scripts.get(key)?);
+                    }
                 }
+
+                let parsed = crate::md::parse(
+                    &document.text,
+                    &document.meta,
+                    None,
+                    Some(images),
+                    bibtex.map(|(_, library)| &library.data),
+                )?;
+
+                let buffer = render(
+                    ctx,
+                    &document.matter,
+                    parsed,
+                    ctx.env.data.repo.files.get(document.meta.path.as_str()),
+                    bibtex.map(|(_, library)| library.path.as_path()),
+                    &document.matter.tags,
+                    styles,
+                    &js,
+                )?
+                .render()
+                .into_inner();
+
+                pages.push(
+                    document
+                        .output()
+                        .strip_prefix("content")?
+                        .html()
+                        .content(buffer),
+                );
             }
 
-            let parsed = crate::md::parse(
-                &document.text,
-                &document.meta,
-                None,
-                Some(images),
-                bibtex.map(|(_, library)| &library.data),
-            )?;
+            {
+                let styles = &[
+                    styles.get("styles/styles.scss")?,
+                    styles.get("styles/layouts/list.scss")?,
+                ];
 
-            let buffer = render(
-                ctx,
-                &document.matter,
-                parsed,
-                ctx.env.data.repo.files.get(document.meta.path.as_str()),
-                bibtex.map(|(_, library)| library.path.as_path()),
-                &document.matter.tags,
-                styles,
-                &js,
-            )?
-            .render()
-            .into_inner();
+                let html = to_list(
+                    ctx,
+                    documents
+                        .iter()
+                        .map(|item| LinkDate {
+                            link: Link {
+                                path: Utf8PathBuf::from(&item.meta.href),
+                                name: item.matter.title.clone(),
+                                desc: item.matter.desc.clone(),
+                            },
+                            date: item.matter.date,
+                        })
+                        .collect(),
+                    "Posts".into(),
+                    "/posts/rss.xml",
+                    styles,
+                )?
+                .render()
+                .into_inner();
 
-            pages.push(
-                document
-                    .output()
-                    .strip_prefix("content")?
-                    .html()
-                    .content(buffer),
-            );
-        }
+                pages.push(Output::html("posts", html));
+            }
 
-        {
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/layouts/list.scss")?,
-            ];
+            {
+                pages.push(crate::rss::generate_feed(
+                    &documents,
+                    "posts",
+                    "Kamoshi.org Posts",
+                ));
+            }
 
-            let html = to_list(
-                ctx,
-                documents
-                    .iter()
-                    .map(|item| LinkDate {
-                        link: Link {
-                            path: Utf8PathBuf::from(&item.meta.href),
-                            name: item.matter.title.clone(),
-                            desc: item.matter.desc.clone(),
-                        },
-                        date: item.matter.date,
-                    })
-                    .collect(),
-                "Posts".into(),
-                "/posts/rss.xml",
-                styles,
-            )?
-            .render()
-            .into_inner();
-
-            pages.push(Output::html("posts", html));
-        }
-
-        {
-            pages.push(crate::rss::generate_feed(
-                &documents,
-                "posts",
-                "Kamoshi.org Posts",
-            ));
-        }
-
-        Ok(pages)
-    });
+            Ok(pages)
+        });
 
     Ok((docs, pages))
 }
