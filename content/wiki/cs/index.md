@@ -2,6 +2,11 @@
 title: Computer Science
 ---
 
+## What to read
+
+* [Making Software](https://www.makingsoftware.com/) - Illustrated explanations
+  of various topics in Computer Science.
+
 ## General
 
 - [To the members of the Budget Council ~ Edsger Dijkstra](https://www.cs.utexas.edu/users/EWD/OtherDocs/To%20the%20Budget%20Council%20concerning%20Haskell.pdf)
