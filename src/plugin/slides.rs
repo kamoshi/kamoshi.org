@@ -3,8 +3,8 @@ use std::fmt::Write as _;
 use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::generic::DocumentMeta;
-use hauchiwa::loader::{Assets, Image, Script, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output};
+use hauchiwa::loader::{Image, Script, Stylesheet};
+use hauchiwa::{Tracker, prelude::*};
 use hypertext::{Raw, prelude::*};
 
 use crate::model::Slideshow;
@@ -15,10 +15,10 @@ use super::make_bare;
 
 pub fn add_slides(
     config: &mut Blueprint<Global>,
-    images: Handle<Assets<Image>>,
-    styles: Handle<Assets<Stylesheet>>,
-    scripts: Handle<Assets<Script>>,
-) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    images: Many<Image>,
+    styles: Many<Stylesheet>,
+    scripts: Many<Script>,
+) -> Result<One<Vec<Output>>, HauchiwaError> {
     let md = config
         .load_documents::<Slideshow>()
         .source("content/slides/**/*.md")
@@ -51,7 +51,7 @@ pub fn add_slides(
                 let scripts = &[scripts.get("scripts/slides/main.ts")?];
 
                 for document in &documents {
-                    let text = parse(&document.text, &document.meta, None, Some(images))?;
+                    let text = parse(&document.text, &document.meta, None, Some(&images))?;
                     let html = render(ctx, &document.matter, &text, styles, scripts)?
                         .render()
                         .into_inner();
@@ -111,7 +111,7 @@ pub fn parse(
     text: &str,
     meta: &DocumentMeta,
     library: Option<&hayagriva::Library>,
-    images: Option<&Assets<Image>>,
+    images: Option<&Tracker<Image>>,
 ) -> Result<String, RuntimeError> {
     let mut buff = String::new();
 

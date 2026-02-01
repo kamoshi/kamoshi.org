@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use hauchiwa::error::HauchiwaError;
-use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output};
+use hauchiwa::loader::{Document, Image, Stylesheet};
+use hauchiwa::prelude::*;
 use hypertext::{Raw, maud_borrow, prelude::*};
 
 use crate::md::{Parsed, WikiLinkResolver};
@@ -14,10 +14,10 @@ use super::make_page;
 
 pub fn add_teien(
     config: &mut Blueprint<Global>,
-    images: Handle<Assets<Image>>,
-    styles: Handle<Assets<Stylesheet>>,
-    bibtex: Handle<Assets<Bibtex>>,
-) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    images: Many<Image>,
+    styles: Many<Stylesheet>,
+    bibtex: Many<Bibtex>,
+) -> Result<One<Vec<Output>>, HauchiwaError> {
     let documents = config
         .load_documents::<Wiki>()
         .source("content/wiki/**/*.md")
@@ -37,7 +37,7 @@ pub fn add_teien(
             let doc_map = {
                 let mut doc_map = HashMap::new();
 
-                for document in documents.values() {
+                for document in &documents {
                     doc_map.insert(document.meta.href.as_str(), document);
                 }
 
@@ -48,13 +48,13 @@ pub fn add_teien(
             let mut datalog = crate::datalog::Datalog::new();
 
             // this can resolve wiki links
-            let resolver = WikiLinkResolver::from_assets(documents);
+            let resolver = WikiLinkResolver::from_assets(&documents);
 
             // pass 1: parse markdown
             let parsed = {
                 let mut parsed = Vec::new();
 
-                for document in documents.values() {
+                for document in documents {
                     let library = bibtex
                         .glob(&document.meta.assets("*.bib"))?
                         .into_iter()
@@ -64,7 +64,7 @@ pub fn add_teien(
                         &document.text,
                         &document.meta,
                         Some(&resolver),
-                        Some(images),
+                        Some(&images),
                         library.map(|library| &library.1.data),
                     )?;
 

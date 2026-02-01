@@ -1,6 +1,6 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Assets, Image, Script, Stylesheet, Svelte};
-use hauchiwa::{Blueprint, Handle, Output};
+use hauchiwa::loader::{Image, Script, Stylesheet, Svelte};
+use hauchiwa::prelude::*;
 use hypertext::{Raw, maud_static, prelude::*};
 
 use crate::Context;
@@ -36,10 +36,10 @@ const SECTION_BUTTONS: Raw<&str> = {
 
 pub fn add_home(
     config: &mut Blueprint<Global>,
-    images: Handle<Assets<Image>>,
-    styles: Handle<Assets<Stylesheet>>,
-    svelte: Handle<Assets<Svelte>>,
-) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    images: Many<Image>,
+    styles: Many<Stylesheet>,
+    svelte: Many<Svelte>,
+) -> Result<One<Vec<Output>>, HauchiwaError> {
     let docs = config
         .load_documents::<Home>()
         .source("content/index.md")
@@ -64,7 +64,7 @@ pub fn add_home(
             let scripts = &[&kanji.hydration];
 
             let parsed =
-                crate::md::parse(&document.text, &document.meta, None, Some(images), None)?;
+                crate::md::parse(&document.text, &document.meta, None, Some(&images), None)?;
 
             let html = render(ctx, &parsed.html, &kanji_html, styles, scripts)?;
 

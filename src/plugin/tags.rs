@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, HashMap};
 use camino::Utf8PathBuf;
 use chrono::Datelike;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Assets, Document, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output};
+use hauchiwa::loader::{Document, Stylesheet};
+use hauchiwa::prelude::*;
 use hypertext::prelude::*;
 
 use crate::{Context, Global, Link, LinkDate, model::Post};
@@ -13,9 +13,9 @@ use super::make_page;
 
 pub fn add_tags(
     config: &mut Blueprint<Global>,
-    posts: Handle<Assets<Document<Post>>>,
-    styles: Handle<Assets<Stylesheet>>,
-) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    posts: Many<Document<Post>>,
+    styles: Many<Stylesheet>,
+) -> Result<One<Vec<Output>>, HauchiwaError> {
     let handle = config
         .task()
         .depends_on((posts, styles))

@@ -234,7 +234,16 @@ fn run() -> Result<(), RuntimeError> {
             Ok(pages)
         });
 
-    config.use_pagefind([home, about, teien, projects, posts, slides, other]);
+    config
+        .use_pagefind()
+        .index(home)
+        .index(about)
+        .index(teien)
+        .index(projects)
+        .index(posts)
+        .index(slides)
+        .index(other)
+        .register();
 
     config
         .use_sitemap(BASE_URL)

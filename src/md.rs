@@ -7,7 +7,10 @@ use comrak::{
     options::Plugins,
     parse_document,
 };
-use hauchiwa::loader::{Assets, Document, Image, generic::DocumentMeta};
+use hauchiwa::{
+    Tracker,
+    loader::{Document, Image, generic::DocumentMeta},
+};
 use hypertext::Renderable;
 use regex::Regex;
 use thiserror::Error;
@@ -87,7 +90,7 @@ pub fn parse(
     file_text: &str,
     file_meta: &DocumentMeta,
     resolver: Option<&WikiLinkResolver>,
-    images: Option<&Assets<Image>>,
+    images: Option<&Tracker<Image>>,
     library: Option<&hayagriva::Library>,
 ) -> Result<Parsed, MarkdownError> {
     let arena = Arena::new();
@@ -163,7 +166,7 @@ pub fn parse(
 
 fn process_images<'arena, 'a>(
     file_meta: &'a DocumentMeta,
-    images: Option<&'a Assets<Image>>,
+    images: Option<&'a Tracker<Image>>,
     arena: &'a Arena<'arena>,
     root: &'a Node<'arena>,
 ) -> std::fmt::Result
@@ -228,7 +231,7 @@ where
 fn resolve_image_path<'ctx, 'a>(
     file_meta: &'a DocumentMeta,
     text_url: &'a str,
-    images: &'ctx Assets<Image>,
+    images: &'ctx Tracker<Image>,
 ) -> Option<&'ctx Image> {
     // Skip absolute URLs (http://...)
     if text_url.contains("://") {
@@ -301,7 +304,7 @@ impl WikiLinkResolver {
         }
     }
 
-    pub fn from_assets<T>(assets: &Assets<Document<T>>) -> Self
+    pub fn from_assets<T>(assets: &Tracker<Document<T>>) -> Self
     where
         T: Clone,
     {
@@ -325,11 +328,11 @@ impl WikiLinkResolver {
         }
     }
 
-    pub fn add_all<T>(&mut self, docs: &Assets<Document<T>>)
+    pub fn add_all<T>(&mut self, docs: &Tracker<Document<T>>)
     where
         T: Clone,
     {
-        for doc in docs.values() {
+        for doc in docs {
             self.add(doc);
         }
     }

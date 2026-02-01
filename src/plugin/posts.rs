@@ -1,8 +1,8 @@
 use camino::{Utf8Path, Utf8PathBuf};
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::git::GitHistory;
-use hauchiwa::loader::{Assets, Document, Image, Script, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output};
+use hauchiwa::loader::{Document, Image, Script, Stylesheet};
+use hauchiwa::prelude::*;
 use hypertext::{Raw, prelude::*};
 
 use crate::md::Parsed;
@@ -13,11 +13,11 @@ use super::{make_page, render_bibliography, to_list};
 
 pub fn add_posts(
     config: &mut Blueprint<Global>,
-    images: Handle<Assets<Image>>,
-    styles: Handle<Assets<Stylesheet>>,
-    scripts: Handle<Assets<Script>>,
-    bibtex: Handle<Assets<Bibtex>>,
-) -> Result<(Handle<Assets<Document<Post>>>, Handle<Vec<Output>>), HauchiwaError> {
+    images: Many<Image>,
+    styles: Many<Stylesheet>,
+    scripts: Many<Script>,
+    bibtex: Many<Bibtex>,
+) -> Result<(Many<Document<Post>>, One<Vec<Output>>), HauchiwaError> {
     let docs = config
         .load_documents::<Post>()
         .source("content/posts/**/*.md")
@@ -60,7 +60,7 @@ pub fn add_posts(
                     &document.text,
                     &document.meta,
                     None,
-                    Some(images),
+                    Some(&images),
                     bibtex.map(|(_, library)| &library.data),
                 )?;
 

@@ -2,10 +2,11 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+use hauchiwa::prelude::*;
 use hauchiwa::{
-    Blueprint, Handle, Output,
+    Blueprint, Output,
     error::HauchiwaError,
-    loader::{Assets, Stylesheet, Svelte},
+    loader::{Stylesheet, Svelte},
 };
 use hypertext::{Raw, Renderable};
 
@@ -21,8 +22,8 @@ const CHARS: &str = include_str!("./kklc.txt");
 
 pub fn build(
     config: &mut Blueprint<Global>,
-    styles: Handle<Assets<Stylesheet>>,
-) -> Result<Handle<Output>, HauchiwaError> {
+    styles: Many<Stylesheet>,
+) -> Result<One<Output>, HauchiwaError> {
     let svelte = config
         .load_svelte::<Props>()
         .entry("src/plugin/projects/radicals/App.svelte")

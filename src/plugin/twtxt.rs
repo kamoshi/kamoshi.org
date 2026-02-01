@@ -1,6 +1,6 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Assets, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output};
+use hauchiwa::loader::Stylesheet;
+use hauchiwa::prelude::*;
 use hypertext::{Raw, prelude::*};
 
 use crate::model::{Microblog, MicroblogEntry};
@@ -10,8 +10,8 @@ use super::make_page;
 
 pub fn add_twtxt(
     config: &mut Blueprint<Global>,
-    styles: Handle<Assets<Stylesheet>>,
-) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    styles: Many<Stylesheet>,
+) -> Result<One<Vec<Output>>, HauchiwaError> {
     let twtxt = config
         .task()
         .source("content/twtxt.txt")

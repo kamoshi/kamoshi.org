@@ -1,6 +1,6 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Assets, Document, Image, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output};
+use hauchiwa::loader::{Document, Image, Stylesheet};
+use hauchiwa::prelude::*;
 use hypertext::{Raw, prelude::*};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
@@ -13,9 +13,9 @@ use super::make_page;
 
 pub fn add_about(
     config: &mut Blueprint<Global>,
-    images: Handle<Assets<Image>>,
-    styles: Handle<Assets<Stylesheet>>,
-) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    images: Many<Image>,
+    styles: Many<Stylesheet>,
+) -> Result<One<Vec<Output>>, HauchiwaError> {
     let docs = config
         .load_documents::<Post>()
         .source("content/about/index.md")
@@ -50,7 +50,7 @@ pub fn add_about(
             ];
 
             let parsed =
-                crate::md::parse(&document.text, &document.meta, None, Some(images), None)?;
+                crate::md::parse(&document.text, &document.meta, None, Some(&images), None)?;
 
             let html = render(ctx, document, parsed, pubkey_ident, pubkey_email, styles)?
                 .render()

@@ -2,8 +2,8 @@ mod radicals;
 
 use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Assets, Stylesheet};
-use hauchiwa::{Blueprint, Handle, Output};
+use hauchiwa::loader::Stylesheet;
+use hauchiwa::prelude::*;
 use hypertext::{Raw, prelude::*};
 
 use crate::md::Parsed;
@@ -21,8 +21,8 @@ pub struct ProjectView<'a> {
 
 pub fn add_projects(
     config: &mut Blueprint<Global>,
-    styles: Handle<Assets<Stylesheet>>,
-) -> Result<Handle<Vec<Output>>, HauchiwaError> {
+    styles: Many<Stylesheet>,
+) -> Result<One<Vec<Output>>, HauchiwaError> {
     let docs = config
         .load_documents::<Project>()
         .source("content/projects/**/*.md")
