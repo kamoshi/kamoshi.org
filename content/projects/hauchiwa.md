@@ -1,7 +1,7 @@
 ---
 title: Hauchiwa
 date: 2025-03-16T18:08:34.100Z
-link: /projects/hauchiwa/
+link: https://hauchiwa.kamoshi.org/
 tech: [rust]
 desc: >
   Incredibly flexible static site generator library with incremental rebuilds
