@@ -11,7 +11,7 @@ use super::make_page;
 pub fn add_twtxt(
     config: &mut Blueprint<Global>,
     styles: Many<Stylesheet>,
-) -> Result<One<Vec<Output>>, HauchiwaError> {
+) -> Result<Many<Output>, HauchiwaError> {
     let twtxt = config
         .task()
         .source("content/twtxt.txt")
@@ -38,7 +38,7 @@ pub fn add_twtxt(
     let handle = config
         .task()
         .depends_on((twtxt, styles))
-        .run(|ctx, (twtxt, styles)| {
+        .run_many(|ctx, (twtxt, styles)| {
             let styles = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/microblog.scss")?,
@@ -48,15 +48,19 @@ pub fn add_twtxt(
             let html = render(ctx, data, styles)?.render().into_inner();
 
             let mut pages = vec![
-                Output::binary("twtxt.txt", data.data.clone()),
-                Output::html("thoughts", html),
+                (
+                    "twtxt.txt".into(),
+                    Output::binary("twtxt.txt", data.data.clone()),
+                ),
+                ("thoughts".into(), Output::html("thoughts", html)),
             ];
 
             for entry in &data.entries {
                 let html = render_entry(ctx, entry, styles)?.render().into_inner();
                 let date = entry.date.timestamp();
 
-                pages.push(Output::html(format!("thoughts/{date}"), html));
+                let path = format!("thoughts/{date}");
+                pages.push((path.clone(), Output::html(path, html)));
             }
 
             Ok(pages)
