@@ -1058,15 +1058,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crossbeam-channel"
-version = "0.5.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82b8f8f868b36967f9606790d1903570de9ceaf870a7bf9fbbd3016d636a2cb2"
-dependencies = [
- "crossbeam-utils",
-]
-
-[[package]]
 name = "crossbeam-deque"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1859,10 +1850,8 @@ dependencies = [
  "axum",
  "blake3",
  "camino",
- "chrono",
  "ciborium",
  "console 0.16.2",
- "crossbeam-channel",
  "gitscan",
  "glob",
  "grass",
@@ -1876,7 +1865,6 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
- "serde_yaml 0.9.34+deprecated",
  "sitemap-rs",
  "thiserror 2.0.18",
  "tokio",

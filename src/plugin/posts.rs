@@ -26,8 +26,8 @@ pub fn add_posts(
 
     let pages = config
         .task()
-        .depends_on((docs, images, styles, scripts, bibtex))
-        .run(|ctx, (docs, images, styles, scripts, bibtex)| {
+        .using((docs, images, styles, scripts, bibtex))
+        .merge(|ctx, (docs, images, styles, scripts, bibtex)| {
             let mut pages = vec![];
 
             let documents = docs

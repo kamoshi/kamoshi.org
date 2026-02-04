@@ -31,7 +31,7 @@ pub fn add_projects(
 
     let page_radicals = radicals::build(config, styles)?;
 
-    let task = config.task().depends_on((docs, styles, page_radicals)).run(
+    let task = config.task().using((docs, styles, page_radicals)).merge(
         |ctx, (docs, styles, page_radicals)| {
             let styles_list = &[
                 styles.get("styles/styles.scss")?,

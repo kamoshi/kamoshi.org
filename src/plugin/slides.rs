@@ -33,8 +33,8 @@ pub fn add_slides(
 
     let handle = config
         .task()
-        .depends_on((md, hs, images, styles, scripts))
-        .run(|ctx, (md, hs, images, styles, scripts)| {
+        .using((md, hs, images, styles, scripts))
+        .merge(|ctx, (md, hs, images, styles, scripts)| {
             let mut pages = vec![];
 
             let documents = [md.values(), hs.values()]

@@ -26,8 +26,8 @@ pub fn add_teien(
 
     let task = config
         .task()
-        .depends_on((documents, images, styles, bibtex))
-        .run(|ctx, (documents, images, styles, bibtex)| {
+        .using((documents, images, styles, bibtex))
+        .merge(|ctx, (documents, images, styles, bibtex)| {
             let styles = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/layouts/page.scss")?,

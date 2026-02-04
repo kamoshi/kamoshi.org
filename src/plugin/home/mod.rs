@@ -39,17 +39,15 @@ pub fn add_home(
     images: Many<Image>,
     styles: Many<Stylesheet>,
     svelte: Many<Svelte>,
-) -> Result<One<Vec<Output>>, HauchiwaError> {
+) -> Result<One<Output>, HauchiwaError> {
     let docs = config
         .load_documents::<Home>()
         .source("content/index.md")
         .offset("content")
         .register()?;
 
-    let task = config
-        .task()
-        .depends_on((docs, images, styles, svelte))
-        .run(|ctx, (docs, images, styles, svelte)| {
+    let task = config.task().using((docs, images, styles, svelte)).merge(
+        |ctx, (docs, images, styles, svelte)| {
             let document = docs.get("content/index.md")?;
 
             let styles = &[
@@ -68,8 +66,9 @@ pub fn add_home(
 
             let html = render(ctx, &parsed.html, &kanji_html, styles, scripts)?;
 
-            Ok(vec![Output::html("", html)])
-        });
+            Ok(Output::html("", html))
+        },
+    );
 
     Ok(task)
 }

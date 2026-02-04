@@ -32,8 +32,8 @@ pub fn build(
 
     let radicals = config
         .task()
-        .source("src/plugin/projects/radicals/IDS.TXT")
-        .run(|_, store, input| {
+        .glob("src/plugin/projects/radicals/IDS.TXT")
+        .map(|_, store, input| {
             // 1. Prepare the filter set
             let set = CHARS.chars().map(|c| c.to_string()).collect::<HashSet<_>>();
             let mut kanji_components: HashMap<String, Vec<String>> = HashMap::new();
@@ -90,40 +90,42 @@ pub fn build(
             Ok(path)
         })?;
 
-    let task = config.task().depends_on((styles, svelte, radicals)).run(
-        |ctx, (styles, svelte, radicals)| {
-            let Svelte {
-                prerender,
-                hydration,
-                ..
-            } = svelte.get("src/plugin/projects/radicals/App.svelte")?;
+    let task =
+        config
+            .task()
+            .using((styles, svelte, radicals))
+            .merge(|ctx, (styles, svelte, radicals)| {
+                let Svelte {
+                    prerender,
+                    hydration,
+                    ..
+                } = svelte.get("src/plugin/projects/radicals/App.svelte")?;
 
-            let props = Props {
-                url: radicals
-                    .get("src/plugin/projects/radicals/IDS.TXT")?
-                    .to_string(),
-            };
+                let props = Props {
+                    url: radicals
+                        .get("src/plugin/projects/radicals/IDS.TXT")?
+                        .to_string(),
+                };
 
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/radicals.scss")?,
-            ];
+                let styles = &[
+                    styles.get("styles/styles.scss")?,
+                    styles.get("styles/radicals.scss")?,
+                ];
 
-            let scripts = &[hydration];
+                let scripts = &[hydration];
 
-            let html = make_bare(
-                ctx,
-                Raw::dangerously_create(format!(r#"<main>{}</main>"#, prerender(&props)?)),
-                "Radicals".into(),
-                styles,
-                scripts,
-            )?
-            .render()
-            .into_inner();
+                let html = make_bare(
+                    ctx,
+                    Raw::dangerously_create(format!(r#"<main>{}</main>"#, prerender(&props)?)),
+                    "Radicals".into(),
+                    styles,
+                    scripts,
+                )?
+                .render()
+                .into_inner();
 
-            Ok(Output::html("projects/radicals", html))
-        },
-    );
+                Ok(Output::html("projects/radicals", html))
+            });
 
     Ok(task)
 }

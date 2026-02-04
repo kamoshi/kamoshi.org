@@ -12,33 +12,30 @@ pub fn add_twtxt(
     config: &mut Blueprint<Global>,
     styles: Many<Stylesheet>,
 ) -> Result<Many<Output>, HauchiwaError> {
-    let twtxt = config
-        .task()
-        .source("content/twtxt.txt")
-        .run(|_, _, file| {
-            let data = file.read()?;
-            let data = String::from_utf8_lossy(&data);
+    let twtxt = config.task().glob("content/twtxt.txt").map(|_, _, file| {
+        let data = file.read()?;
+        let data = String::from_utf8_lossy(&data);
 
-            let entries = data
-                .lines()
-                .filter(|line| {
-                    let line = line.trim_start();
-                    !line.is_empty() && !line.starts_with('#')
-                })
-                .map(str::parse::<MicroblogEntry>)
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap();
-
-            Ok(Microblog {
-                entries,
-                data: data.to_string(),
+        let entries = data
+            .lines()
+            .filter(|line| {
+                let line = line.trim_start();
+                !line.is_empty() && !line.starts_with('#')
             })
-        })?;
+            .map(str::parse::<MicroblogEntry>)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+
+        Ok(Microblog {
+            entries,
+            data: data.to_string(),
+        })
+    })?;
 
     let handle = config
         .task()
-        .depends_on((twtxt, styles))
-        .run_many(|ctx, (twtxt, styles)| {
+        .using((twtxt, styles))
+        .spread(|ctx, (twtxt, styles)| {
             let styles = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/microblog.scss")?,

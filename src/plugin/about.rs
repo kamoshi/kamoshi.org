@@ -24,8 +24,8 @@ pub fn add_about(
 
     let cert = config
         .task()
-        .source("content/about/*.asc")
-        .run(|_, _, input| {
+        .glob("content/about/*.asc")
+        .map(|_, _, input| {
             let data = input.read()?;
 
             Ok(Pubkey {
@@ -38,7 +38,7 @@ pub fn add_about(
             })
         })?;
 
-    let handle = config.task().depends_on((docs, cert, images, styles)).run(
+    let handle = config.task().using((docs, cert, images, styles)).merge(
         |ctx, (docs, cert, images, styles)| {
             let document = docs.get("content/about/index.md")?;
             let pubkey_ident = cert.get("content/about/pubkey-ident.asc")?;

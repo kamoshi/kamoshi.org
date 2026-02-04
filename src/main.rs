@@ -151,8 +151,8 @@ fn run() -> Result<(), RuntimeError> {
     let bibtex = config
         .task()
         .name("bibtex")
-        .source("content/**/*.bib")
-        .run(|_, store, input| {
+        .glob("content/**/*.bib")
+        .map(|_, store, input| {
             let data = input.read()?;
             let path = store.save(&data, "bib")?;
             let text = String::from_utf8_lossy(&data);
@@ -189,8 +189,8 @@ fn run() -> Result<(), RuntimeError> {
     let other = config
         .task()
         .name("other")
-        .depends_on((styles, scripts, svelte))
-        .run(|ctx, (styles, scripts, svelte)| {
+        .using((styles, scripts, svelte))
+        .merge(|ctx, (styles, scripts, svelte)| {
             let mut pages = vec![];
 
             {

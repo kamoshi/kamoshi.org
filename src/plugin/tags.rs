@@ -18,8 +18,8 @@ pub fn add_tags(
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
     let handle = config
         .task()
-        .depends_on((posts, styles))
-        .run(|ctx, (posts, styles)| {
+        .using((posts, styles))
+        .merge(|ctx, (posts, styles)| {
             use std::collections::BTreeMap;
 
             let styles = &[
