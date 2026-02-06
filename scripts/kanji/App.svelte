@@ -3,6 +3,24 @@
 
   let state = $state<Promise<KKLCEntry>>(new Promise(() => {}));
 
+  async function getKanjiSVG(char: string) {
+    const codePoint = char.codePointAt(0);
+
+    if (codePoint === undefined) {
+      throw new Error(`Invalid character input: ${char}`);
+    }
+
+    const hexCode = codePoint.toString(16).toLowerCase().padStart(5, "0");
+    const url = `/static/svg/kanji/${hexCode}.svg`;
+
+    const data = await fetch(url);
+    const text = await data.text();
+
+    return text
+      .substring(text.indexOf("<svg"))
+      .replaceAll(/<g id="kvg:StrokeNumbers[\s\S]*?<\/g>/g, "");
+  }
+
   $effect(() => void (state = getKanji()));
 </script>
 
@@ -28,9 +46,11 @@
         <div class="info-id">
           #{state.id}
         </div>
-        <div class="info-char">
-          {state.char}
-        </div>
+        {#await getKanjiSVG(state.char)}
+          ...
+        {:then svg}
+          {@html svg}
+        {/await}
       </div>
       <div class="info-meta">
         <div class="info-key">

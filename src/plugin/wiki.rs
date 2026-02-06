@@ -55,10 +55,7 @@ pub fn add_teien(
                 let mut parsed = Vec::new();
 
                 for document in documents {
-                    let library = bibtex
-                        .glob(&document.meta.assets("*.bib"))?
-                        .into_iter()
-                        .next();
+                    let library = bibtex.glob(&document.meta.assets("*.bib"))?.next();
 
                     let markdown = crate::md::parse(
                         &document.text,

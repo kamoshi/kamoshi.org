@@ -54,11 +54,12 @@
     font-family: sans-serif;
   }
 
-  .info-char {
-    max-height: 4.5rem;
-    font-size: 4.5rem;
-    font-family: serif;
-    line-height: 1;
+  svg {
+    max-height: 6rem;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 
   .table {

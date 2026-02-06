@@ -123,9 +123,9 @@ fn run() -> Result<(), RuntimeError> {
         .load_images()
         .format(ImageFormat::Avif(Quality::Lossy(80)))
         .format(ImageFormat::WebP)
-        .source("content/**/*.jpg")
-        .source("content/**/*.png")
-        .source("content/**/*.gif")
+        .glob("content/**/*.jpg")
+        .glob("content/**/*.png")
+        .glob("content/**/*.gif")
         .register()?;
 
     let styles = config
