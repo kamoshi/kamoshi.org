@@ -14,3 +14,4 @@
 2026-01-03T21:50:17.445Z    Came across this album titled [「春と修羅」](https://youtu.be/bbNNDP6IA5U), which I remember someone recommended to me back in 2018. It's really good, and it fills me with nostalgia. The way I came across it is kinda funny, because I was thinking about trying to search for it, and after a week or two I saw it inside a meme.
 2026-01-23T23:53:24.448Z    Recently, I came across a word (expression) that uses two different readings for the same kanji within the same expression. 十人十色 is じゅうにんといろ
 2026-02-08T14:53:37.544Z	I've started doing the Chinese course on Duolingo. Except I am doing it purely for fun and in Japanese, so I am using Japanese to learn Chinese. I have no plans or ambitions, just seeing how far it goes.
+2026-02-08T15:01:46.172Z	Also, I've recently bought ESP32-C6 development board with 8MB flash, mainly looking to see if I can learn more about Rust on embedded systems. And RISC-V has first-class support for Rust, which is great.
