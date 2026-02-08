@@ -1,4 +1,4 @@
-.PHONY: build watch serve deploy perf
+.PHONY: build watch serve deploy perf tweet
 
 build:
 	cargo run --release
@@ -15,3 +15,8 @@ deploy: build
 
 perf:
 	cargo flamegraph
+
+tweet:
+	timestamp=$$(deno eval "console.log(new Date)"); \
+	printf "$$timestamp\t" >> ./content/twtxt.txt; \
+	echo "Added new entry to ./content/twtxt.txt"
