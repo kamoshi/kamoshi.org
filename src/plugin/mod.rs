@@ -69,19 +69,19 @@ fn make_head(
 }
 
 fn make_navbar() -> impl Renderable {
-    const ITEMS: &[(&str, &str)] = &[
-        ("Posts", "/posts/"),
-        ("Slides", "/slides/"),
-        ("Projects", "/projects/"),
-        ("Wiki", "/wiki/"),
-        ("Thoughts", "/thoughts/"),
-        ("Map", "/map/"),
-        ("About", "/about/"),
-        ("Search", "/search/"),
+    const ITEMS: &[(&str, &str, &str)] = &[
+        ("綴", "Posts", "/posts/"),
+        ("映", "Slides", "/slides/"),
+        ("創", "Projects", "/projects/"),
+        ("葉", "Garden", "/wiki/"),
+        ("想", "Journal", "/thoughts/"),
+        ("跡", "Map", "/map/"),
+        ("己", "About", "/about/"),
+        ("索", "Search", "/search/"),
     ];
 
     maud!(
-        nav .p-nav {
+        nav #navigation .p-nav {
             input #p-nav-toggle type="checkbox" hidden;
 
             div .p-nav__bar {
@@ -102,11 +102,17 @@ fn make_navbar() -> impl Renderable {
                 }
             }
 
-            menu .p-nav__menu {
-                @for (name, url) in ITEMS {
-                    li .p-nav__menu-item {
-                        a .p-nav__menu-link href=(*url) {
-                            (*name)
+            menu {
+                @for (stamp, name, url) in ITEMS {
+                    li {
+                        a href=(*url) {
+                            div .stamp {
+                                (*stamp)
+                            }
+                            div .text {
+                                (*name)
+                            }
+                            div .indicator {}
                         }
                     }
                 }
