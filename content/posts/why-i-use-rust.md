@@ -1,6 +1,11 @@
 ---
 title: Why I use Rust
 date: 2026-02-07T20:20:58.714Z
+desc: >
+  At work, I use the usual suspects, languages like TypeScript, Python, C#. The
+  boring, table-stakes languages that everyone expects you to know. But for my
+  hobby projects, when I’m building something just for fun, at this point I
+  reach for Rust nearly every single time.
 ---
 
 At work, I use the usual suspects, languages like TypeScript, Python, C#. The

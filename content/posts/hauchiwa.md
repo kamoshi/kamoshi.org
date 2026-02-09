@@ -1,6 +1,10 @@
 ---
 title: Building a static site generator from scratch
 date: 2026-02-02T20:28:32.821Z
+desc: >
+  This won’t be a guide how to build one, neither will it be about anything
+  technical. In fact this is about the process itself which I had the chance to
+  explore, with its ups and downs.
 ---
 
 This won't be a guide how to build one, neither will it be about anything
