@@ -25,6 +25,7 @@ main {
 }
 
 .article {
+  width: 100%;
   grid-area: page;
 
   @media (min-width: $bp-m) {
@@ -36,6 +37,10 @@ main {
 
   @media (min-width: $bp-l) {
     margin-block: 2rem;
+  }
+
+  > object {
+    min-height: 75vh;
   }
 }
 

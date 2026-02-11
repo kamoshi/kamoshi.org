@@ -12,6 +12,11 @@ use crate::{Bibtex, Global};
 
 use super::make_page;
 
+enum RenderedItem<'a> {
+    Markdown(&'a Document<Wiki>),
+    Typst { title: String },
+}
+
 pub fn add_teien(
     config: &mut Blueprint<Global>,
     images: Many<Image>,
@@ -24,10 +29,48 @@ pub fn add_teien(
         .offset("content")
         .register()?;
 
+    let typst = config
+        .task()
+        .name("wiki:typst:pdf")
+        .glob("content/wiki/**/*.typ")
+        .map(|_, store, input| {
+            use std::io::Write;
+            use std::process::{Command, Stdio};
+
+            let data = input.read().unwrap();
+
+            let mut child = Command::new("typst")
+                .arg("c")
+                .arg("--format=pdf")
+                .arg("-")
+                .arg("-")
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()?;
+
+            {
+                let stdin = child.stdin.as_mut().unwrap();
+                stdin.write_all(&data)?;
+                stdin.flush()?;
+            }
+
+            let output = child.wait_with_output()?;
+
+            if !output.status.success() {
+                let stderr = String::from_utf8(output.stderr)?;
+                todo!("Typst SSR failed:\n{stderr}")
+            }
+
+            let path_pdf = store.save(&output.stdout, "pdf")?;
+
+            Ok((input.path, path_pdf))
+        })?;
+
     let task = config
         .task()
-        .using((documents, images, styles, bibtex))
-        .merge(|ctx, (documents, images, styles, bibtex)| {
+        .using((documents, images, styles, bibtex, typst))
+        .merge(|ctx, (documents, images, styles, bibtex, typst)| {
             let styles = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/layouts/page.scss")?,
@@ -38,7 +81,14 @@ pub fn add_teien(
                 let mut doc_map = HashMap::new();
 
                 for document in &documents {
-                    doc_map.insert(document.meta.href.as_str(), document);
+                    doc_map.insert(document.meta.href.to_string(), RenderedItem::Markdown(document));
+                }
+
+                for typst in &typst {
+                    let href = typst.0.strip_prefix("content/")?.with_extension("");
+                    let href = Utf8Path::new("/").join(href);
+                    let title = typst.0.file_name().unwrap().to_string();
+                    doc_map.insert(href.to_string(), RenderedItem::Typst { title });
                 }
 
                 doc_map
@@ -49,6 +99,51 @@ pub fn add_teien(
 
             // this can resolve wiki links
             let resolver = WikiLinkResolver::from_assets(&documents);
+
+            let mut typst_items = Vec::new();
+            for (path_file, path_pdf) in typst {
+                let href = path_file.strip_prefix("content/")?.with_extension("");
+                let href = Utf8Path::new("/").join(href);
+
+                hauchiwa::tracing::info!("{}", &href);
+
+                // Datalog: add parent hierarchy
+                {
+                    let mut ptr = Utf8Path::new(&href);
+
+                    // Track the current child (start with the document itself)
+                    let mut current_child_str = href.to_string();
+
+                    while let Some(parent) = ptr.parent() {
+                        let parent_str = parent.as_str();
+                        if parent_str.is_empty() {
+                            break;
+                        }
+
+                        // Normalize parent to ensure trailing slash
+                        let parent_normalized = if parent_str == "/" {
+                            "/".to_string()
+                        } else if !parent_str.ends_with('/') {
+                            format!("{}/", parent_str)
+                        } else {
+                            parent_str.to_string()
+                        };
+
+                        // add link Parent -> Child
+                        datalog.add_parent(&parent_normalized, &current_child_str);
+
+                        // The parent becomes the child for the next iteration
+                        current_child_str = parent_normalized;
+                        ptr = parent;
+
+                        if ptr == "/" {
+                            break;
+                        }
+                    }
+                }
+
+                typst_items.push((href.strip_prefix("/")?.to_owned(), path_pdf));
+            }
 
             // pass 1: parse markdown
             let parsed = {
@@ -76,6 +171,7 @@ pub fn add_teien(
 
                     // Datalog: add parent hierarchy
                     {
+                        hauchiwa::tracing::info!("{}", &href);
                         let mut ptr = Utf8Path::new(&href);
 
                         // Track the current child (start with the document itself)
@@ -128,7 +224,10 @@ pub fn add_teien(
                         hrefs
                             .iter()
                             .filter_map(|h| doc_map.get(*h))
-                            .map(|&doc| (doc.meta.href.as_str(), doc)) // Tuple for the template
+                            .map(|doc| match doc {
+                                RenderedItem::Markdown(doc) => (doc.meta.href.as_str(), *doc),
+                                RenderedItem::Typst { title } => todo!(),
+                            })
                             .collect::<Vec<_>>()
                     });
 
@@ -159,6 +258,32 @@ pub fn add_teien(
                             .html()
                             .content(page),
                     );
+                }
+
+                for (href, path_pdf) in &typst_items {
+                    let html = maud_borrow!(
+                        main .wiki-main {
+                            // Outline
+                            aside .outline {
+                                section {
+                                    div {
+                                        (TreeContext::new("/", Utf8Path::new("/").join(href).as_str(), &doc_map, &solution))
+                                    }
+                                }
+                            }
+
+                            // Article
+                            article .article {
+                                object class="pdf" width="100%" height="100%" data=(path_pdf.as_str()) {}
+                            }
+                        }
+                    );
+
+                    let html = make_page(ctx, html, "".into(), styles, &[])?
+                        .render()
+                        .into_inner();
+
+                    pages.push(Output::html(href, html));
                 }
 
                 pages
@@ -214,14 +339,14 @@ struct TreeContext<'a> {
     root: &'a str,
     href: &'a str,
     solution: &'a crate::datalog::Solution,
-    resolved: &'a HashMap<&'a str, &'a Document<Wiki>>,
+    resolved: &'a HashMap<String, RenderedItem<'a>>,
 }
 
 impl<'a> TreeContext<'a> {
     fn new(
         root: &'a str,
         href: &'a str,
-        resolved: &'a HashMap<&str, &Document<Wiki>>,
+        resolved: &'a HashMap<String, RenderedItem>,
         solution: &'a crate::datalog::Solution,
     ) -> Self {
         Self {
@@ -256,7 +381,11 @@ fn show_tree_recursive(ctx: &TreeContext<'_>, href: &str) -> impl Renderable {
                 @for child_href in children {
                     // Determine display name: Title if doc exists, else directory name
                     @let (name, is_link) = if let Some(doc) = ctx.resolved.get(*child_href) {
-                        (doc.matter.title.as_str(), true)
+                        (match doc {
+                            RenderedItem::Markdown(doc) => doc.matter.title.as_str(),
+                            RenderedItem::Typst { title } => title.as_str(),
+                        },
+                        true)
                     } else {
                         // Fallback: extract last folder name from "/wiki/cs/languages/" -> "languages"
                         let name = child_href.trim_end_matches('/').split('/').next_back().unwrap_or(child_href);
