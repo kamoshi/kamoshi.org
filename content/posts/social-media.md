@@ -1,6 +1,11 @@
 ---
 title: Social media time trap
 date: 2026-02-09T18:16:31.710Z
+desc: >
+  Social networks were built to connect people, but evolved into addiction
+  machines designed to steal as much of your time as possible. The real cost is
+  your most finite resource, time, that could be spent on anything genuinely
+  meaningful.
 ---
 
 One thing I've come to realize, is that time is the most valuable thing any
