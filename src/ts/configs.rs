@@ -86,6 +86,13 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
             "",
         ),
         language!(
+            "ini",
+            tree_sitter_ini::LANGUAGE,
+            tree_sitter_ini::HIGHLIGHTS_QUERY,
+            "",
+            ""
+        ),
+        language!(
             "javascript",
             tree_sitter_javascript::LANGUAGE,
             merge![
