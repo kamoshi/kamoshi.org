@@ -65,6 +65,7 @@ fn get_options() -> Options<'static> {
     options.extension.tasklist = true;
     options.extension.wikilinks_title_after_pipe = true;
     options.extension.header_ids = Some("".into());
+    options.extension.footnotes = true;
 
     options.render.r#unsafe = true;
 

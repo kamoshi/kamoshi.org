@@ -4,7 +4,10 @@ version = "0.0.0"
 edition = "2024"
 
 [dependencies]
-hauchiwa                = { path = "../hauchiwa" }
+hauchiwa = {
+    path = "../hauchiwa",
+    features = ["rolldown"],
+}
 
 camino                  = { version = "1.2", features = ["serde1"] }
 chrono                  = "0.4"

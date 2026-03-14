@@ -136,7 +136,7 @@ fn run() -> Result<(), RuntimeError> {
         .register()?;
 
     let scripts = config
-        .load_js()
+        .load_rolldown()
         .entry("scripts/**/main.ts")
         .watch("scripts/**/*.ts")
         .minify(true)
