@@ -15,3 +15,4 @@
 2026-01-23T23:53:24.448Z    Recently, I came across a word (expression) that uses two different readings for the same kanji within the same expression. 十人十色 is じゅうにんといろ
 2026-02-08T14:53:37.544Z	I've started doing the Chinese course on Duolingo. Except I am doing it purely for fun and in Japanese, so I am using Japanese to learn Chinese. I have no plans or ambitions, just seeing how far it goes.
 2026-02-08T15:01:46.172Z	Also, I've recently bought ESP32-C6 development board with 8MB flash, mainly looking to see if I can learn more about Rust on embedded systems. And RISC-V has first-class support for Rust, which is great.
+2026-03-18T23:30:59.879Z	夏のN3日本語能力試験に登録しました。その後、冬のも受けてみたい。それまでの間に日本語でもっともっと書きたいと思います。
