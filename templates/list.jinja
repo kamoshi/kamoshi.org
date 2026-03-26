@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include "components/head.jinja" %}
+<body>
+{% include "components/navbar.jinja" %}
+<main class="page-list-main">
+  <article class="page-list">
+    <header class="directory-header markdown">
+      <h1>{{ title }}</h1>
+      <a href="{{ rss }}" title="RSS feed">{{ icon_rss }}</a>
+    </header>
+    {% for group in groups %}
+    <section class="page-list-year">
+      <header class="page-list-year__header">
+        <h2>{{ group.year }}</h2>
+      </header>
+      {% for item in group.items %}
+      <a class="page-item" href="{{ item.path }}">
+        <div class="page-item__header">
+          <h3>{{ item.name }}</h3>
+          <time datetime="{{ item.date_iso }}">{{ item.date }}</time>
+        </div>
+        {% if item.desc %}
+        <div class="page-item__desc">{{ item.desc }}</div>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </section>
+    {% endfor %}
+  </article>
+</main>
+{% include "components/footer.jinja" %}
+</body>
+</html>

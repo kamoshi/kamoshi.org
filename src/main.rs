@@ -2,6 +2,7 @@ mod datalog;
 mod md;
 mod model;
 mod plugin;
+mod props;
 mod rss;
 mod ts;
 mod typst;
@@ -17,7 +18,7 @@ use hauchiwa::loader::image::{ImageFormat, Quality};
 use hauchiwa::loader::sitemap::ChangeFrequency;
 use hauchiwa::{Output, TaskContext, Website};
 use hayagriva::Library;
-use hypertext::{Raw, Renderable};
+use minijinja::Value;
 
 use crate::plugin::about::add_about;
 use crate::plugin::home::add_home;
@@ -27,7 +28,7 @@ use crate::plugin::slides::add_slides;
 use crate::plugin::tags::add_tags;
 use crate::plugin::twtxt::add_twtxt;
 use crate::plugin::wiki::add_teien;
-use crate::plugin::{make_fullscreen, make_page};
+use crate::props::{PropsMap, PropsSearch};
 
 /// Base path for content files
 const BASE_URL: &str = "https://kamoshi.org/";
@@ -119,6 +120,12 @@ fn run() -> Result<(), RuntimeError> {
 
     let mut config = Website::<Global>::design();
 
+    let templates = config
+        .load_minijinja()
+        .glob("templates/**/*.jinja")
+        .root("templates")
+        .register()?;
+
     let images = config
         .load_images()
         .format(ImageFormat::Avif(Quality::Lossy(80)))
@@ -162,55 +169,51 @@ fn run() -> Result<(), RuntimeError> {
         })?;
 
     // home
-    let home = add_home(&mut config, images, styles, svelte)?;
+    let home = add_home(&mut config, templates, images, styles, svelte)?;
 
     // about
-    let about = add_about(&mut config, images, styles)?;
+    let about = add_about(&mut config, templates, images, styles)?;
 
     // digital garden
-    let teien = add_teien(&mut config, images, styles, bibtex)?;
+    let teien = add_teien(&mut config, templates, images, styles, bibtex)?;
 
     // twtxt
-    let twtxt = add_twtxt(&mut config, styles)?;
+    let twtxt = add_twtxt(&mut config, templates, styles)?;
 
     // posts
-    let (posts_data, posts) = add_posts(&mut config, images, styles, scripts, bibtex)?;
+    let (posts_data, posts) = add_posts(&mut config, templates, images, styles, scripts, bibtex)?;
 
     // slides
-    let slides = add_slides(&mut config, images, styles, scripts)?;
+    let slides = add_slides(&mut config, templates, images, styles, scripts)?;
 
     // projects
-    let projects = add_projects(&mut config, styles)?;
+    let projects = add_projects(&mut config, templates, styles)?;
 
     // tags
-    let tags = add_tags(&mut config, posts_data, styles)?;
+    let tags = add_tags(&mut config, templates, posts_data, styles)?;
 
     // other
     let other = config
         .task()
         .name("other")
-        .using((styles, scripts, svelte))
-        .merge(|ctx, (styles, scripts, svelte)| {
+        .using((templates, styles, scripts, svelte))
+        .merge(|ctx, (templates, styles, scripts, svelte)| {
             let mut pages = vec![];
 
             {
-                let html = Raw::dangerously_create(
-                    r#"<div id="map" style="height: 100%; width: 100%"></div>"#,
-                );
-
                 let styles = &[
                     styles.get("styles/styles.scss")?,
                     styles.get("styles/photos/leaflet.scss")?,
                     styles.get("styles/layouts/map.scss")?,
                 ];
-
                 let scripts = &[scripts.get("scripts/photos/main.ts")?];
 
-                let html = make_fullscreen(ctx, html, "Map".into(), styles, scripts)?
-                    .render()
-                    .into_inner();
-
-                pages.push(Output::html("map", html));
+                let props = PropsMap {
+                    head: crate::plugin::make_props_head(ctx, "Map".to_string(), styles, scripts)?,
+                    navbar: crate::plugin::make_props_navbar(),
+                };
+                let tmpl = templates.get_template("map.jinja")?;
+                pages.push(Output::html("map", tmpl.render(&props)?));
             }
 
             {
@@ -218,17 +221,22 @@ fn run() -> Result<(), RuntimeError> {
                     styles.get("styles/styles.scss")?,
                     styles.get("styles/layouts/search.scss")?,
                 ];
-
                 let component = svelte.get("scripts/search/App.svelte")?;
                 let scripts = &[&component.hydration];
 
-                let html = (component.prerender)(&())?;
-                let html = Raw::dangerously_create(format!(r#"<main>{html}</main>"#));
-                let html = make_page(ctx, html, "Search".into(), styles, scripts)?
-                    .render()
-                    .into_inner();
-
-                pages.push(Output::html("search", html));
+                let props = PropsSearch {
+                    head: crate::plugin::make_props_head(
+                        ctx,
+                        "Search".to_string(),
+                        styles,
+                        scripts,
+                    )?,
+                    navbar: crate::plugin::make_props_navbar(),
+                    footer: crate::plugin::make_props_footer(ctx),
+                    content: Value::from_safe_string((component.prerender)(&())?),
+                };
+                let tmpl = templates.get_template("search.jinja")?;
+                pages.push(Output::html("search", tmpl.render(&props)?));
             }
 
             Ok(pages)

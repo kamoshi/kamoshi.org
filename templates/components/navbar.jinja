@@ -1,0 +1,29 @@
+<nav id="navigation" class="p-nav">
+  <input id="p-nav-toggle" type="checkbox" hidden>
+
+  <div class="p-nav__bar">
+    <a class="p-nav__logo" href="/">
+      <img class="p-nav__logo-icon" height="48px" width="51px" src="/static/svg/aya.svg" alt="">
+      <div class="p-nav__logo-text">
+        <div class="p-nav__logo-main">{{ navbar.logotype_svg }}</div>
+        <div id="p-nav-splash" class="p-nav__logo-sub">夢現の遥か彼方</div>
+      </div>
+    </a>
+
+    <label class="p-nav__burger" for="p-nav-toggle" tabindex="0">
+      <span class="p-nav__burger-icon"></span>
+    </label>
+  </div>
+
+  <menu>
+    {% for item in navbar.items %}
+    <li>
+      <a href="{{ item.url }}">
+        <div class="stamp">{{ item.stamp }}</div>
+        <div class="text">{{ item.name }}</div>
+        <div class="indicator"></div>
+      </a>
+    </li>
+    {% endfor %}
+  </menu>
+</nav>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include "components/head.jinja" %}
+<body>
+{% include "components/navbar.jinja" %}
+<main>
+  {{ outline }}
+  <article class="article">
+    <section class="paper">
+      <header>
+        <h1 id="top">{{ title }}</h1>
+      </header>
+      <section class="wiki-article__markdown markdown">
+        {{ content }}
+      </section>
+    </section>
+    {% if bibliography %}
+    <section class="bibliography">
+      <header>
+        <h2>Bibliography</h2>
+        {% if bibliography.library_path %}
+        <a class="icon-btn" href="{{ bibliography.library_path }}" download="bibliography.bib" title="Download BibTeX">
+          <img src="/static/svg/lucide/file-down.svg" alt="Download">
+        </a>
+        {% endif %}
+      </header>
+      <ol>
+        {% for item in bibliography.items %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ol>
+    </section>
+    {% endif %}
+  </article>
+  <aside class="tiles">
+    <section class="metadata">
+      <h2>Metadata</h2>
+      <div>
+        <img src="/static/svg/lucide/file-plus-2.svg" title="Added">
+        <time datetime="{{ metadata.date_added_iso }}">{{ metadata.date_added }}</time>
+      </div>
+      {% if metadata.updated %}
+      <div>
+        <img src="/static/svg/lucide/file-clock.svg" title="Updated">
+        <time datetime="{{ metadata.updated.date_iso }}">{{ metadata.updated.date }}</time>
+      </div>
+      <div>
+        <img src="/static/svg/lucide/git-graph.svg" title="Link to commit">
+        <a href="{{ metadata.updated.hash_url }}">{{ metadata.updated.hash }}</a>
+      </div>
+      {% endif %}
+      {% if metadata.tags %}
+      <div class="tags">
+        <img src="/static/svg/lucide/tag.svg" title="Tags">
+        <ul>
+          {% for tag in metadata.tags %}
+          <li><a href="/tags/{{ tag }}">{{ tag }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </section>
+  </aside>
+</main>
+{% include "components/footer.jinja" %}
+</body>
+</html>

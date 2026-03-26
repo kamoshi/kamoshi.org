@@ -1,15 +1,15 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::Stylesheet;
+use hauchiwa::loader::{Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
-use hypertext::{Raw, prelude::*};
+use minijinja::Value;
 
 use crate::model::{Microblog, MicroblogEntry};
+use crate::props::{PropsMicroblogEntry, PropsThought, PropsThoughts};
 use crate::{Context, Global};
-
-use super::make_page;
 
 pub fn add_twtxt(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     styles: Many<Stylesheet>,
 ) -> Result<Many<Output>, HauchiwaError> {
     let twtxt = config.task().glob("content/twtxt.txt").map(|_, _, file| {
@@ -34,15 +34,15 @@ pub fn add_twtxt(
 
     let handle = config
         .task()
-        .using((twtxt, styles))
-        .spread(|ctx, (twtxt, styles)| {
+        .using((templates, twtxt, styles))
+        .spread(|ctx, (templates, twtxt, styles)| {
             let styles = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/microblog.scss")?,
             ];
 
             let data = twtxt.get("content/twtxt.txt")?;
-            let html = render(ctx, data, styles)?.render().into_inner();
+            let html = render(ctx, templates, data, styles)?;
 
             let mut pages = vec![
                 (
@@ -53,7 +53,7 @@ pub fn add_twtxt(
             ];
 
             for entry in &data.entries {
-                let html = render_entry(ctx, entry, styles)?.render().into_inner();
+                let html = render_entry(ctx, templates, entry, styles)?;
                 let date = entry.date.timestamp();
 
                 let path = format!("thoughts/{date}");
@@ -66,71 +66,49 @@ pub fn add_twtxt(
     Ok(handle)
 }
 
-pub fn render<'ctx>(
-    ctx: &'ctx Context,
-    microblog: &'ctx Microblog,
-    styles: &'ctx [&Stylesheet],
-) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
+fn make_entry_props(entry: &MicroblogEntry) -> PropsMicroblogEntry {
+    let body = comrak::markdown_to_html(&entry.text, &comrak::Options::default());
+    PropsMicroblogEntry {
+        body: Value::from_safe_string(body),
+        date_iso: entry.date.to_rfc3339(),
+        date_display: entry.date.format("%b %d").to_string(),
+        timestamp: entry.date.timestamp(),
+    }
+}
+
+pub fn render(
+    ctx: &Context,
+    templates: &TemplateEnv,
+    microblog: &Microblog,
+    styles: &[&Stylesheet],
+) -> Result<String, RuntimeError> {
     let mut entries = microblog.entries.clone();
     entries.sort_by(|a, b| b.date.cmp(&a.date));
 
-    let main = maud!(
-        main {
-            section .microblog {
-                @for entry in &entries {
-                    (render_tweet(entry))
-                }
-            }
-        }
-    );
+    let props = PropsThoughts {
+        head: super::make_props_head(ctx, "microblog".to_string(), styles, &[])?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        entries: entries.iter().map(make_entry_props).collect(),
+    };
 
-    make_page(ctx, main, "microblog".into(), styles, &[])
+    let tmpl = templates.get_template("thoughts.jinja")?;
+    Ok(tmpl.render(&props)?)
 }
 
-pub fn render_entry<'ctx>(
-    ctx: &'ctx Context,
-    entry: &'ctx MicroblogEntry,
-    styles: &'ctx [&Stylesheet],
-) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let main = maud!(
-        main {
-            section .microblog {
-                (render_tweet(entry))
-            }
-        }
-    );
+pub fn render_entry(
+    ctx: &Context,
+    templates: &TemplateEnv,
+    entry: &MicroblogEntry,
+    styles: &[&Stylesheet],
+) -> Result<String, RuntimeError> {
+    let props = PropsThought {
+        head: super::make_props_head(ctx, "microblog".to_string(), styles, &[])?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        entry: make_entry_props(entry),
+    };
 
-    make_page(ctx, main, "microblog".into(), styles, &[])
-}
-
-fn render_tweet(entry: &MicroblogEntry) -> impl Renderable {
-    let html = comrak::markdown_to_html(&entry.text, &comrak::Options::default());
-
-    maud!(
-        article .tweet {
-            // Left Column: Avatar
-            div .tweet-avatar {
-                // Using a placeholder service. Replace src with your user's PFP url.
-                img src="/aya_shades.png" alt="Avatar";
-            }
-
-            // Right Column: Header + Content
-            div .tweet-content {
-                header .tweet-header {
-                    span .display-name { "kamov" }
-                    span .handle { "@kamov" }
-                    span .separator { "·" }
-                    a .tweet-link href=(format!("/thoughts/{}/", entry.date.timestamp())) {
-                        time datetime=(entry.date.to_rfc3339()) {
-                            (entry.date.format("%b %d").to_string())
-                        }
-                    }
-                }
-
-                div .tweet-body {
-                    (Raw::dangerously_create(&html))
-                }
-            }
-        }
-    )
+    let tmpl = templates.get_template("thought.jinja")?;
+    Ok(tmpl.render(&props)?)
 }

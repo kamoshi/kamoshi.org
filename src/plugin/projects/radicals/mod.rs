@@ -4,14 +4,14 @@ use std::io::{BufRead, BufReader};
 
 use hauchiwa::prelude::*;
 use hauchiwa::{
-    Blueprint, Output,
+    Blueprint, One, Output,
     error::HauchiwaError,
-    loader::{Stylesheet, Svelte},
+    loader::{Stylesheet, Svelte, TemplateEnv},
 };
-use hypertext::{Raw, Renderable};
+use minijinja::Value;
 
 use crate::Global;
-use crate::plugin::make_bare;
+use crate::props::PropsBare;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 struct Props {
@@ -22,6 +22,7 @@ const CHARS: &str = include_str!("./kklc.txt");
 
 pub fn build(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     styles: Many<Stylesheet>,
 ) -> Result<One<Output>, HauchiwaError> {
     let svelte = config
@@ -93,8 +94,8 @@ pub fn build(
     let task =
         config
             .task()
-            .using((styles, svelte, radicals))
-            .merge(|ctx, (styles, svelte, radicals)| {
+            .using((templates, styles, svelte, radicals))
+            .merge(|ctx, (templates, styles, svelte, radicals)| {
                 let Svelte {
                     prerender,
                     hydration,
@@ -114,15 +115,20 @@ pub fn build(
 
                 let scripts = &[hydration];
 
-                let html = make_bare(
-                    ctx,
-                    Raw::dangerously_create(format!(r#"<main>{}</main>"#, prerender(&props)?)),
-                    "Radicals".into(),
-                    styles,
-                    scripts,
-                )?
-                .render()
-                .into_inner();
+                let prerendered = prerender(&props)?;
+
+                let page_props = PropsBare {
+                    head: crate::plugin::make_props_head(
+                        ctx,
+                        "Radicals".to_string(),
+                        styles,
+                        scripts,
+                    )?,
+                    content: Value::from_safe_string(format!("<main>{prerendered}</main>")),
+                };
+
+                let tmpl = templates.get_template("bare.jinja")?;
+                let html = tmpl.render(&page_props)?;
 
                 Ok(Output::html("projects/radicals", html))
             });

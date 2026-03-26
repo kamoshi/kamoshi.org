@@ -7,186 +7,81 @@ pub mod tags;
 pub mod twtxt;
 pub mod wiki;
 
-mod footer;
-
 use std::collections::HashMap;
 
 use camino::Utf8Path;
 use chrono::Datelike as _;
 use hauchiwa::{
     error::RuntimeError,
-    loader::{Script, Stylesheet},
+    loader::{Script, Stylesheet, TemplateEnv},
 };
-// use hauchiwa::{RuntimeError, loader::Style};
-use hypertext::{Raw, prelude::*};
+use minijinja::Value;
 
+use crate::props::{
+    PropsFooter, PropsHead, PropsList, PropsListGroup, PropsListItem, PropsNavItem, PropsNavbar,
+};
 use crate::{Context, LinkDate};
 
-// use crate::{Context, LinkDate};
+const LOGOTYPE_SVG: &str = include_str!("../assets/logotype.svg");
+const ICON_RSS: &str = include_str!("../assets/rss.svg");
 
-fn make_head(
+const NAV_ITEMS: &[(&str, &str, &str)] = &[
+    ("綴", "Posts", "/posts/"),
+    ("映", "Slides", "/slides/"),
+    ("創", "Projects", "/projects/"),
+    ("葉", "Garden", "/wiki/"),
+    ("想", "Journal", "/thoughts/"),
+    ("跡", "Map", "/map/"),
+    ("己", "About", "/about/"),
+    ("索", "Search", "/search/"),
+];
+
+pub(crate) fn make_props_navbar() -> PropsNavbar {
+    PropsNavbar {
+        logotype_svg: Value::from_safe_string(LOGOTYPE_SVG.to_string()),
+        items: NAV_ITEMS
+            .iter()
+            .map(|&(stamp, name, url)| PropsNavItem { stamp, name, url })
+            .collect(),
+    }
+}
+
+pub(crate) fn make_props_footer(ctx: &Context) -> PropsFooter {
+    let repo_link = Utf8Path::new(&ctx.env.data.link)
+        .join("tree")
+        .join(&ctx.env.data.hash);
+    PropsFooter {
+        year: ctx.env.data.year,
+        repo_link: repo_link.to_string(),
+        hash_short: ctx.env.data.hash[0..7].to_string(),
+        date: ctx.env.data.date.clone(),
+    }
+}
+
+pub(crate) fn make_props_head(
     ctx: &Context,
     title: String,
     styles: &[&Stylesheet],
     scripts: &[&Script],
-) -> Result<impl Renderable, RuntimeError> {
-    let title = format!("{title} | kamoshi.org");
-
-    let importmap = ctx.importmap.to_json()?;
-
-    let html = maud!(
-        meta charset="utf-8";
-        meta name="viewport" content="width=device-width, initial-scale=1";
-        meta name="generator" content=(ctx.env.generator);
-
-        title { (title) }
-
-        link rel="sitemap" href="/sitemap.xml";
-
-        link rel="preconnect" href="https://rsms.me/";
-        link rel="stylesheet" href="https://rsms.me/inter/inter.css";
-
-        link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
-        link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
-        link rel="icon" href="/favicon.ico" sizes="any";
-
-        script type="importmap" { (Raw::dangerously_create(&importmap)) }
-
-        @for style in styles {
-            link rel="stylesheet" href=(style.path.as_str());
-        }
-
-        @for script in scripts {
-            script type="module" src=(script.path.as_str()) {}
-        }
-
-        @if let Some(reload_script) = ctx.env.get_refresh_script() {
-            script { (Raw::dangerously_create(reload_script)) }
-        }
-    );
-
-    Ok(html)
+) -> Result<PropsHead, RuntimeError> {
+    Ok(PropsHead {
+        title,
+        generator: ctx.env.generator,
+        importmap: Value::from_safe_string(ctx.importmap.to_json()?),
+        styles: styles.iter().map(|s| s.path.to_string()).collect(),
+        scripts: scripts.iter().map(|s| s.path.to_string()).collect(),
+        refresh_script: ctx.env.get_refresh_script().map(Value::from_safe_string),
+    })
 }
-
-fn make_navbar() -> impl Renderable {
-    const ITEMS: &[(&str, &str, &str)] = &[
-        ("綴", "Posts", "/posts/"),
-        ("映", "Slides", "/slides/"),
-        ("創", "Projects", "/projects/"),
-        ("葉", "Garden", "/wiki/"),
-        ("想", "Journal", "/thoughts/"),
-        ("跡", "Map", "/map/"),
-        ("己", "About", "/about/"),
-        ("索", "Search", "/search/"),
-    ];
-
-    maud!(
-        nav #navigation .p-nav {
-            input #p-nav-toggle type="checkbox" hidden;
-
-            div .p-nav__bar {
-                a .p-nav__logo href="/" {
-                    img .p-nav__logo-icon height="48px" width="51px" src="/static/svg/aya.svg" alt="";
-                    div .p-nav__logo-text {
-                        div .p-nav__logo-main {
-                            (Raw::dangerously_create(include_str!("../assets/logotype.svg")))
-                        }
-                        div #p-nav-splash .p-nav__logo-sub {
-                          "夢現の遥か彼方"
-                        }
-                    }
-                }
-
-                label .p-nav__burger for="p-nav-toggle" tabindex="0" {
-                    span .p-nav__burger-icon {}
-                }
-            }
-
-            menu {
-                @for (stamp, name, url) in ITEMS {
-                    li {
-                        a href=(*url) {
-                            div .stamp {
-                                (*stamp)
-                            }
-                            div .text {
-                                (*name)
-                            }
-                            div .indicator {}
-                        }
-                    }
-                }
-            }
-        }
-    )
-}
-
-pub fn make_bare<'ctx>(
-    ctx: &'ctx Context,
-    main: impl Renderable + 'ctx,
-    title: String,
-    styles: &[&Stylesheet],
-    scripts: &[&Script],
-) -> Result<impl Renderable, RuntimeError> {
-    let head = make_head(ctx, title, styles, scripts)?;
-
-    Ok(maud!(
-        !DOCTYPE
-        html lang="en" {
-            (head)
-
-            body {
-                (main)
-            }
-        }
-    ))
-}
-
-pub fn make_fullscreen<'ctx>(
-    ctx: &'ctx Context,
-    main: impl Renderable + 'ctx,
-    title: String,
-    styles: &[&Stylesheet],
-    scripts: &[&Script],
-) -> Result<impl Renderable, RuntimeError> {
-    let main = maud!(
-        // navbar
-        (make_navbar())
-        // main
-        (main)
-    );
-
-    make_bare(ctx, main, title, styles, scripts)
-}
-
-pub fn make_page<'ctx>(
-    sack: &'ctx Context,
-    main: impl Renderable + 'ctx,
-    title: String,
-    styles: &[&Stylesheet],
-    scripts: &[&Script],
-) -> Result<impl Renderable, RuntimeError> {
-    let main = maud!(
-        // navbar
-        (make_navbar())
-        // main
-        (main)
-        // footer
-        (footer::render(sack))
-    );
-
-    make_bare(sack, main, title, styles, scripts)
-}
-
-const ICON_RSS: &str = include_str!("../assets/rss.svg");
 
 pub(crate) fn to_list(
-    sack: &Context,
+    ctx: &Context,
+    templates: &TemplateEnv,
     list: Vec<LinkDate>,
     title: String,
     rss: &'static str,
     styles: &[&Stylesheet],
-) -> Result<impl Renderable, RuntimeError> {
+) -> Result<String, RuntimeError> {
     let mut groups = HashMap::<i32, Vec<_>>::new();
 
     for page in list {
@@ -203,81 +98,31 @@ pub(crate) fn to_list(
 
     groups.sort_by(|a, b| b.0.cmp(&a.0));
 
-    let heading = title.clone();
-    let list = maud!(
-        main .page-list-main {
-            article .page-list {
-                header .directory-header .markdown {
-                    h1 { (heading) }
-                    a href=(rss) title="RSS feed" {
-                       (Raw::dangerously_create(ICON_RSS))
-                    }
-                }
+    let props = PropsList {
+        head: make_props_head(ctx, title.clone(), styles, &[])?,
+        navbar: make_props_navbar(),
+        footer: make_props_footer(ctx),
+        title,
+        rss,
+        icon_rss: Value::from_safe_string(ICON_RSS.to_string()),
+        groups: groups
+            .into_iter()
+            .map(|(year, items)| PropsListGroup {
+                year,
+                items: items
+                    .into_iter()
+                    .map(|item| PropsListItem {
+                        path: item.link.path.to_string(),
+                        name: item.link.name,
+                        desc: item.link.desc,
+                        date: item.date.format("%m/%d").to_string(),
+                        date_iso: item.date.to_rfc3339(),
+                    })
+                    .collect(),
+            })
+            .collect(),
+    };
 
-                @for (year, group) in &groups {
-                    (section(*year, group))
-                }
-            }
-        }
-    );
-
-    make_page(sack, list, title, styles, &[])
-}
-
-fn section(year: i32, group: &[LinkDate]) -> impl Renderable + '_ {
-    maud!(
-        section .page-list-year {
-            header .page-list-year__header {
-                h2 { (year) }
-            }
-            @for item in group.iter() {
-                (link(item))
-            }
-        }
-    )
-}
-
-fn link(data: &LinkDate) -> impl Renderable + '_ {
-    let time = data.date.format("%m/%d");
-    maud!(
-        a .page-item href=(data.link.path.as_str()) {
-            div .page-item__header {
-                h3 {
-                    (&data.link.name)
-                }
-                time datetime=(data.date.to_rfc3339()) {
-                    (time.to_string())
-                }
-            }
-            @if let Some(ref desc) = data.link.desc {
-                div .page-item__desc {
-                    (desc)
-                }
-            }
-        }
-    )
-}
-
-pub fn render_bibliography(bib: &[String], library_path: Option<&Utf8Path>) -> impl Renderable {
-    maud!(
-        section .bibliography {
-            header {
-                h2 {
-                    "Bibliography"
-                }
-                @if let Some(path) = library_path {
-                    a.icon-btn href=(path.as_str()) download="bibliography.bib" title="Download BibTeX" {
-                        img src="/static/svg/lucide/file-down.svg" alt="Download";
-                    }
-                }
-            }
-            ol {
-                @for item in bib {
-                    li {
-                        (Raw::dangerously_create(item))
-                    }
-                }
-            }
-        }
-    )
+    let tmpl = templates.get_template("list.jinja")?;
+    Ok(tmpl.render(&props)?)
 }

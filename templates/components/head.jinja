@@ -1,0 +1,30 @@
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="{{ head.generator }}">
+
+  <title>{{ head.title }} | kamoshi.org</title>
+
+  <link rel="sitemap" href="/sitemap.xml">
+
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+
+  <script type="importmap">{{ head.importmap }}</script>
+
+  {% for style in head.styles %}
+  <link rel="stylesheet" href="{{ style }}">
+  {% endfor %}
+
+  {% for script in head.scripts %}
+  <script type="module" src="{{ script }}"></script>
+  {% endfor %}
+
+  {% if head.refresh_script %}
+  <script>{{ head.refresh_script }}</script>
+  {% endif %}
+</head>

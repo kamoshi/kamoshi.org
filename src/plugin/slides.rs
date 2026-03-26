@@ -3,18 +3,18 @@ use std::fmt::Write as _;
 use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::generic::DocumentMeta;
-use hauchiwa::loader::{Image, Script, Stylesheet};
+use hauchiwa::loader::{Image, Script, Stylesheet, TemplateEnv};
 use hauchiwa::{Tracker, prelude::*};
-use hypertext::{Raw, prelude::*};
+use minijinja::Value;
 
 use crate::model::Slideshow;
 use crate::plugin::to_list;
+use crate::props::PropsSlideshow;
 use crate::{Context, Global, Link, LinkDate};
-
-use super::make_bare;
 
 pub fn add_slides(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     images: Many<Image>,
     styles: Many<Stylesheet>,
     scripts: Many<Script>,
@@ -33,8 +33,8 @@ pub fn add_slides(
 
     let handle = config
         .task()
-        .using((md, hs, images, styles, scripts))
-        .merge(|ctx, (md, hs, images, styles, scripts)| {
+        .using((templates, md, hs, images, styles, scripts))
+        .merge(|ctx, (templates, md, hs, images, styles, scripts)| {
             let mut pages = vec![];
 
             let documents = [md.values(), hs.values()]
@@ -52,9 +52,7 @@ pub fn add_slides(
 
                 for document in &documents {
                     let text = parse(&document.text, &document.meta, None, Some(&images))?;
-                    let html = render(ctx, &document.matter, &text, styles, scripts)?
-                        .render()
-                        .into_inner();
+                    let html = render(ctx, templates, &document.matter, &text, styles, scripts)?;
 
                     pages.push(
                         document
@@ -85,9 +83,7 @@ pub fn add_slides(
                     })
                     .collect();
 
-                let html = to_list(ctx, data, "Slideshows".into(), "/slides/rss.xml", styles)?
-                    .render()
-                    .into_inner();
+                let html = to_list(ctx, templates, data, "Slideshows".into(), "/slides/rss.xml", styles)?;
 
                 pages.push(Output::html("slides", html));
             }
@@ -129,20 +125,19 @@ pub fn parse(
     Ok(buff)
 }
 
-pub fn render<'ctx>(
-    ctx: &'ctx Context,
-    fm: &'ctx Slideshow,
-    slides: &'ctx str,
-    styles: &'ctx [&Stylesheet],
-    scripts: &'ctx [&Script],
-) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let html = maud!(
-        div .reveal {
-            div .slides {
-                (Raw::dangerously_create(slides))
-            }
-        }
-    );
+pub fn render(
+    ctx: &Context,
+    templates: &TemplateEnv,
+    fm: &Slideshow,
+    slides: &str,
+    styles: &[&Stylesheet],
+    scripts: &[&Script],
+) -> Result<String, RuntimeError> {
+    let props = PropsSlideshow {
+        head: super::make_props_head(ctx, fm.title.clone(), styles, scripts)?,
+        slides: Value::from_safe_string(slides.to_string()),
+    };
 
-    make_bare(ctx, html, fm.title.clone(), styles, scripts)
+    let tmpl = templates.get_template("slideshow.jinja")?;
+    Ok(tmpl.render(&props)?)
 }

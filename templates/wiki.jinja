@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include "components/head.jinja" %}
+<body>
+{% include "components/navbar.jinja" %}
+<main class="wiki-main">
+  <aside class="outline">
+    <section>
+      <div>
+        {% include "components/wiki_tree.jinja" %}
+      </div>
+    </section>
+  </aside>
+  <article class="article">
+    <section class="paper">
+      <header>
+        <h1 id="top">{{ title }}</h1>
+      </header>
+      <section class="wiki-article__markdown markdown">
+        {{ content }}
+      </section>
+    </section>
+    {% if bibliography %}
+    <section class="bibliography">
+      <header>
+        <h2>Bibliography</h2>
+      </header>
+      <ol>
+        {% for item in bibliography %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ol>
+    </section>
+    {% endif %}
+    {% if backlinks %}
+    <div class="backlinks">
+      <h3>Backlinks</h3>
+      <ul>
+        {% for link in backlinks %}
+        <li><a href="{{ link.href }}">{{ link.title }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </article>
+</main>
+{% include "components/footer.jinja" %}
+</body>
+</html>

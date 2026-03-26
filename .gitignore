@@ -40,6 +40,10 @@
 content/.obsidian/
 content/.stfolder/
 
+!templates/
+!templates/**/
+!templates/**/*.jinja
+
 !deno.json
 !deno.lock
 !tsconfig.json

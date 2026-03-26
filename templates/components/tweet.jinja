@@ -1,0 +1,16 @@
+<article class="tweet">
+  <div class="tweet-avatar">
+    <img src="/aya_shades.png" alt="Avatar">
+  </div>
+  <div class="tweet-content">
+    <header class="tweet-header">
+      <span class="display-name">kamov</span>
+      <span class="handle">@kamov</span>
+      <span class="separator">·</span>
+      <a class="tweet-link" href="/thoughts/{{ entry.timestamp }}/">
+        <time datetime="{{ entry.date_iso }}">{{ entry.date_display }}</time>
+      </a>
+    </header>
+    <div class="tweet-body">{{ entry.body }}</div>
+  </div>
+</article>

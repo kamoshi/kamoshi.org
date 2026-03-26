@@ -1,18 +1,19 @@
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Document, Image, Stylesheet};
+use hauchiwa::loader::{Document, Image, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
-use hypertext::{Raw, prelude::*};
+use hypertext::prelude::*;
+use minijinja::Value;
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
 
 use crate::md::Parsed;
 use crate::model::{Post, Pubkey};
+use crate::props::PropsAbout;
 use crate::{Context, Global};
-
-use super::make_page;
 
 pub fn add_about(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     images: Many<Image>,
     styles: Many<Stylesheet>,
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
@@ -38,8 +39,8 @@ pub fn add_about(
             })
         })?;
 
-    let handle = config.task().using((docs, cert, images, styles)).merge(
-        |ctx, (docs, cert, images, styles)| {
+    let handle = config.task().using((templates, docs, cert, images, styles)).merge(
+        |ctx, (templates, docs, cert, images, styles)| {
             let document = docs.get("content/about/index.md")?;
             let pubkey_ident = cert.get("content/about/pubkey-ident.asc")?;
             let pubkey_email = cert.get("content/about/pubkey-email.asc")?;
@@ -52,9 +53,7 @@ pub fn add_about(
             let parsed =
                 crate::md::parse(&document.text, &document.meta, None, Some(&images), None)?;
 
-            let html = render(ctx, document, parsed, pubkey_ident, pubkey_email, styles)?
-                .render()
-                .into_inner();
+            let html = render(ctx, templates, document, parsed, pubkey_ident, pubkey_email, styles)?;
 
             Ok(vec![
                 Output::html("about", html),
@@ -67,51 +66,28 @@ pub fn add_about(
     Ok(handle)
 }
 
-pub fn render<'ctx>(
-    ctx: &'ctx Context,
-    doc: &'ctx Document<Post>,
+pub fn render(
+    ctx: &Context,
+    templates: &TemplateEnv,
+    doc: &Document<Post>,
     parsed: Parsed,
-    pubkey_ident: &'ctx Pubkey,
-    pubkey_email: &'ctx Pubkey,
-    styles: &'ctx [&Stylesheet],
-) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let main = maud!(
-        main {
-            // Outline (left)
-            (&parsed.outline)
-            // Article (center)
-            article .article {
-                section .paper {
-                    header {
-                        h1 #top {
-                            (&doc.matter.title)
-                        }
-                    }
-                    section .wiki-article__markdown.markdown {
-                        (Raw::dangerously_create(&parsed.html))
+    pubkey_ident: &Pubkey,
+    pubkey_email: &Pubkey,
+    styles: &[&Stylesheet],
+) -> Result<String, RuntimeError> {
+    let outline_html = parsed.outline.render().into_inner();
 
-                        h2 {
-                           "Keys"
-                        }
-                        p {
-                            "GPG public key"
-                        }
-                        a href="/pubkey_ident.asc" {
-                            (&pubkey_ident.fingerprint)
-                        }
-                        p {
-                            "GPG public key (email)"
-                        }
-                        a href="/pubkey_email.asc" {
-                            (&pubkey_email.fingerprint)
-                        }
-                    }
-                }
-            }
-            // Metadata (right)
-            // (render_metadata(ctx, &item.data.meta, item.file.info.as_ref(), &[]))
-        }
-    );
+    let props = PropsAbout {
+        head: super::make_props_head(ctx, doc.matter.title.clone(), styles, &[])?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        title: doc.matter.title.clone(),
+        outline: Value::from_safe_string(outline_html),
+        content: Value::from_safe_string(parsed.html),
+        pubkey_ident_fingerprint: pubkey_ident.fingerprint.clone(),
+        pubkey_email_fingerprint: pubkey_email.fingerprint.clone(),
+    };
 
-    make_page(ctx, main, doc.matter.title.clone(), styles, &[])
+    let tmpl = templates.get_template("about.jinja")?;
+    Ok(tmpl.render(&props)?)
 }

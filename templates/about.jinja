@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include "components/head.jinja" %}
+<body>
+{% include "components/navbar.jinja" %}
+<main>
+  {{ outline }}
+  <article class="article">
+    <section class="paper">
+      <header>
+        <h1 id="top">{{ title }}</h1>
+      </header>
+      <section class="wiki-article__markdown markdown">
+        {{ content }}
+        <h2>Keys</h2>
+        <p>GPG public key</p>
+        <a href="/pubkey_ident.asc">{{ pubkey_ident_fingerprint }}</a>
+        <p>GPG public key (email)</p>
+        <a href="/pubkey_email.asc">{{ pubkey_email_fingerprint }}</a>
+      </section>
+    </section>
+  </article>
+</main>
+{% include "components/footer.jinja" %}
+</body>
+</html>

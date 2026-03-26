@@ -1,41 +1,32 @@
+use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Image, Script, Stylesheet, Svelte};
+use hauchiwa::loader::{Image, Script, Stylesheet, Svelte, TemplateEnv};
 use hauchiwa::prelude::*;
-use hypertext::{Raw, maud_static, prelude::*};
+use minijinja::Value;
 
 use crate::Context;
 use crate::{Global, model::Home};
-
-use super::make_page;
+use crate::props::{PropsFooter, PropsHead, PropsHome, PropsNavItem, PropsNavbar};
 
 const INTRO: &str = include_str!("./intro.md");
 
-const SECTION_BUTTONS: Raw<&str> = {
-    maud_static!(
-        section .p-card {
-            h2 .p-card__heading {
-                "Badges"
-            }
-            div .grid_88x31 {
-                a href=r#"https://nixos.org"# title="Powered by NixOS" {
-                    img .icon_88x31 src="/static/88x31/nixos.gif" width=88 height=31;
-                }
-                a href=r#"https://crates.io/crates/hauchiwa"# title="Built with Hauchiwa" {
-                    img .icon_88x31 src="/static/88x31/hauchiwa.png" width=88 height=31;
-                }
-                a href=r#"https://www.mozilla.org/firefox/new"# title="Tested on Firefox" {
-                    img .icon_88x31 src="/static/88x31/firefox.webp" width=88 height=31;
-                }
-                a href=r#"https://creativecommons.org/licenses/by/4.0/"# title="CC BY 4.0" {
-                    img .icon_88x31 src="/static/88x31/cc-by.png" width=88 height=31;
-                }
-            }
-        }
-    )
-};
+const LOGOTYPE_SVG: &str = include_str!("../../assets/logotype.svg");
+
+const NAV_ITEMS: &[(&str, &str, &str)] = &[
+    ("綴", "Posts", "/posts/"),
+    ("映", "Slides", "/slides/"),
+    ("創", "Projects", "/projects/"),
+    ("葉", "Garden", "/wiki/"),
+    ("想", "Journal", "/thoughts/"),
+    ("跡", "Map", "/map/"),
+    ("己", "About", "/about/"),
+    ("索", "Search", "/search/"),
+];
+
 
 pub fn add_home(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     images: Many<Image>,
     styles: Many<Stylesheet>,
     svelte: Many<Svelte>,
@@ -46,8 +37,8 @@ pub fn add_home(
         .offset("content")
         .register()?;
 
-    let task = config.task().using((docs, images, styles, svelte)).merge(
-        |ctx, (docs, images, styles, svelte)| {
+    let task = config.task().using((templates, docs, images, styles, svelte)).merge(
+        |ctx, (templates, docs, images, styles, svelte)| {
             let document = docs.get("content/index.md")?;
 
             let styles = &[
@@ -64,7 +55,7 @@ pub fn add_home(
             let parsed =
                 crate::md::parse(&document.text, &document.meta, None, Some(&images), None)?;
 
-            let html = render(ctx, &parsed.html, &kanji_html, styles, scripts)?;
+            let html = render(ctx, templates, &parsed.html, &kanji_html, styles, scripts)?;
 
             Ok(Output::html("", html))
         },
@@ -75,48 +66,47 @@ pub fn add_home(
 
 pub(crate) fn render(
     ctx: &Context,
+    templates: &TemplateEnv,
     text: &str,
     kanji: &str,
     styles: &[&Stylesheet],
     scripts: &[&Script],
 ) -> Result<String, RuntimeError> {
-    let intro = intro(ctx)?;
-    // let posts = latest_posts(ctx)?;
+    let intro_html = comrak::markdown_to_html(INTRO, &comrak::Options::default());
 
-    let main = maud!(
-        main .l-home {
-            article .l-home__article.markdown {
-                (Raw::dangerously_create(text))
-            }
-            aside .l-home__aside {
-                (intro)
-                // (Raw(SECTION_IMAGE))
-                section .p-card {
-                    (Raw::dangerously_create(kanji))
-                }
-                // (posts)
-                (SECTION_BUTTONS)
-            }
-        }
-    );
+    let repo_link = Utf8Path::new(&ctx.env.data.link)
+        .join("tree")
+        .join(&ctx.env.data.hash);
 
-    let rendered = make_page(ctx, main, "Home".into(), styles, scripts)?
-        .render()
-        .into_inner();
+    let props = PropsHome {
+        head: PropsHead {
+            title: "Home".to_string(),
+            generator: ctx.env.generator,
+            importmap: Value::from_safe_string(ctx.importmap.to_json()?),
+            styles: styles.iter().map(|s| s.path.to_string()).collect(),
+            scripts: scripts.iter().map(|s| s.path.to_string()).collect(),
+            refresh_script: ctx.env.get_refresh_script().map(Value::from_safe_string),
+        },
+        navbar: PropsNavbar {
+            logotype_svg: Value::from_safe_string(LOGOTYPE_SVG.to_string()),
+            items: NAV_ITEMS
+                .iter()
+                .map(|&(stamp, name, url)| PropsNavItem { stamp, name, url })
+                .collect(),
+        },
+        footer: PropsFooter {
+            year: ctx.env.data.year,
+            repo_link: repo_link.to_string(),
+            hash_short: ctx.env.data.hash[0..7].to_string(),
+            date: ctx.env.data.date.clone(),
+        },
+        article: Value::from_safe_string(text.to_string()),
+        kanji: Value::from_safe_string(kanji.to_string()),
+        intro: Value::from_safe_string(intro_html),
+    };
 
-    Ok(rendered)
-}
-
-fn intro(_: &Context) -> Result<impl Renderable, RuntimeError> {
-    let article = comrak::markdown_to_html(INTRO, &comrak::Options::default());
-
-    let html = maud!(
-        section .p-card.intro-jp lang="ja-JP" {
-            (Raw::dangerously_create(&article))
-        }
-    );
-
-    Ok(html)
+    let tmpl = templates.get_template("home.jinja")?;
+    Ok(tmpl.render(&props)?)
 }
 
 // const SECTION_IMAGE: Rendered<&str> = {

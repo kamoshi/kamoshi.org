@@ -2,15 +2,15 @@ mod radicals;
 
 use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::Stylesheet;
+use hauchiwa::loader::{Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
-use hypertext::{Raw, prelude::*};
+use hypertext::prelude::*;
+use minijinja::Value;
 
 use crate::md::Parsed;
 use crate::model::Project;
+use crate::props::{PropsProjectPage, PropsProjectTile, PropsProjects};
 use crate::{Context, Global};
-
-use super::make_page;
 
 pub struct ProjectView<'a> {
     pub title: &'a str,
@@ -21,6 +21,7 @@ pub struct ProjectView<'a> {
 
 pub fn add_projects(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     styles: Many<Stylesheet>,
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
     let docs = config
@@ -29,17 +30,15 @@ pub fn add_projects(
         .offset("content")
         .register()?;
 
-    let page_radicals = radicals::build(config, styles)?;
+    let page_radicals = radicals::build(config, templates, styles)?;
 
-    let task = config.task().using((docs, styles, page_radicals)).merge(
-        |ctx, (docs, styles, page_radicals)| {
+    let task = config.task().using((templates, docs, styles, page_radicals)).merge(
+        |ctx, (templates, docs, styles, page_radicals)| {
             let styles_list = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/layouts/projects.scss")?,
             ];
 
-            // Map the external Document<Project> to our local ProjectView
-            // This effectively "strips" the external container
             let mut project_views: Vec<ProjectView> = docs
                 .values()
                 .map(|doc| ProjectView {
@@ -63,9 +62,6 @@ pub fn add_projects(
 
             let mut pages = vec![];
 
-            // Note: crate::rss::generate_feed likely still needs the original docs
-            // or a similar transformation depending on its signature.
-            // Assuming it keeps working with references to the raw map:
             {
                 let docs_vec = docs.values().collect::<Vec<_>>();
                 pages.push(crate::rss::generate_feed(
@@ -76,12 +72,9 @@ pub fn add_projects(
             }
 
             {
-                // Pass the mapped views instead of the docs
-                let list = render_list(ctx, project_views, styles_list)?;
+                let list = render_list(ctx, templates, project_views, styles_list)?;
                 pages.push(Output::html("projects", list));
             }
-
-            // Removed `pages.push(value);` as `value` was undefined in snippet
 
             Ok(pages)
         },
@@ -92,80 +85,47 @@ pub fn add_projects(
 
 pub fn render_list(
     ctx: &Context,
-    mut projects: Vec<ProjectView>, // Now accepts our local struct
+    templates: &TemplateEnv,
+    mut projects: Vec<ProjectView>,
     styles: &[&Stylesheet],
 ) -> Result<String, RuntimeError> {
-    // Sort logic remains the same, but operates on the view struct
     projects.sort_unstable_by(|a, b| a.title.cmp(b.title));
 
-    let main = maud! {
-        main {
-            article .project-list-wrap {
-                h1 {
-                    "Projects"
-                }
-
-                div .project-list-flex {
-                    @for item in &projects {
-                        (render_tile(item))
-                    }
-                }
-            }
-        }
+    let props = PropsProjects {
+        head: super::make_props_head(ctx, "Projects".to_string(), styles, &[])?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        projects: projects
+            .iter()
+            .map(|p| PropsProjectTile {
+                title: p.title.to_string(),
+                tech: p.tech.clone(),
+                link: p.link.clone(),
+                desc: p.desc.map(str::to_string),
+            })
+            .collect(),
     };
 
-    let html = make_page(ctx, main, "Projects".into(), styles, &[])?
-        .render()
-        .into_inner();
-
-    Ok(html)
+    let tmpl = templates.get_template("projects.jinja")?;
+    Ok(tmpl.render(&props)?)
 }
 
-// Updated to take the ProjectView
-fn render_tile(project: &ProjectView) -> impl Renderable {
-    maud! {
-        a .project-list-tile href=(project.link) {
-            h2 { (project.title) }
-            ul .tech-stack {
-                @for tech in &project.tech {
-                    li {
-                        img src=(format!("/static/svg/tech/{}.svg", tech.to_lowercase())) alt=(tech);
-                    }
-                }
-            }
-            @if let Some(desc) = project.desc {
-                p { (desc) }
-            }
-        }
-    }
-}
+pub fn render_page(
+    ctx: &Context,
+    templates: &TemplateEnv,
+    parsed: &Parsed,
+    styles: &[&Stylesheet],
+) -> Result<String, RuntimeError> {
+    let outline_html = parsed.outline.render().into_inner();
 
-pub fn render_page<'ctx>(
-    ctx: &'ctx Context,
-    parsed: &'ctx Parsed,
-    styles: &'ctx [&Stylesheet],
-) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let html = maud!(
-        main {
-            // Outline (left)
-            (&parsed.outline)
-            // Article (center)
-            article .article {
-                section .paper {
-                    section .wiki-article__markdown.markdown {
-                        (Raw::dangerously_create(&parsed.html))
-                    }
-                }
-            }
-            // Metadata (right)
-            aside .tiles {
-                section .metadata {
-                }
-            }
-        }
-    );
+    let props = PropsProjectPage {
+        head: super::make_props_head(ctx, "".to_string(), styles, &[])?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        outline: Value::from_safe_string(outline_html),
+        content: Value::from_safe_string(parsed.html.clone()),
+    };
 
-    let html = make_page(ctx, html, "".into(), styles, &[])?;
-
-    Ok(html)
+    let tmpl = templates.get_template("project_page.jinja")?;
+    Ok(tmpl.render(&props)?)
 }

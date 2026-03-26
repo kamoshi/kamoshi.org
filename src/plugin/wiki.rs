@@ -2,15 +2,14 @@ use std::collections::HashMap;
 
 use camino::Utf8Path;
 use hauchiwa::error::HauchiwaError;
-use hauchiwa::loader::{Document, Image, Stylesheet};
+use hauchiwa::loader::{Document, Image, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
-use hypertext::{Raw, maud_borrow, prelude::*};
+use minijinja::Value;
 
-use crate::md::{Parsed, WikiLinkResolver};
+use crate::md::WikiLinkResolver;
 use crate::model::Wiki;
+use crate::props::{PropsWiki, PropsWikiBacklink, PropsWikiPdf, PropsWikiTreeNode};
 use crate::{Bibtex, Global};
-
-use super::make_page;
 
 enum RenderedItem<'a> {
     Markdown(&'a Document<Wiki>),
@@ -19,6 +18,7 @@ enum RenderedItem<'a> {
 
 pub fn add_teien(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     images: Many<Image>,
     styles: Many<Stylesheet>,
     bibtex: Many<Bibtex>,
@@ -69,8 +69,8 @@ pub fn add_teien(
 
     let task = config
         .task()
-        .using((documents, images, styles, bibtex, typst))
-        .merge(|ctx, (documents, images, styles, bibtex, typst)| {
+        .using((templates, documents, images, styles, bibtex, typst))
+        .merge(|ctx, (templates, documents, images, styles, bibtex, typst)| {
             let styles = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/layouts/page.scss")?,
@@ -110,8 +110,6 @@ pub fn add_teien(
                 // Datalog: add parent hierarchy
                 {
                     let mut ptr = Utf8Path::new(&href);
-
-                    // Track the current child (start with the document itself)
                     let mut current_child_str = href.to_string();
 
                     while let Some(parent) = ptr.parent() {
@@ -120,7 +118,6 @@ pub fn add_teien(
                             break;
                         }
 
-                        // Normalize parent to ensure trailing slash
                         let parent_normalized = if parent_str == "/" {
                             "/".to_string()
                         } else if !parent_str.ends_with('/') {
@@ -129,10 +126,7 @@ pub fn add_teien(
                             parent_str.to_string()
                         };
 
-                        // add link Parent -> Child
                         datalog.add_parent(&parent_normalized, &current_child_str);
-
-                        // The parent becomes the child for the next iteration
                         current_child_str = parent_normalized;
                         ptr = parent;
 
@@ -173,8 +167,6 @@ pub fn add_teien(
                     {
                         hauchiwa::tracing::info!("{}", &href);
                         let mut ptr = Utf8Path::new(&href);
-
-                        // Track the current child (start with the document itself)
                         let mut current_child_str = href.clone();
 
                         while let Some(parent) = ptr.parent() {
@@ -183,7 +175,6 @@ pub fn add_teien(
                                 break;
                             }
 
-                            // Normalize parent to ensure trailing slash
                             let parent_normalized = if parent_str == "/" {
                                 "/".to_string()
                             } else if !parent_str.ends_with('/') {
@@ -192,10 +183,7 @@ pub fn add_teien(
                                 parent_str.to_string()
                             };
 
-                            // add link Parent -> Child
                             datalog.add_parent(&parent_normalized, &current_child_str);
-
-                            // The parent becomes the child for the next iteration
                             current_child_str = parent_normalized;
                             ptr = parent;
 
@@ -219,37 +207,37 @@ pub fn add_teien(
                 let mut pages = vec![];
 
                 for (document, markdown, href) in &parsed {
-                    // Get backlinks (list of href strings) and map them to Document objects
-                    let backrefs = solution.get_backlinks(href).map(|hrefs| {
+                    let backlinks = solution.get_backlinks(href).map(|hrefs| {
                         hrefs
                             .iter()
                             .filter_map(|h| doc_map.get(*h))
-                            .map(|doc| match doc {
-                                RenderedItem::Markdown(doc) => (doc.meta.href.as_str(), *doc),
-                                RenderedItem::Typst { title } => todo!(),
+                            .filter_map(|item| match item {
+                                RenderedItem::Markdown(doc) => Some(PropsWikiBacklink {
+                                    href: doc.meta.href.clone(),
+                                    title: doc.matter.title.clone(),
+                                }),
+                                RenderedItem::Typst { .. } => None,
                             })
                             .collect::<Vec<_>>()
                     });
 
-                    let main = maud_borrow!(
-                        main .wiki-main {
-                            // Outline
-                            aside .outline {
-                                section {
-                                    div {
-                                        (TreeContext::new("/", href, &doc_map, &solution))
-                                    }
-                                }
-                            }
+                    let bibliography = markdown.bibliography.as_ref().map(|bib| {
+                        bib.iter().map(|item| Value::from_safe_string(item.clone())).collect()
+                    });
 
-                            // Article
-                            (render_article(&document.matter, markdown, backrefs.as_deref()))
-                        }
-                    );
+                    let props = PropsWiki {
+                        head: super::make_props_head(ctx, document.matter.title.clone(), styles, &[])?,
+                        navbar: super::make_props_navbar(),
+                        footer: super::make_props_footer(ctx),
+                        title: document.matter.title.clone(),
+                        tree: build_tree_nodes(href, "/", &doc_map, &solution),
+                        content: Value::from_safe_string(markdown.html.clone()),
+                        bibliography,
+                        backlinks,
+                    };
 
-                    let page = make_page(ctx, main, document.matter.title.to_owned(), styles, &[])?
-                        .render()
-                        .into_inner();
+                    let tmpl = templates.get_template("wiki.jinja")?;
+                    let page = tmpl.render(&props)?;
 
                     pages.push(
                         document
@@ -261,27 +249,18 @@ pub fn add_teien(
                 }
 
                 for (href, path_pdf) in &typst_items {
-                    let html = maud_borrow!(
-                        main .wiki-main {
-                            // Outline
-                            aside .outline {
-                                section {
-                                    div {
-                                        (TreeContext::new("/", Utf8Path::new("/").join(href).as_str(), &doc_map, &solution))
-                                    }
-                                }
-                            }
+                    let href_full = Utf8Path::new("/").join(href).to_string();
 
-                            // Article
-                            article .article {
-                                object class="pdf" width="100%" height="100%" data=(path_pdf.as_str()) {}
-                            }
-                        }
-                    );
+                    let props = PropsWikiPdf {
+                        head: super::make_props_head(ctx, "".to_string(), styles, &[])?,
+                        navbar: super::make_props_navbar(),
+                        footer: super::make_props_footer(ctx),
+                        tree: build_tree_nodes(&href_full, "/", &doc_map, &solution),
+                        pdf_path: path_pdf.to_string(),
+                    };
 
-                    let html = make_page(ctx, html, "".into(), styles, &[])?
-                        .render()
-                        .into_inner();
+                    let tmpl = templates.get_template("wiki_pdf.jinja")?;
+                    let html = tmpl.render(&props)?;
 
                     pages.push(Output::html(href, html));
                 }
@@ -295,155 +274,55 @@ pub fn add_teien(
     Ok(task)
 }
 
-fn render_article(
-    meta: &Wiki,
-    markdown: &Parsed,
-    backlinks: Option<&[(&str, &Document<Wiki>)]>,
-) -> impl Renderable {
-    maud!(
-        article .article {
-            section .paper {
-                header {
-                    h1 #top {
-                        (&meta.title)
-                    }
-                }
-                section .wiki-article__markdown.markdown {
-                    (Raw::dangerously_create(&markdown.html))
-                }
-            }
-
-            @if let Some(bibliography) = &markdown.bibliography {
-                (render_bibliography(bibliography))
-            }
-
-            @if let Some(backlinks) = backlinks {
-                div .backlinks {
-                    h3 { "Backlinks" }
-
-                    ul {
-                        @for link in backlinks {
-                            li {
-                                a href=(link.0) { (&link.1.matter.title) }
-                            }
-                        }
-                    }
-                }
-            }
+fn build_tree_nodes(
+    active_href: &str,
+    parent_href: &str,
+    resolved: &HashMap<String, RenderedItem>,
+    solution: &crate::datalog::Solution,
+) -> Vec<PropsWikiTreeNode> {
+    let children = match solution.get_children(parent_href) {
+        Some(mut kids) => {
+            kids.sort();
+            kids
         }
-    )
-}
+        None => return vec![],
+    };
 
-// Helper struct to bundle the context needed for rendering
-struct TreeContext<'a> {
-    root: &'a str,
-    href: &'a str,
-    solution: &'a crate::datalog::Solution,
-    resolved: &'a HashMap<String, RenderedItem<'a>>,
-}
+    children
+        .into_iter()
+        .map(|child_href| {
+            let (name, is_link) = if let Some(doc) = resolved.get(child_href) {
+                let name = match doc {
+                    RenderedItem::Markdown(doc) => doc.matter.title.clone(),
+                    RenderedItem::Typst { title } => title.clone(),
+                };
+                (name, true)
+            } else {
+                let name = child_href
+                    .trim_end_matches('/')
+                    .split('/')
+                    .next_back()
+                    .unwrap_or(child_href)
+                    .to_string();
+                (name, false)
+            };
 
-impl<'a> TreeContext<'a> {
-    fn new(
-        root: &'a str,
-        href: &'a str,
-        resolved: &'a HashMap<String, RenderedItem>,
-        solution: &'a crate::datalog::Solution,
-    ) -> Self {
-        Self {
-            root,
-            href,
-            solution,
-            resolved,
-        }
-    }
-}
+            let is_active_path = active_href.starts_with(child_href);
+            let is_current = active_href == child_href;
 
-impl hypertext::Renderable for TreeContext<'_> {
-    fn render_to(&self, buffer: &mut hypertext::Buffer<hypertext::context::Node>) {
-        maud!(
-            nav .link-tree__nav {
-                (show_tree_recursive(self, self.root))
+            let children = if is_active_path || !is_link {
+                build_tree_nodes(active_href, child_href, resolved, solution)
+            } else {
+                vec![]
+            };
+
+            PropsWikiTreeNode {
+                href: child_href.to_string(),
+                name,
+                is_link,
+                is_current,
+                children,
             }
-        )
-        .render_to(buffer);
-    }
-}
-
-fn show_tree_recursive(ctx: &TreeContext<'_>, href: &str) -> impl Renderable {
-    let children = ctx.solution.get_children(href).map(|mut kids| {
-        kids.sort();
-        kids
-    });
-
-    maud!(
-        @if let Some(children) = &children {
-            ul .link-tree__nav-list {
-                @for child_href in children {
-                    // Determine display name: Title if doc exists, else directory name
-                    @let (name, is_link) = if let Some(doc) = ctx.resolved.get(*child_href) {
-                        (match doc {
-                            RenderedItem::Markdown(doc) => doc.matter.title.as_str(),
-                            RenderedItem::Typst { title } => title.as_str(),
-                        },
-                        true)
-                    } else {
-                        // Fallback: extract last folder name from "/wiki/cs/languages/" -> "languages"
-                        let name = child_href.trim_end_matches('/').split('/').next_back().unwrap_or(child_href);
-                        (name, false)
-                    };
-
-                    // Check if this child is part of the active path (to expand it)
-                    // e.g. if active is "/wiki/cs/datalog/", then "/wiki/cs/" is active
-                    @let is_active_path = ctx.href.starts_with(child_href);
-                    @let is_current_page = ctx.href == *child_href;
-
-                    li .link-tree__nav-list-item {
-                        span .link-tree__nav-list-text {
-                            @if is_link {
-                                a .link-tree__nav-list-text.link
-                                    .active[is_current_page]
-                                    href=(child_href)
-                                {
-                                    (name)
-                                }
-                            } @else {
-                                // a hole
-                                span .link-tree__nav-list-text { (name) }
-                            }
-                        }
-
-                        // expand children if this node is part of the active
-                        // path, or if it's not a link
-                        @if is_active_path || !is_link {
-                            (show_tree_recursive(ctx, child_href))
-                        }
-                    }
-                }
-            }
-        }
-    )
-}
-
-pub fn render_bibliography(bibliography: &[String]) -> impl Renderable {
-    maud!(
-        section .bibliography {
-            header {
-                h2 {
-                    "Bibliography"
-                }
-                // @if let Some(path) = library_path {
-                //     a.icon-btn href=(path.as_str()) download="bibliography.bib" title="Download BibTeX" {
-                //         img src="/static/svg/lucide/file-down.svg" alt="Download";
-                //     }
-                // }
-            }
-            ol {
-                @for item in bibliography {
-                    li {
-                        (Raw::dangerously_create(item))
-                    }
-                }
-            }
-        }
-    )
+        })
+        .collect()
 }

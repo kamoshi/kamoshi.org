@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include "components/head.jinja" %}
+<body>
+{% include "components/navbar.jinja" %}
+<main>
+  <article>
+    <header>
+      <h1>{{ title }}</h1>
+    </header>
+    <ul>
+      {% for entry in entries %}
+      <li>
+        <a href="/tags/{{ entry.tag }}/" title="{{ entry.count }} posts">{{ entry.tag }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+</main>
+{% include "components/footer.jinja" %}
+</body>
+</html>

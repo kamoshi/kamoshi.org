@@ -3,25 +3,22 @@ use std::collections::{BTreeMap, HashMap};
 use camino::Utf8PathBuf;
 use chrono::Datelike;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Document, Stylesheet};
+use hauchiwa::loader::{Document, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
-use hypertext::prelude::*;
 
+use crate::props::{PropsListGroup, PropsListItem, PropsTag, PropsTagCloud, PropsTagCloudEntry};
 use crate::{Context, Global, Link, LinkDate, model::Post};
-
-use super::make_page;
 
 pub fn add_tags(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     posts: Many<Document<Post>>,
     styles: Many<Stylesheet>,
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
     let handle = config
         .task()
-        .using((posts, styles))
-        .merge(|ctx, (posts, styles)| {
-            use std::collections::BTreeMap;
-
+        .using((templates, posts, styles))
+        .merge(|ctx, (templates, posts, styles)| {
             let styles = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/layouts/list.scss")?,
@@ -50,20 +47,10 @@ pub fn add_tags(
 
             let mut pages = Vec::new();
 
-            // Render individual tag pages
             for (tag, links) in &tag_map {
                 let path = format!("tags/{tag}/index.html");
-
-                let data = group(links);
-                let html = render_tag(ctx, &data, tag.to_owned(), styles)?
-                    .render()
-                    .into_inner();
-
+                let html = render_tag(ctx, templates, &group(links), tag.to_owned(), styles)?;
                 pages.push(Output::html(path, html));
-
-                // Render global tag index
-                // let index = crate::html::tags::tag_cloud(&ctx, &tag_map, "Tag index")?;
-                // pages.push(Page::text("tags/index.html".into(), index.render().into()));
             }
 
             Ok(pages)
@@ -91,96 +78,64 @@ pub fn group(links: &[LinkDate]) -> Vec<(i32, Vec<&LinkDate>)> {
     groups
 }
 
-pub fn render_tag<'ctx>(
-    ctx: &'ctx Context,
-    links: &[(i32, Vec<&'ctx LinkDate>)],
+pub fn render_tag(
+    ctx: &Context,
+    templates: &TemplateEnv,
+    links: &[(i32, Vec<&LinkDate>)],
     title: String,
-    styles: &'ctx [&Stylesheet],
-) -> Result<impl Renderable, RuntimeError> {
-    let heading = title.clone();
-    let list = maud!(
-        main .page-list-main {
-            article .page-list {
-                header .directory-header .markdown {
-                    h1 { (heading) }
-                }
-
-                @for (year, group) in links {
-                    (section(*year, group))
-                }
-            }
-        }
-    );
-
-    make_page(ctx, list, title, styles, &[])
-}
-
-fn section(year: i32, group: &[&LinkDate]) -> impl Renderable {
-    maud!(
-        section .page-list-year {
-            header .page-list-year__header {
-                h2 { (year) }
-            }
-            @for item in group.iter() {
-                (link(item))
-            }
-        }
-    )
-}
-
-fn link(data: &LinkDate) -> impl Renderable {
-    let time = data.date.format("%m/%d");
-    maud!(
-        a .page-item href=(data.link.path.as_str()) {
-            div .page-item__header {
-                h3 {
-                    (&data.link.name)
-                }
-                time datetime=(data.date.to_rfc3339()) {
-                    (time.to_string())
-                }
-            }
-            @if let Some(ref desc) = data.link.desc {
-                div .page-item__desc {
-                    (desc)
-                }
-            }
-        }
-    )
-}
-
-pub fn tag_cloud<'ctx>(
-    ctx: &'ctx Context,
-    tag_map: &'ctx BTreeMap<String, Vec<LinkDate>>,
-    title: &'ctx str,
-    styles: &'ctx [&Stylesheet],
-) -> Result<impl Renderable, RuntimeError> {
-    let sorted = {
-        let mut vec: Vec<_> = tag_map.iter().collect();
-        vec.sort_by_key(|(tag, _)| tag.to_lowercase());
-        vec
+    styles: &[&Stylesheet],
+) -> Result<String, RuntimeError> {
+    let props = PropsTag {
+        head: super::make_props_head(ctx, title.clone(), styles, &[])?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        title,
+        groups: links
+            .iter()
+            .map(|(year, items)| PropsListGroup {
+                year: *year,
+                items: items
+                    .iter()
+                    .map(|item| PropsListItem {
+                        path: item.link.path.to_string(),
+                        name: item.link.name.clone(),
+                        desc: item.link.desc.clone(),
+                        date: item.date.format("%m/%d").to_string(),
+                        date_iso: item.date.to_rfc3339(),
+                    })
+                    .collect(),
+            })
+            .collect(),
     };
 
-    let main = maud! {
-        main {
-            article {
-                header {
-                    h1 { (title) }
-                }
-                ul {
-                    @for (tag, entries) in &sorted {
-                        @let count = entries.len();
+    let tmpl = templates.get_template("tag.jinja")?;
+    Ok(tmpl.render(&props)?)
+}
 
-                        li {
-                            a href=(format!("/tags/{tag}/")) title=(format!("{count} posts")) {
-                                (tag)
-                            }
-                        }
-                    }
-                }
-            }
-        }
+pub fn tag_cloud(
+    ctx: &Context,
+    templates: &TemplateEnv,
+    tag_map: &BTreeMap<String, Vec<LinkDate>>,
+    title: &str,
+    styles: &[&Stylesheet],
+) -> Result<String, RuntimeError> {
+    let mut entries: Vec<_> = tag_map.iter().collect();
+    entries.sort_by_key(|(tag, _)| tag.to_lowercase());
+
+    let props = PropsTagCloud {
+        head: super::make_props_head(ctx, title.to_string(), styles, &[])?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        title: title.to_string(),
+        entries: entries
+            .iter()
+            .map(|(tag, items)| PropsTagCloudEntry {
+                tag: tag.to_string(),
+                count: items.len(),
+            })
+            .collect(),
     };
 
-    make_page(ctx, main, "Tag index".into(), styles, &[])
+    let tmpl = templates.get_template("tag_cloud.jinja")?;
+    Ok(tmpl.render(&props)?)
 }

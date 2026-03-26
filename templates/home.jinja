@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  {% include "components/head.jinja" %}
+  <body>
+    {% include "components/navbar.jinja" %}
+
+    <main class="l-home">
+      <article class="l-home__article markdown">{{ article }}</article>
+
+      <aside class="l-home__aside">
+        <section class="p-card intro-jp" lang="ja-JP">{{ intro }}</section>
+
+        <section class="p-card">{{ kanji }}</section>
+
+        <section class="p-card">
+          <h2 class="p-card__heading">Badges</h2>
+          <div class="grid_88x31">
+            <a href="https://nixos.org" title="Powered by NixOS">
+              <img
+                class="icon_88x31"
+                src="/static/88x31/nixos.gif"
+                width="88"
+                height="31"
+              />
+            </a>
+            <a
+              href="https://crates.io/crates/hauchiwa"
+              title="Built with Hauchiwa"
+            >
+              <img
+                class="icon_88x31"
+                src="/static/88x31/hauchiwa.png"
+                width="88"
+                height="31"
+              />
+            </a>
+            <a
+              href="https://www.mozilla.org/firefox/new"
+              title="Tested on Firefox"
+            >
+              <img
+                class="icon_88x31"
+                src="/static/88x31/firefox.webp"
+                width="88"
+                height="31"
+              />
+            </a>
+            <a
+              href="https://creativecommons.org/licenses/by/4.0/"
+              title="CC BY 4.0"
+            >
+              <img
+                class="icon_88x31"
+                src="/static/88x31/cc-by.png"
+                width="88"
+                height="31"
+              />
+            </a>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    {% include "components/footer.jinja" %}
+  </body>
+</html>

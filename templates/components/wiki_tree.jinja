@@ -1,0 +1,18 @@
+<nav class="link-tree__nav">
+  <ul class="link-tree__nav-list">
+    {% for node in tree recursive %}
+    <li class="link-tree__nav-list-item">
+      <span class="link-tree__nav-list-text">
+        {% if node.is_link %}
+        <a class="link-tree__nav-list-text link{% if node.is_current %} active{% endif %}" href="{{ node.href }}">{{ node.name }}</a>
+        {% else %}
+        <span class="link-tree__nav-list-text">{{ node.name }}</span>
+        {% endif %}
+      </span>
+      {% if node.children %}
+      <ul class="link-tree__nav-list">{{ loop(node.children) }}</ul>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</nav>

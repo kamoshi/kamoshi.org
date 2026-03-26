@@ -1,18 +1,21 @@
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::git::GitHistory;
-use hauchiwa::loader::{Document, Image, Script, Stylesheet};
+use hauchiwa::loader::{Document, Image, Script, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
-use hypertext::{Raw, prelude::*};
+use hypertext::prelude::*;
+use minijinja::Value;
 
 use crate::md::Parsed;
 use crate::model::Post;
+use crate::props::{PropsBibliography, PropsPost, PropsPostMeta, PropsPostUpdated};
 use crate::{Bibtex, Context, Global, Link, LinkDate};
 
-use super::{make_page, render_bibliography, to_list};
+use super::to_list;
 
 pub fn add_posts(
     config: &mut Blueprint<Global>,
+    templates: One<TemplateEnv>,
     images: Many<Image>,
     styles: Many<Stylesheet>,
     scripts: Many<Script>,
@@ -26,8 +29,8 @@ pub fn add_posts(
 
     let pages = config
         .task()
-        .using((docs, images, styles, scripts, bibtex))
-        .merge(|ctx, (docs, images, styles, scripts, bibtex)| {
+        .using((templates, docs, images, styles, scripts, bibtex))
+        .merge(|ctx, (templates, docs, images, styles, scripts, bibtex)| {
             let mut pages = vec![];
 
             let documents = docs
@@ -66,6 +69,7 @@ pub fn add_posts(
 
                 let buffer = render(
                     ctx,
+                    templates,
                     &document.matter,
                     parsed,
                     ctx.env.data.repo.files.get(document.meta.path.as_str()),
@@ -73,9 +77,7 @@ pub fn add_posts(
                     &document.matter.tags,
                     styles,
                     &js,
-                )?
-                .render()
-                .into_inner();
+                )?;
 
                 pages.push(
                     document
@@ -94,11 +96,12 @@ pub fn add_posts(
 
                 let html = to_list(
                     ctx,
+                    templates,
                     documents
                         .iter()
                         .map(|item| LinkDate {
                             link: Link {
-                                path: Utf8PathBuf::from(&item.meta.href),
+                                path: camino::Utf8PathBuf::from(&item.meta.href),
                                 name: item.matter.title.clone(),
                                 desc: item.matter.desc.clone(),
                             },
@@ -108,9 +111,7 @@ pub fn add_posts(
                     "Posts".into(),
                     "/posts/rss.xml",
                     styles,
-                )?
-                .render()
-                .into_inner();
+                )?;
 
                 pages.push(Output::html("posts", html));
             }
@@ -129,103 +130,50 @@ pub fn add_posts(
     Ok((docs, pages))
 }
 
-pub fn render<'ctx>(
-    ctx: &'ctx Context,
-    meta: &'ctx Post,
-    parsed: Parsed,
-    info: Option<&'ctx GitHistory>,
-    library_path: Option<&'ctx Utf8Path>,
-    tags: &'ctx [String],
-    styles: &'ctx [&Stylesheet],
-    scripts: &'ctx [&Script],
-) -> Result<impl Renderable + use<'ctx>, RuntimeError> {
-    let main = maud!(
-        main {
-            // Outline (left)
-            (&parsed.outline)
-            // Article (center)
-            (render_article(meta, &parsed, library_path))
-            // Metadata (right)
-            (render_metadata(ctx, meta, info, tags))
-        }
-    );
-
-    make_page(ctx, main, meta.title.clone(), styles, scripts)
-}
-
-fn render_article(
-    meta: &Post,
-    parsed: &Parsed,
-    library_path: Option<&Utf8Path>,
-) -> impl Renderable {
-    maud!(
-        article .article {
-            section .paper {
-                header {
-                    h1 #top {
-                        (&meta.title)
-                    }
-                }
-                section .wiki-article__markdown.markdown {
-                    (Raw::dangerously_create(&parsed.html))
-                }
-            }
-
-            @if let Some(bibliography) = &parsed.bibliography {
-                (render_bibliography(bibliography, library_path))
-            }
-        }
-    )
-}
-
-pub fn render_metadata(
+pub fn render(
     ctx: &Context,
+    templates: &TemplateEnv,
     meta: &Post,
+    parsed: Parsed,
     info: Option<&GitHistory>,
+    library_path: Option<&Utf8Path>,
     tags: &[String],
-) -> impl Renderable {
-    maud!(
-        aside .tiles {
-            section .metadata {
-                h2 {
-                    "Metadata"
-                }
-                div {
-                    img src="/static/svg/lucide/file-plus-2.svg" title="Added";
-                    time datetime=(meta.date.format("%Y-%m-%d").to_string()) {
-                        (meta.date.format("%Y, %B %d").to_string())
-                    }
-                }
-                @if let Some(info) = info {
-                    @let info = info[0].as_ref();
-                    div {
-                        img src="/static/svg/lucide/file-clock.svg" title="Updated";
-                        time datetime=(info.commit_date.format("%Y-%m-%d").to_string()) {
-                            (info.commit_date.format("%Y, %B %d").to_string())
-                        }
-                    }
-                    div {
-                        img src="/static/svg/lucide/git-graph.svg" title="Link to commit";
-                        a href=(format!("{}/commit/{}", &ctx.env.data.link, &info.abbreviated_hash)) {
-                            (&info.abbreviated_hash)
-                        }
-                    }
-                }
-                @if !tags.is_empty() {
-                    div .tags {
-                        img src="/static/svg/lucide/tag.svg" title="Tags";
-                        ul {
-                            @for tag in tags {
-                                li {
-                                    a href=(format!("/tags/{tag}")) {
-                                        (tag)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    styles: &[&Stylesheet],
+    scripts: &[&Script],
+) -> Result<String, RuntimeError> {
+    let outline_html = parsed.outline.render().into_inner();
+
+    let bibliography = parsed.bibliography.map(|bib| PropsBibliography {
+        items: bib.into_iter().map(Value::from_safe_string).collect(),
+        library_path: library_path.map(|p| p.to_string()),
+    });
+
+    let updated = info.map(|info| {
+        let info = info[0].as_ref();
+        PropsPostUpdated {
+            date: info.commit_date.format("%Y, %B %d").to_string(),
+            date_iso: info.commit_date.format("%Y-%m-%d").to_string(),
+            hash: info.abbreviated_hash.clone(),
+            hash_url: format!("{}/commit/{}", &ctx.env.data.link, &info.abbreviated_hash),
         }
-    )
+    });
+
+    let props = PropsPost {
+        head: super::make_props_head(ctx, meta.title.clone(), styles, scripts)?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        title: meta.title.clone(),
+        outline: Value::from_safe_string(outline_html),
+        content: Value::from_safe_string(parsed.html),
+        bibliography,
+        metadata: PropsPostMeta {
+            date_added: meta.date.format("%Y, %B %d").to_string(),
+            date_added_iso: meta.date.format("%Y-%m-%d").to_string(),
+            updated,
+            tags: tags.to_vec(),
+        },
+    };
+
+    let tmpl = templates.get_template("post.jinja")?;
+    Ok(tmpl.render(&props)?)
 }
