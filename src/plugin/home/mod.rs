@@ -74,9 +74,7 @@ pub(crate) fn render(
 ) -> Result<String, RuntimeError> {
     let intro_html = comrak::markdown_to_html(INTRO, &comrak::Options::default());
 
-    let repo_link = Utf8Path::new(&ctx.env.data.link)
-        .join("tree")
-        .join(&ctx.env.data.hash);
+    let repo_link = Utf8Path::new(&ctx.env.data.link).join(&ctx.env.data.hash);
 
     let props = PropsHome {
         head: PropsHead {

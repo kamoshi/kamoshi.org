@@ -134,7 +134,8 @@
 
 .grid_88x31 {
   display: flex;
-  gap: 2px;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .icon_88x31 {

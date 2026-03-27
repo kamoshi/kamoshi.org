@@ -47,9 +47,7 @@ pub(crate) fn make_props_navbar() -> PropsNavbar {
 }
 
 pub(crate) fn make_props_footer(ctx: &Context) -> PropsFooter {
-    let repo_link = Utf8Path::new(&ctx.env.data.link)
-        .join("tree")
-        .join(&ctx.env.data.hash);
+    let repo_link = Utf8Path::new(&ctx.env.data.link).join(&ctx.env.data.hash);
     PropsFooter {
         year: ctx.env.data.year,
         repo_link: repo_link.to_string(),

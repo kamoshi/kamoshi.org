@@ -1,8 +1,11 @@
-<footer class="footer">
-  <div class="footer-content">
+<footer id="footer">
+  <div class="container">
     <div class="left">
-      <div class="copyright">© {{ footer.year }} Maciej Jur</div>
-      <a href="mailto:maciej@kamoshi.org">maciej@kamoshi.org</a>
+      <div>Imagined and brought to life by me</div>
+      <div>© {{ footer.year }} Maciej Jur &lt;<a href="mailto:maciej@kamoshi.org">maciej@kamoshi.org</a>&gt;</div>
+      <div>
+        Available under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+      </div>
     </div>
 
     <div class="grid_88x31">
@@ -21,18 +24,25 @@
     </div>
 
     <div class="right">
-      <div>{{ footer.date }}</div>
-      <div>Commit: <a class="hash" href="{{ footer.repo_link }}">{{ footer.hash_short }}</a></div>
+      <div class="meta">
+        <div>{{- footer.date -}}</div>
+        <div>
+          Commit:
+          <a class="hash" href="{{- footer.repo_link -}}">
+            {{- footer.hash_short -}}
+          </a>
+        </div>
+      </div>
 
-      <div class="social">
+      <div class="forges">
         <a href="https://codeberg.org/kamov" title="Codeberg" aria-label="Codeberg">
-          <img width="32" height="32" src="/static/svg/codeberg.svg" alt="" />
+          <img width="32" height="32" src="/static/svg/codeberg.svg" alt=""/>
         </a>
         <a href="https://github.com/kamoshi" title="GitHub" aria-label="GitHub">
-          <img width="32" height="32" src="/static/svg/github.svg" alt="" />
+          <img width="32" height="32" src="/static/svg/github.svg" alt=""/>
         </a>
-        <a href="https://git.kamoshi.org/kamov" title="Forgejo" aria-label="Forgejo">
-          <img width="32" height="32" src="/static/svg/forgejo.svg" alt="" />
+        <a class="forgejo"  href="https://git.kamoshi.org/kamov" title="Forgejo" aria-label="Forgejo">
+          <img width="32" height="32" src="/static/svg/forgejo.svg" alt=""/>
         </a>
       </div>
     </div>

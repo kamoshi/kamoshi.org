@@ -67,7 +67,7 @@ impl Global {
             repo: git::map(git::Options::new("main")).unwrap(),
             year: time.year(),
             date: time.format("%Y/%m/%d %H:%M").to_string(),
-            link: "https://github.com/kamoshi/kamoshi.org".into(),
+            link: "https://codeberg.org/kamov/kamoshi.org/src/commit/".into(),
             hash: String::from_utf8(
                 Command::new("git")
                     .args(["rev-parse", "--short", "HEAD"])

@@ -154,7 +154,7 @@ pub fn render(
             date: info.commit_date.format("%Y, %B %d").to_string(),
             date_iso: info.commit_date.format("%Y-%m-%d").to_string(),
             hash: info.abbreviated_hash.clone(),
-            hash_url: format!("{}/commit/{}", &ctx.env.data.link, &info.abbreviated_hash),
+            hash_url: format!("{}/{}", &ctx.env.data.link, &info.abbreviated_hash),
         }
     });
 
