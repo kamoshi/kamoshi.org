@@ -1,8 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-{% include "components/head.jinja" %}
-<body>
-{% include "components/navbar.jinja" %}
+{% extends "layouts/base.jinja" %}
+{% block main %}
 <main class="wiki-main">
   <aside class="outline">
     <section>
@@ -44,6 +41,4 @@
     {% endif %}
   </article>
 </main>
-{% include "components/footer.jinja" %}
-</body>
-</html>
+{% endblock %}

@@ -46,7 +46,7 @@
 .page-item {
   display: block;
   padding: 0.5em;
-  background-color: white;
+  background-color: var(--c-purewhite);
   border-radius: 4px;
   box-shadow: var(--shadow-s);
   transition: box-shadow ease-in-out 0.25s;
@@ -60,7 +60,7 @@
     display: flex;
     justify-content: space-between;
     gap: 1em;
-    color: black;
+    color: var(--c-text);
 
     time {
       color: var(--c-text-muted);
@@ -68,7 +68,7 @@
   }
   &__desc {
     margin-top: 0.5em;
-    color: black;
+    color: var(--c-text);
     text-align: justify;
     text-justify: auto;
   }

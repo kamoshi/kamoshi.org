@@ -46,7 +46,7 @@ main {
 
 .paper {
   padding: 1rem;
-  background-color: white;
+  background-color: var(--c-purewhite);
 
   @media (min-width: $bp-m) {
     border-radius: 8px;
@@ -63,7 +63,7 @@ main {
 
 .bibliography {
   padding: 1rem;
-  background-color: white;
+  background-color: var(--c-purewhite);
 
   @media (min-width: $bp-m) {
     margin-top: 1em;
@@ -75,7 +75,7 @@ main {
     display: flex;
     justify-content: space-between; /* Spreads items apart */
     align-items: center;
-    border-bottom: 1px solid #eaeaea;
+    border-bottom: 1px solid var(--c-border-faint);
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
   }
@@ -88,7 +88,7 @@ main {
     line-height: 0;
 
     &:hover {
-      background-color: #f0f0f0;
+      background-color: var(--c-bg-subtle);
 
       img {
         opacity: 1;
@@ -133,7 +133,7 @@ main {
 
 .backlinks {
   padding: 1rem;
-  background-color: white;
+  background-color: var(--c-purewhite);
 
   @media (min-width: $bp-m) {
     margin-top: 1em;
@@ -165,8 +165,8 @@ main {
   display: block;
   margin: 1em 1.5em;
   padding-block: 0.5em;
-  border-block: 1px dashed gray;
-  color: gray;
+  border-block: 1px dashed var(--c-text-subtle);
+  color: var(--c-text-subtle);
 
   @media (min-width: $bp-m) {
     float: right;
@@ -247,16 +247,16 @@ figure {
   }
 
   .outline-depth-2 {
-    border-left: 1px solid lightgray;
+    border-left: 1px solid var(--c-border-muted);
   }
 
   .outline-depth-3 {
-    border-left: 1px dashed lightgray;
+    border-left: 1px dashed var(--c-border-muted);
   }
 
   a {
     text-decoration: none;
-    color: var(--text-muted);
+    color: var(--c-text-muted);
 
     &:hover {
       text-decoration: underline;
@@ -312,7 +312,7 @@ figure {
 
   img {
     display: inline;
-    color: gray;
+    color: var(--c-text-subtle);
   }
 
   a {
@@ -338,8 +338,8 @@ figure {
 
     li a {
       display: inline-block;
-      background-color: var(--tag-bg, #eef);
-      color: var(--tag-color, #225);
+      background-color: var(--tag-bg);
+      color: var(--tag-color);
       padding: 0.2rem 0.5rem;
       border-radius: 0.3rem;
       text-decoration: none;

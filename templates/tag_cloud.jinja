@@ -1,8 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-{% include "components/head.jinja" %}
-<body>
-{% include "components/navbar.jinja" %}
+{% extends "layouts/base.jinja" %}
+{% block main %}
 <main>
   <article>
     <header>
@@ -17,6 +14,4 @@
     </ul>
   </article>
 </main>
-{% include "components/footer.jinja" %}
-</body>
-</html>
+{% endblock %}

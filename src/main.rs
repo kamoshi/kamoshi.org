@@ -6,6 +6,7 @@ mod props;
 mod rss;
 mod ts;
 mod typst;
+mod utils;
 
 use std::fs;
 use std::process::{Command, ExitCode};
@@ -118,11 +119,18 @@ fn run() -> Result<(), RuntimeError> {
 
     let _ = fs::remove_dir_all("./dist");
 
+    fs::write(
+        "public/static/svg/footer-dither.svg",
+        utils::generate_footer_dither(4, 64, 16, 42),
+    )
+    .expect("Failed to write footer-dither.svg");
+
     let mut config = Website::<Global>::design();
 
     let templates = config
         .load_minijinja()
         .glob("templates/**/*.jinja")
+        .glob("templates/**/*.svg")
         .root("templates")
         .register()?;
 

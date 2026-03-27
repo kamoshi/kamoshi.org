@@ -31,7 +31,7 @@
       text-align: center;
       font-size: 0.9rem;
       line-height: 1.4;
-      color: #666;
+      color: var(--c-text-muted);
     }
   }
 }
@@ -133,11 +133,11 @@
     th,
     td {
       padding: 0.2em 0.5em;
-      border: 1px solid #dbdbdb;
+      border: 1px solid var(--c-border);
     }
 
     th {
-      background-color: #f3f3f3;
+      background-color: var(--c-bg-subtle);
     }
 
     p {
@@ -151,9 +151,9 @@
 
   :not(pre) > code {
     padding-inline: 0.25em;
-    background-color: white;
+    background-color: var(--c-purewhite);
     border-radius: 0.33em;
-    border: 1px dashed lightgray;
+    border: 1px dashed var(--c-border-muted);
   }
 
   .listing {

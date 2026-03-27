@@ -5,8 +5,8 @@ use hauchiwa::prelude::*;
 use minijinja::Value;
 
 use crate::Context;
-use crate::{Global, model::Home};
 use crate::props::{PropsFooter, PropsHead, PropsHome, PropsNavItem, PropsNavbar};
+use crate::{Global, model::Home};
 
 const INTRO: &str = include_str!("./intro.md");
 
@@ -23,7 +23,6 @@ const NAV_ITEMS: &[(&str, &str, &str)] = &[
     ("索", "Search", "/search/"),
 ];
 
-
 pub fn add_home(
     config: &mut Blueprint<Global>,
     templates: One<TemplateEnv>,
@@ -37,8 +36,10 @@ pub fn add_home(
         .offset("content")
         .register()?;
 
-    let task = config.task().using((templates, docs, images, styles, svelte)).merge(
-        |ctx, (templates, docs, images, styles, svelte)| {
+    let task = config
+        .task()
+        .using((templates, docs, images, styles, svelte))
+        .merge(|ctx, (templates, docs, images, styles, svelte)| {
             let document = docs.get("content/index.md")?;
 
             let styles = &[
@@ -58,8 +59,7 @@ pub fn add_home(
             let html = render(ctx, templates, &parsed.html, &kanji_html, styles, scripts)?;
 
             Ok(Output::html("", html))
-        },
-    );
+        });
 
     Ok(task)
 }

@@ -38,9 +38,6 @@
 
 .p-card {
   padding: 1em;
-  border-radius: 0.25em;
-  background-color: white;
-  box-shadow: var(--shadow-l);
 
   &__heading {
     line-height: 1em;
@@ -116,7 +113,7 @@
 .card-indieweb {
   padding: 1em;
   border-radius: 0.25em;
-  background-color: white;
+  background-color: var(--c-purewhite);
   box-shadow: var(--shadow-l);
 
   h2 {

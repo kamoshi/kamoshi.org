@@ -127,7 +127,7 @@ pub fn build(
                     content: Value::from_safe_string(format!("<main>{prerendered}</main>")),
                 };
 
-                let tmpl = templates.get_template("bare.jinja")?;
+                let tmpl = templates.get_template("layouts/bare.jinja")?;
                 let html = tmpl.render(&page_props)?;
 
                 Ok(Output::html("projects/radicals", html))

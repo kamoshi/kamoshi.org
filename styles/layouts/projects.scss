@@ -20,7 +20,7 @@
   .project-list-tile {
     flex: 1 1 calc(33.333% - 1rem); /* Responsive: 3 columns by default */
     max-width: 300px;
-    background: #fff;
+    background: var(--c-purewhite);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 1rem;
@@ -57,7 +57,7 @@
 
     p {
       font-size: 0.95rem;
-      color: #555;
+      color: var(--c-text-muted);
     }
   }
 

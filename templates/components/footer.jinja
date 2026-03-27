@@ -1,15 +1,42 @@
 <footer class="footer">
-  <div class="left">
-    <div class="copyright">© {{ footer.year }} Maciej Jur</div>
-    <a href="mailto:maciej@kamoshi.org">maciej@kamoshi.org</a>
-  </div>
+  <div class="footer-dither"></div>
 
-  <a class="cc" rel="license" href="http://creativecommons.org/licenses/by/4.0/">
-    <img alt="Creative Commons License" src="/static/svg/by.svg">
-  </a>
+  <div class="footer-content">
+    <div class="left">
+      <div class="copyright">© {{ footer.year }} Maciej Jur</div>
+      <a href="mailto:maciej@kamoshi.org">maciej@kamoshi.org</a>
+    </div>
 
-  <div class="right">
-    <div>Build: <a class="hash" href="{{ footer.repo_link }}">{{ footer.hash_short }}</a></div>
-    <div>({{ footer.date }})</div>
+    <div class="grid_88x31">
+      <a href="https://creativecommons.org/licenses/by/4.0/" title="CC BY 4.0" rel="license">
+        <img class="icon_88x31" src="/static/88x31/cc-by.png" width="88" height="31" alt="Creative Commons License" />
+      </a>
+      <a href="https://nixos.org" title="Powered by NixOS">
+        <img class="icon_88x31" src="/static/88x31/nixos.gif" width="88" height="31" />
+      </a>
+      <a href="https://crates.io/crates/hauchiwa" title="Built with Hauchiwa">
+        <img class="icon_88x31" src="/static/88x31/hauchiwa.png" width="88" height="31" />
+      </a>
+      <a href="https://www.mozilla.org/firefox/new" title="Tested on Firefox">
+        <img class="icon_88x31" src="/static/88x31/firefox.webp" width="88" height="31" />
+      </a>
+    </div>
+
+    <div class="right">
+      <div>{{ footer.date }}</div>
+      <div>Commit: <a class="hash" href="{{ footer.repo_link }}">{{ footer.hash_short }}</a></div>
+
+      <div class="social">
+        <a href="https://codeberg.org/kamov" title="Codeberg" aria-label="Codeberg">
+          <img width="32" height="32" src="/static/svg/codeberg.svg" alt="" />
+        </a>
+        <a href="https://github.com/kamoshi" title="GitHub" aria-label="GitHub">
+          <img width="32" height="32" src="/static/svg/github.svg" alt="" />
+        </a>
+        <a href="https://git.kamoshi.org/kamov" title="Forgejo" aria-label="Forgejo">
+          <img width="32" height="32" src="/static/svg/forgejo.svg" alt="" />
+        </a>
+      </div>
+    </div>
   </div>
 </footer>
