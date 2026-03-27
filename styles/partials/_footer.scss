@@ -1,7 +1,29 @@
+$dither-height: 64px;
+
 .footer {
   display: flex;
   flex-direction: column;
   font-size: var(--fs-sm);
+  background-color: var(--c-primary);
+  padding-top: $dither-height;
+
+  // mask
+  mask-image:
+    url("/static/svg/footer-dither.svg"), linear-gradient(black, black);
+  mask-repeat: repeat-x, no-repeat;
+  mask-size:
+    auto $dither-height,
+    100% calc(100% - $dither-height);
+  mask-position: top, bottom;
+  mask-composite: add;
+  -webkit-mask-image:
+    url("/static/svg/footer-dither.svg"), linear-gradient(black, black);
+  -webkit-mask-repeat: repeat-x, no-repeat;
+  -webkit-mask-size:
+    auto $dither-height,
+    100% calc(100% - $dither-height);
+  -webkit-mask-position: top, bottom;
+  -webkit-mask-composite: source-over;
 
   a {
     color: inherit;
@@ -11,24 +33,12 @@
     }
   }
 
-  &-dither {
-    width: 100%;
-    height: 64px;
-    background-color: var(--c-primary);
-    mask-image: url("/static/svg/footer-dither.svg");
-    mask-repeat: repeat-x;
-    mask-size: auto 64px;
-    -webkit-mask-image: url("/static/svg/footer-dither.svg");
-    -webkit-mask-repeat: repeat-x;
-    -webkit-mask-size: auto 64px;
-  }
-
   &-content {
     display: flex;
     align-items: center;
     padding: 1rem 1.5rem;
+    padding-top: 1rem;
     gap: 2rem;
-    background-color: var(--c-primary);
     color: var(--c-purewhite);
   }
 
