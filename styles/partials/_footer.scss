@@ -55,9 +55,8 @@ $dither-height: 64px;
   }
 
   .grid_88x31 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 88px);
-    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.25rem;
     max-width: calc((88px * 4) + (0.25rem * 3));
   }
