@@ -132,6 +132,7 @@ fn run() -> Result<(), RuntimeError> {
         .glob("templates/**/*.jinja")
         .glob("templates/**/*.svg")
         .root("templates")
+        // .filter("svag", utils::filter_svag)
         .register()?;
 
     let images = config

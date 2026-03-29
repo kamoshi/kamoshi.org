@@ -28,6 +28,10 @@ crepe                   = "0.2.0"
 ts-rs                   = "12"
 minijinja               = "2"
 
+# svag                    = {
+#     path = "../svag",
+# }
+
 # Formats
 hayagriva               = "0.9"
 pulldown-latex          = "0.7"

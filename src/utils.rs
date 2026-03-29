@@ -1,3 +1,14 @@
+// pub fn filter_svag(svg: String) -> Result<minijinja::Value, minijinja::Error> {
+//     svag::minify(&svg)
+//         .map(minijinja::Value::from_safe_string)
+//         .map_err(|e| {
+//             minijinja::Error::new(
+//                 minijinja::ErrorKind::InvalidOperation,
+//                 format!("svag: {e}"),
+//             )
+//         })
+// }
+
 pub fn generate_footer_dither(
     pixel_size: u32,
     tile_width: u32,
