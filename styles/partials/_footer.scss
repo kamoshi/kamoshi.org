@@ -55,7 +55,19 @@ $dither-height: 64px;
   }
 
   .grid_88x31 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 88px);
     justify-content: center;
+    gap: 0.25rem;
+    max-width: calc((88px * 4) + (0.25rem * 3));
+  }
+
+  .icon_88x31 {
+    display: inline-block;
+    width: 88px;
+    height: 31px;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
   }
 
   .left,
