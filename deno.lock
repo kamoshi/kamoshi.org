@@ -10,11 +10,12 @@
     "npm:@types/leaflet@^1.9.21": "1.9.21",
     "npm:@types/reveal.js@^5.2.2": "5.2.2",
     "npm:codemirror@6.0.2": "6.0.2",
-    "npm:esbuild-svelte@0.9.4": "0.9.4_esbuild@0.25.11_svelte@5.46.1__acorn@8.15.0",
+    "npm:esbuild-svelte@0.9.4": "0.9.4_esbuild@0.27.2_svelte@5.46.1__acorn@8.15.0",
     "npm:esbuild@0.25.11": "0.25.11",
     "npm:esbuild@0.27.2": "0.27.2",
     "npm:leaflet.markercluster@^1.5.3": "1.5.3_leaflet@1.9.4",
     "npm:leaflet@^1.9.4": "1.9.4",
+    "npm:lit@3": "3.3.2",
     "npm:mermaid@^11.12.2": "11.12.2_cytoscape@3.33.1",
     "npm:pixi-viewport@^6.0.3": "6.0.3_pixi.js@8.14.3",
     "npm:pixi.js@^8.14.3": "8.14.3",
@@ -429,6 +430,15 @@
       "integrity": "sha512-/YTRKP5yPPSo1xImYQk7AZZMAgap0kegzqCSYHjAL9x1AZ0ZQW+IpcEzMKagCsbTsLnVeWkxYrCNeXG8xEPrjg==",
       "dependencies": [
         "@lezer/common"
+      ]
+    },
+    "@lit-labs/ssr-dom-shim@1.5.1": {
+      "integrity": "sha512-Aou5UdlSpr5whQe8AA/bZG0jMj96CoJIWbGfZ91qieWu5AWUMKw8VR/pAkQkJYvBNhmCcWnZlyyk5oze8JIqYA=="
+    },
+    "@lit/reactive-element@2.1.2": {
+      "integrity": "sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==",
+      "dependencies": [
+        "@lit-labs/ssr-dom-shim"
       ]
     },
     "@marijn/find-cluster-break@1.0.2": {
@@ -1125,11 +1135,11 @@
     "earcut@3.0.2": {
       "integrity": "sha512-X7hshQbLyMJ/3RPhyObLARM2sNxxmRALLKx1+NVFFnQ9gKzmCrxm9+uLIAdBcvc8FNLpctqlQ2V6AE92Ol9UDQ=="
     },
-    "esbuild-svelte@0.9.4_esbuild@0.25.11_svelte@5.46.1__acorn@8.15.0": {
+    "esbuild-svelte@0.9.4_esbuild@0.27.2_svelte@5.46.1__acorn@8.15.0": {
       "integrity": "sha512-v/a0GjkKN06nal2QLluxjk2GXsei3fdtjIuHRa6pVnri5rQBZ6pj4a2WwjLfRojgRsLwDHl4xSeZ1BeUHsqQrw==",
       "dependencies": [
         "@jridgewell/trace-mapping",
-        "esbuild@0.25.11",
+        "esbuild@0.27.2",
         "svelte"
       ]
     },
@@ -1289,6 +1299,28 @@
     },
     "leaflet@1.9.4": {
       "integrity": "sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA=="
+    },
+    "lit-element@4.2.2": {
+      "integrity": "sha512-aFKhNToWxoyhkNDmWZwEva2SlQia+jfG0fjIWV//YeTaWrVnOxD89dPKfigCUspXFmjzOEUQpOkejH5Ly6sG0w==",
+      "dependencies": [
+        "@lit-labs/ssr-dom-shim",
+        "@lit/reactive-element",
+        "lit-html"
+      ]
+    },
+    "lit-html@3.3.2": {
+      "integrity": "sha512-Qy9hU88zcmaxBXcc10ZpdK7cOLXvXpRoBxERdtqV9QOrfpMZZ6pSYP91LhpPtap3sFMUiL7Tw2RImbe0Al2/kw==",
+      "dependencies": [
+        "@types/trusted-types"
+      ]
+    },
+    "lit@3.3.2": {
+      "integrity": "sha512-NF9zbsP79l4ao2SNrH3NkfmFgN/hBYSQo90saIVI1o5GpjAdCPVstVzO1MrLOakHoEhYkrtRjPK6Ob521aoYWQ==",
+      "dependencies": [
+        "@lit/reactive-element",
+        "lit-element",
+        "lit-html"
+      ]
     },
     "locate-character@3.0.0": {
       "integrity": "sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA=="
@@ -1588,6 +1620,7 @@
       "npm:codemirror@6.0.2",
       "npm:leaflet.markercluster@^1.5.3",
       "npm:leaflet@^1.9.4",
+      "npm:lit@3",
       "npm:mermaid@^11.12.2",
       "npm:pixi-viewport@^6.0.3",
       "npm:pixi.js@^8.14.3",

@@ -3,13 +3,15 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "useDefineForClassFields": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": true,
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
     "moduleDetection": "force",
     "noEmit": true,
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "scripts/**/*.ts"],
 }

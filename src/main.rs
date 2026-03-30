@@ -153,9 +153,13 @@ fn run() -> Result<(), RuntimeError> {
 
     let scripts = config
         .load_esbuild()
+        .entry("scripts/**/main.js")
         .entry("scripts/**/main.ts")
-        .watch("scripts/**/*.ts")
+        .watch("scripts/")
         .minify(true)
+        // .external("lit")
+        // .external("lit/decorators.js")
+        // .external("lit/directives/unsafe-html.js")
         .register()?;
 
     let svelte = config
@@ -178,7 +182,7 @@ fn run() -> Result<(), RuntimeError> {
         })?;
 
     // home
-    let home = add_home(&mut config, templates, images, styles, svelte)?;
+    let home = add_home(&mut config, templates, images, styles, scripts)?;
 
     // about
     let about = add_about(&mut config, templates, images, styles)?;

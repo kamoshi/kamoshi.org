@@ -1,6 +1,6 @@
 use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Image, Script, Stylesheet, Svelte, TemplateEnv};
+use hauchiwa::loader::{Image, Script, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
 use minijinja::Value;
 
@@ -28,7 +28,7 @@ pub fn add_home(
     templates: One<TemplateEnv>,
     images: Many<Image>,
     styles: Many<Stylesheet>,
-    svelte: Many<Svelte>,
+    scripts: Many<Script>,
 ) -> Result<One<Output>, HauchiwaError> {
     let docs = config
         .load_documents::<Home>()
@@ -38,8 +38,8 @@ pub fn add_home(
 
     let task = config
         .task()
-        .using((templates, docs, images, styles, svelte))
-        .merge(|ctx, (templates, docs, images, styles, svelte)| {
+        .using((templates, docs, images, styles, scripts))
+        .merge(|ctx, (templates, docs, images, styles, scripts)| {
             let document = docs.get("content/index.md")?;
 
             let styles = &[
@@ -48,15 +48,12 @@ pub fn add_home(
                 styles.get("styles/components/kanji.scss")?,
             ];
 
-            let kanji = svelte.get("scripts/kanji/App.svelte")?;
-            let kanji_html = (kanji.prerender)(&())?;
-
-            let scripts = &[&kanji.hydration];
+            let scripts = &[scripts.get("scripts/kanji/main.ts")?];
 
             let parsed =
                 crate::md::parse(&document.text, &document.meta, None, Some(&images), None)?;
 
-            let html = render(ctx, templates, &parsed.html, &kanji_html, styles, scripts)?;
+            let html = render(ctx, templates, &parsed.html, styles, scripts)?;
 
             Ok(Output::html("", html))
         });
@@ -68,7 +65,6 @@ pub(crate) fn render(
     ctx: &Context,
     templates: &TemplateEnv,
     text: &str,
-    kanji: &str,
     styles: &[&Stylesheet],
     scripts: &[&Script],
 ) -> Result<String, RuntimeError> {
@@ -99,7 +95,6 @@ pub(crate) fn render(
             date: ctx.env.data.date.clone(),
         },
         article: Value::from_safe_string(text.to_string()),
-        kanji: Value::from_safe_string(kanji.to_string()),
         intro: Value::from_safe_string(intro_html),
     };
 

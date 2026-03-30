@@ -38,7 +38,6 @@ pub struct PropsHome {
     pub navbar: PropsNavbar,
     pub footer: PropsFooter,
     pub article: Value,
-    pub kanji: Value,
     pub intro: Value,
 }
 
