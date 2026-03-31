@@ -1,9 +1,9 @@
 {
   "version": "5",
   "specifiers": {
-    "npm:@codemirror/commands@^6.10.1": "6.10.1",
-    "npm:@codemirror/state@^6.5.3": "6.5.3",
-    "npm:@codemirror/view@^6.39.8": "6.39.8",
+    "npm:@codemirror/commands@^6.10.3": "6.10.3",
+    "npm:@codemirror/state@^6.6.0": "6.6.0",
+    "npm:@codemirror/view@^6.40.0": "6.40.0",
     "npm:@types/leaflet.markercluster@^1.5.6": "1.5.6",
     "npm:@types/leaflet@^1.9.21": "1.9.21",
     "npm:@types/reveal.js@^5.2.2": "5.2.2",
@@ -14,10 +14,10 @@
     "npm:esbuild@0.27.2": "0.27.2",
     "npm:leaflet.markercluster@^1.5.3": "1.5.3_leaflet@1.9.4",
     "npm:leaflet@^1.9.4": "1.9.4",
-    "npm:lit@3": "3.3.2",
-    "npm:pixi-viewport@^6.0.3": "6.0.3_pixi.js@8.14.3",
-    "npm:pixi.js@^8.14.3": "8.14.3",
-    "npm:reveal.js@^5.2.1": "5.2.1",
+    "npm:lit@^3.3.2": "3.3.2",
+    "npm:pixi-viewport@^6.0.3": "6.0.3_pixi.js@8.17.1",
+    "npm:pixi.js@^8.17.1": "8.17.1",
+    "npm:reveal.js@6": "6.0.0",
     "npm:svelte@5.46.1": "5.46.1"
   },
   "npm": {
@@ -30,8 +30,8 @@
         "@lezer/common"
       ]
     },
-    "@codemirror/commands@6.10.1": {
-      "integrity": "sha512-uWDWFypNdQmz2y1LaNJzK7fL7TYKLeUAU0npEC685OKTF3KcQ2Vu3klIM78D7I6wGhktme0lh3CuQLv0ZCrD9Q==",
+    "@codemirror/commands@6.10.3": {
+      "integrity": "sha512-JFRiqhKu+bvSkDLI+rUhJwSxQxYb759W5GBezE8Uc8mHLqC9aV/9aTC7yJSqCtB3F00pylrLCwnyS91Ap5ej4Q==",
       "dependencies": [
         "@codemirror/language",
         "@codemirror/state",
@@ -66,14 +66,14 @@
         "crelt"
       ]
     },
-    "@codemirror/state@6.5.3": {
-      "integrity": "sha512-MerMzJzlXogk2fxWFU1nKp36bY5orBG59HnPiz0G9nLRebWa0zXuv2siH6PLIHBvv5TH8CkQRqjBs0MlxCZu+A==",
+    "@codemirror/state@6.6.0": {
+      "integrity": "sha512-4nbvra5R5EtiCzr9BTHiTLc+MLXK2QGiAVYMyi8PkQd3SR+6ixar/Q/01Fa21TBIDOZXgeWV4WppsQolSreAPQ==",
       "dependencies": [
         "@marijn/find-cluster-break"
       ]
     },
-    "@codemirror/view@6.39.8": {
-      "integrity": "sha512-1rASYd9Z/mE3tkbC9wInRlCNyCkSn+nLsiQKZhEDUUJiUfs/5FHDpCUDaQpoTIaNGeDc6/bhaEAyLmeEucEFPw==",
+    "@codemirror/view@6.40.0": {
+      "integrity": "sha512-WA0zdU7xfF10+5I3HhUUq3kqOx3KjqmtQ9lqZjfK7jtYk4G72YW9rezcSywpaUMCWOMlq+6E0pO1IWg1TNIhtg==",
       "dependencies": [
         "@codemirror/state",
         "crelt",
@@ -404,9 +404,6 @@
         "acorn"
       ]
     },
-    "@types/css-font-loading-module@0.0.12": {
-      "integrity": "sha512-x2tZZYkSxXqWvTDgveSynfjq/T2HyiZHXb00j/+gy19yp70PHCizM48XFdjBCWH7eHBD0R5i/pw9yMBP/BH5uA=="
-    },
     "@types/earcut@3.0.0": {
       "integrity": "sha512-k/9fOUGO39yd2sCjrbAJvGDEQvRwRnQIZlBz43roGwUZo5SHAmyVvSFyaVVZkicRVCaDXPKlbxrUcBuJoSWunQ=="
     },
@@ -434,11 +431,12 @@
     "@types/trusted-types@2.0.7": {
       "integrity": "sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw=="
     },
-    "@webgpu/types@0.1.68": {
-      "integrity": "sha512-3ab1B59Ojb6RwjOspYLsTpCzbNB3ZaamIAxBMmvnNkiDoLTZUOBXZ9p5nAYVEkQlDdf6qAZWi1pqj9+ypiqznA=="
+    "@webgpu/types@0.1.69": {
+      "integrity": "sha512-RPmm6kgRbI8e98zSD3RVACvnuktIja5+yLgDAkTmxLr90BEwdTXRQWNLF3ETTTyH/8mKhznZuN5AveXYFEsMGQ=="
     },
     "@xmldom/xmldom@0.8.11": {
-      "integrity": "sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw=="
+      "integrity": "sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==",
+      "deprecated": true
     },
     "acorn@8.16.0": {
       "integrity": "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==",
@@ -842,17 +840,16 @@
     "parse-svg-path@0.1.2": {
       "integrity": "sha512-JyPSBnkTJ0AI8GGJLfMXvKq42cj5c006fnLz6fXy6zfoVjJizi8BNTpu8on8ziI1cKy9d9DGNuY17Ce7wuejpQ=="
     },
-    "pixi-viewport@6.0.3_pixi.js@8.14.3": {
+    "pixi-viewport@6.0.3_pixi.js@8.17.1": {
       "integrity": "sha512-2+qPJ0/n+8hQYhWvY+795+x9y3MiUrCOWacK0DY53whowWaGdx9iDocy7z1pBwjkZhC52YvrJQuZKK0sdVLtBw==",
       "dependencies": [
         "pixi.js"
       ]
     },
-    "pixi.js@8.14.3": {
-      "integrity": "sha512-6xGYARV8D9E/fO1c2NmYn+k2dQ5oZldVm5tNlLQJ8obTlOQXdL5QpMc217qTpRyHVDFaw5eoFCLF1gr6p5ZcjQ==",
+    "pixi.js@8.17.1": {
+      "integrity": "sha512-OB4TpZHrP5RYy+7FqmFrAc0IHRhfOoNIfF4sVeinvK3aG1r2pYrSMneJAKi9+WvGKC70Dj7GEpZ2OZGB6o/xdg==",
       "dependencies": [
         "@pixi/colord",
-        "@types/css-font-loading-module",
         "@types/earcut",
         "@webgpu/types",
         "@xmldom/xmldom",
@@ -864,8 +861,8 @@
         "tiny-lru"
       ]
     },
-    "reveal.js@5.2.1": {
-      "integrity": "sha512-r7//6mIM5p34hFiDMvYfXgyjXqGRta+/psd9YtytsgRlrpRzFv4RbH76TXd2qD+7ZPZEbpBDhdRhJaFgfQ7zNQ=="
+    "reveal.js@6.0.0": {
+      "integrity": "sha512-RayDr1FL3Jglnf6p9xHGJ0U18va96PiuLs/JHnd1cdDOXvC+3lsXKe6ujl7PX0pvnhNW2Tpqnr6PEKpJVO2exw=="
     },
     "robust-predicates@3.0.2": {
       "integrity": "sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg=="
@@ -918,8 +915,8 @@
         "zimmerframe"
       ]
     },
-    "tiny-lru@11.4.5": {
-      "integrity": "sha512-hkcz3FjNJfKXjV4mjQ1OrXSLAehg8Hw+cEZclOVT+5c/cWQWImQ9wolzTjth+dmmDe++p3bme3fTxz6Q4Etsqw=="
+    "tiny-lru@11.4.7": {
+      "integrity": "sha512-w/Te7uMUVeH0CR8vZIjr+XiN41V+30lkDdK+NRIDCUYKKuL9VcmaUEmaPISuwGhLlrTGh5yu18lENtR9axSxYw=="
     },
     "w3c-keyname@2.2.8": {
       "integrity": "sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ=="
@@ -930,9 +927,9 @@
   },
   "workspace": {
     "dependencies": [
-      "npm:@codemirror/commands@^6.10.1",
-      "npm:@codemirror/state@^6.5.3",
-      "npm:@codemirror/view@^6.39.8",
+      "npm:@codemirror/commands@^6.10.3",
+      "npm:@codemirror/state@^6.6.0",
+      "npm:@codemirror/view@^6.40.0",
       "npm:@types/leaflet.markercluster@^1.5.6",
       "npm:@types/leaflet@^1.9.21",
       "npm:@types/reveal.js@^5.2.2",
@@ -940,10 +937,10 @@
       "npm:d3@^7.9.0",
       "npm:leaflet.markercluster@^1.5.3",
       "npm:leaflet@^1.9.4",
-      "npm:lit@3",
+      "npm:lit@^3.3.2",
       "npm:pixi-viewport@^6.0.3",
-      "npm:pixi.js@^8.14.3",
-      "npm:reveal.js@^5.2.1"
+      "npm:pixi.js@^8.17.1",
+      "npm:reveal.js@6"
     ]
   }
 }

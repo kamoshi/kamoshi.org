@@ -1,9 +1,9 @@
 {
   "nodeModulesDir": "auto",
   "imports": {
-    "@codemirror/commands": "npm:@codemirror/commands@^6.10.1",
-    "@codemirror/state": "npm:@codemirror/state@^6.5.3",
-    "@codemirror/view": "npm:@codemirror/view@^6.39.8",
+    "@codemirror/commands": "npm:@codemirror/commands@^6.10.3",
+    "@codemirror/state": "npm:@codemirror/state@^6.6.0",
+    "@codemirror/view": "npm:@codemirror/view@^6.40.0",
     "@types/leaflet": "npm:@types/leaflet@^1.9.21",
     "@types/leaflet.markercluster": "npm:@types/leaflet.markercluster@^1.5.6",
     "@types/reveal.js": "npm:@types/reveal.js@^5.2.2",
@@ -12,8 +12,8 @@
     "leaflet": "npm:leaflet@^1.9.4",
     "leaflet.markercluster": "npm:leaflet.markercluster@^1.5.3",
     "pixi-viewport": "npm:pixi-viewport@^6.0.3",
-    "pixi.js": "npm:pixi.js@^8.14.3",
-    "reveal.js": "npm:reveal.js@^5.2.1",
-    "lit": "npm:lit@^3"
+    "pixi.js": "npm:pixi.js@^8.17.1",
+    "reveal.js": "npm:reveal.js@^6.0.0",
+    "lit": "npm:lit@^3.3.2"
   }
 }
