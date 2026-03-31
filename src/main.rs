@@ -157,15 +157,10 @@ fn run() -> Result<(), RuntimeError> {
         .entry("scripts/**/main.ts")
         .watch("scripts/")
         .minify(true)
-        // .external("lit")
-        // .external("lit/decorators.js")
-        // .external("lit/directives/unsafe-html.js")
-        .register()?;
-
-    let svelte = config
-        .load_svelte::<()>()
-        .entry("scripts/**/App.svelte")
-        .watch("scripts/**/*.svelte")
+        .external("lit")
+        .external("lit/decorators.js")
+        .external("lit/directives/repeat.js")
+        .external("lit/directives/unsafe-html.js")
         .register()?;
 
     let bibtex = config
@@ -209,8 +204,8 @@ fn run() -> Result<(), RuntimeError> {
     let other = config
         .task()
         .name("other")
-        .using((templates, styles, scripts, svelte))
-        .merge(|ctx, (templates, styles, scripts, svelte)| {
+        .using((templates, styles, scripts))
+        .merge(|ctx, (templates, styles, scripts)| {
             let mut pages = vec![];
 
             {
@@ -230,12 +225,8 @@ fn run() -> Result<(), RuntimeError> {
             }
 
             {
-                let styles = &[
-                    styles.get("styles/styles.scss")?,
-                    styles.get("styles/layouts/search.scss")?,
-                ];
-                let component = svelte.get("scripts/search/App.svelte")?;
-                let scripts = &[&component.hydration];
+                let styles = &[styles.get("styles/styles.scss")?];
+                let scripts = &[scripts.get("scripts/search/main.ts")?];
 
                 let props = PropsSearch {
                     head: crate::plugin::make_props_head(
@@ -246,7 +237,6 @@ fn run() -> Result<(), RuntimeError> {
                     )?,
                     navbar: crate::plugin::make_props_navbar(),
                     footer: crate::plugin::make_props_footer(ctx),
-                    content: Value::from_safe_string((component.prerender)(&())?),
                 };
                 let tmpl = templates.get_template("search.jinja")?;
                 pages.push(Output::html("search", tmpl.render(&props)?));

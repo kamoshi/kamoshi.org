@@ -188,7 +188,6 @@ pub struct PropsSearch {
     pub head: PropsHead,
     pub navbar: PropsNavbar,
     pub footer: PropsFooter,
-    pub content: Value,
 }
 
 #[derive(Serialize)]
