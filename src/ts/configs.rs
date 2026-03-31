@@ -212,6 +212,7 @@ fn expand_extension(ext: &str) -> &str {
 		"scm" => "scheme",
 		"ts"  => "typescript",
 		"scss" => "css",
+		"glsl" => "c",
 		other => other,
     }
 }

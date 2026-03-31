@@ -19,7 +19,6 @@ use hauchiwa::loader::image::{ImageFormat, Quality};
 use hauchiwa::loader::sitemap::ChangeFrequency;
 use hauchiwa::{Output, TaskContext, Website};
 use hayagriva::Library;
-use minijinja::Value;
 
 use crate::plugin::about::add_about;
 use crate::plugin::home::add_home;
@@ -153,9 +152,10 @@ fn run() -> Result<(), RuntimeError> {
 
     let scripts = config
         .load_esbuild()
-        .entry("scripts/**/main.js")
         .entry("scripts/**/main.ts")
-        .watch("scripts/")
+        .entry("content/**/main.ts")
+        .watch("scripts/**/*.ts")
+        .watch("content/**/*.ts")
         .minify(true)
         .external("lit")
         .external("lit/decorators.js")

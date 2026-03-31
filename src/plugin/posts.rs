@@ -40,10 +40,7 @@ pub fn add_posts(
 
             // render the posts
             for document in &documents {
-                let bibtex = bibtex
-                    .glob(&document.meta.assets("*.bib"))?
-                    .into_iter()
-                    .next();
+                let bibtex = bibtex.glob(&document.meta.assets("*.bib"))?.next();
 
                 let styles = &[
                     styles.get("styles/styles.scss")?,
@@ -51,6 +48,12 @@ pub fn add_posts(
                 ];
 
                 let mut js = vec![scripts.get("scripts/outline/main.ts")?];
+
+                // Auto-include colocated script if present (e.g. content/posts/foo/main.ts)
+                let colocated = document.meta.path.with_file_name("main.ts");
+                if let Ok(script) = scripts.get(colocated.as_str()) {
+                    js.push(script);
+                };
 
                 if let Some(entries) = &document.matter.scripts {
                     for entry in entries {
