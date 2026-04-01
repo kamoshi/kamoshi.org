@@ -36,6 +36,7 @@
 !content/**/*.yaml
 !content/**/*.asc
 !content/**/*.typ
+!content/**/*.html
 !content/twtxt.txt
 content/.obsidian/
 content/.stfolder/
