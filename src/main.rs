@@ -195,7 +195,7 @@ fn run() -> Result<(), RuntimeError> {
     let slides = add_slides(&mut config, templates, images, styles, scripts)?;
 
     // projects
-    let projects = add_projects(&mut config, templates, styles)?;
+    let projects = add_projects(&mut config, templates, styles, scripts)?;
 
     // tags
     let tags = add_tags(&mut config, templates, posts_data, styles)?;

@@ -6,7 +6,7 @@
     <h1>Projects</h1>
     <div class="project-list-flex">
       {% for project in projects %}
-      <a class="project-list-tile" href="{{ project.link }}">
+      <a class="project-list-tile" href="{{ project.link }}"{% if project.external %} target="_blank" rel="noopener noreferrer"{% endif %}>
         <h2>{{ project.title }}</h2>
         <ul class="tech-stack">
           {% for tech in project.tech %}

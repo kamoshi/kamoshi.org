@@ -101,7 +101,8 @@ pub struct Project {
     pub title: String,
     /// List of technologies used
     pub tech: Vec<String>,
-    pub link: String,
+    /// External link; if absent, the markdown body is rendered as a page
+    pub link: Option<String>,
     pub desc: Option<String>,
 }
 

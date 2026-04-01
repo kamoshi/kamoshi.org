@@ -2,7 +2,7 @@ mod radicals;
 
 use camino::Utf8PathBuf;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
-use hauchiwa::loader::{Stylesheet, TemplateEnv};
+use hauchiwa::loader::{Script, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
 use hypertext::prelude::*;
 use minijinja::Value;
@@ -17,12 +17,14 @@ pub struct ProjectView<'a> {
     pub tech: Vec<String>,
     pub link: String,
     pub desc: Option<&'a str>,
+    pub external: bool,
 }
 
 pub fn add_projects(
     config: &mut Blueprint<Global>,
     templates: One<TemplateEnv>,
     styles: Many<Stylesheet>,
+    scripts: Many<Script>,
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
     let docs = config
         .load_documents::<Project>()
@@ -32,22 +34,52 @@ pub fn add_projects(
 
     let page_radicals = radicals::build(config, templates, styles)?;
 
-    let task = config.task().using((templates, docs, styles, page_radicals)).merge(
-        |ctx, (templates, docs, styles, page_radicals)| {
+    let task = config.task().using((templates, docs, styles, scripts, page_radicals)).merge(
+        |ctx, (templates, docs, styles, scripts, page_radicals)| {
             let styles_list = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/layouts/projects.scss")?,
             ];
 
-            let mut project_views: Vec<ProjectView> = docs
-                .values()
-                .map(|doc| ProjectView {
+            let mut project_views: Vec<ProjectView> = vec![];
+            let mut pages = vec![];
+
+            for doc in docs.values() {
+                let (link, external) = match &doc.matter.link {
+                    Some(url) => (url.clone(), true),
+                    None => {
+                        let parsed = crate::md::parse(
+                            &doc.text,
+                            &doc.meta,
+                            None,
+                            None,
+                            None,
+                        )?;
+                        let colocated_key = doc.meta.path.with_file_name("main.ts");
+                        let js: Vec<&Script> = scripts
+                            .get(colocated_key.as_str())
+                            .ok()
+                            .into_iter()
+                            .collect();
+                        let html = render_page(ctx, templates, &doc.matter.title, &parsed, styles_list, &js)?;
+                        let href = doc.meta.href.clone();
+                        pages.push(
+                            doc.output()
+                                .strip_prefix("content")?
+                                .html()
+                                .content(html),
+                        );
+                        (href, false)
+                    }
+                };
+                project_views.push(ProjectView {
                     title: &doc.matter.title,
                     tech: doc.matter.tech.clone(),
-                    link: doc.matter.link.clone(),
+                    link,
                     desc: doc.matter.desc.as_deref(),
-                })
-                .collect();
+                    external,
+                });
+            }
 
             project_views.push(ProjectView {
                 title: "Constellations",
@@ -58,9 +90,8 @@ pub fn add_projects(
                     .unwrap()
                     .to_string(),
                 desc: Some("Try adding kanji you know and see how they connect to each other."),
+                external: false,
             });
-
-            let mut pages = vec![];
 
             {
                 let docs_vec = docs.values().collect::<Vec<_>>();
@@ -102,6 +133,7 @@ pub fn render_list(
                 tech: p.tech.clone(),
                 link: p.link.clone(),
                 desc: p.desc.map(str::to_string),
+                external: p.external,
             })
             .collect(),
     };
@@ -113,13 +145,15 @@ pub fn render_list(
 pub fn render_page(
     ctx: &Context,
     templates: &TemplateEnv,
+    title: &str,
     parsed: &Parsed,
     styles: &[&Stylesheet],
+    scripts: &[&Script],
 ) -> Result<String, RuntimeError> {
     let outline_html = parsed.outline.render().into_inner();
 
     let props = PropsProjectPage {
-        head: super::make_props_head(ctx, "".to_string(), styles, &[])?,
+        head: super::make_props_head(ctx, title.to_string(), styles, scripts)?,
         navbar: super::make_props_navbar(),
         footer: super::make_props_footer(ctx),
         outline: Value::from_safe_string(outline_html),

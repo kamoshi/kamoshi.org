@@ -15,5 +15,5 @@
     "moduleDetection": "force",
     "noEmit": true,
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "scripts/**/*.ts"],
+  "include": ["**/*.ts"],
 }

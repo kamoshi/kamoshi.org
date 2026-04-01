@@ -202,6 +202,7 @@ pub struct PropsProjectTile {
     pub tech: Vec<String>,
     pub link: String,
     pub desc: Option<String>,
+    pub external: bool,
 }
 
 #[derive(Serialize)]
