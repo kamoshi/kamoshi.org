@@ -79,7 +79,7 @@ export class FontHeader extends LitElement {
       --muted:  #7a6e62;
     }
 
-    header { text-align: center; margin-top: 2rem; margin-bottom: 2.5rem; max-width: 900px; margin-inline: auto; }
+    header { text-align: center; margin-top: 2rem; margin-bottom: 2.5rem; }
 
     .desc {
       font-size: 0.95rem;
@@ -154,8 +154,6 @@ export class FontTextbox extends LitElement {
       border-radius: 4px;
       padding: 0.75rem 1rem;
       background: var(--card-bg);
-      max-width: 900px;
-      margin-inline: auto;
       margin-bottom: 1.75rem;
       display: flex;
       gap: 0.6rem;
@@ -235,8 +233,6 @@ export class FontArena extends LitElement {
       border: 1px solid var(--rule);
       border-radius: 4px;
       padding: 1rem;
-      max-width: 900px;
-      margin-inline: auto;
       margin-bottom: 1.75rem;
     }
 
@@ -433,7 +429,7 @@ export class FontArena extends LitElement {
         </div>
         <div class="skip-row">
           <button class="skip-btn" @click=${this._skip}>
-            I can't decide — skip this pair
+            I can't decide - skip this pair
           </button>
         </div>
       </div>
@@ -445,12 +441,19 @@ export class FontArena extends LitElement {
 
 @customElement('font-showdown')
 export class FontShowdown extends LitElement {
+  static styles = css`
+    :host { display: block; }
+    .inner { max-width: 900px; margin-inline: auto; }
+  `;
+
   render() {
     return html`
-      <font-header></font-header>
-      <font-textbox></font-textbox>
-      <font-arena></font-arena>
-      <font-leaderboard></font-leaderboard>
+      <div class="inner">
+        <font-header></font-header>
+        <font-textbox></font-textbox>
+        <font-arena></font-arena>
+        <font-leaderboard></font-leaderboard>
+      </div>
     `;
   }
 }
@@ -483,8 +486,7 @@ export class FontLeaderboard extends LitElement {
       border: 1px solid var(--rule);
       border-radius: 4px;
       overflow: hidden;
-      max-width: 900px;
-      margin: 0 auto 3rem;
+      margin-bottom: 3rem;
     }
 
     .board-header {
