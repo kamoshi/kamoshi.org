@@ -223,6 +223,14 @@ pub struct PropsProjectPage {
 }
 
 #[derive(Serialize)]
+pub struct PropsRawPage {
+    pub head: PropsHead,
+    pub navbar: PropsNavbar,
+    pub footer: PropsFooter,
+    pub content: Value,
+}
+
+#[derive(Serialize)]
 pub struct PropsListItem {
     pub path: String,
     pub name: String,

@@ -9,7 +9,7 @@ use minijinja::Value;
 
 use crate::md::Parsed;
 use crate::model::Project;
-use crate::props::{PropsProjectPage, PropsProjectTile, PropsProjects};
+use crate::props::{PropsProjectPage, PropsProjectTile, PropsProjects, PropsRawPage};
 use crate::{Context, Global};
 
 pub struct ProjectView<'a> {
@@ -29,6 +29,7 @@ pub fn add_projects(
     let docs = config
         .load_documents::<Project>()
         .source("content/projects/**/*.md")
+        .source("content/projects/**/*.html")
         .offset("content")
         .register()?;
 
@@ -48,20 +49,26 @@ pub fn add_projects(
                 let (link, external) = match &doc.matter.link {
                     Some(url) => (url.clone(), true),
                     None => {
-                        let parsed = crate::md::parse(
-                            &doc.text,
-                            &doc.meta,
-                            None,
-                            None,
-                            None,
-                        )?;
                         let colocated_key = doc.meta.path.with_file_name("main.ts");
                         let js: Vec<&Script> = scripts
                             .get(colocated_key.as_str())
                             .ok()
                             .into_iter()
                             .collect();
-                        let html = render_page(ctx, templates, &doc.matter.title, &parsed, styles_list, &js)?;
+
+                        let html = if doc.meta.path.extension() == Some("html") {
+                            render_raw_page(ctx, templates, &doc.matter.title, &doc.text, styles_list, &js)?
+                        } else {
+                            let parsed = crate::md::parse(
+                                &doc.text,
+                                &doc.meta,
+                                None,
+                                None,
+                                None,
+                            )?;
+                            render_page(ctx, templates, &doc.matter.title, &parsed, styles_list, &js)?
+                        };
+
                         let href = doc.meta.href.clone();
                         pages.push(
                             doc.output()
@@ -160,6 +167,25 @@ pub fn render_page(
         content: Value::from_safe_string(parsed.html.clone()),
     };
 
-    let tmpl = templates.get_template("project_page.jinja")?;
+    let tmpl = templates.get_template("project_page_md.jinja")?;
+    Ok(tmpl.render(&props)?)
+}
+
+pub fn render_raw_page(
+    ctx: &Context,
+    templates: &TemplateEnv,
+    title: &str,
+    html: &str,
+    styles: &[&Stylesheet],
+    scripts: &[&Script],
+) -> Result<String, RuntimeError> {
+    let props = PropsRawPage {
+        head: super::make_props_head(ctx, title.to_string(), styles, scripts)?,
+        navbar: super::make_props_navbar(),
+        footer: super::make_props_footer(ctx),
+        content: Value::from_safe_string(html.to_string()),
+    };
+
+    let tmpl = templates.get_template("project_page_html.jinja")?;
     Ok(tmpl.render(&props)?)
 }
