@@ -124,7 +124,9 @@ fn run() -> Result<(), RuntimeError> {
     )
     .expect("Failed to write footer-dither.svg");
 
-    let mut config = Website::<Global>::design();
+    let mut config = Website::<Global>::design()
+        .copy_static("", "public/")
+        .copy_static("static/svg/hanafuda/", "scripts/hanafuda/res/");
 
     let templates = config
         .load_minijinja()
@@ -160,6 +162,7 @@ fn run() -> Result<(), RuntimeError> {
         .external("lit")
         .external("lit/decorators.js")
         .external("lit/directives/repeat.js")
+        .external("lit/directives/style-map.js")
         .external("lit/directives/unsafe-html.js")
         .register()?;
 

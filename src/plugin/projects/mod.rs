@@ -50,11 +50,18 @@ pub fn add_projects(
                     Some(url) => (url.clone(), true),
                     None => {
                         let colocated_key = doc.meta.path.with_file_name("main.ts");
-                        let js: Vec<&Script> = scripts
+                        let mut js: Vec<&Script> = scripts
                             .get(colocated_key.as_str())
                             .ok()
                             .into_iter()
                             .collect();
+
+                        if let Some(entries) = &doc.matter.scripts {
+                            for entry in entries {
+                                let key = format!("scripts/{}", entry);
+                                js.push(scripts.get(&key)?);
+                            }
+                        }
 
                         let html = if doc.meta.path.extension() == Some("html") {
                             render_raw_page(ctx, templates, &doc.matter.title, &doc.text, styles_list, &js)?

@@ -104,6 +104,7 @@ pub struct Project {
     /// External link; if absent, the markdown body is rendered as a page
     pub link: Option<String>,
     pub desc: Option<String>,
+    pub scripts: Option<Vec<String>>,
 }
 
 /// Represents a wiki page
