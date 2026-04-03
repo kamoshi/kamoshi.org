@@ -8,11 +8,14 @@ scripts:
   - hanafuda/src/main.ts
 ---
 
-<hf-app res-root="/static/svg/hanafuda/"></hf-app>
+<div id="hf">
+  <hf-app res-root="/static/svg/hanafuda/"></hf-app>
+</div>
 
 <style>
-  hf-app {
+  #hf {
     display: block;
+    height: calc(100vh - 3rem);
     padding: 1rem;
   }
 </style>
