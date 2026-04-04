@@ -1,4 +1,6 @@
 $dither-height: 64px;
+$footer-wrap: 28rem;
+$footer-row: 58rem;
 
 #footer {
   display: flex;
@@ -36,21 +38,23 @@ $dither-height: 64px;
 
   .container {
     display: flex;
+    flex-direction: column;
     align-items: center;
+    text-align: center;
     padding: 1rem 1.5rem;
-    padding-top: 1rem;
     gap: 2rem;
     color: var(--c-purewhite);
 
-    @media (max-width: 640px) {
+    @media (min-width: $footer-wrap) {
+      flex-direction: row;
       flex-wrap: wrap;
       justify-content: center;
+      text-align: left;
     }
 
-    @media (max-width: 400px) {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
+    @media (min-width: $footer-row) {
+      flex-wrap: nowrap;
+      justify-content: flex-start;
     }
   }
 
@@ -77,39 +81,35 @@ $dither-height: 64px;
   }
 
   .left {
-    white-space: nowrap;
     font-weight: 500;
     gap: 0.3rem;
-    align-items: flex-start;
 
-    @media (max-width: 640px) {
-      white-space: normal;
+    @media (min-width: $footer-row) {
+      white-space: nowrap;
+      align-items: flex-start;
     }
   }
 
   .right {
-    margin-left: auto;
-    align-items: flex-end;
     gap: 0.7rem;
 
-    @media (max-width: 640px) {
-      margin-left: 0;
-      align-items: center;
+    @media (min-width: $footer-row) {
+      margin-left: auto;
+      align-items: flex-end;
     }
 
     .meta {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
+      align-items: center;
       gap: 0.2rem;
       font-family: monospace;
       font-size: 0.7rem;
       opacity: 0.7;
-      white-space: nowrap;
 
-      @media (max-width: 640px) {
-        white-space: normal;
-        align-items: center;
+      @media (min-width: $footer-row) {
+        white-space: nowrap;
+        align-items: flex-end;
       }
     }
 

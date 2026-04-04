@@ -2,12 +2,20 @@
 
 {% block main %}
 <main class="l-home">
-  <article class="l-home__article markdown">{{ article }}</article>
+  <article class="k-paper l-home__article markdown">
+    {{ article }}
+
+    <hr>
+
+    {%  include "assets/ascii.jinja" %}
+  </article>
 
   <aside class="l-home__aside">
-    <section class="p-card intro-jp" lang="ja-JP">{{ intro }}</section>
+    <section class="p-card k-box intro-jp" lang="ja-JP">
+      {{ intro }}
+    </section>
 
-    <section class="p-card">
+    <section class="p-card k-box">
       <kanji-of-day>
         <h2 class="p-card__heading">Kanji of the day</h2>
         <div class="daily-kanji">

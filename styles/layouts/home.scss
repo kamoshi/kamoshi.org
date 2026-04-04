@@ -1,12 +1,17 @@
-@use "../consts" as consts;
+$two-col: 76rem;
+$aside-multi-col: 44rem;
 
 .l-home {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5em;
+  padding: 0.75em;
 
-  @media (min-width: consts.$bp-lg) {
+  @media (min-width: 40rem) {
+    padding: 1.5em;
+  }
+
+  @media (min-width: $two-col) {
     flex-direction: row;
     justify-content: center;
     align-items: flex-start;
@@ -20,10 +25,21 @@
     max-width: min(40em, 100%);
     margin-top: 3em;
 
-    @media (min-width: consts.$bp-lg) {
+    @media (min-width: $aside-multi-col) and (max-width: $two-col) {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+
+      > * {
+        width: 24em;
+      }
+    }
+
+    @media (min-width: $two-col) {
       width: 24em;
       margin-top: 0;
-      margin-left: 3em;
+      margin-left: 1rem;
 
       > * {
         width: 24em;
@@ -32,7 +48,7 @@
   }
 
   &__article {
-    max-width: 40em;
+    max-width: 50em;
   }
 }
 
@@ -45,57 +61,24 @@
     font-family: var(--font-heading);
     font-weight: 500;
   }
-
-  &__latest {
-    padding-left: 1em;
-    a {
-      text-decoration: none;
-      color: var(--c-primary);
-    }
-  }
 }
 
-.home-card-image {
-  &__link {
+.ascii-art {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+
+  pre {
     display: block;
-  }
-  &__image {
-    width: 100%;
-    height: auto;
-  }
-}
-
-.home-card-contact {
-  a {
-    color: var(--c-primary);
-    font-family: var(--font-heading);
-    font-weight: 500;
-    font-style: italic;
-    text-decoration: unset;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-  &__grid {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    row-gap: 0.5em;
-    column-gap: 0.5em;
-  }
-  &__image {
-    max-width: 2em;
-    height: auto;
-    margin: 0 0.5em 0 0;
-  }
-  &__text {
-    display: inline-flex;
-    align-items: center;
+    font-family: sans-serif;
+    font-size: 0.5rem;
+    font-weight: bold;
+    letter-spacing: -0.05em;
   }
 }
 
 .intro-jp {
-  height: 18em;
+  height: 18.5rem;
   writing-mode: vertical-rl;
 
   h2 {
@@ -107,27 +90,5 @@
   p {
     text-indent: 1em;
     line-height: 1.4;
-  }
-}
-
-.card-indieweb {
-  padding: 1em;
-  border-radius: 0.25em;
-  background-color: var(--c-purewhite);
-  box-shadow: var(--shadow-l);
-
-  h2 {
-    line-height: 1em;
-    margin-bottom: 0.5em;
-    font-family: var(--font-heading);
-    font-weight: 500;
-  }
-
-  ul {
-    padding-left: 1em;
-    a {
-      text-decoration: none;
-      color: var(--c-primary);
-    }
   }
 }

@@ -91,3 +91,20 @@ body.dark {
   --mb-c-bg-hover: #f7f9f9;
   --mb-c-link: #1d9bf0;
 }
+
+.k-box {
+  border: 1px solid #d4c9b8;
+  background: oklch(0.98 0.005 85);
+  border-radius: 4px;
+}
+
+.k-paper {
+  padding: 1rem;
+  background: oklch(0.99 0.003 85);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  @media (min-width: 40rem) {
+    padding: 2rem;
+  }
+}
