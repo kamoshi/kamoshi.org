@@ -31,10 +31,6 @@ crepe                   = "0.2.0"
 ts-rs                   = "12"
 minijinja               = "2"
 
-# svag                    = {
-#     path = "../svag",
-# }
-
 # Formats
 hayagriva               = "0.9"
 pulldown-latex          = "0.7"
@@ -42,7 +38,7 @@ rss                     = "2.0"
 sequoia-openpgp         = { version = "2.1", default-features = false, features = ["crypto-openssl"] }
 
 # Markdown
-comrak                  = { version = "0.50", default-features = false, features = ["shortcodes"] }
+comrak                  = { version = "0.52", default-features = false, features = ["shortcodes"] }
 
 # Templating
 hypertext               = "0.12"
