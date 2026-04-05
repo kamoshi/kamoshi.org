@@ -11,6 +11,7 @@ mod utils;
 use std::fs;
 use std::process::{Command, ExitCode};
 
+
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
@@ -114,9 +115,8 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<(), RuntimeError> {
+    hauchiwa::init_logging()?;
     let args = Args::parse();
-
-    let _ = fs::remove_dir_all("./dist");
 
     fs::write(
         "public/static/svg/footer-dither.svg",
