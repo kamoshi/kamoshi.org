@@ -1,34 +1,43 @@
-const HEADINGS = "h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]";
+const HEADINGS = 'h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]';
 
 type Heading = HTMLHeadingElement;
-type Link = HTMLLinkElement;
+type Link = HTMLAnchorElement;
 
 function findID(headings: Heading[]) {
-  const scrollY = window.scrollY || window.pageYOffset;
-  const midpoint = scrollY + window.innerHeight / 2;
+  const scrollY = globalThis.scrollY;
+  // Set the trigger line near the top of the viewport. 100px is a standard
+  // buffer, adjust this if you have a sticky header
+  const triggerLine = scrollY + 100;
+
+  // Default to the first heading so something is always highlighted at the very top
+  let activeId = headings[0]?.id;
 
   for (let i = 0; i < headings.length; i++) {
     const heading = headings[i];
-    const next = headings[i + 1];
 
-    const headingTop = heading.offsetTop;
-
-    // If there's a next heading, we check if we're between this one and the next
-    if (!next || next.offsetTop > midpoint) {
-      if (headingTop <= midpoint) {
-        return heading.id;
-      }
+    // If this heading has scrolled past our top trigger line, it's the active one (so far)
+    if (heading.offsetTop <= triggerLine) {
+      activeId = heading.id;
+    } else {
+      // Because headings are ordered vertically, as soon as we find one
+      // BELOW the trigger line, we can stop looking.
       break;
     }
   }
+
+  return activeId;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const headings = [...document.querySelectorAll(HEADINGS)] as Heading[];
+globalThis.document.addEventListener('DOMContentLoaded', () => {
+  const headings = [
+    ...globalThis.document.querySelectorAll(HEADINGS),
+  ] as Heading[];
   const outline = new Map(
     headings.map((h) => [
       h.id,
-      document.querySelector(`.outline a[href="#${h.id}"]`) as Link | null,
+      globalThis.document.querySelector(
+        `.outline a[href="#${h.id}"]`,
+      ) as Link | null,
     ]),
   );
 
@@ -37,9 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (const [id, link] of outline.entries()) {
       if (found === id) {
-        link?.classList.add("active");
+        link?.classList.add('active');
       } else {
-        link?.classList.remove("active");
+        link?.classList.remove('active');
       }
     }
   }
@@ -47,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let ready = true;
   function onScrollThrottled() {
     if (ready) {
-      window.requestAnimationFrame(() => {
+      globalThis.requestAnimationFrame(() => {
         onScroll();
         ready = true;
       });
@@ -55,7 +64,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  document.addEventListener("scroll", onScrollThrottled, { passive: true });
-  window.addEventListener("resize", onScrollThrottled);
-  window.addEventListener("load", onScroll);
+  globalThis.document.addEventListener('scroll', onScrollThrottled, {
+    passive: true,
+  });
+  globalThis.addEventListener('resize', onScrollThrottled);
+  globalThis.addEventListener('load', onScroll);
 });

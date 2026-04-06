@@ -15,15 +15,6 @@ main {
   }
 }
 
-.outline {
-  display: none;
-
-  @media (min-width: $bp-m) {
-    display: unset;
-    grid-area: left;
-  }
-}
-
 .article {
   width: 100%;
   grid-area: page;
@@ -196,101 +187,6 @@ figure {
   }
 }
 
-.outline {
-  height: 100%;
-
-  @media (min-width: $bp-m) {
-    margin-block: 0.5rem;
-  }
-
-  @media (min-width: $bp-l) {
-    margin-block: 1rem;
-  }
-
-  section {
-    position: sticky;
-    top: 0;
-    max-height: min(100vh, 100%);
-    padding: 0.5em;
-    overflow-y: auto;
-
-    @media (min-width: $bp-l) {
-      padding: 1em;
-    }
-  }
-
-  h2 {
-    font-family: var(--font-heading);
-    font-weight: 500;
-
-    a {
-      text-decoration: none;
-      color: var(--c-text);
-    }
-  }
-
-  ul {
-    display: flex;
-    flex-direction: column;
-    margin-top: 0.25rem;
-    gap: 0.4rem;
-    list-style: none;
-
-    ul {
-      padding-left: 1rem;
-    }
-
-    .active {
-      font-weight: bold;
-      border-left: 3px solid var(--accent-color);
-    }
-  }
-
-  .outline-depth-2 {
-    border-left: 1px solid var(--c-border-muted);
-  }
-
-  .outline-depth-3 {
-    border-left: 1px dashed var(--c-border-muted);
-  }
-
-  a {
-    text-decoration: none;
-    color: var(--c-text-muted);
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  /* h2 {
-    border-bottom: 1px solid;
-    border-image: linear-gradient(to right, transparent, lightgray, transparent)
-      1;
-    font-family: var(--font-heading);
-    font-weight: 500;
-    font-size: 1.4rem;
-
-    a {
-      display: block;
-      text-decoration: unset;
-      text-align: center;
-    }
-  }
-
-
-
-
-  a {
-    color: var(--c-primary);
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  } */
-}
-
 .metadata {
   display: flex;
   width: 100%;
@@ -344,6 +240,132 @@ figure {
       border-radius: 0.3rem;
       text-decoration: none;
       font-size: 0.9rem;
+    }
+  }
+}
+
+.outline {
+  height: 100%;
+  display: none;
+
+  @media (min-width: $bp-m) {
+    display: unset;
+    grid-area: left;
+    margin-block: 1rem;
+  }
+
+  @media (min-width: $bp-l) {
+    margin-block: 2rem;
+  }
+
+  section {
+    position: sticky;
+    /* Give it some breathing room from the top of the viewport */
+    top: 2rem;
+    max-height: calc(100vh - 4rem);
+    padding: 0 1rem 1rem 0.85rem;
+    overflow-y: auto;
+
+    /* Minimalist scrollbar for long outlines */
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--c-border-muted, #d4c9b8);
+      border-radius: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  }
+
+  h2 {
+    margin-bottom: 1rem;
+
+    a {
+      /* Styling the header to look like a small, crisp label */
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--c-text-muted);
+      text-decoration: none;
+    }
+  }
+
+  nav {
+    font-family: system-ui, sans-serif;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  /* Base Link Styling */
+  a {
+    display: block;
+    text-decoration: none;
+    color: var(--c-text-muted);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    transition:
+      color 0.15s ease,
+      transform 0.15s ease;
+    padding-block: 0.15rem;
+
+    &:hover {
+      color: var(--c-text);
+      transform: translateX(2px); /* Gentle nudge on hover */
+    }
+  }
+
+  /* --- Depth & Hierarchy --- */
+
+  .outline-depth-1 {
+    > li > a {
+      font-weight: 500;
+      color: var(--c-text); /* Top level is slightly darker by default */
+    }
+  }
+
+  /* Smooth, unified guide lines for nested items */
+  .outline-depth-2,
+  .outline-depth-3 {
+    padding-left: 0.85rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.4rem;
+    border-left: 1px solid var(--c-border-faint, #e2e8f0);
+  }
+
+  .outline-depth-3 {
+    font-size: 0.95em; /* Slightly scale down deeper nesting */
+    opacity: 0.9;
+  }
+
+  /* --- Active State --- */
+
+  ul a.active,
+  ul .active > a {
+    color: var(--c-primary);
+    font-weight: 600;
+    position: relative;
+
+    /* A sharp, modern indicator line for the active item */
+    &::before {
+      content: "";
+      position: absolute;
+      left: -0.85rem; /* Aligns perfectly over the nested border-left */
+      top: 0.15rem;
+      bottom: 0.15rem;
+      width: 2px;
+      background-color: var(--c-primary);
+      border-radius: 2px;
     }
   }
 }
