@@ -1,75 +1,160 @@
+/* --- Theme Variables --- */
+:root {
+  --ink: #1a1410;
+  --paper: #faf8f4;
+  --rule: #d4c9b8;
+  --accent: #b5451b;
+  --muted: #7a6e62;
+  --white: #ffffff;
+  --row-border: #f0ebe3;
+  --row-hover: #fdf9f6;
+}
+
+/* --- Layout & Typography --- */
+.page-list-main {
+  padding: 1rem; /* Updated to 1rem */
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ink);
+  box-sizing: border-box;
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+.page-list {
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+/* --- Main Header --- */
 .directory-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
 
-.page-list-main {
-  padding: 2em;
-}
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ink);
+  }
 
-.page-list {
-  max-width: 40em;
-  margin-inline: auto;
-}
-
-.page-list-year {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-  margin-block: 1em;
-
-  &__header {
+  a {
+    color: var(--accent);
     display: flex;
     align-items: center;
-    justify-content: center;
+    transition: opacity 0.2s ease;
 
-    h2 {
-      &::before {
-        content: "\2766";
-        display: inline-block;
-        line-height: 1em;
-        margin-right: 0.5em;
-        transform: rotate(90deg);
-      }
-      &::after {
-        content: "\2766";
-        display: inline-block;
-        line-height: 1em;
-        margin-left: 0.5em;
-        transform: rotate(270deg);
-      }
+    &:hover {
+      opacity: 0.7;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
     }
   }
 }
 
+/* --- The "Board" (Year Groups) --- */
+.page-list-year {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  box-shadow: 0 4px 12px rgba(26, 20, 16, 0.03);
+
+  &__header {
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    padding: 1rem; /* Updated to 1rem */
+    display: flex;
+    align-items: center;
+
+    h2 {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-family: system-ui, sans-serif;
+    }
+  }
+}
+
+/* --- The "Rows" (Articles) --- */
 .page-item {
   display: block;
-  padding: 0.5em;
-  background-color: var(--c-purewhite);
-  border-radius: 4px;
-  box-shadow: var(--shadow-s);
-  transition: box-shadow ease-in-out 0.25s;
-  text-decoration: unset;
+  padding: 1rem; /* Updated to 1rem */
+  text-decoration: none;
+  border-bottom: 1px solid var(--row-border);
+  transition: background 0.12s ease-in-out;
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   &:hover {
-    box-shadow: var(--shadow-m);
+    background: var(--row-hover);
   }
 
   &__header {
     display: flex;
     justify-content: space-between;
-    gap: 1em;
-    color: var(--c-text);
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+
+    h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.3;
+    }
 
     time {
-      color: var(--c-text-muted);
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-style: italic;
+      font-family: system-ui, sans-serif;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
   }
+
   &__desc {
-    margin-top: 0.5em;
-    color: var(--c-text);
-    text-align: justify;
-    text-justify: auto;
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1.6;
+    text-align: left;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 600px) {
+  /* Removed specific mobile padding overrides since 1rem works well on mobile too */
+  .page-item {
+    &__header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+
+      time {
+        font-size: 0.8rem;
+      }
+    }
   }
 }

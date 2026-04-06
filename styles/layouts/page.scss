@@ -292,12 +292,12 @@ figure {
 }
 
 .metadata {
-  display: inline-flex;
-  flex-direction: column;
+  display: flex;
   width: 100%;
-  height: fit-content;
-  clear: right;
+  padding: 1rem;
+  flex-direction: column;
   gap: 0.25rem;
+  clear: right;
 
   h2 {
     font-family: var(--font-heading);
@@ -338,7 +338,7 @@ figure {
 
     li a {
       display: inline-block;
-      background-color: var(--tag-bg);
+      background-color: var(--c-accent);
       color: var(--tag-color);
       padding: 0.2rem 0.5rem;
       border-radius: 0.3rem;
