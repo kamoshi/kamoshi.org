@@ -4,7 +4,9 @@
 @use "fonts";
 @use "base";
 @use "markdown";
-@use "kanagawa";
+
+@use "syntax/stackoverflow";
+/* @use "syntax/kanagawa"; */
 
 // Components
 @use "components/link-tree";

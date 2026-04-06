@@ -1,0 +1,78 @@
+:root {
+  --so-bg:          #f6f6f6; // Default background
+  --so-fg:          #2f3337; // Default foreground
+  --so-border:      #d6d9dc; // Border color
+  --so-comment:     #656e77; // Comments
+  --so-gray:        #535a60; // Punctuation
+  --so-blue:        #015692; // Keywords, tags, booleans
+  --so-purple:      #803378; // Attributes, properties
+  --so-orange:      #b75501; // Functions, numbers, types, built-ins
+  --so-green:       #54790d; // Strings, variables
+  --so-red:         #c02d2e; // Diff Deleted
+  --so-dark-green:  #2f6f44; // Diff Added
+}
+
+.syntax {
+  background-color: var(--so-bg);
+  border-color: var(--so-border);
+  color: var(--so-fg);
+
+  &::before {
+    background: var(--so-border);
+  }
+
+  // Identifiers
+  .variable-builtin { color: var(--so-orange); }
+  .variable-parameter { color: var(--so-green); }
+
+  .constant { color: var(--so-orange); }
+  .constant-builtin { color: var(--so-orange); }
+
+  .label { color: var(--so-blue); } 
+
+  // Literals
+  .string { color: var(--so-green); }
+  .string-special { color: var(--so-green); }
+
+  .number { color: var(--so-orange); }
+  .number-float { color: var(--so-orange); };
+
+  // Types
+  .type { color: var(--so-orange); }
+  .type-builtin { color: var(--so-orange); }
+
+  .attribute { color: var(--so-purple); }
+  .property { color: var(--so-purple); }
+
+  // Functions
+  .function { color: var(--so-orange); }
+  .function-macro { color: var(--so-orange); }
+  .function-method { color: var(--so-orange); }
+
+  .constructor { color: var(--so-orange); }
+  .operator { color: var(--so-fg); }
+
+  // Keywords
+  .keyword { color: var(--so-blue); }
+  .keyword-coroutine { color: var(--so-blue); }
+  .keyword-function { color: var(--so-blue); }
+  .keyword-operator { color: var(--so-blue); }
+  .keyword-import { color: var(--so-blue); }
+  .keyword-repeat { color: var(--so-blue); }
+  .keyword-return { color: var(--so-blue); }
+  .keyword-debug { color: var(--so-blue); }
+  .keyword-exception { color: var(--so-blue); }
+
+  .keyword-conditional { color: var(--so-blue); }
+
+  // Punctuation
+  .punctuation-delimiter { color: var(--so-gray); } 
+  .punctuation-bracket { color: var(--so-gray); }
+
+  // Comments
+  .comment-documentation,
+  .comment { color: var(--so-comment); }
+
+  // Markup
+  .tag { color: var(--so-blue); }
+}

@@ -14,7 +14,7 @@ pub enum TSEvent {
 
 pub fn highlight(lang: &str, code: &str) -> impl Renderable {
     maud!(
-        figure .listing.kanagawa data-lang=(lang) {
+        figure .listing.syntax data-lang=(lang) {
             pre {
                 code {
                     (Raw::dangerously_create(to_html(lang, code)))
