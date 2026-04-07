@@ -32,9 +32,9 @@ pub fn add_home(
 ) -> Result<One<Output>, HauchiwaError> {
     let docs = config
         .load_documents::<Home>()
-        .source("content/index.md")
+        .glob("content/index.md")?
         .offset("content")
-        .register()?;
+        .register();
 
     let task = config
         .task()

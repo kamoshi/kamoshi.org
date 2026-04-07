@@ -12,7 +12,7 @@ pub fn add_twtxt(
     templates: One<TemplateEnv>,
     styles: Many<Stylesheet>,
 ) -> Result<Many<Output>, HauchiwaError> {
-    let twtxt = config.task().glob("content/twtxt.txt").map(|_, _, file| {
+    let twtxt = config.task().glob("content/twtxt.txt")?.map(|_, _, file| {
         let data = file.read()?;
         let data = String::from_utf8_lossy(&data);
 
@@ -30,12 +30,10 @@ pub fn add_twtxt(
             entries,
             data: data.to_string(),
         })
-    })?;
+    });
 
-    let handle = config
-        .task()
-        .using((templates, twtxt, styles))
-        .spread(|ctx, (templates, twtxt, styles)| {
+    let handle = config.task().using((templates, twtxt, styles)).spread(
+        |ctx, (templates, twtxt, styles)| {
             let styles = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/microblog.scss")?,
@@ -61,7 +59,8 @@ pub fn add_twtxt(
             }
 
             Ok(pages)
-        });
+        },
+    );
 
     Ok(handle)
 }

@@ -21,26 +21,18 @@ pub fn add_slides(
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
     let md = config
         .load_documents::<Slideshow>()
-        .source("content/slides/**/*.md")
+        .glob("content/slides/**/*.md")?
+        .glob("content/slides/**/*.lhs")?
         .offset("content")
-        .register()?;
-
-    let hs = config
-        .load_documents::<Slideshow>()
-        .source("content/slides/**/*.lhs")
-        .offset("content")
-        .register()?;
+        .register();
 
     let handle = config
         .task()
-        .using((templates, md, hs, images, styles, scripts))
-        .merge(|ctx, (templates, md, hs, images, styles, scripts)| {
+        .using((templates, md, images, styles, scripts))
+        .merge(|ctx, (templates, md, images, styles, scripts)| {
             let mut pages = vec![];
 
-            let documents = [md.values(), hs.values()]
-                .into_iter()
-                .flatten()
-                .collect::<Vec<_>>();
+            let documents = md.values().collect::<Vec<_>>();
 
             {
                 let styles = &[
@@ -83,7 +75,14 @@ pub fn add_slides(
                     })
                     .collect();
 
-                let html = to_list(ctx, templates, data, "Slideshows".into(), "/slides/rss.xml", styles)?;
+                let html = to_list(
+                    ctx,
+                    templates,
+                    data,
+                    "Slideshows".into(),
+                    "/slides/rss.xml",
+                    styles,
+                )?;
 
                 pages.push(Output::html("slides", html));
             }

@@ -11,14 +11,13 @@ mod utils;
 use std::fs;
 use std::process::{Command, ExitCode};
 
-
 use camino::Utf8PathBuf;
 use chrono::{DateTime, Datelike, Utc};
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::image::{ImageFormat, Quality};
 use hauchiwa::loader::sitemap::ChangeFrequency;
-use hauchiwa::{Output, TaskContext, Website};
+use hauchiwa::{Blueprint, Output, TaskContext};
 use hayagriva::Library;
 
 use crate::plugin::about::add_about;
@@ -124,52 +123,52 @@ fn run() -> Result<(), RuntimeError> {
     )
     .expect("Failed to write footer-dither.svg");
 
-    let mut config = Website::<Global>::design()
-        .copy_static("", "public/")
-        .copy_static("static/svg/hanafuda/", "scripts/hanafuda/res/");
+    let mut config = Blueprint::<Global>::new()
+        .copy_static("public/", "")
+        .copy_static("scripts/hanafuda/res/", "static/svg/hanafuda/");
 
     let templates = config
         .load_minijinja()
-        .glob("templates/**/*.jinja")
-        .glob("templates/**/*.svg")
+        .glob("templates/**/*.jinja")?
+        .glob("templates/**/*.svg")?
         .root("templates")
         // .filter("svag", utils::filter_svag)
-        .register()?;
+        .register();
 
     let images = config
         .load_images()
         .format(ImageFormat::Avif(Quality::Lossy(80)))
         .format(ImageFormat::WebP)
-        .glob("content/**/*.jpg")
-        .glob("content/**/*.png")
-        .glob("content/**/*.gif")
-        .register()?;
+        .glob("content/**/*.jpg")?
+        .glob("content/**/*.png")?
+        .glob("content/**/*.gif")?
+        .register();
 
     let styles = config
         .load_css()
-        .entry("styles/**/[!_]*.scss")
-        .watch("styles/**/*.scss")
+        .entry("styles/**/[!_]*.scss")?
+        .watch("styles/**/*.scss")?
         .minify(true)
-        .register()?;
+        .register();
 
     let scripts = config
         .load_esbuild()
-        .entry("scripts/**/main.ts")
-        .entry("content/**/main.ts")
-        .watch("scripts/**/*.ts")
-        .watch("content/**/*.ts")
+        .entry("scripts/**/main.ts")?
+        .entry("content/**/main.ts")?
+        .watch("scripts/**/*.ts")?
+        .watch("content/**/*.ts")?
         .minify(true)
         .external("lit")
         .external("lit/decorators.js")
         .external("lit/directives/repeat.js")
         .external("lit/directives/style-map.js")
         .external("lit/directives/unsafe-html.js")
-        .register()?;
+        .register();
 
     let bibtex = config
         .task()
         .name("bibtex")
-        .glob("content/**/*.bib")
+        .glob("content/**/*.bib")?
         .map(|_, store, input| {
             let data = input.read()?;
             let path = store.save(&data, "bib")?;
@@ -177,7 +176,7 @@ fn run() -> Result<(), RuntimeError> {
             let data = hayagriva::io::from_biblatex_str(&text).unwrap();
 
             Ok(Bibtex { path, data })
-        })?;
+        });
 
     // home
     let home = add_home(&mut config, templates, images, styles, scripts)?;

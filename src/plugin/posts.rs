@@ -23,9 +23,9 @@ pub fn add_posts(
 ) -> Result<(Many<Document<Post>>, One<Vec<Output>>), HauchiwaError> {
     let docs = config
         .load_documents::<Post>()
-        .source("content/posts/**/*.md")
+        .glob("content/posts/**/*.md")?
         .offset("content")
-        .register()?;
+        .register();
 
     let pages = config
         .task()

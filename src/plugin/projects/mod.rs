@@ -28,15 +28,17 @@ pub fn add_projects(
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
     let docs = config
         .load_documents::<Project>()
-        .source("content/projects/**/*.md")
-        .source("content/projects/**/*.html")
+        .glob("content/projects/**/*.md")?
+        .glob("content/projects/**/*.html")?
         .offset("content")
-        .register()?;
+        .register();
 
     let page_radicals = radicals::build(config, templates, styles)?;
 
-    let task = config.task().using((templates, docs, styles, scripts, page_radicals)).merge(
-        |ctx, (templates, docs, styles, scripts, page_radicals)| {
+    let task = config
+        .task()
+        .using((templates, docs, styles, scripts, page_radicals))
+        .merge(|ctx, (templates, docs, styles, scripts, page_radicals)| {
             let styles_list = &[
                 styles.get("styles/styles.scss")?,
                 styles.get("styles/layouts/projects.scss")?,
@@ -64,25 +66,28 @@ pub fn add_projects(
                         }
 
                         let html = if doc.meta.path.extension() == Some("html") {
-                            render_raw_page(ctx, templates, &doc.matter.title, &doc.text, styles_list, &js)?
-                        } else {
-                            let parsed = crate::md::parse(
+                            render_raw_page(
+                                ctx,
+                                templates,
+                                &doc.matter.title,
                                 &doc.text,
-                                &doc.meta,
-                                None,
-                                None,
-                                None,
-                            )?;
-                            render_page(ctx, templates, &doc.matter.title, &parsed, styles_list, &js)?
+                                styles_list,
+                                &js,
+                            )?
+                        } else {
+                            let parsed = crate::md::parse(&doc.text, &doc.meta, None, None, None)?;
+                            render_page(
+                                ctx,
+                                templates,
+                                &doc.matter.title,
+                                &parsed,
+                                styles_list,
+                                &js,
+                            )?
                         };
 
                         let href = doc.meta.href.clone();
-                        pages.push(
-                            doc.output()
-                                .strip_prefix("content")?
-                                .html()
-                                .content(html),
-                        );
+                        pages.push(doc.output().strip_prefix("content")?.html().content(html));
                         (href, false)
                     }
                 };
@@ -122,8 +127,7 @@ pub fn add_projects(
             }
 
             Ok(pages)
-        },
-    );
+        });
 
     Ok(task)
 }

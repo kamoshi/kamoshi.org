@@ -27,13 +27,13 @@ pub fn build(
 ) -> Result<One<Output>, HauchiwaError> {
     let svelte = config
         .load_svelte::<Props>()
-        .entry("src/plugin/projects/radicals/App.svelte")
-        .watch("src/plugin/projects/radicals/")
-        .register()?;
+        .entry("src/plugin/projects/radicals/App.svelte")?
+        .watch("src/plugin/projects/radicals/")?
+        .register();
 
     let radicals = config
         .task()
-        .glob("src/plugin/projects/radicals/IDS.TXT")
+        .glob("src/plugin/projects/radicals/IDS.TXT")?
         .map(|_, store, input| {
             // 1. Prepare the filter set
             let set = CHARS.chars().map(|c| c.to_string()).collect::<HashSet<_>>();
@@ -89,49 +89,43 @@ pub fn build(
             let path = store.save(data.as_bytes(), "json")?;
 
             Ok(path)
-        })?;
+        });
 
-    let task =
-        config
-            .task()
-            .using((templates, styles, svelte, radicals))
-            .merge(|ctx, (templates, styles, svelte, radicals)| {
-                let Svelte {
-                    prerender,
-                    hydration,
-                    ..
-                } = svelte.get("src/plugin/projects/radicals/App.svelte")?;
+    let task = config
+        .task()
+        .using((templates, styles, svelte, radicals))
+        .merge(|ctx, (templates, styles, svelte, radicals)| {
+            let Svelte {
+                prerender,
+                hydration,
+                ..
+            } = svelte.get("src/plugin/projects/radicals/App.svelte")?;
 
-                let props = Props {
-                    url: radicals
-                        .get("src/plugin/projects/radicals/IDS.TXT")?
-                        .to_string(),
-                };
+            let props = Props {
+                url: radicals
+                    .get("src/plugin/projects/radicals/IDS.TXT")?
+                    .to_string(),
+            };
 
-                let styles = &[
-                    styles.get("styles/styles.scss")?,
-                    styles.get("styles/radicals.scss")?,
-                ];
+            let styles = &[
+                styles.get("styles/styles.scss")?,
+                styles.get("styles/radicals.scss")?,
+            ];
 
-                let scripts = &[hydration];
+            let scripts = &[hydration];
 
-                let prerendered = prerender(&props)?;
+            let prerendered = prerender(&props)?;
 
-                let page_props = PropsBare {
-                    head: crate::plugin::make_props_head(
-                        ctx,
-                        "Radicals".to_string(),
-                        styles,
-                        scripts,
-                    )?,
-                    content: Value::from_safe_string(format!("<main>{prerendered}</main>")),
-                };
+            let page_props = PropsBare {
+                head: crate::plugin::make_props_head(ctx, "Radicals".to_string(), styles, scripts)?,
+                content: Value::from_safe_string(format!("<main>{prerendered}</main>")),
+            };
 
-                let tmpl = templates.get_template("layouts/bare.jinja")?;
-                let html = tmpl.render(&page_props)?;
+            let tmpl = templates.get_template("layouts/bare.jinja")?;
+            let html = tmpl.render(&page_props)?;
 
-                Ok(Output::html("projects/radicals", html))
-            });
+            Ok(Output::html("projects/radicals", html))
+        });
 
     Ok(task)
 }

@@ -333,7 +333,7 @@ impl WikiLinkResolver {
     where
         T: Clone,
     {
-        for doc in docs {
+        for (_, doc) in docs {
             self.add(doc);
         }
     }

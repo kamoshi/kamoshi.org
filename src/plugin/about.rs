@@ -19,13 +19,13 @@ pub fn add_about(
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
     let docs = config
         .load_documents::<Post>()
-        .source("content/about/index.md")
+        .glob("content/about/index.md")?
         .offset("content")
-        .register()?;
+        .register();
 
     let cert = config
         .task()
-        .glob("content/about/*.asc")
+        .glob("content/about/*.asc")?
         .map(|_, _, input| {
             let data = input.read()?;
 
@@ -37,10 +37,12 @@ pub fn add_about(
                     .to_spaced_hex(),
                 data: String::from_utf8(data.to_vec())?.to_string(),
             })
-        })?;
+        });
 
-    let handle = config.task().using((templates, docs, cert, images, styles)).merge(
-        |ctx, (templates, docs, cert, images, styles)| {
+    let handle = config
+        .task()
+        .using((templates, docs, cert, images, styles))
+        .merge(|ctx, (templates, docs, cert, images, styles)| {
             let document = docs.get("content/about/index.md")?;
             let pubkey_ident = cert.get("content/about/pubkey-ident.asc")?;
             let pubkey_email = cert.get("content/about/pubkey-email.asc")?;
@@ -53,15 +55,22 @@ pub fn add_about(
             let parsed =
                 crate::md::parse(&document.text, &document.meta, None, Some(&images), None)?;
 
-            let html = render(ctx, templates, document, parsed, pubkey_ident, pubkey_email, styles)?;
+            let html = render(
+                ctx,
+                templates,
+                document,
+                parsed,
+                pubkey_ident,
+                pubkey_email,
+                styles,
+            )?;
 
             Ok(vec![
                 Output::html("about", html),
                 Output::binary("pubkey_ident.asc", pubkey_ident.data.clone()),
                 Output::binary("pubkey_email.asc", pubkey_email.data.clone()),
             ])
-        },
-    );
+        });
 
     Ok(handle)
 }
