@@ -25,3 +25,14 @@ Throughout the years that I could spend at the university I had the privilege
 to learn commonly used programming languages like C#, Java, TypeScript, Python,
 C++, and other useful technologies. I also went out of my own way to learn
 Haskell and Rust.
+
+
+## My setup
+
+| Device                | Why? |
+| --------------------- | --------------------- |
+| MacBook Air M4        | I used to think it would be situational, but now I use it more than the Arch Linux PC. It has a surprisingly powerful processor, which can be used to build Rust projects... |
+| Arch Linux PC         | A certified hood classic for toy AI projects, compiling things, or playing vidya games. |
+| NixOS VPS             | This $5/month bad boy from Hetzner can fit so much self-hosted SaaS in it. |
+| Pixel 9a              | A phone. At least it has no ads in the file manager like the Xiaomi ones. |
+| Kindle Paperwhite 5   | I use it to read e-books, which I exclusively sideload, so it's always in airplane mode. I never use Amazon, and the firmware is like 3 years old. |
