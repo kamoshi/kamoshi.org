@@ -2,7 +2,8 @@
   <div class="container">
     <div class="left">
       <div>Imagined and brought to life by me</div>
-      <div>© {{ footer.year }} Maciej Jur &lt;<a href="mailto:maciej@kamoshi.org">maciej@kamoshi.org</a>&gt;</div>
+      {% set email = "gro.ihsomak@jeicam" %}
+      <div>© {{ footer.year }} Maciej Jur &lt;<span class="obf-email">{% for c in email %}<span>{{ c }}</span>{% endfor %}</span>&gt;</div>
       <div>
         Available under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
       </div>

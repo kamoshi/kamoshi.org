@@ -80,6 +80,11 @@ $footer-row: 58rem;
     align-items: center;
   }
 
+  .obf-email {
+    display: inline-flex;
+    flex-direction: row-reverse;
+  }
+
   .left {
     font-weight: 500;
     gap: 0.3rem;
