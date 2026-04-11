@@ -2,11 +2,11 @@ html {
   --c-primary: oklch(50% 0.07 295);
   --c-bg-main: oklch(97% 0.01 80);
   --c-accent: oklch(90% 0.09 20);
-
-  /* &.dark {
-    --c-primary: oklch(45% 0.07 283);
-    --c-bg-main: oklch(14% 0.008 60);
-  } */
+  --c-bg-paper: oklch(0.99 0.003 85);
+  --c-on-bg-paper: hsl(0, 0%, 13%);
+  --c-bg-box: oklch(0.98 0.005 85);
+  --c-border-box: #d4c9b8;
+  --c-kanji-grid: hsl(0, 0%, 70%);
 
   font-family: var(--font-ui);
 }
@@ -64,44 +64,50 @@ html {
     url("/static/svg/momiji.svg") 0 0, url("/static/svg/momiji.svg") 16px 16px;
 }
 
-body.dark {
-  --c-primary-d: hsl(240, 21%, 35%);
-  --c-primary: hsl(240, 21%, 45%);
-  --c-primary-l: hsl(240, 21%, 55%);
+html.dark {
+  --c-bg-paper: oklch(0.2393 0 0);
+  --c-on-bg-paper: hsl(0, 0%, 87%);
+  --c-bg-box: oklch(0.2393 0 0);
+  --c-border-box: oklch(0.32 0 0);
+  --c-kanji-grid: hsl(0, 0%, 30%);
+  --c-primary-d: hsl(240, 18%, 28%);
+  --c-primary: hsl(240, 18%, 28%);
+  --c-primary-l: hsl(240, 18%, 50%);
   --c-secondary: hsl(2, 58%, 52%);
-  --c-white: hsl(0, 0%, 98%);
+  --c-white: hsl(0, 0%, 15%);
   --c-purewhite: hsl(0, 0%, 100%);
-  --c-black: hsl(0, 0%, 7%);
-  --c-text: hsl(0, 0%, 13%);
-  --c-text-muted: hsl(0, 0%, 40%);
+  --c-black: hsl(0, 0%, 93%);
+  --c-text: hsl(0, 0%, 87%);
+  --c-text-muted: hsl(0, 0%, 60%);
   --c-text-subtle: hsl(0, 0%, 50%);
-  --c-footer-bg: hsl(0, 0%, 93%);
-  --c-footer-text: hsl(0, 0%, 35%);
-  --c-timeline-bg: hsl(0, 0%, 78%);
-  --c-shadow: 0deg 0% 76%;
-  --c-bg-main: hsl(0, 0%, 98%);
-  --c-bg-subtle: hsl(0, 0%, 95%);
-  --c-border: hsl(0, 0%, 86%);
-  --c-border-muted: hsl(0, 0%, 83%);
-  --c-border-faint: hsl(0, 0%, 92%);
-  --tag-bg: hsl(240, 100%, 93%);
-  --tag-color: hsl(240, 50%, 22%);
-  --mb-c-border: #eff3f4;
-  --mb-c-text: #0f1419;
-  --mb-c-text-meta: #536471;
-  --mb-c-bg-hover: #f7f9f9;
+  --c-footer-bg: hsl(0, 0%, 12%);
+  --c-footer-text: hsl(0, 0%, 65%);
+  --c-timeline-bg: hsl(0, 0%, 30%);
+  --c-shadow: 0deg 0% 5%;
+  --c-bg-main: #171717;
+  --c-bg-subtle: hsl(0, 0%, 14%);
+  --c-border: hsl(0, 0%, 22%);
+  --c-border-muted: hsl(0, 0%, 26%);
+  --c-border-faint: hsl(0, 0%, 18%);
+  --tag-bg: hsl(240, 30%, 20%);
+  --tag-color: hsl(240, 60%, 75%);
+  --mb-c-border: #2f3336;
+  --mb-c-text: #e7e9ea;
+  --mb-c-text-meta: #71767b;
+  --mb-c-bg-hover: #16181c;
   --mb-c-link: #1d9bf0;
 }
 
 .k-box {
-  border: 1px solid #d4c9b8;
-  background: oklch(0.98 0.005 85);
+  border: 1px solid var(--c-border-box);
+  background: var(--c-bg-box);
   border-radius: 4px;
 }
 
 .k-paper {
   padding: 1rem;
-  background: oklch(0.99 0.003 85);
+  background: var(--c-bg-paper);
+  color: var(--c-on-bg-paper);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 

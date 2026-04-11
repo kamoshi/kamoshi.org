@@ -46,6 +46,7 @@ content/.stfolder/
 !templates/
 !templates/**/
 !templates/**/*.jinja
+!templates/**/*.svg
 
 !deno.json
 !deno.lock

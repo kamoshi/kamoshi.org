@@ -66,7 +66,8 @@ async function getKanjiSVG(char: string): Promise<string> {
 
   return text
     .substring(text.indexOf('<svg'))
-    .replaceAll(/<g id="kvg:StrokeNumbers[\s\S]*?<\/g>/g, '');
+    .replaceAll(/<g id="kvg:StrokeNumbers[\s\S]*?<\/g>/g, '')
+    .replaceAll('stroke:#000000', 'stroke:currentColor');
 }
 
 class KanjiOfDay extends HTMLElement {

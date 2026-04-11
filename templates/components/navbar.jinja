@@ -25,14 +25,14 @@
       </a>
     </li>
     {% endfor %}
-    <button id="theme-toggle" class="p-nav__theme-toggle" aria-label="Toggle Dark Mode" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-left: auto; margin-right: 1rem;">
-      🌓
-    </button>
   </menu>
+
+  {% include "components/theme.jinja" %}
 </nav>
 
 <script>
-  document.getElementById('theme-toggle').addEventListener('click', () => {
+  const toggle = document.getElementById('theme-toggle');
+  toggle.addEventListener('click', () => {
     const isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   });

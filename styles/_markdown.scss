@@ -79,7 +79,7 @@
   }
 
   a {
-    color: var(--c-primary);
+    color: var(--c-secondary);
     font-family: var(--font-heading);
     font-weight: 500;
     font-style: italic;
@@ -153,7 +153,7 @@
 
   :not(pre) > code {
     padding-inline: 0.25em;
-    background-color: var(--c-purewhite);
+    background-color: var(--c-bg-paper);
     border-radius: 0.33em;
     border: 1px dashed var(--c-border-muted);
   }

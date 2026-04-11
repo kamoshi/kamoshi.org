@@ -21,21 +21,21 @@
     padding: 0.1em;
     height: 6rem;
     width: 6rem;
-    border: 1px dashed black;
+    border: 1px dashed var(--c-kanji-grid);
 
     &::before {
       top: -0.01em;
       left: 3rem;
       width: 0;
       height: 100%;
-      border-right: 1px dashed #000;
+      border-right: 1px dashed var(--c-kanji-grid);
     }
     &::after {
       top: 3em;
       left: -0.01em;
       width: 100%;
       height: 0;
-      border-top: 1px dashed #000;
+      border-top: 1px dashed var(--c-kanji-grid);
     }
     &::before,
     &::after {
@@ -60,6 +60,11 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    color: #000;
+
+    html.dark & {
+      color: var(--kngw-fujiWhite);
+    }
   }
 
   .table {

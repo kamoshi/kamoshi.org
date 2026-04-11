@@ -10,6 +10,17 @@
   --row-hover: #fdf9f6;
 }
 
+html.dark {
+  --ink: hsl(0, 0%, 87%);
+  --paper: oklch(0.27 0 0);
+  --rule: oklch(0.32 0 0);
+  --accent: hsl(2, 58%, 62%);
+  --muted: hsl(0, 0%, 55%);
+  --white: oklch(0.2393 0 0);
+  --row-border: oklch(0.26 0 0);
+  --row-hover: oklch(0.26 0 0);
+}
+
 /* --- Layout & Typography --- */
 .page-list-main {
   padding: 1rem; /* Updated to 1rem */

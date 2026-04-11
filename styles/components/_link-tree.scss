@@ -1,3 +1,65 @@
+.wiki-tree {
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  ul ul {
+    padding-left: 0.85rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    border-left: 1px solid var(--c-border-faint);
+  }
+
+  a {
+    display: block;
+    text-decoration: none;
+    color: var(--c-text-muted);
+    line-height: 1.4;
+    padding-block: 0.15rem;
+    transition:
+      color 0.15s ease,
+      transform 0.15s ease;
+
+    &:hover {
+      color: var(--c-text);
+      transform: translateX(2px);
+    }
+
+    &.current {
+      color: var(--c-secondary);
+      font-weight: 600;
+      position: relative;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: -0.85rem;
+        top: 0.15rem;
+        bottom: 0.15rem;
+        width: 2px;
+        background-color: var(--c-secondary);
+        border-radius: 2px;
+      }
+    }
+  }
+
+  span {
+    display: block;
+    color: var(--c-text);
+    font-weight: 500;
+    line-height: 1.4;
+    padding-block: 0.15rem;
+  }
+}
+
 .link-tree {
   position: relative;
   max-height: min(100vh, 100%);
@@ -22,7 +84,7 @@
       text-overflow: ellipsis;
 
       &.link {
-        color: var(--c-primary);
+        color: var(--c-secondary);
       }
 
       &:not(.current):hover {
@@ -30,7 +92,7 @@
       }
 
       &.current {
-        background-color: var(--c-primary);
+        background-color: var(--c-secondary);
         border: unset;
         border-radius: 0.33em;
         color: var(--c-purewhite);

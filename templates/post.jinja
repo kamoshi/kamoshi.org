@@ -17,8 +17,8 @@
       <header>
         <h2>Bibliography</h2>
         {% if bibliography.library_path %}
-        <a class="icon-btn" href="{{ bibliography.library_path }}" download="bibliography.bib" title="Download BibTeX">
-          <img src="/static/svg/lucide/file-down.svg" alt="Download">
+        <a class="icon-btn" href="{{ bibliography.library_path }}" download="bibliography.bib" aria-label="Download BibTeX">
+          {% include "assets/lucide/file-down.svg" %}
         </a>
         {% endif %}
       </header>
@@ -34,22 +34,26 @@
     <section class="k-box metadata">
       <h2>Metadata</h2>
       <div>
-        <img src="/static/svg/lucide/file-plus-2.svg" title="Added">
+        {% include "assets/lucide/file-plus-2.svg" %}
+        <span class="sr-only">Added</span>
         <time datetime="{{ metadata.date_added_iso }}">{{ metadata.date_added }}</time>
       </div>
       {% if metadata.updated %}
       <div>
-        <img src="/static/svg/lucide/file-clock.svg" title="Updated">
+        {% include "assets/lucide/file-clock.svg" %}
+        <span class="sr-only">Updated</span>
         <time datetime="{{ metadata.updated.date_iso }}">{{ metadata.updated.date }}</time>
       </div>
       <div>
-        <img src="/static/svg/lucide/git-graph.svg" title="Link to commit">
+        {% include "assets/lucide/git-graph.svg" %}
+        <span class="sr-only">Commit</span>
         <a href="{{ metadata.updated.hash_url }}">{{ metadata.updated.hash }}</a>
       </div>
       {% endif %}
       {% if metadata.tags %}
       <div class="tags">
-        <img src="/static/svg/lucide/tag.svg" title="Tags">
+        {% include "assets/lucide/tag.svg" %}
+        <span class="sr-only">Tags</span>
         <ul>
           {% for tag in metadata.tags %}
           <li><a href="/tags/{{ tag }}">{{ tag }}</a></li>

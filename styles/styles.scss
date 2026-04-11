@@ -6,7 +6,7 @@
 @use "markdown";
 
 @use "syntax/stackoverflow";
-/* @use "syntax/kanagawa"; */
+@use "syntax/kanagawa";
 
 // Components
 @use "components/link-tree";

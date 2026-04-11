@@ -20,7 +20,7 @@
   .project-list-tile {
     flex: 1 1 calc(33.333% - 1rem); /* Responsive: 3 columns by default */
     max-width: 300px;
-    background: var(--c-purewhite);
+    background: var(--c-bg-paper);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 1rem;
@@ -52,6 +52,10 @@
         width: 24px;
         height: 24px;
         margin: 0.25rem;
+      }
+
+      html.dark & img[src*="/rust"] {
+        filter: invert(0.8);
       }
     }
 

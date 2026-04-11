@@ -37,7 +37,7 @@ main {
 
 .paper {
   padding: 1rem;
-  background-color: var(--c-purewhite);
+  background-color: var(--c-bg-paper);
 
   @media (min-width: $bp-m) {
     border-radius: 8px;
@@ -54,7 +54,7 @@ main {
 
 .bibliography {
   padding: 1rem;
-  background-color: var(--c-purewhite);
+  background-color: var(--c-bg-paper);
 
   @media (min-width: $bp-m) {
     margin-top: 1em;
@@ -124,7 +124,7 @@ main {
 
 .backlinks {
   padding: 1rem;
-  background-color: var(--c-purewhite);
+  background-color: var(--c-bg-paper);
 
   @media (min-width: $bp-m) {
     margin-top: 1em;
@@ -212,7 +212,7 @@ figure {
   }
 
   a {
-    color: var(--c-primary);
+    color: var(--c-secondary);
   }
 
   .tags {
@@ -234,7 +234,7 @@ figure {
 
     li a {
       display: inline-block;
-      background-color: var(--c-accent);
+      background-color: var(--tag-bg);
       color: var(--tag-color);
       padding: 0.2rem 0.5rem;
       border-radius: 0.3rem;
@@ -244,8 +244,40 @@ figure {
   }
 }
 
+.wiki-sidebar {
+  display: none;
+
+  @media (min-width: $bp-m) {
+    display: unset;
+    grid-area: left;
+    margin-block: 1rem;
+  }
+
+  @media (min-width: $bp-l) {
+    margin-block: 2rem;
+  }
+
+  section {
+    position: sticky;
+    top: 2rem;
+    max-height: calc(100vh - 4rem);
+    padding: 0 1rem 1rem 0;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--c-border-muted);
+      border-radius: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  }
+}
+
 .outline {
-  height: 100%;
   display: none;
 
   @media (min-width: $bp-m) {
@@ -352,7 +384,7 @@ figure {
 
   ul a.active,
   ul .active > a {
-    color: var(--c-primary);
+    color: var(--c-secondary);
     font-weight: 600;
     position: relative;
 
@@ -364,7 +396,7 @@ figure {
       top: 0.15rem;
       bottom: 0.15rem;
       width: 2px;
-      background-color: var(--c-primary);
+      background-color: var(--c-secondary);
       border-radius: 2px;
     }
   }

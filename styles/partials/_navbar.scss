@@ -3,7 +3,7 @@
 %burger-line {
   height: 0.15em;
   width: 100%;
-  background-color: var(--c-white);
+  background-color: var(--c-purewhite);
 }
 
 %burger-wing {
@@ -35,6 +35,7 @@
 }
 
 .p-nav {
+  position: relative;
   background: var(--momiji);
   background-color: var(--c-primary);
 
@@ -120,6 +121,66 @@
       }
     }
   }
+}
+
+.p-nav__theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4em;
+  height: 4em;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--c-purewhite);
+  opacity: 0.75;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+
+  // On mobile: sit in the bar row, to the left of the burger
+  position: absolute;
+  right: 4em; // burger is 4em wide
+  top: 0;
+
+  @media (min-width: consts.$bp-md) {
+    position: static;
+    margin-left: auto;
+    align-self: center;
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  &:hover {
+    opacity: 1;
+    background-color: oklch(100% 0 0 / 0.1);
+  }
+}
+
+.p-nav__theme-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  position: absolute;
+  transition: opacity 0.2s ease, transform 0.3s ease;
+}
+
+// In light mode: show moon (click to go dark), hide sun
+.p-nav__theme-icon--sun {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.8);
+}
+.p-nav__theme-icon--moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+// In dark mode: show sun (click to go light), hide moon
+html.dark .p-nav__theme-icon--sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+html.dark .p-nav__theme-icon--moon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.8);
 }
 
 #navigation menu {

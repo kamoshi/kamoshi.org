@@ -1,0 +1,31 @@
+main {
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 2rem 1rem;
+
+  h1 {
+    margin-bottom: 1.5rem;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+  }
+
+  a {
+    display: inline-block;
+    background-color: var(--tag-bg);
+    color: var(--tag-color);
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.3rem;
+    text-decoration: none;
+    font-size: 0.9rem;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
