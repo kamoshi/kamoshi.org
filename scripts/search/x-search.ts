@@ -42,6 +42,9 @@ export class XSearch extends LitElement {
       padding: 0.5em 1em;
       margin-bottom: 0.5em;
       box-sizing: border-box;
+      background-color: var(--c-bg-paper);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
     }
 
     section {
