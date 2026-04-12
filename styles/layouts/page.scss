@@ -147,12 +147,14 @@ main {
   @media (min-width: $bp-l) {
     display: unset;
     grid-area: info;
+    height: fit-content;
     margin-block: 2rem;
     margin-inline: unset;
+    clear: both;
   }
 }
 
-.marginnote {
+.sidenote {
   display: block;
   margin: 1em 1.5em;
   padding-block: 0.5em;
@@ -169,11 +171,13 @@ main {
   }
 
   @media (min-width: $bp-l) {
-    margin: 1em -16rem;
+    z-index: 1;
+    max-width: 16rem;
+    margin: 1rem -18rem 1rem 0;
   }
 
   a {
-    color: var(--c-primary);
+    color: var(--c-secondary);
   }
 }
 

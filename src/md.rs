@@ -64,8 +64,9 @@ fn get_options() -> Options<'static> {
     options.extension.table = true;
     options.extension.tasklist = true;
     options.extension.wikilinks_title_after_pipe = true;
-    options.extension.header_ids = Some("".into());
+    options.extension.header_id_prefix = Some("".into());
     options.extension.footnotes = true;
+    options.extension.block_directive = true;
 
     options.render.r#unsafe = true;
 
