@@ -3,3 +3,9 @@
 {% block main %}
   <main>{{ content }}</main>
 {% endblock %}
+
+{% block footer %}
+  {% if not hide_footer %}
+    {% include "components/footer.jinja" %}
+  {% endif %}
+{% endblock %}

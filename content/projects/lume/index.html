@@ -1,0 +1,38 @@
+---
+title: Lume
+date: 2026-04-14T15:13:20.117Z
+tech: [rust, wasm]
+desc: >
+  Minimal fully inferred functional language with row type polymorphism, which
+  compiles to JS and Lua. Built with AI agents, just for fun.
+hide_footer: true
+---
+
+<div id="lume-playground">
+  <lume-editor></lume-editor>
+</div>
+
+<style>
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #lume-playground {
+    height: 100%;
+    padding: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  lume-editor {
+    display: block;
+    height: 100%;
+  }
+</style>

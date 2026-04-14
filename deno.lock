@@ -2,12 +2,17 @@
   "version": "5",
   "specifiers": {
     "npm:@codemirror/commands@^6.10.3": "6.10.3",
+    "npm:@codemirror/lang-javascript@^6.2.5": "6.2.5",
+    "npm:@codemirror/language@^6.12.3": "6.12.3",
+    "npm:@codemirror/legacy-modes@^6.5.2": "6.5.2",
+    "npm:@codemirror/lint@^6.9.5": "6.9.5",
     "npm:@codemirror/state@^6.6.0": "6.6.0",
     "npm:@codemirror/view@^6.40.0": "6.40.0",
+    "npm:@lezer/highlight@^1.2.3": "1.2.3",
     "npm:@types/leaflet.markercluster@^1.5.6": "1.5.6",
     "npm:@types/leaflet@^1.9.21": "1.9.21",
     "npm:@types/reveal.js@^5.2.2": "5.2.2",
-    "npm:codemirror@6.0.2": "6.0.2",
+    "npm:codemirror@^6.0.2": "6.0.2",
     "npm:d3@^7.9.0": "7.9.0",
     "npm:esbuild-svelte@0.9.4": "0.9.4_esbuild@0.27.2_svelte@5.46.1__acorn@8.16.0_acorn@8.16.0",
     "npm:esbuild@0.25.11": "0.25.11",
@@ -21,8 +26,8 @@
     "npm:svelte@5.46.1": "5.46.1"
   },
   "npm": {
-    "@codemirror/autocomplete@6.20.0": {
-      "integrity": "sha512-bOwvTOIJcG5FVo5gUUupiwYh8MioPLQ4UcqbcRf7UQ98X90tCa9E1kZ3Z7tqwpZxYyOvh1YTYbmZE9RTfTp5hg==",
+    "@codemirror/autocomplete@6.20.1": {
+      "integrity": "sha512-1cvg3Vz1dSSToCNlJfRA2WSI4ht3K+WplO0UMOgmUYPivCyy2oueZY6Lx7M9wThm7SDUBViRmuT+OG/i8+ON9A==",
       "dependencies": [
         "@codemirror/language",
         "@codemirror/state",
@@ -39,8 +44,20 @@
         "@lezer/common"
       ]
     },
-    "@codemirror/language@6.12.1": {
-      "integrity": "sha512-Fa6xkSiuGKc8XC8Cn96T+TQHYj4ZZ7RdFmXA3i9xe/3hLHfwPZdM+dqfX0Cp0zQklBKhVD8Yzc8LS45rkqcwpQ==",
+    "@codemirror/lang-javascript@6.2.5": {
+      "integrity": "sha512-zD4e5mS+50htS7F+TYjBPsiIFGanfVqg4HyUz6WNFikgOPf2BgKlx+TQedI1w6n/IqRBVBbBWmGFdLB/7uxO4A==",
+      "dependencies": [
+        "@codemirror/autocomplete",
+        "@codemirror/language",
+        "@codemirror/lint",
+        "@codemirror/state",
+        "@codemirror/view",
+        "@lezer/common",
+        "@lezer/javascript"
+      ]
+    },
+    "@codemirror/language@6.12.3": {
+      "integrity": "sha512-QwCZW6Tt1siP37Jet9Tb02Zs81TQt6qQrZR2H+eGMcFsL1zMrk2/b9CLC7/9ieP1fjIUMgviLWMmgiHoJrj+ZA==",
       "dependencies": [
         "@codemirror/state",
         "@codemirror/view",
@@ -50,16 +67,22 @@
         "style-mod"
       ]
     },
-    "@codemirror/lint@6.9.2": {
-      "integrity": "sha512-sv3DylBiIyi+xKwRCJAAsBZZZWo82shJ/RTMymLabAdtbkV5cSKwWDeCgtUq3v8flTaXS2y1kKkICuRYtUswyQ==",
+    "@codemirror/legacy-modes@6.5.2": {
+      "integrity": "sha512-/jJbwSTazlQEDOQw2FJ8LEEKVS72pU0lx6oM54kGpL8t/NJ2Jda3CZ4pcltiKTdqYSRk3ug1B3pil1gsjA6+8Q==",
+      "dependencies": [
+        "@codemirror/language"
+      ]
+    },
+    "@codemirror/lint@6.9.5": {
+      "integrity": "sha512-GElsbU9G7QT9xXhpUg1zWGmftA/7jamh+7+ydKRuT0ORpWS3wOSP0yT1FOlIZa7mIJjpVPipErsyvVqB9cfTFA==",
       "dependencies": [
         "@codemirror/state",
         "@codemirror/view",
         "crelt"
       ]
     },
-    "@codemirror/search@6.5.11": {
-      "integrity": "sha512-KmWepDE6jUdL6n8cAAqIpRmLPBZ5ZKnicE8oGU/s3QrAVID+0VhLFrzUucVKHG5035/BSykhExDL/Xm7dHthiA==",
+    "@codemirror/search@6.6.0": {
+      "integrity": "sha512-koFuNXcDvyyotWcgOnZGmY7LZqEOXZaaxD/j6n18TCLx2/9HieZJ5H6hs1g8FiRxBD0DNfs0nXn17g872RmYdw==",
       "dependencies": [
         "@codemirror/state",
         "@codemirror/view",
@@ -375,6 +398,14 @@
       "integrity": "sha512-qXdH7UqTvGfdVBINrgKhDsVTJTxactNNxLk7+UMwZhU13lMHaOBlJe9Vqp907ya56Y3+ed2tlqzys7jDkTmW0g==",
       "dependencies": [
         "@lezer/common"
+      ]
+    },
+    "@lezer/javascript@1.5.4": {
+      "integrity": "sha512-vvYx3MhWqeZtGPwDStM2dwgljd5smolYD2lR2UyFcHfxbBQebqx8yjmFmxtJ/E6nN6u1D9srOiVWm3Rb4tmcUA==",
+      "dependencies": [
+        "@lezer/common",
+        "@lezer/highlight",
+        "@lezer/lr"
       ]
     },
     "@lezer/lr@1.4.5": {
@@ -928,12 +959,17 @@
   "workspace": {
     "dependencies": [
       "npm:@codemirror/commands@^6.10.3",
+      "npm:@codemirror/lang-javascript@^6.2.5",
+      "npm:@codemirror/language@^6.12.3",
+      "npm:@codemirror/legacy-modes@^6.5.2",
+      "npm:@codemirror/lint@^6.9.5",
       "npm:@codemirror/state@^6.6.0",
       "npm:@codemirror/view@^6.40.0",
+      "npm:@lezer/highlight@^1.2.3",
       "npm:@types/leaflet.markercluster@^1.5.6",
       "npm:@types/leaflet@^1.9.21",
       "npm:@types/reveal.js@^5.2.2",
-      "npm:codemirror@6.0.2",
+      "npm:codemirror@^6.0.2",
       "npm:d3@^7.9.0",
       "npm:leaflet.markercluster@^1.5.3",
       "npm:leaflet@^1.9.4",

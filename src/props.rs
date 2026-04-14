@@ -228,6 +228,7 @@ pub struct PropsRawPage {
     pub navbar: PropsNavbar,
     pub footer: PropsFooter,
     pub content: Value,
+    pub hide_footer: bool,
 }
 
 #[derive(Serialize)]

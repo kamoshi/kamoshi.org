@@ -105,6 +105,8 @@ pub struct Project {
     pub link: Option<String>,
     pub desc: Option<String>,
     pub scripts: Option<Vec<String>>,
+    /// When true, the page footer is hidden
+    pub hide_footer: Option<bool>,
 }
 
 /// Represents a wiki page

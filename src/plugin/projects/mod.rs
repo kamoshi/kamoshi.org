@@ -73,6 +73,7 @@ pub fn add_projects(
                                 &doc.text,
                                 styles_list,
                                 &js,
+                                doc.matter.hide_footer.unwrap_or(false),
                             )?
                         } else {
                             let parsed = crate::md::parse(&doc.text, &doc.meta, None, None, None)?;
@@ -189,12 +190,14 @@ pub fn render_raw_page(
     html: &str,
     styles: &[&Stylesheet],
     scripts: &[&Script],
+    hide_footer: bool,
 ) -> Result<String, RuntimeError> {
     let props = PropsRawPage {
         head: super::make_props_head(ctx, title.to_string(), styles, scripts)?,
         navbar: super::make_props_navbar(),
         footer: super::make_props_footer(ctx),
         content: Value::from_safe_string(html.to_string()),
+        hide_footer,
     };
 
     let tmpl = templates.get_template("project_page_html.jinja")?;

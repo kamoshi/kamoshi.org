@@ -1,0 +1,228 @@
+import type { Diagnostic } from '@codemirror/lint';
+import { linter, lintGutter } from '@codemirror/lint';
+import { HighlightStyle, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
+import { tags as t } from '@lezer/highlight';
+import { EditorView, hoverTooltip } from '@codemirror/view';
+import { basicSetup } from 'codemirror';
+import { css, html, LitElement } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import { wasmReady, wasmLint, wasmTypeAt } from './wasm';
+
+// ── Language definition ────────────────────────────────────────────────────
+
+const KEYWORDS = /^(let|type|use|if|then|else|in)\b/;
+const BUILTINS = /^(map|filter|fold|sum|average|sort|show|print)\b/;
+const TYPES    = /^(Num|Text|Bool|List|Maybe|Result)\b/;
+const CTORS    = /^[A-Z]\w*/;
+
+export const lumeLang = StreamLanguage.define({
+  token(stream) {
+    if (stream.match('--')) { stream.skipToEnd(); return 'comment'; }
+    if (stream.match(/"(?:[^"\\]|\\.)*"/)) return 'string';
+    if (stream.match(/^[0-9]+(?:\.[0-9]+)?/)) return 'number';
+    if (stream.match(KEYWORDS)) return 'keyword';
+    if (stream.match(BUILTINS)) return 'variableName.standard';
+    if (stream.match(TYPES)) return 'typeName';
+    const prev = stream.string[stream.pos - 1] ?? '';
+    if (!/\w/.test(prev) && stream.match(CTORS)) return 'className';
+    if (stream.match(/^(?:\|>|\?>|->|\+\+|==|!=|<=|>=|[+\-*/<>=|])/)) return 'operator';
+    if (stream.match(/^[{}()[\],.:#]/)) return 'punctuation';
+    stream.next();
+    return null;
+  },
+});
+
+export const lumeHighlight = syntaxHighlighting(
+  HighlightStyle.define([
+    { tag: t.comment,                  color: 'var(--hl-comment)',  fontStyle: 'italic' },
+    { tag: t.string,                   color: 'var(--hl-string)' },
+    { tag: t.number,                   color: 'var(--hl-number)' },
+    { tag: t.keyword,                  color: 'var(--hl-keyword)',  fontWeight: 'bold' },
+    { tag: t.standard(t.variableName), color: 'var(--hl-builtin)' },
+    { tag: t.typeName,                 color: 'var(--hl-type)',     fontWeight: 'bold' },
+    { tag: t.className,                color: 'var(--hl-ctor)' },
+    { tag: t.operator,                 color: 'var(--hl-operator)' },
+    { tag: t.punctuation,              color: 'var(--hl-punct)' },
+  ])
+);
+
+// ── CM extensions ──────────────────────────────────────────────────────────
+
+function lumeLinter() {
+  return linter(
+    (view): readonly Diagnostic[] => {
+      if (!wasmReady) return [];
+      const src = view.state.doc.toString();
+      let raw: { from: number; to: number; message: string }[];
+      try {
+        raw = JSON.parse(wasmLint(src));
+      } catch {
+        return [];
+      }
+      return raw.map((d) => ({
+        from: d.from,
+        to: Math.max(d.to, d.from + 1),
+        severity: 'error' as const,
+        message: d.message,
+      }));
+    },
+    { delay: 0 },
+  );
+}
+
+function lumeHover() {
+  return hoverTooltip((view, pos) => {
+    if (!wasmReady) return null;
+    const src = view.state.doc.toString();
+    const ty = wasmTypeAt(src, pos);
+    if (!ty) return null;
+    return {
+      pos,
+      create() {
+        const dom = document.createElement('div');
+        dom.className = 'cm-lume-type';
+        dom.textContent = ty;
+        return { dom };
+      },
+    };
+  });
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+const hlVars = css`
+  :host {
+    --hl-comment:  var(--so-comment);
+    --hl-string:   var(--so-green);
+    --hl-number:   var(--so-orange);
+    --hl-keyword:  var(--so-blue);
+    --hl-builtin:  var(--so-orange);
+    --hl-type:     var(--so-orange);
+    --hl-ctor:     var(--so-purple);
+    --hl-operator: var(--so-fg);
+    --hl-punct:    var(--so-gray);
+  }
+  :host(.dark) {
+    --hl-comment:  var(--kngw-fujiGray);
+    --hl-string:   var(--kngw-springGreen);
+    --hl-number:   var(--kngw-sakuraPink);
+    --hl-keyword:  var(--kngw-oniViolet);
+    --hl-builtin:  var(--kngw-springBlue);
+    --hl-type:     var(--kngw-waveAqua2);
+    --hl-ctor:     var(--kngw-surimiOrange);
+    --hl-operator: var(--kngw-boatYellow2);
+    --hl-punct:    var(--kngw-springViolet2);
+  }
+`;
+
+@customElement('x-editor')
+export class XEditor extends LitElement {
+  static styles = [
+    hlVars,
+    css`
+      :host {
+        display: block;
+        height: 100%;
+      }
+
+      .wrap {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .cm-editor {
+        height: 100%;
+        background-color: var(--so-bg);
+        color: var(--so-fg);
+      }
+
+      .cm-gutters {
+        background-color: var(--so-bg);
+        border-right-color: var(--so-border);
+        color: var(--so-comment);
+      }
+
+      :host(.dark) .cm-editor {
+        background-color: var(--kngw-sumiInk1);
+        color: var(--kngw-fujiWhite);
+      }
+
+      :host(.dark) .cm-gutters {
+        background-color: var(--kngw-sumiInk1);
+        border-right-color: var(--kngw-sumiInk3);
+        color: var(--kngw-sumiInk4);
+      }
+
+      .cm-scroller {
+        font-family: ui-monospace, monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        overflow: auto;
+      }
+
+      .cm-lume-type {
+        padding: 2px 6px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        background: var(--c-bg-paper, #f5f5f5);
+        border: 1px solid var(--c-border, #d0d0d0);
+        border-radius: 3px;
+      }
+    `,
+  ];
+
+  @property({ attribute: false }) initialDoc = '';
+
+  private view?: EditorView;
+  private themeObserver = new MutationObserver(() => this.syncDark());
+
+  private syncDark() {
+    this.classList.toggle('dark', document.documentElement.classList.contains('dark'));
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    this.syncDark();
+  }
+
+  firstUpdated() {
+    const wrap = this.shadowRoot!.querySelector('.wrap') as HTMLElement;
+    this.view = new EditorView({
+      doc: this.initialDoc,
+      extensions: [
+        basicSetup,
+        lumeLang,
+        lumeHighlight,
+        lintGutter(),
+        lumeLinter(),
+        lumeHover(),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            this.dispatchEvent(new CustomEvent('lume-change', {
+              detail: update.state.doc.toString(),
+              bubbles: true,
+              composed: true,
+            }));
+          }
+        }),
+      ],
+      parent: wrap,
+      root: this.shadowRoot!,
+    });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.themeObserver.disconnect();
+    this.view?.destroy();
+  }
+
+  getDoc(): string {
+    return this.view?.state.doc.toString() ?? '';
+  }
+
+  render() {
+    return html`<div class="wrap"></div>`;
+  }
+}
