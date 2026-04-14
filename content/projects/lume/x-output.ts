@@ -1,5 +1,5 @@
-import { StreamLanguage } from '@codemirror/language';
 import { javascript } from '@codemirror/lang-javascript';
+import { StreamLanguage } from '@codemirror/language';
 import { lua } from '@codemirror/legacy-modes/mode/lua';
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
@@ -116,19 +116,25 @@ export class XOutput extends LitElement {
   `;
 
   @property({ attribute: false }) output: Output = { kind: 'ok', code: '' };
-  @state() private tab: Tab = 'js';
+  @state() private tab: Tab = 'lua';
 
   private outputView?: EditorView;
   private langCompartment = new Compartment();
   private themeObserver = new MutationObserver(() => this.syncDark());
 
   private syncDark() {
-    this.classList.toggle('dark', document.documentElement.classList.contains('dark'));
+    this.classList.toggle(
+      'dark',
+      document.documentElement.classList.contains('dark'),
+    );
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    this.themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
     this.syncDark();
   }
 
@@ -154,7 +160,9 @@ export class XOutput extends LitElement {
     if (changed.has('output') && this.output.kind === 'ok') {
       const ov = this.outputView;
       if (!ov) return;
-      ov.dispatch({ changes: { from: 0, to: ov.state.doc.length, insert: this.output.code } });
+      ov.dispatch({
+        changes: { from: 0, to: ov.state.doc.length, insert: this.output.code },
+      });
     }
   }
 
@@ -173,24 +181,28 @@ export class XOutput extends LitElement {
     this.outputView?.dispatch({
       effects: this.langCompartment.reconfigure(this.langExtension(tab)),
     });
-    this.dispatchEvent(new CustomEvent('tab-change', {
-      detail: tab,
-      bubbles: true,
-      composed: true,
-    }));
+    this.dispatchEvent(
+      new CustomEvent('tab-change', {
+        detail: tab,
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   render() {
     return html`
       <div class="tabs">
-        <button class="tab" aria-selected=${this.tab === 'js'}  @click=${() => this.selectTab('js')}>JS</button>
         <button class="tab" aria-selected=${this.tab === 'lua'} @click=${() => this.selectTab('lua')}>Lua</button>
+        <button class="tab" aria-selected=${this.tab === 'js'}  @click=${() => this.selectTab('js')}>JS</button>
       </div>
       <div class="body">
         <div class="output-view" ?hidden=${this.output.kind === 'err'}></div>
-        ${this.output.kind === 'err'
-          ? html`<pre class="error">${this.output.message}</pre>`
-          : ''}
+        ${
+          this.output.kind === 'err'
+            ? html`<pre class="error">${this.output.message}</pre>`
+            : ''
+        }
       </div>
     `;
   }

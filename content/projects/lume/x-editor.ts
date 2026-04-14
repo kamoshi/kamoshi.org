@@ -1,23 +1,30 @@
+import {
+  HighlightStyle,
+  StreamLanguage,
+  syntaxHighlighting,
+} from '@codemirror/language';
 import type { Diagnostic } from '@codemirror/lint';
 import { linter, lintGutter } from '@codemirror/lint';
-import { HighlightStyle, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
-import { tags as t } from '@lezer/highlight';
 import { EditorView, hoverTooltip } from '@codemirror/view';
+import { tags as t } from '@lezer/highlight';
 import { basicSetup } from 'codemirror';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { wasmReady, wasmLint, wasmTypeAt } from './wasm';
+import { wasmLint, wasmReady, wasmTypeAt } from './wasm';
 
 // ── Language definition ────────────────────────────────────────────────────
 
-const KEYWORDS = /^(let|type|use|if|then|else|in)\b/;
+const KEYWORDS = /^(let|type|use|if|then|else|in|pub)\b/;
 const BUILTINS = /^(map|filter|fold|sum|average|sort|show|print)\b/;
-const TYPES    = /^(Num|Text|Bool|List|Maybe|Result)\b/;
-const CTORS    = /^[A-Z]\w*/;
+const TYPES = /^(Num|Text|Bool|List|Maybe|Result)\b/;
+const CTORS = /^[A-Z]\w*/;
 
 export const lumeLang = StreamLanguage.define({
   token(stream) {
-    if (stream.match('--')) { stream.skipToEnd(); return 'comment'; }
+    if (stream.match('--')) {
+      stream.skipToEnd();
+      return 'comment';
+    }
     if (stream.match(/"(?:[^"\\]|\\.)*"/)) return 'string';
     if (stream.match(/^[0-9]+(?:\.[0-9]+)?/)) return 'number';
     if (stream.match(KEYWORDS)) return 'keyword';
@@ -25,7 +32,8 @@ export const lumeLang = StreamLanguage.define({
     if (stream.match(TYPES)) return 'typeName';
     const prev = stream.string[stream.pos - 1] ?? '';
     if (!/\w/.test(prev) && stream.match(CTORS)) return 'className';
-    if (stream.match(/^(?:\|>|\?>|->|\+\+|==|!=|<=|>=|[+\-*/<>=|])/)) return 'operator';
+    if (stream.match(/^(?:\|>|\?>|->|\+\+|==|!=|<=|>=|[+\-*/<>=|])/))
+      return 'operator';
     if (stream.match(/^[{}()[\],.:#]/)) return 'punctuation';
     stream.next();
     return null;
@@ -34,16 +42,16 @@ export const lumeLang = StreamLanguage.define({
 
 export const lumeHighlight = syntaxHighlighting(
   HighlightStyle.define([
-    { tag: t.comment,                  color: 'var(--hl-comment)',  fontStyle: 'italic' },
-    { tag: t.string,                   color: 'var(--hl-string)' },
-    { tag: t.number,                   color: 'var(--hl-number)' },
-    { tag: t.keyword,                  color: 'var(--hl-keyword)',  fontWeight: 'bold' },
+    { tag: t.comment, color: 'var(--hl-comment)', fontStyle: 'italic' },
+    { tag: t.string, color: 'var(--hl-string)' },
+    { tag: t.number, color: 'var(--hl-number)' },
+    { tag: t.keyword, color: 'var(--hl-keyword)', fontWeight: 'bold' },
     { tag: t.standard(t.variableName), color: 'var(--hl-builtin)' },
-    { tag: t.typeName,                 color: 'var(--hl-type)',     fontWeight: 'bold' },
-    { tag: t.className,                color: 'var(--hl-ctor)' },
-    { tag: t.operator,                 color: 'var(--hl-operator)' },
-    { tag: t.punctuation,              color: 'var(--hl-punct)' },
-  ])
+    { tag: t.typeName, color: 'var(--hl-type)', fontWeight: 'bold' },
+    { tag: t.className, color: 'var(--hl-ctor)' },
+    { tag: t.operator, color: 'var(--hl-operator)' },
+    { tag: t.punctuation, color: 'var(--hl-punct)' },
+  ]),
 );
 
 // ── CM extensions ──────────────────────────────────────────────────────────
@@ -198,12 +206,18 @@ export class XEditor extends LitElement {
   private themeObserver = new MutationObserver(() => this.syncDark());
 
   private syncDark() {
-    this.classList.toggle('dark', document.documentElement.classList.contains('dark'));
+    this.classList.toggle(
+      'dark',
+      document.documentElement.classList.contains('dark'),
+    );
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    this.themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
     this.syncDark();
   }
 
@@ -220,11 +234,13 @@ export class XEditor extends LitElement {
         lumeHover(),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
-            this.dispatchEvent(new CustomEvent('lume-change', {
-              detail: update.state.doc.toString(),
-              bubbles: true,
-              composed: true,
-            }));
+            this.dispatchEvent(
+              new CustomEvent('lume-change', {
+                detail: update.state.doc.toString(),
+                bubbles: true,
+                composed: true,
+              }),
+            );
           }
         }),
       ],

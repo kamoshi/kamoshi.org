@@ -8,6 +8,8 @@ import './x-output';
 // ── Sample ─────────────────────────────────────────────────────────────────
 
 const SAMPLE = `\
+use math = "lume:math"
+
 -- ADT: a shape with multiple constructors
 type Shape =
   | Circle   { radius: Num }
@@ -73,7 +75,7 @@ let areas   = map area shapes
 let doubled = map (scale 2) shapes
 let labels  = map describe shapes
 
-{
+pub {
   area,
   describe,
   scale,
@@ -126,7 +128,7 @@ export class LumeEditor extends LitElement {
     }
   `;
 
-  @state() private tab: Tab = 'js';
+  @state() private tab: Tab = 'lua';
   @state() private output: Output = { kind: 'ok', code: '' };
   private src = SAMPLE;
 
