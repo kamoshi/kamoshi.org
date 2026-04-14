@@ -160,13 +160,34 @@ export class XEditor extends LitElement {
         overflow: auto;
       }
 
+      .cm-tooltip {
+        background-color: var(--so-bg);
+        color: var(--so-fg);
+        border-color: var(--so-border);
+      }
+
+      :host(.dark) .cm-tooltip {
+        background-color: var(--kngw-sumiInk3);
+        color: var(--kngw-fujiWhite);
+        border-color: var(--kngw-sumiInk4);
+      }
+
+      :host(.dark) .cm-tooltip-lint {
+        background-color: var(--kngw-sumiInk3);
+      }
+
       .cm-lume-type {
         padding: 2px 6px;
         font-family: ui-monospace, monospace;
         font-size: 0.8rem;
-        background: var(--c-bg-paper, #f5f5f5);
-        border: 1px solid var(--c-border, #d0d0d0);
+        background: var(--so-bg);
+        border: 1px solid var(--so-border);
         border-radius: 3px;
+      }
+
+      :host(.dark) .cm-lume-type {
+        background: var(--kngw-sumiInk3);
+        border-color: var(--kngw-sumiInk4);
       }
     `,
   ];
