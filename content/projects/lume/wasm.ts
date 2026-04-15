@@ -1,10 +1,11 @@
 import {
-  initSync,
+  complete as _complete,
   lint as _lint,
   to_js as _toJs,
   to_lua as _toLua,
   type_at as _typeAt,
-} from './pkg/lume_wasm';
+  initSync,
+} from './pkg/lume_wasm.js';
 
 export let wasmReady = false;
 export const wasmCallbacks: (() => void)[] = [];
@@ -15,7 +16,8 @@ WebAssembly.compileStreaming(fetch('/static/wasm/lume.wasm')).then((mod) => {
   wasmCallbacks.splice(0).forEach((cb) => cb());
 });
 
-export const wasmLint   = _lint;
+export const wasmComplete = _complete;
+export const wasmLint = _lint;
 export const wasmTypeAt = _typeAt;
-export const wasmToJs   = _toJs;
-export const wasmToLua  = _toLua;
+export const wasmToJs = _toJs;
+export const wasmToLua = _toLua;

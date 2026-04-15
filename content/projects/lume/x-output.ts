@@ -6,7 +6,7 @@ import { EditorView } from '@codemirror/view';
 import { minimalSetup } from 'codemirror';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { lumeHighlight } from './x-editor';
+import { lumeHighlight } from './x-editor.ts';
 
 export type Tab = 'js' | 'lua';
 export type Output =

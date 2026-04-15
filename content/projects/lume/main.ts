@@ -1,9 +1,9 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { wasmCallbacks, wasmReady, wasmToJs, wasmToLua } from './wasm';
-import type { Output, Tab } from './x-output';
-import './x-editor';
-import './x-output';
+import { wasmCallbacks, wasmReady, wasmToJs, wasmToLua } from './wasm.ts';
+import type { Output, Tab } from './x-output.ts';
+import './x-editor.ts';
+import './x-output.ts';
 
 // ── Sample ─────────────────────────────────────────────────────────────────
 

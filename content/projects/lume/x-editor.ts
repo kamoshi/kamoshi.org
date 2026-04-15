@@ -1,4 +1,9 @@
 import {
+  autocompletion,
+  type CompletionContext,
+  type CompletionResult,
+} from '@codemirror/autocomplete';
+import {
   HighlightStyle,
   StreamLanguage,
   syntaxHighlighting,
@@ -10,11 +15,11 @@ import { tags as t } from '@lezer/highlight';
 import { basicSetup } from 'codemirror';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { wasmLint, wasmReady, wasmTypeAt } from './wasm';
+import { wasmComplete, wasmLint, wasmReady, wasmTypeAt } from './wasm.ts';
 
 // ── Language definition ────────────────────────────────────────────────────
 
-const KEYWORDS = /^(let|type|use|if|then|else|in|pub)\b/;
+const KEYWORDS = /^(let|type|use|if|then|else|in|pub|and)\b/;
 const BUILTINS = /^(map|filter|fold|sum|average|sort|show|print)\b/;
 const TYPES = /^(Num|Text|Bool|List|Maybe|Result)\b/;
 const CTORS = /^[A-Z]\w*/;
@@ -94,6 +99,111 @@ function lumeHover() {
       },
     };
   });
+}
+
+// ── Autocomplete ──────────────────────────────────────────────────────────
+
+/**
+ * Classify the cursor position for completion purposes.
+ * - `'use-path'` — inside the path string of a `use` declaration
+ * - `'expr'`     — in a normal expression position
+ * - `'none'`     — inside a non-use string or a line comment; suppress completions
+ */
+function completionCtx(
+  src: string,
+  offset: number,
+): 'use-path' | 'expr' | 'none' {
+  const lineStart = src.lastIndexOf('\n', offset - 1) + 1;
+  const line = src.slice(lineStart, offset);
+
+  let inString = false;
+  let quoteIdx = -1;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (!inString && ch === '-' && line[i + 1] === '-') return 'none';
+    if (ch === '"') {
+      if (inString) {
+        inString = false;
+        quoteIdx = -1;
+      } else {
+        inString = true;
+        quoteIdx = i;
+      }
+    } else if (inString && ch === '\\') {
+      i++; // skip escaped char
+    }
+  }
+
+  if (!inString) return 'expr';
+
+  // We're inside a string — only allow completions in use-path strings.
+  const beforeQuote = line.slice(0, quoteIdx).trim();
+  return /^use\s/.test(beforeQuote) && beforeQuote.trimEnd().endsWith('=')
+    ? 'use-path'
+    : 'none';
+}
+
+function lumeCompletionSource(
+  context: CompletionContext,
+): CompletionResult | null {
+  if (!wasmReady) return null;
+
+  const src = context.state.doc.toString();
+  const pos = context.pos;
+  const ctx = completionCtx(src, pos);
+
+  if (ctx === 'none') return null;
+
+  if (ctx === 'use-path') {
+    // The WASM complete() detects the use-path context and returns stdlib
+    // names (or [] for file paths, which WASM can't resolve).
+    let items: { label: string; detail: string }[];
+    try {
+      items = JSON.parse(wasmComplete(src, pos));
+    } catch {
+      return null;
+    }
+    if (!items.length && !context.explicit) return null;
+    // Replace from the start of whatever module name fragment is typed.
+    const word = context.matchBefore(/\w*/);
+    return {
+      from: word ? word.from : pos,
+      options: items.map((item) => ({
+        label: item.label,
+        detail: item.detail,
+        type: 'module' as const,
+      })),
+    };
+  }
+
+  // expr context — identifier and field-access completions.
+  const word = context.matchBefore(/\w*/);
+  if (!word) return null;
+  const charBefore = context.state.doc.sliceString(word.from - 1, word.from);
+  if (word.from === word.to && charBefore !== '.' && !context.explicit)
+    return null;
+
+  let items: { label: string; detail: string }[];
+  try {
+    items = JSON.parse(wasmComplete(src, word.to));
+  } catch {
+    return null;
+  }
+  if (!items.length) return null;
+
+  return {
+    from: word.from,
+    options: items.map((item) => ({
+      label: item.label,
+      detail: item.detail,
+      type: 'variable' as const,
+    })),
+  };
+}
+
+function lumeComplete() {
+  return autocompletion({ override: [lumeCompletionSource] });
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -232,6 +342,7 @@ export class XEditor extends LitElement {
         lintGutter(),
         lumeLinter(),
         lumeHover(),
+        lumeComplete(),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             this.dispatchEvent(

@@ -1,6 +1,7 @@
 {
   "nodeModulesDir": "auto",
   "imports": {
+    "@codemirror/autocomplete": "npm:@codemirror/autocomplete@^6.18.6",
     "@codemirror/commands": "npm:@codemirror/commands@^6.10.3",
     "@codemirror/lang-javascript": "npm:@codemirror/lang-javascript@^6.2.5",
     "@codemirror/language": "npm:@codemirror/language@^6.12.3",
