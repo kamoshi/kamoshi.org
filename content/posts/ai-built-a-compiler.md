@@ -27,7 +27,7 @@ The vast majority of the type system code was implemented by models like Sonnet
 lines of Rust.
 
 There's no way I would have been able to build something like this in a single
-week without AI — it's just too much work. With AI I was able to get a PoC
+week without AI, it's just too much work. With AI I was able to get a PoC
 language up quickly and iterate on it easily, even without fully understanding
 what's going on in the code.
 
@@ -66,7 +66,8 @@ You can check the [online version][online] that just compile code to Lua, or you
 can compile the [full version from the GitHub repo][github].
 
 By the way, don't expect all things to work, this is just a language designed
-and created in a single week!
+and created in a single week! But I made sure to make all the basics work,
+including LSP, Zed extension and VS Code extension.
 
 [online]: https://kamoshi.org/projects/lume/
 [github]: https://github.com/kamoshi/lume
