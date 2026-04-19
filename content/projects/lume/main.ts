@@ -8,8 +8,6 @@ import './x-output.ts';
 // ── Sample ─────────────────────────────────────────────────────────────────
 
 const SAMPLE = `\
-use math = "lume:math"
-
 -- ADT: a shape with multiple constructors
 type Shape =
   | Circle   { radius: Num }
@@ -20,20 +18,27 @@ let pi = 3.14159
 
 -- Pattern matching on ADT
 let area : Shape -> Num =
-  | Circle   { radius }         -> pi * radius * radius
-  | Rect     { width, height }  -> width * height
-  | Triangle { base, height }   -> base * height / 2
+  | Circle   { radius }        -> pi * radius * radius
+  | Rect     { width, height } -> width * height
+  | Triangle { base, height }  -> base * height / 2
 
-let describe : Shape -> Text =
-  | Circle   { radius }         -> "circle r="    ++ show radius
-  | Rect     { width, height }  -> "rect "         ++ show width ++ "x" ++ show height
-  | Triangle { base, height }   -> "triangle b="   ++ show base  ++ " h=" ++ show height
+-- Trait for converting a value to Text
+trait Show a {
+  let show : a -> Text
+}
+
+use Show in Shape {
+  let show =
+    | Circle   { radius }        -> "circle r="    ++ showNum radius
+    | Rect     { width, height } -> "rect "         ++ showNum width ++ "x" ++ showNum height
+    | Triangle { base, height }  -> "triangle b="   ++ showNum base  ++ " h=" ++ showNum height
+}
 
 -- Curried scaling function
 let scale : Num -> Shape -> Shape = f ->
   | Circle   { radius }        -> Circle   { radius: radius * f }
-  | Rect     { width, height } -> Rect     { width: width * f, height: height * f }
-  | Triangle { base, height }  -> Triangle { base: base * f,   height: height * f }
+  | Rect     { width, height } -> Rect     { width: width * f,  height: height * f }
+  | Triangle { base, height }  -> Triangle { base: base * f,    height: height * f }
 
 -- Row polymorphism: works on any record with a \`score\` field
 let passed : { score: Num, .. } -> Bool = { score, .. } -> score >= 60
@@ -48,21 +53,21 @@ let grade : Num -> Text =
 -- Safe division returning a Result
 let safeDivide : Num -> Num -> Result Num Text = a -> b ->
   if b == 0
-    then Err { reason: "division by zero" }
-    else Ok { value: a / b }
+    then Err "division by zero"
+    else Ok (a / b)
 
 -- Chaining Results with ?>
 let halfThenThird = n ->
   safeDivide n 2 ?> (half -> safeDivide half 3)
 
--- List processing with pipe operator
+-- List processing
 let scores = [85, 92, 67, 45, 78, 95, 55, 88]
 
-let passing  = filter (s -> s >= 60) scores
-let top      = filter (s -> s >= 85) scores
-let graded   = map grade scores
-let total    = sum scores
-let avg      = average scores
+let passing = filter (s -> s >= 60) scores
+let top     = filter (s -> s >= 85) scores
+let graded  = map grade scores
+let total   = sum scores
+let avg     = average scores
 
 -- Shapes pipeline
 let shapes = [
@@ -73,11 +78,12 @@ let shapes = [
 
 let areas   = map area shapes
 let doubled = map (scale 2) shapes
-let labels  = map describe shapes
+let labels  = map Show.show shapes
+
+let _ = ToText.to_text labels |> print
 
 pub {
   area,
-  describe,
   scale,
   grade,
   halfThenThird,
