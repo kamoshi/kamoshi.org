@@ -1,4 +1,7 @@
-use std::collections::{BTreeMap, HashMap};
+use std::{
+    cmp::Reverse,
+    collections::{BTreeMap, HashMap},
+};
 
 use camino::Utf8PathBuf;
 use chrono::Datelike;
@@ -15,46 +18,52 @@ pub fn add_tags(
     posts: Many<Document<Post>>,
     styles: Many<Stylesheet>,
 ) -> Result<One<Vec<Output>>, HauchiwaError> {
-    let handle = config
-        .task()
-        .using((templates, posts, styles))
-        .merge(|ctx, (templates, posts, styles)| {
-            let styles = &[
-                styles.get("styles/styles.scss")?,
-                styles.get("styles/layouts/list.scss")?,
-                styles.get("styles/layouts/tags.scss")?,
-            ];
+    let handle =
+        config
+            .task()
+            .using((templates, posts, styles))
+            .merge(|ctx, (templates, posts, styles)| {
+                let styles = &[
+                    styles.get("styles/styles.scss")?,
+                    styles.get("styles/layouts/list.scss")?,
+                    styles.get("styles/layouts/tags.scss")?,
+                ];
 
-            let posts = posts
-                .values()
-                .filter(|item| !item.matter.draft)
-                .collect::<Vec<_>>();
+                let posts = posts
+                    .values()
+                    .filter(|item| !item.matter.draft)
+                    .collect::<Vec<_>>();
 
-            let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
+                let mut tag_map: BTreeMap<String, Vec<LinkDate>> = BTreeMap::new();
 
-            for post in &posts {
-                for tag in &post.matter.tags {
-                    tag_map.entry(tag.clone()).or_default().push(LinkDate {
-                        link: Link {
-                            path: Utf8PathBuf::from(&post.meta.href),
-                            name: post.matter.title.clone(),
-                            desc: post.matter.desc.clone(),
-                        },
-                        date: post.matter.date,
-                    });
+                for post in &posts {
+                    for tag in &post.matter.tags {
+                        tag_map.entry(tag.clone()).or_default().push(LinkDate {
+                            link: Link {
+                                path: Utf8PathBuf::from(&post.meta.href),
+                                name: post.matter.title.clone(),
+                                desc: post.matter.desc.clone(),
+                            },
+                            date: post.matter.date,
+                        });
+                    }
                 }
-            }
 
-            let mut pages = Vec::new();
+                let mut pages = Vec::new();
 
-            for (tag, links) in &tag_map {
-                let path = format!("tags/{tag}/index.html");
-                let html = render_tag(ctx, templates, &group(links), tag.to_owned(), styles)?;
-                pages.push(Output::html(path, html));
-            }
+                for (tag, links) in &tag_map {
+                    let path = format!("tags/{tag}/index.html");
+                    let html = render_tag(ctx, templates, &group(links), tag.to_owned(), styles)?;
+                    pages.push(Output::html(path, html));
+                }
 
-            Ok(pages)
-        });
+                pages.push(Output::html(
+                    "tags",
+                    tag_cloud(ctx, templates, &tag_map, "Tags", styles)?,
+                ));
+
+                Ok(pages)
+            });
 
     Ok(handle)
 }
@@ -69,12 +78,12 @@ pub fn group(links: &[LinkDate]) -> Vec<(i32, Vec<&LinkDate>)> {
     let mut groups: Vec<_> = groups
         .into_iter()
         .map(|(k, mut v)| {
-            v.sort_by(|a, b| b.date.cmp(&a.date));
+            v.sort_by_key(|item| Reverse(item.date));
             (k, v)
         })
         .collect();
 
-    groups.sort_by(|a, b| b.0.cmp(&a.0));
+    groups.sort_by_key(|item| Reverse(item.0));
     groups
 }
 

@@ -5,7 +5,6 @@ mod plugin;
 mod props;
 mod rss;
 mod ts;
-mod typst;
 mod utils;
 
 use std::fs;
@@ -49,7 +48,7 @@ pub struct Bibliography(pub Option<Vec<String>>);
 
 #[derive(Debug, Clone)]
 struct Global {
-    pub repo: hauchiwa::git::GitRepo,
+    pub repo: Option<hauchiwa::git::GitRepo>,
     pub year: i32,
     pub date: String,
     pub link: String,
@@ -61,24 +60,35 @@ impl Global {
         use hauchiwa::git;
 
         let time = chrono::Utc::now();
+        let repo = git::map(git::Options::new("main"))
+            .inspect_err(|err| hauchiwa::tracing::warn!("failed to read git history: {err}"))
+            .ok();
+        let hash = git_hash().unwrap_or_else(|| "unknown".to_string());
 
         Self {
-            repo: git::map(git::Options::new("main")).unwrap(),
+            repo,
             year: time.year(),
             date: time.format("%Y/%m/%d %H:%M").to_string(),
             link: "https://codeberg.org/kamov/kamoshi.org/src/commit/".into(),
-            hash: String::from_utf8(
-                Command::new("git")
-                    .args(["rev-parse", "--short", "HEAD"])
-                    .output()
-                    .expect("Couldn't load git revision")
-                    .stdout,
-            )
-            .expect("Invalid UTF8")
-            .trim()
-            .into(),
+            hash,
         }
     }
+}
+
+fn git_hash() -> Option<String> {
+    let output = Command::new("git")
+        .args(["rev-parse", "--short", "HEAD"])
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    String::from_utf8(output.stdout)
+        .ok()
+        .map(|hash| hash.trim().to_string())
+        .filter(|hash| !hash.is_empty())
 }
 
 // convenient wrapper for `Context`
@@ -120,8 +130,7 @@ fn run() -> Result<(), RuntimeError> {
     fs::write(
         "public/static/svg/footer-dither.svg",
         utils::generate_footer_dither(4, 64, 16, 42),
-    )
-    .expect("Failed to write footer-dither.svg");
+    )?;
 
     let mut config = Blueprint::<Global>::new()
         .copy_static("public/", "")
@@ -173,7 +182,12 @@ fn run() -> Result<(), RuntimeError> {
             let data = input.read()?;
             let path = store.save(&data, "bib")?;
             let text = String::from_utf8_lossy(&data);
-            let data = hayagriva::io::from_biblatex_str(&text).unwrap();
+            let data = hayagriva::io::from_biblatex_str(&text).map_err(|errors| {
+                RuntimeError::msg(format!(
+                    "Failed to parse BibLaTeX file '{}': {errors:?}",
+                    input.path
+                ))
+            })?;
 
             Ok(Bibtex { path, data })
         });

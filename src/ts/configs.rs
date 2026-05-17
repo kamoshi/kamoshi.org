@@ -29,20 +29,27 @@ macro_rules! merge {
 }
 
 macro_rules! language {
-    ($name:expr, $lang:expr, $highlights:expr, $injections:expr, $locals:expr $(,)?) => {
-        ($name, {
-            let lang: tree_sitter::Language = $lang.into();
-            let mut config =
-                HighlightConfiguration::new(lang, $name, $highlights, $injections, $locals)
-                    .unwrap();
-            config.configure(captures::NAMES);
-            config
-        })
-    };
+    ($name:expr, $lang:expr, $highlights:expr, $injections:expr, $locals:expr $(,)?) => {{
+        let lang: tree_sitter::Language = $lang.into();
+        match HighlightConfiguration::new(lang, $name, $highlights, $injections, $locals) {
+            Ok(mut config) => {
+                config.configure(captures::NAMES);
+                Some(($name, config))
+            }
+            Err(err) => {
+                hauchiwa::tracing::warn!(
+                    "failed to initialize tree-sitter highlighting for '{}': {}",
+                    $name,
+                    err
+                );
+                None
+            }
+        }
+    }};
 }
 
 static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLock::new(|| {
-    HashMap::from([
+    [
         language!(
             "asm",
             tree_sitter_asm::LANGUAGE,
@@ -77,6 +84,13 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
             tree_sitter_haskell::HIGHLIGHTS_QUERY,
             tree_sitter_haskell::INJECTIONS_QUERY,
             tree_sitter_haskell::LOCALS_QUERY,
+        ),
+        language!(
+            "hern",
+            tree_sitter_hern::LANGUAGE,
+            tree_sitter_hern::HIGHLIGHTS_QUERY,
+            "",
+            "",
         ),
         language!(
             "html",
@@ -198,7 +212,10 @@ static CONFIGS: LazyLock<HashMap<&'static str, HighlightConfiguration>> = LazyLo
                 tree_sitter_typescript::LOCALS_QUERY,
             ],
         ),
-    ])
+    ]
+    .into_iter()
+    .flatten()
+    .collect()
 });
 
 #[rustfmt::skip]

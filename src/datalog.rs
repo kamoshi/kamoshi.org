@@ -85,6 +85,7 @@ impl Datalog {
         let (backlinks, children, co_citations) = self.runtime.run();
 
         Solution {
+            lookup: self.interner,
             // We move the reverse map into the solution so we can look up names later
             names: self.reverser,
             backlinks: {
@@ -121,29 +122,34 @@ impl Datalog {
 }
 
 pub struct Solution {
+    // Stores the mapping from String -> ID
+    lookup: HashMap<String, usize>,
     // Stores the mapping from ID -> String
     names: Vec<String>,
     // Stores ID -> List<ID>
     backlinks: HashMap<usize, Vec<usize>>,
     // Map child_id -> parent_id
+    #[allow(dead_code)]
     parents: HashMap<usize, usize>,
     // Map parent_id -> Vec<child_id>
     children: HashMap<usize, Vec<usize>>,
     // Map (parent_id, child_id) -> count
+    #[allow(dead_code)]
     co_citations: HashMap<usize, HashMap<usize, usize>>,
 }
 
 impl Solution {
     pub fn get_backlinks(&self, target_href: &str) -> Option<Vec<&str>> {
-        let target_id = self.names.iter().position(|n| n == target_href)?;
+        let target_id = *self.lookup.get(target_href)?;
         self.backlinks
             .get(&target_id)
             .map(|sources| sources.iter().map(|&id| self.names[id].as_str()).collect())
     }
 
     /// Get the parent href for a given child href
+    #[allow(dead_code)]
     pub fn get_parent(&self, child_href: &str) -> Option<&str> {
-        let child_id = self.names.iter().position(|n| n == child_href)?;
+        let child_id = *self.lookup.get(child_href)?;
         self.parents
             .get(&child_id)
             .map(|&id| self.names[id].as_str())
@@ -151,15 +157,16 @@ impl Solution {
 
     /// Get children hrefs for a given parent href
     pub fn get_children(&self, parent_href: &str) -> Option<Vec<&str>> {
-        let parent_id = self.names.iter().position(|n| n == parent_href)?;
+        let parent_id = *self.lookup.get(parent_href)?;
         self.children
             .get(&parent_id)
             .map(|children| children.iter().map(|&id| self.names[id].as_str()).collect())
     }
 
     /// Get co-citations for a given parent href
+    #[allow(dead_code)]
     pub fn get_co_citations(&self, href: &str) -> Option<Vec<(&str, usize)>> {
-        let id = self.names.iter().position(|n| n == href)?;
+        let id = *self.lookup.get(href)?;
         self.co_citations.get(&id).map(|co_citations| {
             co_citations
                 .iter()

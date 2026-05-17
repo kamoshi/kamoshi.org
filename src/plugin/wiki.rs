@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use camino::Utf8Path;
 use hauchiwa::error::HauchiwaError;
 use hauchiwa::loader::{Document, Image, Stylesheet, TemplateEnv};
+use hauchiwa::output;
 use hauchiwa::prelude::*;
 use minijinja::Value;
 
@@ -26,7 +27,7 @@ pub fn add_teien(
     let documents = config
         .load_documents::<Wiki>()
         .glob("content/wiki/**/*.md")?
-        .offset("content")
+        .base("content")
         .register();
 
     let typst = config
@@ -37,7 +38,7 @@ pub fn add_teien(
             use std::io::Write;
             use std::process::{Command, Stdio};
 
-            let data = input.read().unwrap();
+            let data = input.read()?;
 
             let mut child = Command::new("typst")
                 .arg("c")
@@ -50,7 +51,9 @@ pub fn add_teien(
                 .spawn()?;
 
             {
-                let stdin = child.stdin.as_mut().unwrap();
+                let stdin = child.stdin.as_mut().ok_or_else(|| {
+                    hauchiwa::error::RuntimeError::msg("typst stdin was not piped")
+                })?;
                 stdin.write_all(&data)?;
                 stdin.flush()?;
             }
@@ -59,7 +62,10 @@ pub fn add_teien(
 
             if !output.status.success() {
                 let stderr = String::from_utf8(output.stderr)?;
-                todo!("Typst SSR failed:\n{stderr}")
+                return Err(hauchiwa::error::RuntimeError::msg(format!(
+                    "Typst SSR failed for '{}':\n{stderr}",
+                    input.path
+                )));
             }
 
             let path_pdf = store.save(&output.stdout, "pdf")?;
@@ -89,9 +95,8 @@ pub fn add_teien(
                     }
 
                     for (_, typst) in &typst {
-                        let href = typst.0.strip_prefix("content/")?.with_extension("");
-                        let href = Utf8Path::new("/").join(href);
-                        let title = typst.0.file_name().unwrap().to_string();
+                        let href = output::source_to_href(&typst.0, Some("content"));
+                        let title = typst.0.file_stem().unwrap_or("Untitled").to_string();
                         doc_map.insert(href.to_string(), RenderedItem::Typst { title });
                     }
 
@@ -102,45 +107,20 @@ pub fn add_teien(
                 let mut datalog = crate::datalog::Datalog::new();
 
                 // this can resolve wiki links
-                let resolver = WikiLinkResolver::from_assets(&documents);
+                let mut resolver = WikiLinkResolver::from_assets(&documents);
+                for (_, typst) in &typst {
+                    resolver.add_href(&output::source_to_href(&typst.0, Some("content")));
+                }
 
                 let mut typst_items = Vec::new();
                 for (_, (path_file, path_pdf)) in &typst {
-                    let href = path_file.strip_prefix("content/")?.with_extension("");
-                    let href = Utf8Path::new("/").join(href);
+                    let href = output::source_to_href(path_file, Some("content"));
 
                     hauchiwa::tracing::info!("{}", &href);
 
-                    // Datalog: add parent hierarchy
-                    {
-                        let mut ptr = Utf8Path::new(&href);
-                        let mut current_child_str = href.to_string();
+                    add_parent_hierarchy(&mut datalog, &href);
 
-                        while let Some(parent) = ptr.parent() {
-                            let parent_str = parent.as_str();
-                            if parent_str.is_empty() {
-                                break;
-                            }
-
-                            let parent_normalized = if parent_str == "/" {
-                                "/".to_string()
-                            } else if !parent_str.ends_with('/') {
-                                format!("{}/", parent_str)
-                            } else {
-                                parent_str.to_string()
-                            };
-
-                            datalog.add_parent(&parent_normalized, &current_child_str);
-                            current_child_str = parent_normalized;
-                            ptr = parent;
-
-                            if ptr == "/" {
-                                break;
-                            }
-                        }
-                    }
-
-                    typst_items.push((href.strip_prefix("/")?.to_owned(), path_pdf));
+                    typst_items.push((href, path_pdf));
                 }
 
                 // pass 1: parse markdown
@@ -167,35 +147,8 @@ pub fn add_teien(
                             }
                         }
 
-                        // Datalog: add parent hierarchy
-                        {
-                            hauchiwa::tracing::info!("{}", &href);
-                            let mut ptr = Utf8Path::new(&href);
-                            let mut current_child_str = href.clone();
-
-                            while let Some(parent) = ptr.parent() {
-                                let parent_str = parent.as_str();
-                                if parent_str.is_empty() {
-                                    break;
-                                }
-
-                                let parent_normalized = if parent_str == "/" {
-                                    "/".to_string()
-                                } else if !parent_str.ends_with('/') {
-                                    format!("{}/", parent_str)
-                                } else {
-                                    parent_str.to_string()
-                                };
-
-                                datalog.add_parent(&parent_normalized, &current_child_str);
-                                current_child_str = parent_normalized;
-                                ptr = parent;
-
-                                if ptr == "/" {
-                                    break;
-                                }
-                            }
-                        }
+                        hauchiwa::tracing::info!("{}", &href);
+                        add_parent_hierarchy(&mut datalog, &href);
 
                         parsed.push((document, markdown, href));
                     }
@@ -250,30 +203,22 @@ pub fn add_teien(
                         let tmpl = templates.get_template("wiki.jinja")?;
                         let page = tmpl.render(&props)?;
 
-                        pages.push(
-                            document
-                                .output()
-                                .strip_prefix("content")?
-                                .html()
-                                .content(page),
-                        );
+                        pages.push(Output::to(document).html(page)?);
                     }
 
                     for (href, path_pdf) in &typst_items {
-                        let href_full = Utf8Path::new("/").join(href).to_string();
-
                         let props = PropsWikiPdf {
                             head: super::make_props_head(ctx, "".to_string(), styles, &[])?,
                             navbar: super::make_props_navbar(),
                             footer: super::make_props_footer(ctx),
-                            tree: build_tree_nodes(&href_full, "/", &doc_map, &solution),
+                            tree: build_tree_nodes(href, "/", &doc_map, &solution),
                             pdf_path: path_pdf.to_string(),
                         };
 
                         let tmpl = templates.get_template("wiki_pdf.jinja")?;
                         let html = tmpl.render(&props)?;
 
-                        pages.push(Output::html(href, html));
+                        pages.push(Output::html(href.strip_prefix('/').unwrap_or(href), html));
                     }
 
                     pages
@@ -319,7 +264,7 @@ fn build_tree_nodes(
                 (name, false)
             };
 
-            let is_active_path = active_href.starts_with(child_href);
+            let is_active_path = is_same_or_descendant(active_href, child_href);
             let is_current = active_href == child_href;
 
             let children = if is_active_path || !is_link {
@@ -337,4 +282,73 @@ fn build_tree_nodes(
             }
         })
         .collect()
+}
+
+fn add_parent_hierarchy(datalog: &mut crate::datalog::Datalog, href: &str) {
+    let mut child = href.to_string();
+
+    while let Some(parent) = parent_href(&child) {
+        datalog.add_parent(&parent, &child);
+
+        if parent == "/" {
+            break;
+        }
+
+        child = parent;
+    }
+}
+
+fn is_same_or_descendant(active_href: &str, child_href: &str) -> bool {
+    if active_href == child_href {
+        return true;
+    }
+
+    let child_prefix = if child_href.ends_with('/') {
+        child_href.to_string()
+    } else {
+        format!("{child_href}/")
+    };
+
+    active_href.starts_with(&child_prefix)
+}
+
+fn parent_href(href: &str) -> Option<String> {
+    let href = href.trim_end_matches('/');
+    if href.is_empty() {
+        return None;
+    }
+
+    let parent = Utf8Path::new(href).parent()?;
+    let parent = parent.as_str();
+
+    match parent {
+        "" => None,
+        "/" => Some("/".to_string()),
+        _ => Some(format!("{parent}/")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_same_or_descendant;
+
+    #[test]
+    fn same_or_descendant_matches_path_segments() {
+        assert!(is_same_or_descendant("/wiki/cs/", "/wiki/cs/"));
+        assert!(is_same_or_descendant("/wiki/cs/firefox/", "/wiki/cs/"));
+        assert!(is_same_or_descendant(
+            "/wiki/cs/firefox/",
+            "/wiki/cs/firefox/"
+        ));
+
+        assert!(!is_same_or_descendant(
+            "/wiki/cs/firefox/",
+            "/wiki/cs/fire/"
+        ));
+        assert!(!is_same_or_descendant(
+            "/wiki/cs/firefox/",
+            "/wiki/cs/firefoxes/"
+        ));
+        assert!(!is_same_or_descendant("/wiki/cs/", "/wiki/cs/firefox/"));
+    }
 }

@@ -30,7 +30,7 @@ pub fn add_projects(
         .load_documents::<Project>()
         .glob("content/projects/**/*.md")?
         .glob("content/projects/**/*.html")?
-        .offset("content")
+        .base("content")
         .register();
 
     let page_radicals = radicals::build(config, templates, styles)?;
@@ -88,7 +88,7 @@ pub fn add_projects(
                         };
 
                         let href = doc.meta.href.clone();
-                        pages.push(doc.output().strip_prefix("content")?.html().content(html));
+                        pages.push(Output::to(doc).html(html)?);
                         (href, false)
                     }
                 };
@@ -105,9 +105,12 @@ pub fn add_projects(
                 title: "Constellations",
                 tech: vec!["Svelte".into(), "TypeScript".into()],
                 link: Utf8PathBuf::from("/")
-                    .join(&page_radicals.path)
-                    .parent()
-                    .unwrap()
+                    .join(page_radicals.path.parent().ok_or_else(|| {
+                        RuntimeError::msg(format!(
+                            "Radicals page output path '{}' has no parent",
+                            page_radicals.path
+                        ))
+                    })?)
                     .to_string(),
                 desc: Some("Try adding kanji you know and see how they connect to each other."),
                 external: false,

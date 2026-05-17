@@ -10,14 +10,16 @@ pub(crate) trait ToFeed: Sized {
     fn to_feed(&self) -> rss::Item;
 }
 
+fn site_url(href: &str) -> String {
+    let link = href.strip_prefix("/").unwrap_or(href);
+    Utf8Path::new(BASE_URL).join(link).to_string()
+}
+
 impl ToFeed for &Document<Post> {
     fn to_feed(&self) -> rss::Item {
-        let link = self.meta.href.strip_prefix("/").unwrap_or(&self.meta.href);
-        let link = Utf8Path::new(BASE_URL).join(link);
-
         ItemBuilder::default()
             .title(self.matter.title.clone())
-            .link(link.to_string())
+            .link(site_url(&self.meta.href))
             .pub_date(self.matter.date.to_rfc2822())
             .build()
     }
@@ -25,12 +27,9 @@ impl ToFeed for &Document<Post> {
 
 impl ToFeed for &Document<Slideshow> {
     fn to_feed(&self) -> rss::Item {
-        let link = self.meta.href.strip_prefix("/").unwrap_or(&self.meta.href);
-        let link = Utf8Path::new(BASE_URL).join(link);
-
         ItemBuilder::default()
             .title(self.matter.title.clone())
-            .link(link.to_string())
+            .link(site_url(&self.meta.href))
             .pub_date(self.matter.date.to_rfc2822())
             .build()
     }
@@ -38,12 +37,14 @@ impl ToFeed for &Document<Slideshow> {
 
 impl ToFeed for &Document<Project> {
     fn to_feed(&self) -> rss::Item {
-        let link = self.meta.href.strip_prefix("/").unwrap_or(&self.meta.href);
-        let link = Utf8Path::new(BASE_URL).join(link);
-
         ItemBuilder::default()
             .title(self.matter.title.clone())
-            .link(link.to_string())
+            .link(
+                self.matter
+                    .link
+                    .clone()
+                    .unwrap_or_else(|| site_url(&self.meta.href)),
+            )
             .build()
     }
 }

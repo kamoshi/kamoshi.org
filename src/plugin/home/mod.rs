@@ -33,7 +33,7 @@ pub fn add_home(
     let docs = config
         .load_documents::<Home>()
         .glob("content/index.md")?
-        .offset("content")
+        .base("content")
         .register();
 
     let task = config
@@ -91,7 +91,7 @@ pub(crate) fn render(
         footer: PropsFooter {
             year: ctx.env.data.year,
             repo_link: repo_link.to_string(),
-            hash_short: ctx.env.data.hash[0..7].to_string(),
+            hash_short: ctx.env.data.hash.chars().take(7).collect(),
             date: ctx.env.data.date.clone(),
         },
         article: Value::from_safe_string(text.to_string()),

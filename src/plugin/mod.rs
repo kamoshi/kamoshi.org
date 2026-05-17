@@ -7,7 +7,7 @@ pub mod tags;
 pub mod twtxt;
 pub mod wiki;
 
-use std::collections::HashMap;
+use std::{cmp::Reverse, collections::HashMap};
 
 use camino::Utf8Path;
 use chrono::Datelike as _;
@@ -48,10 +48,12 @@ pub(crate) fn make_props_navbar() -> PropsNavbar {
 
 pub(crate) fn make_props_footer(ctx: &Context) -> PropsFooter {
     let repo_link = Utf8Path::new(&ctx.env.data.link).join(&ctx.env.data.hash);
+    let hash_short = ctx.env.data.hash.chars().take(7).collect::<String>();
+
     PropsFooter {
         year: ctx.env.data.year,
         repo_link: repo_link.to_string(),
-        hash_short: ctx.env.data.hash[0..7].to_string(),
+        hash_short,
         date: ctx.env.data.date.clone(),
     }
 }
@@ -89,12 +91,12 @@ pub(crate) fn to_list(
     let mut groups: Vec<_> = groups
         .into_iter()
         .map(|(k, mut v)| {
-            v.sort_by(|a, b| b.date.cmp(&a.date));
+            v.sort_by_key(|item| Reverse(item.date));
             (k, v)
         })
         .collect();
 
-    groups.sort_by(|a, b| b.0.cmp(&a.0));
+    groups.sort_by_key(|item| Reverse(item.0));
 
     let props = PropsList {
         head: make_props_head(ctx, title.clone(), styles, &[])?,

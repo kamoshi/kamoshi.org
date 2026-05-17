@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
@@ -24,7 +26,7 @@ pub fn add_twtxt(
             })
             .map(str::parse::<MicroblogEntry>)
             .collect::<Result<Vec<_>, _>>()
-            .unwrap();
+            .map_err(|err| RuntimeError::msg(format!("Failed to parse '{}': {err}", file.path)))?;
 
         Ok(Microblog {
             entries,
@@ -82,7 +84,7 @@ pub fn render(
     styles: &[&Stylesheet],
 ) -> Result<String, RuntimeError> {
     let mut entries = microblog.entries.clone();
-    entries.sort_by(|a, b| b.date.cmp(&a.date));
+    entries.sort_by_key(|entry| Reverse(entry.date));
 
     let props = PropsThoughts {
         head: super::make_props_head(ctx, "microblog".to_string(), styles, &[])?,

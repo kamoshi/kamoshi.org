@@ -9,6 +9,38 @@
 //         })
 // }
 
+pub fn escape_html_text(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+
+    for ch in text.chars() {
+        match ch {
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            _ => escaped.push(ch),
+        }
+    }
+
+    escaped
+}
+
+pub fn escape_html_attr(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+
+    for ch in text.chars() {
+        match ch {
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            '"' => escaped.push_str("&quot;"),
+            '\'' => escaped.push_str("&#39;"),
+            _ => escaped.push(ch),
+        }
+    }
+
+    escaped
+}
+
 pub fn generate_footer_dither(
     pixel_size: u32,
     tile_width: u32,
@@ -110,7 +142,7 @@ pub fn generate_footer_dither(
         // - v: draw vertical line
         // - H: draw horizontal line to close the rectangle
         // - z: close the subpath (draws a straight line back to the start)
-        write!(path_d, "M{x0} {y0}h{rw}v{rh}H{x0}z").unwrap();
+        let _ = write!(path_d, "M{x0} {y0}h{rw}v{rh}H{x0}z");
     }
 
     // All the coordinates in the path are in pixel units (the logical grid),

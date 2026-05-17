@@ -4,7 +4,6 @@ use chrono::{DateTime, Utc};
 // use hauchiwa::{WithFile, loader::Content};
 use serde::Deserialize;
 
-
 #[derive(Clone, Deserialize)]
 pub struct Pubkey {
     pub fingerprint: String,
@@ -121,6 +120,7 @@ pub mod svelte {
 
     #[derive(Serialize, TS)]
     #[ts(export, export_to = "../scripts/search/props.ts")]
+    #[allow(dead_code)]
     pub struct Search {
         pub test: &'static str,
     }

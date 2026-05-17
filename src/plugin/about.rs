@@ -20,7 +20,7 @@ pub fn add_about(
     let docs = config
         .load_documents::<Post>()
         .glob("content/about/index.md")?
-        .offset("content")
+        .base("content")
         .register();
 
     let cert = config

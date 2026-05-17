@@ -13,6 +13,8 @@ use crate::{Bibtex, Context, Global, Link, LinkDate};
 
 use super::to_list;
 
+type PostsOutput = (Many<Document<Post>>, One<Vec<Output>>);
+
 pub fn add_posts(
     config: &mut Blueprint<Global>,
     templates: One<TemplateEnv>,
@@ -20,11 +22,11 @@ pub fn add_posts(
     styles: Many<Stylesheet>,
     scripts: Many<Script>,
     bibtex: Many<Bibtex>,
-) -> Result<(Many<Document<Post>>, One<Vec<Output>>), HauchiwaError> {
+) -> Result<PostsOutput, HauchiwaError> {
     let docs = config
         .load_documents::<Post>()
         .glob("content/posts/**/*.md")?
-        .offset("content")
+        .base("content")
         .register();
 
     let pages = config
@@ -70,25 +72,24 @@ pub fn add_posts(
                     bibtex.map(|(_, library)| &library.data),
                 )?;
 
-                let buffer = render(
+                let buffer = render(RenderPost {
                     ctx,
                     templates,
-                    &document.matter,
+                    meta: &document.matter,
                     parsed,
-                    ctx.env.data.repo.files.get(document.meta.path.as_str()),
-                    bibtex.map(|(_, library)| library.path.as_path()),
-                    &document.matter.tags,
+                    info: ctx
+                        .env
+                        .data
+                        .repo
+                        .as_ref()
+                        .and_then(|repo| repo.files.get(document.meta.path.as_str())),
+                    library_path: bibtex.map(|(_, library)| library.path.as_path()),
+                    tags: &document.matter.tags,
                     styles,
-                    &js,
-                )?;
+                    scripts: &js,
+                })?;
 
-                pages.push(
-                    document
-                        .output()
-                        .strip_prefix("content")?
-                        .html()
-                        .content(buffer),
-                );
+                pages.push(Output::to(document).html(buffer)?);
             }
 
             {
@@ -133,17 +134,31 @@ pub fn add_posts(
     Ok((docs, pages))
 }
 
-pub fn render(
-    ctx: &Context,
-    templates: &TemplateEnv,
-    meta: &Post,
-    parsed: Parsed,
-    info: Option<&GitHistory>,
-    library_path: Option<&Utf8Path>,
-    tags: &[String],
-    styles: &[&Stylesheet],
-    scripts: &[&Script],
-) -> Result<String, RuntimeError> {
+pub struct RenderPost<'a> {
+    pub ctx: &'a Context<'a>,
+    pub templates: &'a TemplateEnv,
+    pub meta: &'a Post,
+    pub parsed: Parsed,
+    pub info: Option<&'a GitHistory>,
+    pub library_path: Option<&'a Utf8Path>,
+    pub tags: &'a [String],
+    pub styles: &'a [&'a Stylesheet],
+    pub scripts: &'a [&'a Script],
+}
+
+pub fn render(args: RenderPost) -> Result<String, RuntimeError> {
+    let RenderPost {
+        ctx,
+        templates,
+        meta,
+        parsed,
+        info,
+        library_path,
+        tags,
+        styles,
+        scripts,
+    } = args;
+
     let outline_html = parsed.outline.render().into_inner();
 
     let bibliography = parsed.bibliography.map(|bib| PropsBibliography {

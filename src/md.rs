@@ -1,4 +1,9 @@
-use std::{borrow::Cow, collections::HashMap, fmt::Write, sync::LazyLock};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    fmt::Write,
+    sync::{LazyLock, Mutex},
+};
 
 use camino::Utf8Path;
 use comrak::{
@@ -15,6 +20,9 @@ use hypertext::Renderable;
 use regex::Regex;
 use thiserror::Error;
 
+static HERN_ANALYZER: LazyLock<Option<hern_doc::Analyzer>> =
+    LazyLock::new(|| hern_doc::Analyzer::new().ok());
+
 #[derive(Error, Debug)]
 pub enum MarkdownError {
     #[error("Link target not found: '{0}'")]
@@ -25,9 +33,34 @@ pub enum MarkdownError {
 
     #[error("Formatting error")]
     Format(#[from] std::fmt::Error),
+
+    #[error("I/O formatting error")]
+    Io(#[from] std::io::Error),
 }
 
-pub struct Highlighter;
+pub struct Highlighter {
+    hern_session: Option<Mutex<hern_doc::SnippetSession<'static>>>,
+}
+
+impl Highlighter {
+    #[allow(dead_code)]
+    pub fn stateless() -> Self {
+        Self { hern_session: None }
+    }
+
+    pub fn stateful_hern() -> Self {
+        Self {
+            hern_session: HERN_ANALYZER
+                .as_ref()
+                .map(|analyzer| Mutex::new(analyzer.session())),
+        }
+    }
+
+    fn analyze_hern_snippet(&self, code: &str) -> Option<hern_doc::SnippetAnalysis> {
+        let session = self.hern_session.as_ref()?;
+        Some(session.lock().ok()?.analyze_snippet(code))
+    }
+}
 
 impl comrak::adapters::SyntaxHighlighterAdapter for Highlighter {
     fn write_highlighted(
@@ -37,7 +70,14 @@ impl comrak::adapters::SyntaxHighlighterAdapter for Highlighter {
         code: &str,
     ) -> std::fmt::Result {
         let lang = lang.unwrap_or("text");
-        let html = crate::ts::highlight(lang, code).render().into_inner();
+        let html = if lang == "hern" {
+            let analysis = self.analyze_hern_snippet(code);
+            crate::ts::highlight_with_analysis(lang, code, analysis.as_ref())
+                .render()
+                .into_inner()
+        } else {
+            crate::ts::highlight(lang, code).render().into_inner()
+        };
 
         write!(output, "{}", html)?;
 
@@ -73,10 +113,10 @@ fn get_options() -> Options<'static> {
     options
 }
 
-fn get_plugins() -> Plugins<'static> {
+fn get_plugins<'a>(highlighter: &'a Highlighter) -> Plugins<'a> {
     let mut plugins = Plugins::default();
 
-    plugins.render.codefence_syntax_highlighter = Some(&Highlighter);
+    plugins.render.codefence_syntax_highlighter = Some(highlighter);
 
     plugins
 }
@@ -98,7 +138,8 @@ pub fn parse(
     let arena = Arena::new();
 
     let options = get_options();
-    let plugins = get_plugins();
+    let highlighter = Highlighter::stateful_hern();
+    let plugins = get_plugins(&highlighter);
 
     let root = parse_document(&arena, file_text, &options);
 
@@ -120,7 +161,7 @@ pub fn parse(
                 let text = &math.literal;
                 let is_display = math.display_math;
 
-                let math = parse_latex(text, is_display);
+                let math = parse_latex(text, is_display)?;
 
                 if is_display {
                     data.value = NodeValue::HtmlBlock(NodeHtmlBlock {
@@ -151,7 +192,7 @@ pub fn parse(
         bibliography = process_citations(library, &root)?;
     }
 
-    let outline = process_headings(&arena, &root);
+    let outline = process_headings(&arena, &root)?;
 
     let mut html = String::new();
     format_html_with_plugins(root, &options, &mut html, &plugins)?;
@@ -187,6 +228,8 @@ where
         if let Some(images) = images
             && let Some(image) = resolve_image_path(file_meta, &link.url, images)
         {
+            let alt = extract_text(&node);
+
             // Create a temporary Document node to act as a container for alt
             // text nodes and render them to HTML
             let caption = {
@@ -203,7 +246,7 @@ where
                 caption
             };
 
-            let literal = render_picture(image, &caption);
+            let literal = render_picture(image, &alt, &caption);
             let html = arena.alloc(
                 NodeValue::HtmlBlock(NodeHtmlBlock {
                     block_type: 0,
@@ -245,7 +288,8 @@ fn resolve_image_path<'ctx, 'a>(
     images.get(&relative).ok()
 }
 
-fn render_picture(image: &Image, alt: &str) -> String {
+fn render_picture(image: &Image, alt: &str, caption: &str) -> String {
+    use hypertext::Raw;
     use hypertext::prelude::*;
 
     maud!(
@@ -255,13 +299,15 @@ fn render_picture(image: &Image, alt: &str) -> String {
                     source srcset=(path.as_str());
                 }
                 img
-                    alt=""
+                    alt=(alt)
                     src=(image.default.as_str())
                     width=(image.width)
                     height=(image.height);
             }
-            figcaption {
-                (alt)
+            @if !caption.trim().is_empty() {
+                figcaption {
+                    (Raw::dangerously_create(caption.to_string()))
+                }
             }
         }
     )
@@ -271,7 +317,7 @@ fn render_picture(image: &Image, alt: &str) -> String {
 
 // math
 
-fn parse_latex(math: &str, is_display: bool) -> String {
+fn parse_latex(math: &str, is_display: bool) -> Result<String, MarkdownError> {
     use pulldown_latex::config::DisplayMode;
     use pulldown_latex::{Parser, RenderConfig, Storage, push_mathml};
 
@@ -288,9 +334,9 @@ fn parse_latex(math: &str, is_display: bool) -> String {
     let parser = Parser::new(math, &storage);
 
     let mut buffer = String::new();
-    push_mathml(&mut buffer, parser, config).expect("MathML fail");
+    push_mathml(&mut buffer, parser, config)?;
 
-    buffer
+    Ok(buffer)
 }
 
 // wikilink
@@ -319,7 +365,12 @@ impl WikiLinkResolver {
     where
         T: Clone,
     {
-        let href = doc.meta.href.as_str();
+        self.add_href(&doc.meta.href);
+    }
+
+    /// Add a generated page href that does not come from a Markdown document,
+    /// such as a Typst-backed wiki page.
+    pub fn add_href(&mut self, href: &str) {
         let path = Utf8Path::new(href);
         // "wiki/tech/rust.html" -> "rust"
         if let Some(stem) = path.file_stem() {
@@ -396,12 +447,12 @@ where
             // Verify matches and collect indices in one go.
             let matches: Vec<_> = RE_RUBY
                 .captures_iter(text)
-                .map(|cap| {
-                    (
-                        cap.get(0).unwrap().range(), // Full match range: [Kanji]{kana}
-                        cap.get(1).unwrap().range(), // Kanji range
-                        cap.get(2).unwrap().range(), // Kana range
-                    )
+                .filter_map(|cap| {
+                    Some((
+                        cap.get(0)?.range(), // Full match range: [Kanji]{kana}
+                        cap.get(1)?.range(), // Kanji range
+                        cap.get(2)?.range(), // Kana range
+                    ))
                 })
                 .collect();
 
@@ -431,7 +482,8 @@ where
 
             let ruby_html = format!(
                 "<ruby>{}<rp>(</rp><rt>{}</rt><rp>)</rp></ruby>",
-                kanji, kana
+                crate::utils::escape_html_text(kanji),
+                crate::utils::escape_html_text(kana)
             );
 
             let ruby_node = arena.alloc(NodeValue::HtmlInline(ruby_html).into());
@@ -460,7 +512,10 @@ static RE_DIRECTIVE_INLINE: LazyLock<Regex> =
 fn render_directive_inline<'a>(arena: &'a Arena<'a>, name: String, content: String) -> Node<'a> {
     match name.as_str() {
         "icon" => {
-            let html = format!(r#"<img class="inline-icon" src="{content}">"#);
+            let html = format!(
+                r#"<img class="inline-icon" src="{}">"#,
+                crate::utils::escape_html_attr(&content)
+            );
             arena.alloc(NodeValue::HtmlInline(html).into())
         }
         "cite" => {
@@ -494,12 +549,12 @@ where
         if let NodeValue::Text(text) = &mut data.value {
             let matches: Vec<_> = RE_DIRECTIVE_INLINE
                 .captures_iter(text)
-                .map(|cap| {
-                    (
-                        cap.get(0).unwrap().range(),              // Full match: :name[content]
-                        cap.get(1).unwrap().as_str().to_string(), // Name
-                        cap.get(2).unwrap().as_str().to_string(), // Content
-                    )
+                .filter_map(|cap| {
+                    Some((
+                        cap.get(0)?.range(),              // Full match: :name[content]
+                        cap.get(1)?.as_str().to_string(), // Name
+                        cap.get(2)?.as_str().to_string(), // Content
+                    ))
                 })
                 .collect();
 
@@ -710,7 +765,10 @@ impl hypertext::Renderable for Outline {
     }
 }
 
-fn process_headings<'a>(arena: &'a Arena<'a>, root: &'a Node<'a>) -> Outline {
+fn process_headings<'a>(
+    arena: &'a Arena<'a>,
+    root: &'a Node<'a>,
+) -> Result<Outline, MarkdownError> {
     let mut flat_headings = Vec::new();
     let mut counts = HashMap::new();
 
@@ -746,13 +804,16 @@ fn process_headings<'a>(arena: &'a Arena<'a>, root: &'a Node<'a>) -> Outline {
             }
 
             let mut html = String::new();
-            comrak::format_html(root, &comrak::Options::default(), &mut html).unwrap();
+            comrak::format_html(root, &comrak::Options::default(), &mut html)?;
 
             html
         };
 
         // Manually build the <hX id="..."> tag
-        let html = format!("<h{level} id=\"{slug}\">{inner_html}</h{level}>");
+        let html = format!(
+            "<h{level} id=\"{}\">{inner_html}</h{level}>",
+            crate::utils::escape_html_attr(&slug)
+        );
 
         let new_node = arena.alloc(
             NodeValue::HtmlBlock(NodeHtmlBlock {
@@ -770,7 +831,7 @@ fn process_headings<'a>(arena: &'a Arena<'a>, root: &'a Node<'a>) -> Outline {
         flat_headings.push((text, slug, level as usize));
     }
 
-    Outline::from(flat_headings)
+    Ok(Outline::from(flat_headings))
 }
 
 /// Helper to recursively extract text from a node's children

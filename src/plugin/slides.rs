@@ -23,7 +23,7 @@ pub fn add_slides(
         .load_documents::<Slideshow>()
         .glob("content/slides/**/*.md")?
         .glob("content/slides/**/*.lhs")?
-        .offset("content")
+        .base("content")
         .register();
 
     let handle = config
@@ -46,13 +46,7 @@ pub fn add_slides(
                     let text = parse(&document.text, &document.meta, None, Some(&images))?;
                     let html = render(ctx, templates, &document.matter, &text, styles, scripts)?;
 
-                    pages.push(
-                        document
-                            .output()
-                            .strip_prefix("content")?
-                            .html()
-                            .content(html),
-                    );
+                    pages.push(Output::to(document).html(html)?);
                 }
             }
 
