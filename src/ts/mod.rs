@@ -145,7 +145,7 @@ fn write_source_with_annotations(
         out.push_str(&crate::utils::escape_html_text(
             &text[annotation_start - start..annotation_end - start],
         ));
-        out.push_str(annotation_close_tag(annotation));
+        out.push_str(&annotation_close_tag(annotation));
         cursor = annotation_end;
     }
 
@@ -172,10 +172,9 @@ fn annotation_open_tag(code: &str, annotation: &Annotation) -> String {
     if let Some(id) = &annotation.id {
         attrs.push_str(&format!(" id=\"{}\"", crate::utils::escape_html_attr(id)));
     }
-    if let Some(hover) = &annotation.hover {
+    if annotation.hover.is_some() {
         attrs.push_str(&format!(
-            " data-hern-hover=\"{}\" data-hern-highlight-start=\"{}\" data-hern-highlight-end=\"{}\"{}",
-            crate::utils::escape_html_attr(hover),
+            " data-hern-highlight-start=\"{}\" data-hern-highlight-end=\"{}\"{}",
             annotation.highlight.start,
             annotation.highlight.end,
             hover_placement_attr(code, annotation.range),
@@ -193,11 +192,84 @@ fn annotation_open_tag(code: &str, annotation: &Annotation) -> String {
     }
 }
 
-fn annotation_close_tag(annotation: &Annotation) -> &'static str {
-    if annotation.link.is_some() {
-        "</a>"
+fn is_type_signature(text: &str) -> bool {
+    let text = text.trim();
+    if text.is_empty() {
+        return false;
+    }
+    if text == "int" || text == "string" || text == "bool" || text == "float" || text == "char" {
+        return true;
+    }
+    if text.contains("->") || text.contains("#{") || text.contains('\'') || text.contains("::") {
+        return true;
+    }
+    if text.starts_with("fn(") || text.starts_with("type ") || text.starts_with("trait ") || text.starts_with("impl ") {
+        return true;
+    }
+    if !text.contains(' ') && !text.ends_with('.') {
+        if let Some(first_char) = text.chars().next() {
+            if first_char.is_uppercase() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn annotation_close_tag(annotation: &Annotation) -> String {
+    let tooltip = if let Some(hover) = &annotation.hover {
+        let mut hover_processed = String::new();
+        let paragraphs: Vec<&str> = hover.split("\n\n").collect();
+        
+        if !paragraphs.is_empty() {
+            if is_type_signature(paragraphs[0]) {
+                hover_processed.push_str(&format!("```hern\n{}\n```", paragraphs[0].trim()));
+            } else {
+                hover_processed.push_str(paragraphs[0]);
+            }
+            
+            for paragraph in &paragraphs[1..] {
+                hover_processed.push_str("\n\n");
+                hover_processed.push_str(paragraph);
+            }
+        }
+
+        let html = crate::md::render_hover_markdown(&hover_processed);
+        let cleaned_html = html.replace("</figure></code></pre>", "</figure>");
+        
+        // Convert block-level HTML tags to spans with block display to avoid browser DOM splitting bugs
+        let safe_html = cleaned_html
+            .replace("<p>", "<span class=\"tooltip-p\">")
+            .replace("</p>", "</span>")
+            .replace("<figure class=\"listing syntax\"", "<span class=\"tooltip-code-block\"")
+            .replace("<figure class=\"listing\"", "<span class=\"tooltip-code-block\"")
+            .replace("</figure>", "</span>")
+            .replace("<pre>", "<span class=\"tooltip-pre\">")
+            .replace("</pre>", "</span>")
+            .replace("<ul>", "<span class=\"tooltip-ul\">")
+            .replace("</ul>", "</span>")
+            .replace("<li>", "<span class=\"tooltip-li\">")
+            .replace("</li>", "</span>")
+            .replace("<code>", "<span class=\"tooltip-code-inline\">")
+            .replace("</code>", "</span>")
+            .replace('\n', "<br>")
+            .replace('\r', "");
+
+        let mut safe_html = safe_html.trim().to_string();
+        while safe_html.ends_with("<br>") {
+            safe_html.truncate(safe_html.len() - 4);
+            safe_html = safe_html.trim().to_string();
+        }
+
+        format!("<span class=\"hern-tooltip\">{}</span>", safe_html)
     } else {
-        "</span>"
+        String::new()
+    };
+
+    if annotation.link.is_some() {
+        format!("{}</a>", tooltip)
+    } else {
+        format!("{}</span>", tooltip)
     }
 }
 

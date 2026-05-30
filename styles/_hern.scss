@@ -1,0 +1,201 @@
+@mixin hern-interactive-underline {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.hern-def {
+  scroll-margin-block-start: 5rem;
+}
+
+.hern-ref {
+  color: inherit;
+  font-family: inherit;
+  font-style: normal;
+  font-weight: inherit;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    @include hern-interactive-underline;
+  }
+}
+
+.hern-tooltip {
+  visibility: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.35rem);
+  z-index: 10;
+  width: max-content;
+  max-width: min(32rem, calc(100vw - 2rem));
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.35rem;
+  background: var(--c-bg-paper);
+  color: var(--c-on-bg-paper);
+  box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 0.16);
+  font-family: var(--font-text);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-wrap; /* Restored for perfect text wrapping */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.25rem);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 120ms ease; // Added visibility transition
+
+  @supports (anchor-name: --test) {
+    position: fixed;
+    position-anchor: --hern-anchor;
+    left: anchor(center);
+    bottom: calc(anchor(top) + 0.35rem);
+    transform: translate(-50%, 0.25rem);
+  }
+
+  // --- Flattened Typography & Custom Tags ---
+  .tooltip-p {
+    display: block;
+    margin: 0;
+    text-align: left;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .tooltip-ul {
+    display: block;
+    padding-left: 1.25em;
+    margin: 0;
+  }
+
+  .tooltip-li {
+    display: block;
+  }
+
+  code,
+  .tooltip-code-inline {
+    font-family: var(--font-code);
+  }
+
+  :not(.tooltip-pre) > code,
+  :not(.tooltip-pre) > .tooltip-code-inline {
+    padding-inline: 0.2em;
+    background-color: var(--c-bg-subtle);
+    border-radius: 0.2em;
+    border: 1px solid var(--c-border);
+  }
+
+  .tooltip-code-block {
+    display: block;
+    margin: 0;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+
+  .tooltip-pre {
+    display: block;
+    white-space: pre;
+    font-family: var(--font-code);
+    padding: 0;
+    margin: 0;
+
+    > code,
+    > .tooltip-code-inline {
+      line-height: 1.3em;
+    }
+  }
+}
+
+.hern-hover {
+  position: relative;
+  anchor-name: --hern-anchor;
+  anchor-scope: --hern-anchor;
+  cursor: help;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    @include hern-interactive-underline;
+
+    .hern-tooltip {
+      visibility: visible; // Changed from display: block to trigger transition
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+
+      @supports (anchor-name: --test) {
+        transform: translate(-50%, 0);
+      }
+    }
+  }
+
+  // --- Placement Modifiers ---
+  &[data-hern-placement="bottom"] {
+    .hern-tooltip {
+      top: calc(100% + 0.35rem);
+      bottom: auto;
+      transform: translateY(-0.25rem);
+
+      @supports (anchor-name: --test) {
+        top: calc(anchor(bottom) + 0.35rem);
+        bottom: auto;
+        transform: translate(-50%, -0.25rem);
+      }
+    }
+  }
+
+  &[data-hern-placement="right"] {
+    .hern-tooltip {
+      top: 50%;
+      left: calc(100% + 0.5rem);
+      bottom: auto;
+      transform: translate(-0.25rem, -50%);
+
+      @supports (anchor-name: --test) {
+        top: anchor(center);
+        left: calc(anchor(right) + 0.5rem);
+        bottom: auto;
+        transform: translate(-0.25rem, -50%);
+      }
+    }
+
+    &:hover,
+    &:focus-visible {
+      .hern-tooltip {
+        transform: translate(0, -50%);
+      }
+    }
+  }
+
+  &[data-hern-placement="left"] {
+    .hern-tooltip {
+      top: 50%;
+      right: calc(100% + 0.5rem);
+      left: auto;
+      bottom: auto;
+      transform: translate(0.25rem, -50%);
+
+      @supports (anchor-name: --test) {
+        top: anchor(center);
+        right: calc(anchor(left) + 0.5rem);
+        left: auto;
+        bottom: auto;
+        transform: translate(0.25rem, -50%);
+      }
+    }
+
+    &:hover,
+    &:focus-visible {
+      .hern-tooltip {
+        transform: translate(0, -50%);
+      }
+    }
+  }
+}

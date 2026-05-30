@@ -12,7 +12,7 @@ const INTRO: &str = include_str!("./intro.md");
 
 const LOGOTYPE_SVG: &str = include_str!("../../assets/logotype.svg");
 
-const NAV_ITEMS: &[(&str, &str, &str)] = &[
+const NAV_ITEMS: &[(&str, &str, &str); 8] = &[
     ("綴", "Posts", "/posts/"),
     ("映", "Slides", "/slides/"),
     ("創", "Projects", "/projects/"),

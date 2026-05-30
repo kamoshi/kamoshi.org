@@ -849,3 +849,14 @@ fn extract_text(node: &Node) -> String {
 
     buf
 }
+
+pub fn render_hover_markdown(markdown: &str) -> String {
+    let arena = Arena::new();
+    let options = get_options();
+    let highlighter = Highlighter::stateless();
+    let plugins = get_plugins(&highlighter);
+    let root = parse_document(&arena, markdown, &options);
+    let mut html = String::new();
+    let _ = format_html_with_plugins(root, &options, &mut html, &plugins);
+    html
+}

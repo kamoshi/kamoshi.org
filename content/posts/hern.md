@@ -244,14 +244,14 @@ trait with a [functional dependency][functional-dependencies] from the input
 types to the output type.
 
 ```hern
-trait Add 'lhs 'rhs -> 'output {
-  fn infixl 6 +(lhs: 'lhs, rhs: 'rhs) -> 'output
+trait Add2 'lhs 'rhs -> 'output {
+  fn infixl 6 ++(lhs: 'lhs, rhs: 'rhs) -> 'output
 }
 
 fn add_twice(x: 'a, y: 'a) -> 'a
-where 'a 'a -> 'a: Add
+where 'a 'a -> 'a: Add2
 {
-  x + y + y
+  x ++ y ++ y
 }
 ```
 
@@ -265,7 +265,7 @@ only using the small piece it needs here.
 The same shape is useful for indexing:
 
 ```hern
-trait Index 'receiver 'key -> 'output {
+trait Index2 'receiver 'key -> 'output {
   fn get(receiver: 'receiver, key: 'key) -> 'output
 }
 ```

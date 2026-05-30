@@ -161,7 +161,7 @@ fn run() -> Result<(), RuntimeError> {
         .register();
 
     let scripts = config
-        .load_esbuild()
+        .load_rolldown()
         .entry("scripts/**/main.ts")?
         .entry("content/**/main.ts")?
         .watch("scripts/**/*.ts")?
