@@ -124,7 +124,7 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<(), RuntimeError> {
-    hauchiwa::init_logging()?;
+    hauchiwa::init_logging_with_format(hauchiwa::LogFormat::Humane)?;
     let args = Args::parse();
 
     fs::write(

@@ -116,8 +116,6 @@ pub fn add_teien(
                 for (_, (path_file, path_pdf)) in &typst {
                     let href = output::source_to_href(path_file, Some("content"));
 
-                    hauchiwa::tracing::info!("{}", &href);
-
                     add_parent_hierarchy(&mut datalog, &href);
 
                     typst_items.push((href, path_pdf));
@@ -147,7 +145,6 @@ pub fn add_teien(
                             }
                         }
 
-                        hauchiwa::tracing::info!("{}", &href);
                         add_parent_hierarchy(&mut datalog, &href);
 
                         parsed.push((document, markdown, href));

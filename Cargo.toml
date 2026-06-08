@@ -37,7 +37,7 @@ ts-rs                   = "12"
 minijinja               = "2"
 
 # Formats
-hayagriva               = "0.9"
+hayagriva               = "0.10"
 pulldown-latex          = "0.7"
 rss                     = "2.0"
 sequoia-openpgp         = { version = "2.1", default-features = false, features = ["crypto-openssl"] }
