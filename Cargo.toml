@@ -43,14 +43,18 @@ rss                     = "2.0"
 sequoia-openpgp         = { version = "2.1", default-features = false, features = ["crypto-openssl"] }
 
 # Markdown
-comrak                  = { version = "0.54", default-features = false, features = ["shortcodes"] }
+comrak = {
+    version = "0.55",
+    default-features = false,
+    features = ["shortcodes"]
+}
 
 # Templating
 hypertext               = "0.12"
 
 # Treesitter
-tree-sitter             = "0.26"
-tree-sitter-highlight   = "0.26"
+tree-sitter             = "0.27"
+tree-sitter-highlight   = "0.27"
 tree-sitter-language    = "0.1"
 
 # Treesitter languages

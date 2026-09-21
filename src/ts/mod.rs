@@ -73,7 +73,7 @@ fn get_events(lang: &str, src: &str) -> Vec<TSEvent> {
     };
 
     let mut hl = Highlighter::new();
-    let Ok(highlights) = hl.highlight(config, src.as_bytes(), None, |name| {
+    let Ok(highlights) = hl.highlight(config, src.as_bytes(), None, None, |name| {
         configs::get_config(name)
     }) else {
         return vec![TSEvent::Write {
