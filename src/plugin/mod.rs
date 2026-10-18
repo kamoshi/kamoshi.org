@@ -15,7 +15,7 @@ use hauchiwa::{
     error::RuntimeError,
     loader::{Script, Stylesheet, TemplateEnv},
 };
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 
 use crate::props::{
     PropsFooter, PropsHead, PropsList, PropsListGroup, PropsListItem, PropsNavItem, PropsNavbar,
@@ -124,5 +124,5 @@ pub(crate) fn to_list(
     };
 
     let tmpl = templates.get_template("list.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }

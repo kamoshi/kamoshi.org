@@ -4,7 +4,7 @@ use hauchiwa::git::GitHistory;
 use hauchiwa::loader::{Document, Image, Script, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
 use hypertext::prelude::*;
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 
 use crate::md::Parsed;
 use crate::model::Post;
@@ -193,5 +193,5 @@ pub fn render(args: RenderPost) -> Result<String, RuntimeError> {
     };
 
     let tmpl = templates.get_template("post.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }

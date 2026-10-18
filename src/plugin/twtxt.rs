@@ -3,7 +3,7 @@ use std::cmp::Reverse;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 
 use crate::model::{Microblog, MicroblogEntry};
 use crate::props::{PropsMicroblogEntry, PropsThought, PropsThoughts};
@@ -94,7 +94,7 @@ pub fn render(
     };
 
     let tmpl = templates.get_template("thoughts.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }
 
 pub fn render_entry(
@@ -111,5 +111,5 @@ pub fn render_entry(
     };
 
     let tmpl = templates.get_template("thought.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }

@@ -34,7 +34,6 @@ serde_json              = "1.0"
 
 crepe                   = "0.2.0"
 ts-rs                   = "12"
-minijinja               = "2"
 
 # Formats
 hayagriva               = "0.10"
@@ -44,7 +43,7 @@ sequoia-openpgp         = { version = "2.1", default-features = false, features 
 
 # Markdown
 comrak = {
-    version = "0.55",
+    version = "0.56",
     default-features = false,
     features = ["shortcodes"]
 }
@@ -62,7 +61,7 @@ tree-sitter-asm         = "0.24"
 tree-sitter-bash        = "0.25"
 tree-sitter-c           = "0.24"
 tree-sitter-css         = "0.25"
-tree-sitter-haskell     = "0.23"
+tree-sitter-haskell     = "0.24"
 tree-sitter-hern        = "0.2"
 tree-sitter-html        = "0.23"
 tree-sitter-ini         = "1.4"

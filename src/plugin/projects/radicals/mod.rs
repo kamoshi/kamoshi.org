@@ -8,7 +8,7 @@ use hauchiwa::{
     error::HauchiwaError,
     loader::{Stylesheet, Svelte, TemplateEnv},
 };
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 
 use crate::Global;
 use crate::props::PropsBare;
@@ -122,7 +122,7 @@ pub fn build(
             };
 
             let tmpl = templates.get_template("layouts/bare.jinja")?;
-            let html = tmpl.render(&page_props)?;
+            let html = tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&page_props)))?;
 
             Ok(Output::html("projects/radicals", html))
         });

@@ -1,4 +1,4 @@
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 use serde::Serialize;
 
 #[derive(Serialize)]

@@ -237,7 +237,7 @@ fn run() -> Result<(), RuntimeError> {
                     navbar: crate::plugin::make_props_navbar(),
                 };
                 let tmpl = templates.get_template("map.jinja")?;
-                pages.push(Output::html("map", tmpl.render(&props)?));
+                pages.push(Output::html("map", tmpl.render(hauchiwa::minijinja::Value::from(hauchiwa::minijinja::value::Serde(&props)))?));
             }
 
             {
@@ -255,7 +255,7 @@ fn run() -> Result<(), RuntimeError> {
                     footer: crate::plugin::make_props_footer(ctx),
                 };
                 let tmpl = templates.get_template("search.jinja")?;
-                pages.push(Output::html("search", tmpl.render(&props)?));
+                pages.push(Output::html("search", tmpl.render(hauchiwa::minijinja::Value::from(hauchiwa::minijinja::value::Serde(&props)))?));
             }
 
             Ok(pages)

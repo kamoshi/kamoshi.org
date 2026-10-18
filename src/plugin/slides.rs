@@ -5,7 +5,7 @@ use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::generic::DocumentMeta;
 use hauchiwa::loader::{Image, Script, Stylesheet, TemplateEnv};
 use hauchiwa::{Tracker, prelude::*};
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 
 use crate::model::Slideshow;
 use crate::plugin::to_list;
@@ -132,5 +132,5 @@ pub fn render(
     };
 
     let tmpl = templates.get_template("slideshow.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }

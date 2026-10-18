@@ -2,7 +2,7 @@ use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Document, Image, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
 use hypertext::prelude::*;
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::parse::Parse;
 
@@ -98,5 +98,5 @@ pub fn render(
     };
 
     let tmpl = templates.get_template("about.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }

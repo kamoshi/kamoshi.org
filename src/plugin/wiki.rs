@@ -5,7 +5,7 @@ use hauchiwa::error::HauchiwaError;
 use hauchiwa::loader::{Document, Image, Stylesheet, TemplateEnv};
 use hauchiwa::output;
 use hauchiwa::prelude::*;
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 
 use crate::md::WikiLinkResolver;
 use crate::model::Wiki;
@@ -198,7 +198,7 @@ pub fn add_teien(
                         };
 
                         let tmpl = templates.get_template("wiki.jinja")?;
-                        let page = tmpl.render(&props)?;
+                        let page = tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?;
 
                         pages.push(Output::to(document).html(page)?);
                     }
@@ -213,7 +213,7 @@ pub fn add_teien(
                         };
 
                         let tmpl = templates.get_template("wiki_pdf.jinja")?;
-                        let html = tmpl.render(&props)?;
+                        let html = tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?;
 
                         pages.push(Output::html(href.strip_prefix('/').unwrap_or(href), html));
                     }

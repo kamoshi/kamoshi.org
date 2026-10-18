@@ -8,6 +8,7 @@ use chrono::Datelike;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Document, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
+use hauchiwa::minijinja::Value;
 
 use crate::props::{PropsListGroup, PropsListItem, PropsTag, PropsTagCloud, PropsTagCloudEntry};
 use crate::{Context, Global, Link, LinkDate, model::Post};
@@ -118,7 +119,7 @@ pub fn render_tag(
     };
 
     let tmpl = templates.get_template("tag.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }
 
 pub fn tag_cloud(
@@ -146,5 +147,5 @@ pub fn tag_cloud(
     };
 
     let tmpl = templates.get_template("tag_cloud.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }

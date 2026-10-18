@@ -5,7 +5,7 @@ use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Script, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
 use hypertext::prelude::*;
-use minijinja::Value;
+use hauchiwa::minijinja::Value;
 
 use crate::md::Parsed;
 use crate::model::Project;
@@ -161,7 +161,7 @@ pub fn render_list(
     };
 
     let tmpl = templates.get_template("projects.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }
 
 pub fn render_page(
@@ -183,7 +183,7 @@ pub fn render_page(
     };
 
     let tmpl = templates.get_template("project_page_md.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }
 
 pub fn render_raw_page(
@@ -204,5 +204,5 @@ pub fn render_raw_page(
     };
 
     let tmpl = templates.get_template("project_page_html.jinja")?;
-    Ok(tmpl.render(&props)?)
+    Ok(tmpl.render(Value::from(hauchiwa::minijinja::value::Serde(&props)))?)
 }
