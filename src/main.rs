@@ -11,7 +11,7 @@ use std::fs;
 use std::process::{Command, ExitCode};
 
 use camino::Utf8PathBuf;
-use chrono::{DateTime, Datelike, Utc};
+use jiff::Timestamp;
 use clap::{Parser, ValueEnum};
 use hauchiwa::error::RuntimeError;
 use hauchiwa::loader::image::{ImageFormat, Quality};
@@ -59,7 +59,7 @@ impl Global {
     fn new() -> Self {
         use hauchiwa::git;
 
-        let time = chrono::Utc::now();
+        let time = Timestamp::now();
         let repo = git::map(git::Options::new("main"))
             .inspect_err(|err| hauchiwa::tracing::warn!("failed to read git history: {err}"))
             .ok();
@@ -67,8 +67,8 @@ impl Global {
 
         Self {
             repo,
-            year: time.year(),
-            date: time.format("%Y/%m/%d %H:%M").to_string(),
+            year: i32::from(time.to_zoned(jiff::tz::TimeZone::UTC).year()),
+            date: time.strftime("%Y/%m/%d %H:%M").to_string(),
             link: "https://codeberg.org/kamov/kamoshi.org/src/commit/".into(),
             hash,
         }
@@ -104,7 +104,7 @@ struct Link {
 #[derive(Debug, Clone)]
 struct LinkDate {
     pub link: Link,
-    pub date: DateTime<Utc>,
+    pub date: Timestamp,
 }
 
 #[derive(Debug, Clone)]

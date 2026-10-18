@@ -54,7 +54,7 @@ pub fn add_twtxt(
 
             for entry in &data.entries {
                 let html = render_entry(ctx, templates, entry, styles)?;
-                let date = entry.date.timestamp();
+                let date = entry.date.as_second();
 
                 let path = format!("thoughts/{date}");
                 pages.push((path.clone(), Output::html(path, html)));
@@ -71,9 +71,9 @@ fn make_entry_props(entry: &MicroblogEntry) -> PropsMicroblogEntry {
     let body = comrak::markdown_to_html(&entry.text, &comrak::Options::default());
     PropsMicroblogEntry {
         body: Value::from_safe_string(body),
-        date_iso: entry.date.to_rfc3339(),
-        date_display: entry.date.format("%b %d").to_string(),
-        timestamp: entry.date.timestamp(),
+        date_iso: entry.date.to_string(),
+        date_display: entry.date.strftime("%b %d").to_string(),
+        timestamp: entry.date.as_second(),
     }
 }
 

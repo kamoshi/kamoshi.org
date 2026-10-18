@@ -2,9 +2,9 @@ use camino::Utf8Path;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::git::GitHistory;
 use hauchiwa::loader::{Document, Image, Script, Stylesheet, TemplateEnv};
+use hauchiwa::minijinja::Value;
 use hauchiwa::prelude::*;
 use hypertext::prelude::*;
-use hauchiwa::minijinja::Value;
 
 use crate::md::Parsed;
 use crate::model::Post;
@@ -168,11 +168,16 @@ pub fn render(args: RenderPost) -> Result<String, RuntimeError> {
 
     let updated = info.map(|info| {
         let info = info[0].as_ref();
+        let commit_date = jiff::Timestamp::new(
+            info.commit_date.timestamp(),
+            info.commit_date.timestamp_subsec_nanos() as i32,
+        )
+        .expect("chrono timestamp is within Jiff range");
         PropsPostUpdated {
-            date: info.commit_date.format("%Y, %B %d").to_string(),
-            date_iso: info.commit_date.format("%Y-%m-%d").to_string(),
+            date: commit_date.strftime("%Y, %B %d").to_string(),
+            date_iso: commit_date.strftime("%Y-%m-%d").to_string(),
             hash: info.abbreviated_hash.clone(),
-            hash_url: format!("{}/{}", &ctx.env.data.link, &info.abbreviated_hash),
+            hash_url: format!("{}/{}", ctx.env.data.link, info.abbreviated_hash),
         }
     });
 
@@ -185,8 +190,8 @@ pub fn render(args: RenderPost) -> Result<String, RuntimeError> {
         content: Value::from_safe_string(parsed.html),
         bibliography,
         metadata: PropsPostMeta {
-            date_added: meta.date.format("%Y, %B %d").to_string(),
-            date_added_iso: meta.date.format("%Y-%m-%d").to_string(),
+            date_added: meta.date.strftime("%Y, %B %d").to_string(),
+            date_added_iso: meta.date.strftime("%Y-%m-%d").to_string(),
             updated,
             tags: tags.to_vec(),
         },

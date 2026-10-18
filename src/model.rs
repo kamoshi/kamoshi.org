@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 // use hauchiwa::{WithFile, loader::Content};
 use serde::Deserialize;
 
@@ -13,7 +13,7 @@ pub struct Pubkey {
 #[derive(Deserialize, Clone)]
 pub struct MicroblogEntry {
     #[serde(with = "isodate")]
-    pub date: DateTime<Utc>,
+    pub date: Timestamp,
     pub text: String,
 }
 
@@ -24,14 +24,14 @@ pub struct Microblog {
 }
 
 impl FromStr for MicroblogEntry {
-    type Err = chrono::ParseError;
+    type Err = jiff::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.splitn(2, char::is_whitespace);
         let datetime_str = parts.next().unwrap_or("");
         let text = parts.next().unwrap_or("").trim_start();
 
-        let date = DateTime::parse_from_rfc3339(datetime_str)?.with_timezone(&Utc);
+        let date = datetime_str.parse::<Timestamp>()?;
 
         Ok(MicroblogEntry {
             date,
@@ -52,7 +52,7 @@ pub struct Post {
     #[serde(default)]
     pub draft: bool,
     #[serde(with = "isodate")]
-    pub date: DateTime<Utc>,
+    pub date: Timestamp,
     pub desc: Option<String>,
     #[serde(default)]
     pub tags: Vec<String>,
@@ -77,7 +77,7 @@ pub struct Post {
 pub(crate) struct Slideshow {
     pub title: String,
     #[serde(with = "isodate")]
-    pub date: DateTime<Utc>,
+    pub date: Timestamp,
     pub desc: Option<String>,
 }
 
@@ -127,15 +127,14 @@ pub mod svelte {
 }
 
 mod isodate {
-    use chrono::{DateTime, Utc};
+    use jiff::Timestamp;
     use serde::{self, Deserialize, Deserializer};
 
-    pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<Timestamp, D::Error>
     where
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let dt = chrono::DateTime::parse_from_rfc3339(&s).map_err(serde::de::Error::custom)?;
-        Ok(dt.into())
+        s.parse::<Timestamp>().map_err(serde::de::Error::custom)
     }
 }

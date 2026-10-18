@@ -2,6 +2,7 @@ use hauchiwa::Output;
 use hauchiwa::camino::Utf8Path;
 use hauchiwa::loader::Document;
 use rss::{ChannelBuilder, ItemBuilder};
+use jiff::fmt::rfc2822::DateTimePrinter;
 
 use crate::BASE_URL;
 use crate::model::{Post, Project, Slideshow};
@@ -20,7 +21,7 @@ impl ToFeed for &Document<Post> {
         ItemBuilder::default()
             .title(self.matter.title.clone())
             .link(site_url(&self.meta.href))
-            .pub_date(self.matter.date.to_rfc2822())
+            .pub_date(DateTimePrinter::new().timestamp_to_string(&self.matter.date).expect("valid RFC 2822 timestamp"))
             .build()
     }
 }
@@ -30,7 +31,7 @@ impl ToFeed for &Document<Slideshow> {
         ItemBuilder::default()
             .title(self.matter.title.clone())
             .link(site_url(&self.meta.href))
-            .pub_date(self.matter.date.to_rfc2822())
+            .pub_date(DateTimePrinter::new().timestamp_to_string(&self.matter.date).expect("valid RFC 2822 timestamp"))
             .build()
     }
 }

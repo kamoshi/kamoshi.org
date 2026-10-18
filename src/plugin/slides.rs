@@ -65,7 +65,7 @@ pub fn add_slides(
                             name: item.matter.title.clone(),
                             desc: item.matter.desc.clone(),
                         },
-                        date: item.matter.date.to_utc(),
+                        date: item.matter.date,
                     })
                     .collect();
 

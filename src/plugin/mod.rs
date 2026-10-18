@@ -10,7 +10,6 @@ pub mod wiki;
 use std::{cmp::Reverse, collections::HashMap};
 
 use camino::Utf8Path;
-use chrono::Datelike as _;
 use hauchiwa::{
     error::RuntimeError,
     loader::{Script, Stylesheet, TemplateEnv},
@@ -85,7 +84,7 @@ pub(crate) fn to_list(
     let mut groups = HashMap::<i32, Vec<_>>::new();
 
     for page in list {
-        groups.entry(page.date.year()).or_default().push(page);
+        groups.entry(i32::from(page.date.to_zoned(jiff::tz::TimeZone::UTC).year())).or_default().push(page);
     }
 
     let mut groups: Vec<_> = groups
@@ -115,8 +114,8 @@ pub(crate) fn to_list(
                         path: item.link.path.to_string(),
                         name: item.link.name,
                         desc: item.link.desc,
-                        date: item.date.format("%m/%d").to_string(),
-                        date_iso: item.date.to_rfc3339(),
+                        date: item.date.strftime("%m/%d").to_string(),
+                        date_iso: item.date.to_string(),
                     })
                     .collect(),
             })

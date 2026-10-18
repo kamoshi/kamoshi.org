@@ -4,7 +4,6 @@ use std::{
 };
 
 use camino::Utf8PathBuf;
-use chrono::Datelike;
 use hauchiwa::error::{HauchiwaError, RuntimeError};
 use hauchiwa::loader::{Document, Stylesheet, TemplateEnv};
 use hauchiwa::prelude::*;
@@ -73,7 +72,7 @@ pub fn group(links: &[LinkDate]) -> Vec<(i32, Vec<&LinkDate>)> {
     let mut groups = HashMap::<_, Vec<_>>::new();
 
     for page in links {
-        groups.entry(page.date.year()).or_default().push(page);
+        groups.entry(i32::from(page.date.to_zoned(jiff::tz::TimeZone::UTC).year())).or_default().push(page);
     }
 
     let mut groups: Vec<_> = groups
@@ -110,8 +109,8 @@ pub fn render_tag(
                         path: item.link.path.to_string(),
                         name: item.link.name.clone(),
                         desc: item.link.desc.clone(),
-                        date: item.date.format("%m/%d").to_string(),
-                        date_iso: item.date.to_rfc3339(),
+                        date: item.date.strftime("%m/%d").to_string(),
+                        date_iso: item.date.to_string(),
                     })
                     .collect(),
             })

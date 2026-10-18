@@ -206,12 +206,12 @@ fn is_type_signature(text: &str) -> bool {
     if text.starts_with("fn(") || text.starts_with("type ") || text.starts_with("trait ") || text.starts_with("impl ") {
         return true;
     }
-    if !text.contains(' ') && !text.ends_with('.') {
-        if let Some(first_char) = text.chars().next() {
-            if first_char.is_uppercase() {
-                return true;
-            }
-        }
+    if !text.contains(' ')
+        && !text.ends_with('.')
+        && let Some(first_char) = text.chars().next()
+        && first_char.is_uppercase()
+    {
+        return true;
     }
     false
 }
